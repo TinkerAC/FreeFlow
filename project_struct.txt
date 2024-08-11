@@ -1,0 +1,50 @@
+/spotify-clone-electron
+│
+├── /public                      # 静态资源文件夹，存放 HTML 文件和静态图片、图标等
+│   ├── index.html               # 应用的 HTML 模板文件
+│   └── assets                   # 应用的图标、图片等静态资源
+│
+├── /src                         # 源代码目录，包含所有 React 组件、页面、和样式文件
+│   ├── /components              # 可重用的 React 组件目录
+│   │   ├── Sidebar.jsx          # 左侧栏组件
+│   │   ├── SidebarItem.jsx      # 左侧栏中的单个导航项组件
+│   │   ├── Topbar.jsx           # 顶端栏组件
+│   │   ├── PlaybackBar.jsx      # 播放控制栏组件
+│   │   ├── PlaybackControls.jsx # 播放控制按钮集组件
+│   │   ├── ProgressBar.jsx      # 播放进度条组件
+│   │   ├── VolumeControl.jsx    # 音量控制组件
+│   │   ├── MainContent.jsx      # 中央内容栏组件，用于显示动态内容
+│   │   ├── AlbumView.jsx        # 专辑详情视图组件
+│   │   ├── PlaylistView.jsx     # 播放列表视图组件
+│   │   ├── ArtistView.jsx       # 艺术家详情视图组件
+│   │   ├── TrackList.jsx        # 通用曲目列表组件
+│   │   ├── NowPlayingSidebar.jsx# 右侧当前播放视图栏组件
+│   │   ├── LyricsView.jsx       # 歌词显示组件
+│   │   └── RelatedTracks.jsx    # 相关歌曲推荐组件
+│   │
+│   ├── /pages                   # React 页面组件目录，包含各个功能页面
+│   │   ├── HomePage.jsx         # 首页页面组件
+│   │   ├── SearchPage.jsx       # 搜索结果页面组件
+│   │   ├── AlbumPage.jsx        # 专辑详情页面组件
+│   │   ├── ArtistPage.jsx       # 艺术家详情页面组件
+│   │   ├── PlaylistPage.jsx     # 播放列表详情页面组件
+│   │   └── NowPlayingPage.jsx   # 当前播放详情页面组件
+│   │
+│   ├── /styles                  # 样式文件目录
+│   │   └── App.css              # 全局样式文件
+│   │
+│   ├── App.jsx                  # React 应用的根组件，负责引导整个应用
+│   ├── index.js                 # React 应用的入口文件，渲染根组件
+│   └── routes.js                # React Router 配置文件，用于设置路由
+│
+├── /electron                    # Electron 主进程相关文件
+│   ├── main.js                  # Electron 主进程入口文件，控制应用生命周期
+│   ├── preload.js               # Electron 预加载脚本，用于主进程与渲染进程间通信
+│   └── electron-builder.json    # Electron 打包配置文件
+│
+├── /node_modules                # Node.js 依赖模块目录（自动生成）
+│
+├── .gitignore                   # Git 忽略文件配置
+├── package.json                 # Node.js 项目配置文件，包含依赖、脚本等信息
+├── package-lock.json            # 锁定依赖版本文件（自动生成）
+└── README.md                    # 项目说明文件，描述项目的安装、使用等信息
