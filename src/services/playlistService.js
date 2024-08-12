@@ -1,6 +1,5 @@
-const fs = require('fs');
-
-
+import fs from 'fs';
+import * as mm from 'music-metadata';
 
 function getPlaylists() {
     const playlists = fs.readdirSync('./data/playlists');
@@ -29,8 +28,36 @@ function generateNewPlaylistNumber() {
     return maxNum + 1; // 返回新歌单的编号
 }
 
-module.exports = {
-    getPlaylists,
-    generateNewPlaylistNumber
-};
+
+function getMusicMetaInfo(filePath) {
+    return new Promise((resolve, reject) => {
+        mm.parseFile(filePath, {native: true})
+            .then(metadata => {
+                // 检查是否存在封面图片
+                if (metadata.common.picture && metadata.common.picture.length > 0) {
+                    // 获取第一个封面图片
+                    const picture = metadata.common.picture[0];
+
+                    // 将 Uint8Array 转换为 Buffer 对象
+                    const buffer = Buffer.from(picture.data);
+
+                    const base64String = buffer.toString('base64');
+                    // 确保使用正确的 MIME 类型格式
+                    const mimeType = picture.format || 'image/jpeg';
+                    // 将 Base64 图片添加到返回的 metadata 对象中
+                    metadata.common.base64Cover = `data:${mimeType};base64,${base64String}`;
+                }
+
+                // 返回包含 Base64 编码图片数据的元数据
+                resolve(metadata);
+            })
+            .catch(err => {
+                reject(err);
+            });
+    });
+}
+
+
+export {getPlaylists, generateNewPlaylistNumber, getMusicMetaInfo};
+
 

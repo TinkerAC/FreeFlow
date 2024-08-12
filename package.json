@@ -2,6 +2,7 @@
   "name": "spotify",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "src/main/main.js",
   "scripts": {
     "build": "webpack --config webpack.config.js",
@@ -30,6 +31,8 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.6.0",
     "autoprefixer": "^10.4.20",
+    "js-yaml": "^4.1.0",
+    "music-metadata": "^10.0.1",
     "postcss": "^8.4.41",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

@@ -56,6 +56,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.2rem; /* 通过设置较小的间距，使项目之间的间距更小 */
+    overflow-y: auto;
 }
 
 .item {

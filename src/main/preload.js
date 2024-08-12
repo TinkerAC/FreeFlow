@@ -5,15 +5,6 @@ contextBridge.exposeInMainWorld('electron', {
     maximize: () => ipcRenderer.send('window-controls', 'maximize'),
     close: () => ipcRenderer.send('window-controls', 'close'),
 
-    //播放音乐
-    playMusic: (filePath) => {
-        const audioBuffer = fs.readFileSync(filePath);
-        const blob = new Blob([audioBuffer], { type: 'audio/mp3' }); // 根据文件类型修改 MIME 类型
-        const audioURL = URL.createObjectURL(blob);
-        const audio = new Audio(audioURL);
-        audio.play();
-    },
-    //创建歌单
     createPlaylist: () => {
         ipcRenderer.send('create-playlists');
     },
@@ -21,6 +12,13 @@ contextBridge.exposeInMainWorld('electron', {
     getPlaylists: () => {
         return ipcRenderer.invoke('get-playlists');
     },
+
+});
+
+
+contextBridge.exposeInMainWorld('playerAPI', {
+    getPlayerState: () => ipcRenderer.invoke('player-state'),
+    getMusicMetaInfo: (filePath) => ipcRenderer.invoke('get-music-meta', filePath),
 
 });
 

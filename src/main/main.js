@@ -1,8 +1,14 @@
-const {app, BrowserWindow, ipcMain} = require('electron');
-const path = require('path');
-const fs = require("fs");
-const {getPlaylists, generateNewPlaylistNumber} = require("../services/playlistService");
-require('electron-reload')(__dirname)  // 引入并配置 electron-reload
+import {app, BrowserWindow, ipcMain} from 'electron';
+import path from 'path';
+import {fileURLToPath} from 'url';
+import fs from 'fs';
+import {generateNewPlaylistNumber, getMusicMetaInfo, getPlaylists} from '../services/playlistService.js';
+import {loadPlayer} from '../services/playerService.js';
+
+// 获取当前文件的目录名
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 let mainWindow;
 
@@ -21,8 +27,11 @@ function createWindow() {
         }
     });
 
+
     mainWindow.loadFile('src/index.html');
     mainWindow.webContents.openDevTools();  // 打开 DevTools
+
+
     //监听窗口控制事件
     ipcMain.on('window-controls', (event, action) => {
         switch (action) {
@@ -44,7 +53,6 @@ function createWindow() {
         }
     });
     //监听创建歌单事件
-
     ipcMain.on('create-playlists', (event) => {
 
         const newNumber = generateNewPlaylistNumber();
@@ -64,9 +72,17 @@ function createWindow() {
     });
     //监听获取歌单事件
     ipcMain.handle('get-playlists', () => {
-        const playlists = getPlaylists();
-        console.log('Playlists:', playlists); // 打印调试信息
-        return playlists;
+        return getPlaylists();
+    });
+
+    //监听获取播放状态事件
+    ipcMain.handle('player-state', () => {
+        return loadPlayer();
+    });
+
+    //监听获取音乐元信息事件
+    ipcMain.handle('get-music-meta', (event, filePath) => {
+        return getMusicMetaInfo(filePath);
     });
 
 

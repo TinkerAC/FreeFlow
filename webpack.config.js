@@ -1,20 +1,25 @@
-const path = require('path');
+// webpack.config.js (使用 ES 模块语法)
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-module.exports = {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default {
   mode: 'development',  // 或 'production'
   entry: './src/index.js',
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist')
   },
-  devtool: 'source-map',  // 添加 source map 支持
+  devtool: 'source-map',
   resolve: {
-    extensions: ['.js', '.jsx'], // 添加 .jsx 扩展名支持
+    extensions: ['.js', '.jsx'],
   },
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,  // 匹配 .js 和 .jsx 文件
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
@@ -24,7 +29,7 @@ module.exports = {
         }
       },
       {
-        test: /\.css$/,  // 添加处理 CSS 文件的规则
+        test: /\.css$/,
         use: ['style-loader', 'css-loader']
       }
     ]
@@ -36,6 +41,6 @@ module.exports = {
     compress: true,
     port: 3000,
     hot: true,
-    open: false // 不自动打开浏览器
+    open: false
   },
 };

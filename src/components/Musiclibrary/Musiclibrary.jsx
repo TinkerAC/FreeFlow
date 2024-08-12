@@ -1,13 +1,13 @@
 import React from 'react';
 import './MusicLibrary.css';
 
-const MusicLibrary = ({ libraryItems }) => {
+const MusicLibrary = ({libraryItems}) => {
 
     // 内部子组件 Item
-    const Item = ({ imgSrc, altText, title, details }) => {
+    const Item = ({imgSrc, altText, title, details}) => {
         return (
             <div className="item">
-                <img src={imgSrc} alt={altText} className="album-cover" />
+                <img src={imgSrc} alt={altText} className="album-cover"/>
                 <div className="item-info">
                     <p className="item-title">{title}</p>
                     <p className="item-details">{details}</p>
@@ -51,3 +51,86 @@ const MusicLibrary = ({ libraryItems }) => {
 };
 
 export default MusicLibrary;
+
+
+// import React from 'react';
+// import './MusicLibrary.css';
+//
+// const Musiclibrary = () => {
+//
+//     // 内部子组件 Item
+//     const Item = ({ imgSrc, altText, title, details }) => {
+//         return (
+//             <div className="item">
+//                 <img src={imgSrc} alt className="album-cover" />
+//                 <div className="item-info">
+//                     <p className="item-title">{title}</p>
+//                     <p className="item-details">{details}</p>
+//                 </div>
+//             </div>
+//         );
+//     };
+//
+//     // 需要渲染的音乐库项目信息
+//     const libraryItems = [
+//         {
+//             imgSrc: "https://placehold.co/50x50",
+//             title: "已点赞的歌曲",
+//             details: "歌单 · 123 首歌曲"
+//         },
+//         {
+//             imgSrc: "https://placehold.co/50x50",
+//             title: "Your Name.",
+//             details: "专辑 · RADWIMPS"
+//         },
+//         {
+//             imgSrc: "https://placehold.co/50x50",
+//             title: "纯音乐",
+//             details: "歌单 · 杨姝"
+//         },
+//         {
+//             imgSrc: "https://placehold.co/50x50",
+//             title: "Love Yourself",
+//             details: "专辑 · Justin Bieber"
+//         },
+//         {
+//             imgSrc: "https://placehold.co/50x50",
+//             title: "The Best of Me",
+//             details: "歌单 · 100 首歌曲"
+//         }
+//     ];
+//
+//     return (
+//         <div className="music-library rounded-lg">
+//             <div className="header">
+//                 <i className="fas fa-bars icon"></i>
+//                 <h1 className="title">音乐库</h1>
+//                 <div className="actions">
+//                     <i className="fas fa-plus icon" onClick={() => window.electron.createPlaylist()}></i>
+//                     <i className="fas fa-arrow-right icon"></i>
+//                 </div>
+//             </div>
+//             <div className="filters">
+//                 <button className="filter-button">歌单</button>
+//                 <button className="filter-button">专辑</button>
+//             </div>
+//             <div className="search-recent">
+//                 <i className="fas fa-search icon"></i>
+//                 <span className="recent">最近播放 <i className="fas fa-list icon"></i></span>
+//             </div>
+//
+//             <div className="library-items">
+//                 {libraryItems.map((item, index) => (
+//                     <Item
+//                         key={index}
+//                         imgSrc={item.imgSrc}
+//                         title={item.title}
+//                         details={item.details}
+//                     />
+//                 ))}
+//             </div>
+//         </div>
+//     );
+// };
+//
+// export default Musiclibrary;
