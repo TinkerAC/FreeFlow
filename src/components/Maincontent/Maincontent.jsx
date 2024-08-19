@@ -1,11 +1,17 @@
 import React from 'react';
 import './Maincontent.css';
 
-const Maincontent = () => {
+
+import {PlaylistView} from "../PlaylistView/PlaylistView.js";
+
+const Maincontent = ({tracks, onReplacePlayQueue, onAddTracksToPlayQueue,playNewTrack}) => {
     return (
-        <div className="main-content">
-            <h1>主要内容</h1>
-            <p>这里是主要内容区域，你可以在这里放置你的主要内容。</p>
+        <div className="main-content overflow-y-auto">
+            <PlaylistView tracks={tracks}
+                          onReplacePlayQueue={onReplacePlayQueue}
+                          onAddTracksToPlayQueue={onAddTracksToPlayQueue}
+                          playNewTrack={playNewTrack}
+            />
         </div>
     );
 }

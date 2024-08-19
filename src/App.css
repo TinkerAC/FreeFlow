@@ -13,33 +13,4 @@ html, body, #root, .App {
     height: 100%;
 }
 
-.App .content-wrapper {
-    display: flex;
-    overflow: hidden;
-    flex-direction: row;
-    flex-grow: 1;
-}
 
-.HeadBar {
-    position: sticky;
-    top: 0; /* 确保固定在顶部 */
-    z-index: 1000;
-    width: 100%;
-}
-
-.MusicLibrary {
-    flex-grow: 0;
-}
-
-.MainContent {
-    flex-grow: 1;
-    display: flex;
-
-}
-
-.PlayerBar {
-    position: sticky;
-    bottom: 0;
-    z-index: 1000;
-    width: 100%;
-}

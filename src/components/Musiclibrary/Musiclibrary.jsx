@@ -1,48 +1,59 @@
 import React from 'react';
-import './MusicLibrary.css';
 
-const MusicLibrary = ({libraryItems}) => {
+const MusicLibrary = ({libraryItems, selectedItem, onSelectItem}) => {
 
     // 内部子组件 Item
-    const Item = ({imgSrc, altText, title, details}) => {
+    const Item = ({imgSrc, altText, title, details, index}) => {
+        const isSelected = selectedItem === index;
+
         return (
-            <div className="item">
-                <img src={imgSrc} alt={altText} className="album-cover"/>
-                <div className="item-info">
-                    <p className="item-title">{title}</p>
-                    <p className="item-details">{details}</p>
+            <div
+                onClick={() => onSelectItem(index)}
+                className={`flex items-center rounded-lg p-2 h-16 cursor-pointer 
+                            ${isSelected ? 'bg-item-bg-selected' : ''}
+                            ${isSelected ? 'hover:bg-item-bg-hover-selected' : 'hover:bg-item-bg-hover'}
+                            active:bg-black`}
+            >
+                <img src={imgSrc} alt={altText} className="w-12 h-12 rounded-lg"/>
+                <div className="ml-4">
+                    <p className="text-white text-base whitespace-nowrap">{title}</p>
+                    <p className="text-gray-400 text-sm whitespace-nowrap">{details}</p>
                 </div>
             </div>
         );
     };
 
     return (
-        <div className="music-library rounded-lg">
-            <div className="header">
-                <i className="fas fa-bars icon"></i>
-                <h1 className="title">音乐库</h1>
-                <div className="actions">
-                    <i className="fas fa-plus icon" onClick={() => window.electron.createPlaylist()}></i>
-                    <i className="fas fa-arrow-right icon"></i>
+        <div className="w-full bg-component-bg text-white p-4 rounded-lg">
+            <div className="flex items-center mb-6">
+                <i className="fas fa-bars text-xl"></i>
+                <h1 className="ml-2 text-lg">音乐库</h1>
+                <div className="ml-auto flex items-center">
+                    <i
+                        className="fas fa-plus text-xl cursor-pointer"
+                        onClick={() => window.electron.createPlaylist()}
+                    ></i>
+                    <i className="fas fa-arrow-right text-xl ml-4"></i>
                 </div>
             </div>
-            <div className="filters">
-                <button className="filter-button">歌单</button>
-                <button className="filter-button">专辑</button>
+            <div className="flex mb-4">
+                <button className="bg-gray-700 text-white px-4 py-1 rounded-full mr-2">歌单</button>
+                <button className="bg-gray-700 text-white px-4 py-1 rounded-full">专辑</button>
             </div>
-            <div className="search-recent">
-                <i className="fas fa-search icon"></i>
-                <span className="recent">最近播放 <i className="fas fa-list icon"></i></span>
+            <div className="flex items-center mb-4">
+                <i className="fas fa-search text-xl"></i>
+                <span className="ml-auto">最近播放 <i className="fas fa-list text-xl"></i></span>
             </div>
-
-            <div className="library-items">
+            {/* 设置固定高度，确保滚动生效 */}
+            <div className="flex flex-col gap-2 flex-grow overflow-x-hidden overflow-y-auto">
                 {libraryItems.map((item, index) => (
                     <Item
                         key={index}
                         imgSrc={item.imgSrc}
-                        altText={item.title} // 使用 title 作为 altText 的默认值
+                        altText={item.title}
                         title={item.title}
                         details={item.details}
+                        index={index}
                     />
                 ))}
             </div>
@@ -51,86 +62,3 @@ const MusicLibrary = ({libraryItems}) => {
 };
 
 export default MusicLibrary;
-
-
-// import React from 'react';
-// import './MusicLibrary.css';
-//
-// const Musiclibrary = () => {
-//
-//     // 内部子组件 Item
-//     const Item = ({ imgSrc, altText, title, details }) => {
-//         return (
-//             <div className="item">
-//                 <img src={imgSrc} alt className="album-cover" />
-//                 <div className="item-info">
-//                     <p className="item-title">{title}</p>
-//                     <p className="item-details">{details}</p>
-//                 </div>
-//             </div>
-//         );
-//     };
-//
-//     // 需要渲染的音乐库项目信息
-//     const libraryItems = [
-//         {
-//             imgSrc: "https://placehold.co/50x50",
-//             title: "已点赞的歌曲",
-//             details: "歌单 · 123 首歌曲"
-//         },
-//         {
-//             imgSrc: "https://placehold.co/50x50",
-//             title: "Your Name.",
-//             details: "专辑 · RADWIMPS"
-//         },
-//         {
-//             imgSrc: "https://placehold.co/50x50",
-//             title: "纯音乐",
-//             details: "歌单 · 杨姝"
-//         },
-//         {
-//             imgSrc: "https://placehold.co/50x50",
-//             title: "Love Yourself",
-//             details: "专辑 · Justin Bieber"
-//         },
-//         {
-//             imgSrc: "https://placehold.co/50x50",
-//             title: "The Best of Me",
-//             details: "歌单 · 100 首歌曲"
-//         }
-//     ];
-//
-//     return (
-//         <div className="music-library rounded-lg">
-//             <div className="header">
-//                 <i className="fas fa-bars icon"></i>
-//                 <h1 className="title">音乐库</h1>
-//                 <div className="actions">
-//                     <i className="fas fa-plus icon" onClick={() => window.electron.createPlaylist()}></i>
-//                     <i className="fas fa-arrow-right icon"></i>
-//                 </div>
-//             </div>
-//             <div className="filters">
-//                 <button className="filter-button">歌单</button>
-//                 <button className="filter-button">专辑</button>
-//             </div>
-//             <div className="search-recent">
-//                 <i className="fas fa-search icon"></i>
-//                 <span className="recent">最近播放 <i className="fas fa-list icon"></i></span>
-//             </div>
-//
-//             <div className="library-items">
-//                 {libraryItems.map((item, index) => (
-//                     <Item
-//                         key={index}
-//                         imgSrc={item.imgSrc}
-//                         title={item.title}
-//                         details={item.details}
-//                     />
-//                 ))}
-//             </div>
-//         </div>
-//     );
-// };
-//
-// export default Musiclibrary;

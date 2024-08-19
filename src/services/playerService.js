@@ -81,6 +81,45 @@ class Player {
     }
 
 
+    addTracksToPlayQueue(tracks) {
+        if (tracks.length === 0) {
+            return;
+        }
+
+        tracks.forEach(track => {
+            this.playQueue.queue.push(track);
+            this.playQueue.indexList.push(this.playQueue.queue.length - 1);
+        });
+    }
+
+    addTrackToNext(tracks) {
+        if (tracks.length === 0) {
+            return;
+        }
+
+        let insertPosition = this.playQueue.currentIndex + 1;
+
+        tracks.forEach(track => {
+            // 在队列中的插入位置插入track
+            this.playQueue.queue.splice(insertPosition, 0, track);
+
+            // 在indexList中添加新插入track的索引
+            this.playQueue.indexList.push(insertPosition);
+
+            // 更新插入位置以确保下一首插入的曲目紧跟着插入
+            insertPosition++;
+        });
+    }
+
+
+    replacePlayQueue(tracks) {
+        this.playQueue.queue = tracks;
+        this.playQueue.indexList = Array.from(Array(tracks.length).keys());
+        this.switchPlayMode(this.mode);//更新indexList
+        this.playQueue.currentIndex = 0;
+    }
+
+
     nextFilePath() {
         if (this.playQueue.indexList.length === 0) {
             return "";
@@ -96,33 +135,6 @@ class Player {
     }
 
 
-    seekTo(seconds) {
-        this.audioRef.current.currentTime = seconds;
-    }
-
-    playPrevious() {
-        if (this.playQueue.indexList.length === 0) {
-            return;
-        }
-
-        if (this.playQueue.currentIndex > 0) {
-            this.playQueue.currentIndex--;
-        } else {
-            this.playQueue.currentIndex = this.playQueue.indexList.length - 1; // 循环播放
-        }
-
-        this.audioRef.current.src = `file://${this.getCurrentFilePath()}`;
-
-        this.audioRef.current.addEventListener('canplaythrough', () => {
-            this.play();
-        }, {once: true});  // 仅监听一次事件
-    }
-
-
-    setVolume(volume) {
-        this.audioRef.current.volume = volume;
-    }
-
     getCurrentTrack() {
         return this.playQueue.getCurrentTrack();
     }
@@ -135,9 +147,18 @@ class Player {
         return this.playQueue;
     }
 
+    getNextTracks() {
+        const nextTracks = [];
 
-    getCurrentIndex() {
-        return this.playQueue.currentIndex;
+        // 从当前播放的音轨的下一个开始遍历
+        for (let i = this.playQueue.currentIndex + 1; i < this.playQueue.indexList.length; i++) {
+            const nextTrack = this.playQueue.queue[this.playQueue.indexList[i]];
+            if (nextTrack) {
+                nextTracks.push(nextTrack);
+            }
+        }
+
+        return nextTracks;
     }
 
 
@@ -148,13 +169,6 @@ class Player {
             playQueue: this.playQueue.toJSON()
         };
     }
-
-    exportUIState() {
-        return {
-            file_path: this.getCurrentFilePath(),
-        };
-    }
-
 
 }
 

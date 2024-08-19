@@ -1,4 +1,3 @@
-// webpack.config.js (使用 ES 模块语法)
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -6,11 +5,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-  mode: 'development',  // 或 'production'
+  mode: 'development', // 或 'production'
   entry: './src/index.js',
   output: {
     filename: 'bundle.js',
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(__dirname, 'dist'),
   },
   devtool: 'source-map',
   resolve: {
@@ -24,15 +23,29 @@ export default {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env', '@babel/preset-react']
-          }
-        }
+            presets: ['@babel/preset-env', '@babel/preset-react'],
+          },
+        },
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader']
-      }
-    ]
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  'tailwindcss',
+                  'autoprefixer',
+                ],
+              },
+            },
+          },
+        ],
+      },
+    ],
   },
   devServer: {
     static: {
@@ -41,6 +54,6 @@ export default {
     compress: true,
     port: 3000,
     hot: true,
-    open: false
+    open: false,
   },
 };

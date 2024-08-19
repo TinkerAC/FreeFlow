@@ -1,0 +1,11 @@
+music:
+  supported_formats:
+    - mp3
+    - wav
+    - flac
+    - aac
+    - m4a
+    - ogg
+    - webm
+    - mp4
+    - opus

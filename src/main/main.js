@@ -4,11 +4,10 @@ import {fileURLToPath} from 'url';
 import fs from 'fs';
 import {generateNewPlaylistNumber, getMusicMetaInfo, getPlaylists} from '../services/playlistService.js';
 import {loadPlayer} from '../services/playerService.js';
-
+import {updateLocalLibrary} from '../services/localLibraryService.js';
 // 获取当前文件的目录名
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 
 let mainWindow;
 
@@ -30,7 +29,6 @@ function createWindow() {
 
     mainWindow.loadFile('src/index.html');
     mainWindow.webContents.openDevTools();  // 打开 DevTools
-
 
     //监听窗口控制事件
     ipcMain.on('window-controls', (event, action) => {
@@ -75,6 +73,9 @@ function createWindow() {
         return getPlaylists();
     });
 
+
+
+
     //监听获取播放状态事件
     ipcMain.handle('player-state', () => {
         return loadPlayer();
@@ -91,6 +92,10 @@ function createWindow() {
         mainWindow = null;
     });
 }
+
+
+//重新扫描本地音乐库并更新到library.json
+updateLocalLibrary();
 
 app.whenReady().then(createWindow);
 

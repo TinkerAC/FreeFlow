@@ -2,23 +2,54 @@
   "playQueue": {
     "queue": [
       {
-        "file_path": "E:\\Music\\尤长靖 - 昨日青空.flac"
+        "file_path": "E:\\Music\\Joel Adams - Please Don_t Go.flac"
+      },
+      {
+        "file_path": "E:\\Music\\Kurt Hugo Schneider,Sam Tsui,Casey Breves - All Time Low.flac"
       },
       {
         "file_path": "E:\\Music\\RADWIMPS - 三葉のテーマ.flac"
       },
       {
+        "file_path": "E:\\Music\\Troye Sivan,Alex Hope - BLUE.flac"
+      },
+      {
+        "file_path": "E:\\Music\\华晨宇 - 烟火里的尘埃.flac"
+      },
+      {
+        "file_path": "E:\\Music\\华晨宇,杨宗纬 - 国王与乞丐.flac"
+      },
+      {
+        "file_path": "E:\\Music\\单依纯 - 给电影人的情书.flac"
+      },
+      {
         "file_path": "E:\\Music\\周杰伦 - 花海.flac"
+      },
+      {
+        "file_path": "E:\\Music\\孙燕姿 - 我怀念的.flac"
+      },
+      {
+        "file_path": "E:\\Music\\尤长靖 - 昨日青空.flac"
+      },
+      {
+        "file_path": "E:\\Music\\苏打绿 - 小情歌.flac"
       }
     ],
     "currentIndex": 0,
     "indexList": [
       0,
       1,
-      2
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
     ]
   },
-
   "playMode": "loop",
   "isPlaying": false
 }

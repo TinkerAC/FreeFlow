@@ -3,6 +3,9 @@
     color: white;
     padding: 1rem;
     border-radius: 0.5rem;
-    margin: 0.25rem;
-    width: 100%;
+    overflow: auto; /* 显示滚动条 */
+}
+
+.main-content::-webkit-scrollbar {
+    display: none; /* 默认情况下隐藏滚动条 */
 }

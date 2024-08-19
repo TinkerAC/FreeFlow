@@ -8,10 +8,18 @@ contextBridge.exposeInMainWorld('electron', {
     createPlaylist: () => {
         ipcRenderer.send('create-playlists');
     },
+
+
+    //读取本地音乐库(全部音乐信息)
+    getLocalLibrary: () => {
+        return ipcRenderer.invoke('get-local-library');
+    },
+
     //读取歌单
     getPlaylists: () => {
         return ipcRenderer.invoke('get-playlists');
     },
+
 
 });
 
