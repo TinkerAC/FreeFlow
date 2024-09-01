@@ -47,30 +47,43 @@ function generateNewPlaylistNumber() {
 }
 
 // 获取音乐文件的元数据
-function getMusicMetaInfo(filePath) {
-    return new Promise((resolve, reject) => {
-        mm.parseFile(filePath, {native: true})
-            .then(metadata => {
-                try {
-                    // 检查是否存在封面图片
-                    if (metadata.common.picture && metadata.common.picture.length > 0) {
-                        const picture = metadata.common.picture[0];
-                        const buffer = Buffer.from(picture.data);
-                        const base64String = buffer.toString('base64');
-                        const mimeType = picture.format || 'image/jpeg';
-                        metadata.common.base64Cover = `data:${mimeType};base64,${base64String}`;
-                    }
-                    resolve(metadata);
-                } catch (err) {
-                    console.error('Error processing music metadata:', err);
-                    reject(err); // 处理封面图像转换或其他错误
-                }
-            })
-            .catch(err => {
-                console.error('Error parsing music file:', filePath, err);
-                reject(err); // 处理文件解析错误
-            });
-    });
+async function extractMusicMeta(file_path) {
+    try {
+        return await mm.parseFile(file_path);
+    } catch (error) {
+        console.error('Error reading metadata:', error);
+        throw error;
+    }
 }
 
-export {getPlaylists, generateNewPlaylistNumber, getMusicMetaInfo};
+function parseTrackInfo(metadata) {
+    // 提取封面图片并转为Base64
+    let coverBase64 = null;
+    if (metadata.common.picture && metadata.common.picture.length > 0) {
+        const picture = metadata.common.picture[0]; // 通常封面是第一个图片
+        const buffer = Buffer.from(picture.data);
+
+        coverBase64 = `data:${picture.format};base64,${buffer.toString('base64')}`
+    }
+    // 构建目标JSON对象
+    return {
+        cover_src: coverBase64,
+        title: metadata.common.title || 'Unknown Title',
+        artist: metadata.common.artist || 'Unknown Artist',
+        album: metadata.common.album || 'Unknown Album',
+        duration: metadata.format.duration || 0
+    };
+}
+
+export {getPlaylists, generateNewPlaylistNumber, extractMusicMeta, parseTrackInfo}
+
+
+//测试单元
+// extractMusicMeta('E:\\Music\\Kurt Hugo Schneider,Sam Tsui,Casey Breves - All Time Low.flac')
+//     .then(metadata => {
+//         const parsedData = parseTrackInfo(metadata);
+//         console.log(parsedData);
+//     })
+//     .catch(error => {
+//         console.error('Error:', error);
+//     });

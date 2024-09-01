@@ -2,9 +2,14 @@ import {app, BrowserWindow, ipcMain} from 'electron';
 import path from 'path';
 import {fileURLToPath} from 'url';
 import fs from 'fs';
-import {generateNewPlaylistNumber, getMusicMetaInfo, getPlaylists} from '../services/playlistService.js';
+import {
+    extractMusicMeta,
+    generateNewPlaylistNumber,
+    getPlaylists, parseTrackInfo
+} from '../services/playlistService.js';
 import {loadPlayer} from '../services/playerService.js';
 import {updateLocalLibrary} from '../services/localLibraryService.js';
+import {getSearchResults} from "../services/hifiniMusicService.js";
 // 获取当前文件的目录名
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,16 +79,27 @@ function createWindow() {
     });
 
 
-
-
     //监听获取播放状态事件
     ipcMain.handle('player-state', () => {
         return loadPlayer();
     });
 
-    //监听获取音乐元信息事件
-    ipcMain.handle('get-music-meta', (event, filePath) => {
-        return getMusicMetaInfo(filePath);
+    //监听获取音乐封面事件
+    ipcMain.handle('get-track-cover', async (event, filePath) => {
+        const meta = await getMusicMetaInfo(filePath);
+        return meta.common.base64Cover;
+    });
+    //
+    ipcMain.handle('get-track-info', async (event, file_path) => {
+        const metaData = await extractMusicMeta(file_path);
+        return parseTrackInfo(metaData);
+    });
+
+    //监听网络搜索音乐事件
+    ipcMain.handle('get-search-results', async (event, searchTerm) => {
+        const results = await getSearchResults(searchTerm);
+        console.log('搜索结果:', results);
+        return results;
     });
 
 

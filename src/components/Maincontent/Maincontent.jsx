@@ -1,19 +1,36 @@
 import React from 'react';
 import './Maincontent.css';
+import NetSearchResultView from "../SearchResultView/SearchResultView.jsx";
 
+import {PlaylistView} from "../PlaylistView/PlaylistView.jsx";
 
-import {PlaylistView} from "../PlaylistView/PlaylistView.js";
+export default function Maincontent({
+                                        view,
+                                        selectedPlaylistInfo,
+                                        onReplacePlayQueue,
+                                        onAddTracksToPlayQueue,
+                                        playNewTrack,
+                                        searchResults
+                                    }) {
+    console.log('Maincontent:', view, selectedPlaylistInfo);
 
-const Maincontent = ({tracks, onReplacePlayQueue, onAddTracksToPlayQueue,playNewTrack}) => {
-    return (
-        <div className="main-content overflow-y-auto">
-            <PlaylistView tracks={tracks}
-                          onReplacePlayQueue={onReplacePlayQueue}
-                          onAddTracksToPlayQueue={onAddTracksToPlayQueue}
-                          playNewTrack={playNewTrack}
+    if (view === "playlists") {
+        return (<div className="main-content">
+            <PlaylistView
+                playListInfo={selectedPlaylistInfo}
+                onReplacePlayQueue={onReplacePlayQueue}
+                onAddTracksToPlayQueue={onAddTracksToPlayQueue}
+                playNewTrack={playNewTrack}/>
+        </div>)
+    } else if (view === "searchResults") {
+        return (<div className="main-content">
+            <NetSearchResultView
+                popularResult={searchResults?.[0] || {}}
+                tracks={searchResults}
+                playNewTrack={playNewTrack}
             />
-        </div>
-    );
+        </div>)
+    }
 }
 
-export default Maincontent;
+

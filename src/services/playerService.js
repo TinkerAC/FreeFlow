@@ -162,14 +162,6 @@ class Player {
     }
 
 
-    toJSON() {
-        return {
-            currentTrack: this.getCurrentTrack(),  // 使用 getCurrentTrack 获取当前曲目
-            mode: this.mode,
-            playQueue: this.playQueue.toJSON()
-        };
-    }
-
 }
 
 function loadPlayer() {

@@ -9,24 +9,27 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.send('create-playlists');
     },
 
-
     //读取本地音乐库(全部音乐信息)
     getLocalLibrary: () => {
         return ipcRenderer.invoke('get-local-library');
     },
-
     //读取歌单
     getPlaylists: () => {
         return ipcRenderer.invoke('get-playlists');
     },
 
+});
+
+contextBridge.exposeInMainWorld('playerAPI', {
+    getPlayerState: () => ipcRenderer.invoke('player-state'),
+    getTrackCover: (filePath) => ipcRenderer.invoke('get-track-cover', filePath),
+    getTrackInfo: (file_path) => ipcRenderer.invoke('get-track-info', file_path)
 
 });
 
 
-contextBridge.exposeInMainWorld('playerAPI', {
-    getPlayerState: () => ipcRenderer.invoke('player-state'),
-    getMusicMetaInfo: (filePath) => ipcRenderer.invoke('get-music-meta', filePath),
+contextBridge.exposeInMainWorld('networkAPI', {
+    getSearchResults: (term) => ipcRenderer.invoke('get-search-results', term),
 
 });
 

@@ -1,18 +1,16 @@
 import React from "react";
 import "./RightContent.css";
-import PlayQueue from "../PlayQueue/PlayQueue.js";
+import PlayQueue from "../PlayQueue/PlayQueue.jsx";
 
-const RightContent = ({playerRef}) => {
-    const currentTrack = playerRef.current.getCurrentTrack();
-    const nextTracks = playerRef.current.getNextTracks();
+export default function RightContent({currentTrack, nextTracks}) {
+
     return <div className="right-content">
         <PlayQueue
             currentTrack={currentTrack}
             nextTracks={nextTracks}/>
-
     </div>;
 
 }
-export default RightContent;
+
 
 
