@@ -19,47 +19,96 @@ const Item = ({imgSrc, altText, title, details, index, isSelected, onClick}) => 
 };
 
 export default function MusicLibrary({
-                                         libraryItems = []
-                                         , selectedItem, onSelectItem
+                                         libraryItems = [],
+                                         selectedItem,
+                                         onSelectItem,
+                                         mainContentView,
+                                         setMainContentView,
+                                         isMusicLibraryCollapsed,
+                                         onToggleMusicLibraryCollapsed
                                      }) {
+    const handleSelectItem = (index) => {
+        if (mainContentView !== 'playlist') {
+            setMainContentView('playlist');
+        }
+        onSelectItem(index);
+    };
 
-
-    return (
-        <div className="w-full bg-component-bg text-white p-4 rounded-lg">
-            <div className="flex items-center mb-6">
-                <i className="fas fa-bars text-xl"></i>
-                <h1 className="ml-2 text-lg">音乐库</h1>
-                <div className="ml-auto flex items-center">
+    if (isMusicLibraryCollapsed) {
+        // 折叠状态下的渲染
+        return (
+            <div className="w-full bg-component-bg text-white rounded-lg h-auto flex flex-col">
+                <div className="flex items-center w-full p-6">
+                    {/* 切换图标 */}
                     <i
-                        className="fas fa-plus text-xl cursor-pointer"
-                        onClick={() => window.electron.createPlaylist()}
+                        className="fas fa-bars cursor-pointer text-2xl"
+                        onClick={() => onToggleMusicLibraryCollapsed()}
                     ></i>
-                    <i className="fas fa-arrow-right text-xl ml-4"></i>
+                </div>
+
+                <div className=" flex justify-center items-center flex-col overflow-y-auto ">
+                    {libraryItems.map((item, index) => (
+                        <img
+                            key={index}
+                            src={item.imgSrc}
+                            alt={item.title}
+                            className="aspect-square w-full  m-1 p-2 rounded-lg cursor-pointer hover:bg-item-bg-hover"
+                            onClick={() => handleSelectItem(index)}
+                        />
+                    ))}
                 </div>
             </div>
-            <div className="flex mb-4">
-                <button className="bg-gray-700 text-white px-4 py-1 rounded-full mr-2">歌单</button>
-                <button className="bg-gray-700 text-white px-4 py-1 rounded-full">专辑</button>
+        );
+    } else {
+        // 展开状态下的渲染
+        return (
+            <div className="w-full bg-component-bg text-white rounded-lg h-auto flex flex-col">
+                <div className="flex items-center w-full p-6">
+                    {/* 切换图标 */}
+                    <i
+                        className="fas fa-bars cursor-pointer text-2xl"
+                        onClick={() => onToggleMusicLibraryCollapsed()}
+                    ></i>
+
+                    {/* 展开状态下显示 "音乐库" 和 "+" 按钮 */}
+                    <h1 className="ml-2 text-lg whitespace-nowrap">音乐库</h1>
+                    <div className="ml-auto flex items-center">
+                        <i
+                            className="fas fa-plus text-xl cursor-pointer"
+                            onClick={() => window.electron.createPlaylist()}
+                        ></i>
+                    </div>
+                </div>
+
+                <div className="w-full p-4">
+                    <div className="flex mb-4 mt-2">
+                        <button className="bg-gray-700 text-white px-4 py-1 rounded-full mr-2 whitespace-nowrap">歌单
+                        </button>
+                        <button className="bg-gray-700 text-white px-4 py-1 rounded-full whitespace-nowrap">专辑
+                        </button>
+                    </div>
+                    <div className="flex items-center mb-4">
+                        <i className="fas fa-search text-xl"></i>
+                        <span className="ml-auto whitespace-nowrap">最近播放 <i
+                            className="fas fa-list text-xl"></i></span>
+                    </div>
+                    {/* 设置固定高度，确保滚动生效 */}
+                    <div className="flex flex-col gap-2 flex-grow overflow-x-hidden overflow-y-auto">
+                        {libraryItems.map((item, index) => (
+                            <Item
+                                key={index}
+                                imgSrc={item.imgSrc}
+                                altText={item.title}
+                                title={item.title}
+                                details={item.details}
+                                index={index}
+                                isSelected={selectedItem === index}
+                                onClick={() => handleSelectItem(index)}
+                            />
+                        ))}
+                    </div>
+                </div>
             </div>
-            <div className="flex items-center mb-4">
-                <i className="fas fa-search text-xl"></i>
-                <span className="ml-auto">最近播放 <i className="fas fa-list text-xl"></i></span>
-            </div>
-            {/* 设置固定高度，确保滚动生效 */}
-            <div className="flex flex-col gap-2 flex-grow overflow-x-hidden overflow-y-auto">
-                {libraryItems.map((item, index) => (
-                    <Item
-                        key={index}
-                        imgSrc={item.imgSrc}
-                        altText={item.title}
-                        title={item.title}
-                        details={item.details}
-                        index={index}
-                        isSelected={selectedItem === index}
-                        onClick={() => onSelectItem(index)}
-                    />
-                ))}
-            </div>
-        </div>
-    );
+        );
+    }
 }

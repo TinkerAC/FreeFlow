@@ -3,4 +3,9 @@
     color: white;
     padding: 1rem;
     border-radius: 0.5rem;
+    overflow-y: auto;
+}
+
+.right-content::-webkit-scrollbar {
+    display: none; /* 默认情况下隐藏滚动条 */
 }

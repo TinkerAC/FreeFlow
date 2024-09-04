@@ -7,9 +7,9 @@ import {
     generateNewPlaylistNumber,
     getPlaylists, parseTrackInfo
 } from '../services/playlistService.js';
-import {loadPlayer} from '../services/playerService.js';
+import loadPlayer from '../services/playerService.js';
 import {updateLocalLibrary} from '../services/localLibraryService.js';
-import {getSearchResults} from "../services/hifiniMusicService.js";
+import {getMusicInfo, getMusicLink, getSearchResults} from "../services/hifiniMusicService.js";
 // 获取当前文件的目录名
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,11 +84,6 @@ function createWindow() {
         return loadPlayer();
     });
 
-    //监听获取音乐封面事件
-    ipcMain.handle('get-track-cover', async (event, filePath) => {
-        const meta = await getMusicMetaInfo(filePath);
-        return meta.common.base64Cover;
-    });
     //
     ipcMain.handle('get-track-info', async (event, file_path) => {
         const metaData = await extractMusicMeta(file_path);
@@ -100,6 +95,11 @@ function createWindow() {
         const results = await getSearchResults(searchTerm);
         console.log('搜索结果:', results);
         return results;
+    });
+
+    //监听解析音乐信息事件
+    ipcMain.handle('get-music-link', async (event, dataHref) => {
+        return await getMusicLink(dataHref);
     });
 
 

@@ -4,9 +4,9 @@ import {formatTime, timeAgo} from "../../utils/timeUtils.js";
 const Track = ({
                    track = {},
                    index = 0,
-                   onAddTracksToPlayQueue = ([]) => {
+                   addToNext = track => {
                    },
-                   playNewTrack = (track) => {
+                   addToNextAndPlay = track => {
                    }
                }) => {
     const [hovered, setHovered] = useState(false); // Track mouse hover state
@@ -14,7 +14,7 @@ const Track = ({
     return (
         <tr
             className={`${index === 0 ? 'border-t border-gray-700' : ''} hover:bg-[#2A2A2A]`}
-            onDoubleClick={() => onAddTracksToPlayQueue([track])}
+            onDoubleClick={() => addToNext(track)}
         >
             <td
                 className="py-2 cursor-pointer"
@@ -24,7 +24,10 @@ const Track = ({
                 {hovered ? (
                     <i
                         className="fas fa-play"
-                        onClick={() => playNewTrack(track)}
+                        onClick={() => {
+                            addToNextAndPlay(track)
+                        }}
+
                     ></i>
                 ) : (
                     index + 1
@@ -54,9 +57,9 @@ const Track = ({
 
 export function Playlist({
                              tracks = [],
-                             onAddTracksToPlayQueue = () => {
+                             addToNext = () => {
                              },
-                             playNewTrack = () => {
+                             addToNextAndPlay = () => {
                              }
                          }) {
     return (
@@ -80,8 +83,8 @@ export function Playlist({
                             key={index}
                             track={track}
                             index={index}
-                            onAddTracksToPlayQueue={onAddTracksToPlayQueue}
-                            playNewTrack={playNewTrack}
+                            addToNext={addToNext}
+                            addToNextAndPlay={addToNextAndPlay}
                         />
                     ))
                 ) : (
@@ -101,9 +104,9 @@ export function PlaylistView({
                                  playListInfo = {title: '未知歌单', creater: '未知创建者', tracks: []},
                                  onReplacePlayQueue = () => {
                                  },
-                                 onAddTracksToPlayQueue = () => {
+                                 addToNext = () => {
                                  },
-                                 playNewTrack = () => {
+                                 addToNextAndPlay = () => {
                                  }
                              }) {
 
@@ -141,8 +144,8 @@ export function PlaylistView({
             </div>
             <Playlist
                 tracks={playListInfo?.tracks || []}
-                onAddTracksToPlayQueue={onAddTracksToPlayQueue}
-                playNewTrack={playNewTrack}
+                addToNext={addToNext}
+                addToNextAndPlay={addToNextAndPlay}
             />
         </div>
     );

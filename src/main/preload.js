@@ -22,7 +22,6 @@ contextBridge.exposeInMainWorld('electron', {
 
 contextBridge.exposeInMainWorld('playerAPI', {
     getPlayerState: () => ipcRenderer.invoke('player-state'),
-    getTrackCover: (filePath) => ipcRenderer.invoke('get-track-cover', filePath),
     getTrackInfo: (file_path) => ipcRenderer.invoke('get-track-info', file_path)
 
 });
@@ -30,6 +29,6 @@ contextBridge.exposeInMainWorld('playerAPI', {
 
 contextBridge.exposeInMainWorld('networkAPI', {
     getSearchResults: (term) => ipcRenderer.invoke('get-search-results', term),
-
+    getMusicLink: (dataHref) => ipcRenderer.invoke('get-music-link', dataHref),
 });
 

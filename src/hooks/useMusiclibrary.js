@@ -8,6 +8,9 @@ function useMusicLibrary() {
     const [playlists, setPlaylists] = useState([]); // 存储所有歌单的状态
     const [selectedItem, setSelectedItem] = useState(null); // 当前选中的歌单索引
     const [selectedPlaylistInfo, setSelectedPlaylistInfo] = useState(null); // 当前选中的歌单信息
+
+    const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState(false); // 控制音乐库折叠状态
+
     // 加载并完善歌单信息
     useEffect(() => {
         const fetchAndCompletePlaylists = async () => {
@@ -50,11 +53,14 @@ function useMusicLibrary() {
         setSelectedPlaylistInfo(playlists[index]);
     };
 
+
     return {
         playlists,
         selectedItem,
         selectedPlaylistInfo,
         setSelectedItem: selectItem,
+        isMusicLibraryCollapsed,
+        setIsMusicLibraryCollapsed
     };
 }
 

@@ -5,7 +5,8 @@ import React from 'react';
 function NetSearchResultView({
     popularResult = {},
     tracks = [],
-    playNewTrack
+    addToNext,
+    addToNextAndPlay,
 }) {
     return (
         <div className="p-4">
@@ -18,7 +19,7 @@ function NetSearchResultView({
                 <div className="grid grid-cols-2 gap-8">
                     {/* 热门结果 */}
                     <div>
-                        <div className="text-2xl mb-4">热门结果</div>
+                        <div className="text-2xl mb-4 font-bold">热门结果</div>
                         {Object.keys(popularResult).length > 0 ? (
                             <div className="flex mb-6 items-center">
                                 <img
@@ -42,13 +43,13 @@ function NetSearchResultView({
 
                     {/* 歌曲列表 */}
                     <div>
-                        <div className="text-2xl mb-4">歌曲</div>
+                        <div className="text-2xl mb-4 font-bold">歌曲</div>
                         {tracks.length > 0 ? (
                             <div className="space-y-4">
                                 {tracks.map((track, index) => (
-                                    <div className="flex items-center space-x-4 p-2 border-b"
+                                    <div className="flex items-center space-x-4 p-2 border-b hover:bg-item-bg-hover"
                                          key={index}
-                                         onDoubleClick={() => playNewTrack(track)}
+                                         onDoubleClick={() => addToNextAndPlay(track)}
                                     >
                                         <img
                                             src={track.cover_src}

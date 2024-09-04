@@ -8,26 +8,27 @@ export default function Maincontent({
                                         view,
                                         selectedPlaylistInfo,
                                         onReplacePlayQueue,
-                                        onAddTracksToPlayQueue,
-                                        playNewTrack,
+                                        onAddToNext,
+                                        onAddToNextAndPlay,
                                         searchResults
                                     }) {
-    console.log('Maincontent:', view, selectedPlaylistInfo);
+    // console.log('Maincontent:', view, selectedPlaylistInfo);
 
-    if (view === "playlists") {
+    if (view === "playlist") {
         return (<div className="main-content">
             <PlaylistView
                 playListInfo={selectedPlaylistInfo}
                 onReplacePlayQueue={onReplacePlayQueue}
-                onAddTracksToPlayQueue={onAddTracksToPlayQueue}
-                playNewTrack={playNewTrack}/>
+                addToNext={onAddToNext}
+                addToNextAndPlay={onAddToNextAndPlay}/>
         </div>)
     } else if (view === "searchResults") {
         return (<div className="main-content">
             <NetSearchResultView
                 popularResult={searchResults?.[0] || {}}
                 tracks={searchResults}
-                playNewTrack={playNewTrack}
+                addToNext={onAddToNext}
+                addToNextAndPlay={onAddToNextAndPlay}/>
             />
         </div>)
     }

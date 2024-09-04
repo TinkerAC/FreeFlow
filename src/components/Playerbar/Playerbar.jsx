@@ -24,6 +24,8 @@ export default function Playerbar({
                                       },
                                       onVolumeChange = (volume) => {
                                       },
+                                      onToggleRightContent = () => {
+                                      }
                                   }) {
     const handleSeekTo = (event) => {
         const newTime = parseFloat(event.target.value);
@@ -82,7 +84,9 @@ export default function Playerbar({
             </div>
 
             <div className="right-section">
-                <i className="fas fa-list"></i>
+                <i className="fas fa-list"
+                   onClick={onToggleRightContent}
+                   title={"播放列表"}/>
                 <i className="fas fa-search"></i>
                 <i className="fas fa-bars"></i>
                 <i className="fas fa-expand"></i>
