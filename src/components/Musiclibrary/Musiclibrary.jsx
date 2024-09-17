@@ -46,15 +46,17 @@ export default function MusicLibrary({
                     ></i>
                 </div>
 
-                <div className=" flex justify-center items-center flex-col overflow-y-auto ">
+                <div className="flex justify-center items-center flex-col overflow-y-auto">
                     {libraryItems.map((item, index) => (
-                        <img
-                            key={index}
-                            src={item.imgSrc}
-                            alt={item.title}
-                            className="aspect-square w-full  m-1 p-2 rounded-lg cursor-pointer hover:bg-item-bg-hover"
-                            onClick={() => handleSelectItem(index)}
-                        />
+                        <div className="w-[4rem] h-[4rem] gap-0.5 flex justify-center items-center rounded-lg hover:bg-item-bg-hover">
+                            <img
+                                key={index}
+                                src={item.imgSrc}
+                                alt={item.title}
+                                className="w-12 h-12 m-1 rounded-md cursor-pointer"
+                                onClick={() => handleSelectItem(index)}
+                            />
+                        </div>
                     ))}
                 </div>
             </div>

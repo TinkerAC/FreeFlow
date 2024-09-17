@@ -6,7 +6,6 @@ export function formatTime(seconds) {
 }
 
 export function timeAgo(isoTimestamp) {
-
     const now = new Date();
     const timestamp = new Date(isoTimestamp);
     const diffInSeconds = Math.floor((now - timestamp) / 1000);
@@ -37,7 +36,15 @@ export function timeAgo(isoTimestamp) {
         return `${diffInWeeks}周前`;
     }
 
-    const diffInMonths = Math.floor(diffInDays / 30);
+    // 改进的月份和年份计算
+    const yearNow = now.getFullYear();
+    const monthNow = now.getMonth();
+    const yearTimestamp = timestamp.getFullYear();
+    const monthTimestamp = timestamp.getMonth();
+
+    // 计算总的月份差异
+    const diffInMonths = (yearNow - yearTimestamp) * 12 + (monthNow - monthTimestamp);
+
     if (diffInMonths < 12) {
         return `${diffInMonths}个月前`;
     }
@@ -45,5 +52,7 @@ export function timeAgo(isoTimestamp) {
     const diffInYears = Math.floor(diffInMonths / 12);
     return `${diffInYears}年前`;
 }
+
+
 
 

@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 
-async function fetchTrackInfo(file_path) {
-    return await window.playerAPI.getTrackInfo(file_path);
+async function fetchTrackInfo(file_path,data_href) {
+    return await window.playerAPI.getTrackInfo(file_path,data_href);
 }
 
 function useMusicLibrary() {
@@ -10,10 +10,7 @@ function useMusicLibrary() {
     const [selectedPlaylistInfo, setSelectedPlaylistInfo] = useState(null); // 当前选中的歌单信息
 
     const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState(false); // 控制音乐库折叠状态
-
-    // 加载并完善歌单信息
-    useEffect(() => {
-        const fetchAndCompletePlaylists = async () => {
+    const fetchAndCompletePlaylists = async () => {
             try {
                 const playlists = await window.electron.getPlaylists(); // 调用 electron API 获取歌单
                 console.log('初始化歌单:', playlists);
@@ -23,7 +20,7 @@ function useMusicLibrary() {
                     playlists.map(async (playlist) => {
                         const tracksWithInfo = await Promise.all(
                             playlist.tracks.map(async (track) => {
-                                const trackInfo = await fetchTrackInfo(track.file_path);
+                                const trackInfo = await fetchTrackInfo(track.file_path,track.data_href);
                                 return {
                                     ...track,
                                     ...trackInfo
@@ -44,6 +41,9 @@ function useMusicLibrary() {
             }
         };
 
+    // 加载并完善歌单信息
+    useEffect(() => {
+
         fetchAndCompletePlaylists();
 
     }, []); // 只在组件挂载时执行一次
@@ -60,7 +60,8 @@ function useMusicLibrary() {
         selectedPlaylistInfo,
         setSelectedItem: selectItem,
         isMusicLibraryCollapsed,
-        setIsMusicLibraryCollapsed
+        setIsMusicLibraryCollapsed,
+        refreshPlaylists: fetchAndCompletePlaylists,
     };
 }
 

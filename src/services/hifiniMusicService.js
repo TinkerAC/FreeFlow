@@ -1,3 +1,4 @@
+import config from "config";
 import axios from 'axios';
 import {JSDOM} from 'jsdom';
 import fetch from 'node-fetch';
@@ -209,6 +210,200 @@ export async function getSearchResults(keyword) {
     }
 }
 
+
+function isCommented(html) {
+    // 如果字符串中含有 "alert-warning"，则返回 False，否则返回 True
+    return !html.includes('alert-warning');
+}
+
+async function createComment(dataHref) {
+    const trackNo = dataHref.match(/\d+/)[0];
+    const url = `https://www.hifini.com/post-create-${trackNo}-1.htm`;
+
+    const params = {
+        doctype: 1,
+        return_html: 1,
+        quotepid: 0,
+        message: '感谢分享'
+    };
+
+    const hifiniCookie = config.get('hifini_cookie');
+    const cookie = `bbs_sid=${hifiniCookie.bbs_sid}; bbs_token=${hifiniCookie.bbs_token}`;
+
+    try {
+        const response = await axios.post(url, params, {
+            headers: {
+                'Cookie': cookie
+            }
+        });
+        console.log('评论成功:', response.data);
+    } catch (error) {
+        console.error('评论失败:', error);
+        throw new Error('评论请求失败');
+    }
+}
+
+async function reloadAndCheckComment(dataHref) {
+    // 从配置文件中获取 bbs_sid 和 bbs_token
+    const hifiniCookie = config.get('hifini_cookie');
+    const cookie = `bbs_sid=${hifiniCookie.bbs_sid}; bbs_token=${hifiniCookie.bbs_token}`;
+
+    const url = `https://www.hifini.com/${dataHref}`;
+
+    // 重新加载页面
+    const response = await fetch(url, {
+        headers: {
+            'cookie': cookie
+        }
+    });
+
+    // 解析新的 HTML 文本
+    const $ = cheerio.load(await response.text());
+
+    // 再次检查是否有评论
+    if (!isCommented($.html())) {
+        throw new Error('评论未成功，请检查');
+    }
+    console.log('评论已成功显示');
+}
+
+export async function parseNetDiskLink(dataHref) {
+    // 从配置文件中获取 bbs_sid 和 bbs_token
+    const hifiniCookie = config.get('hifini_cookie');
+    console.log('hifiniCookie:', hifiniCookie);
+    const cookie = `bbs_sid=${hifiniCookie.bbs_sid}; bbs_token=${hifiniCookie.bbs_token}`;
+
+    const url = `https://www.hifini.com/${dataHref}`;
+
+    const response = await fetch(url, {
+        headers: {
+            'cookie': cookie
+        }
+    });
+
+    // 加载 HTML 文本
+    const $ = cheerio.load(await response.text());
+    // console.log('HTML:', $.html());
+    // 检查是否有评论
+    if (!isCommented($.html())) {
+        console.log('未评论，开始评论');
+        await createComment(dataHref);
+
+        // 等待 3 秒后重新检查评论状态
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            await reloadAndCheckComment(dataHref);
+        } catch (error) {
+            console.error('评论检查失败:', error);
+            throw error;  // 抛出错误
+        }
+    } else {
+        console.log('已存在评论');
+    }
+
+    // 调用 extractVisibleClasses 函数来获取可见的 class 名称
+    const visibleClasses = extractVisibleClasses($);
+
+    // 调用 extractCode 函数来提取 code
+    const code = extractCode($, visibleClasses);
+
+    // 定位到包含下载链接的元素 (用CSS选择器而非XPath)
+    const linkElement = $('#body > div > div > div:nth-child(1) > div:nth-child(1) > div > div:nth-child(2) > div:nth-child(3)');
+
+    // 提取链接
+    const link = linkElement.find('a').attr('href');
+
+    return {link, code};
+}
+
+/**
+ * 提取 <style> 中 display:inline 的 class
+ * @param {CheerioStatic} $ cheerio 实例
+ * @returns {Array<string>} 返回可见的 class 名称列表
+ */
+function extractVisibleClasses($) {
+
+    const targetDiv = $('.message.break-all')[0];
+
+    if (targetDiv) {
+        const firstStyle = targetDiv.children[0];
+        const secondStyle = targetDiv.children[1];
+
+        console.log(firstStyle);
+        debugger;
+        const extractClasses = (styleElement) => {
+            if (!styleElement || !styleElement.innerHTML) {
+                return [];
+            }
+
+            const text = styleElement.innerHTML;
+
+            // 检查 'display:inline !important;' 是否存在
+            if (!text.includes('{display:inline !important;}')) {
+                return [];
+            }
+
+            // 根据 'display:inline !important;' 分割文本
+            const visibleClass = text.split("{display:inline !important;}")[0];
+
+            // 按逗号分割可见的类名并去除空白
+            const list = visibleClass.split(",").map(item => item.trim());
+
+            // 去掉每个类名前的点并返回结果
+            return list.map(item => item.replace(".", "").trim()); // 返回清理后的类名列表
+        };
+
+        const firstStyles = extractClasses(firstStyle);
+        const secondStyles = extractClasses(secondStyle);
+
+        console.log('First Styles:', firstStyles);
+        console.log('Second Styles:', secondStyles);
+    } else {
+        console.error('Target div not found.');
+    }
+
+
+    const styleContent = $('#body > div > div > div:nth-child(1) > div:nth-child(1) > div > div:nth-child(2) > style:nth-child(2)').html();
+
+    // 正则表达式匹配 display:inline 的 class 名称
+    const inlineClassPattern = /\.([a-zA-Z0-9_-]+)[^{]*\{[^}]*display\s*:\s*inline\s*!important\s*;/g;
+    let match;
+    const visibleClasses = [];
+
+    // 遍历匹配结果并收集类名
+    while ((match = inlineClassPattern.exec(styleContent)) !== null) {
+        visibleClasses.push(match[1]);
+    }
+    return visibleClasses;  // 返回一个数组，包含所有可见的 class 名称
+}
+
+/**
+ * 根据 visibleClasses 列表，按顺序提取对应类名的元素内容，并拼接成完整的 code
+ * @param {CheerioStatic} $ cheerio 实例
+ * @param {Array<string>} visibleClasses 可见的 class 名称列表
+ * @returns {string} 拼接成的完整提取码
+ */
+function extractCode($, visibleClasses) {
+    let code = '';
+
+    // 遍历 visibleClasses 列表，按顺序提取每个类对应的元素内容
+    visibleClasses.forEach(className => {
+        // 查找对应的元素
+        const element = $(`.${className}`);
+
+        // 如果找到元素，提取内容并拼接
+        if (element.length > 0) {
+            const text = element.text().trim();
+            if (text.length === 1) {
+                code += text;  // 只会是一个字母或数字
+            }
+        }
+    });
+
+    return code;
+}
+
+
 //
 // //测试
 // console.log(await search('周杰伦'));
@@ -218,3 +413,6 @@ export async function getSearchResults(keyword) {
 //
 // //测试
 // console.log(await getMusicInfo('thread-897.htm'));
+
+// //测试获取网盘链接和提取码
+// console.log(await parseNetDiskLink('thread-897.htm'));

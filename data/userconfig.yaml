@@ -14,3 +14,4 @@ ui:
 local_library:
   # 音乐库路径
   scan_path: [ ""E:\Music" ]
+

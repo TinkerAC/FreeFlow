@@ -1,4 +1,4 @@
-export default async function getAudioSrc(track) { // 接受一个track对象作为参数，返回一个本地文件路径或者blob URL
+export default async function getAudioSrc(track) {
     try {
         const filePath = track.file_path;
         const dataHref = track.data_href;
@@ -7,17 +7,13 @@ export default async function getAudioSrc(track) { // 接受一个track对象作
             // 如果存在 file_path，则直接返回本地文件路径
             return filePath;
         } else if (dataHref) {
-            // 如果存在 datahref，则发起 HTTP 请求
-            const musicLink = await window.networkAPI.getMusicLink(dataHref);
+            // 如果存在 datahref，则使用代理服务器发送请求
+            const proxyUrl = `http://localhost:3000/proxy?dataHref=${encodeURIComponent(dataHref)}`;
+
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
-                xhr.open('GET', musicLink, true);
+                xhr.open('GET', proxyUrl, true);
                 xhr.responseType = 'blob';
-
-                // 自定义操作（例如，添加请求头）
-                if (dataHref.includes('hifini')) {
-                    xhr.setRequestHeader('Referer', 'https://www.hifini.com/');
-                }
 
                 xhr.onload = function () {
                     if (xhr.status === 200 || xhr.status === 206) {
@@ -25,12 +21,12 @@ export default async function getAudioSrc(track) { // 接受一个track对象作
                         const blobUrl = URL.createObjectURL(blob);
                         resolve(blobUrl); // 返回生成的 blob URL
                     } else {
-                        reject(new Error(`Failed to load audio from datahref: ${xhr.status} ${xhr.statusText}`));
+                        reject(new Error(`Failed to load audio from datahref via proxy: ${xhr.status} ${xhr.statusText}`));
                     }
                 };
 
                 xhr.onerror = function () {
-                    reject(new Error('Network error while loading audio.'));
+                    reject(new Error('Network error while loading audio via proxy.'));
                 };
 
                 xhr.send();
@@ -49,7 +45,7 @@ export default async function getAudioSrc(track) { // 接受一个track对象作
 //     // datahref: 'https://example.com/alternative-audio-file' // 备用网络文件路径
 // };
 //
-// loadAudio(track)
+// getAudioSrc(track)
 //     .then(url => {
 //         const audioElement = document.querySelector('audio');
 //         audioElement.src = url; // 如果是本地文件路径或 blob URL，都会返回

@@ -10,7 +10,8 @@ export default function Maincontent({
                                         onReplacePlayQueue,
                                         onAddToNext,
                                         onAddToNextAndPlay,
-                                        searchResults
+                                        searchResults,
+                                        refreshPlaylists
                                     }) {
     // console.log('Maincontent:', view, selectedPlaylistInfo);
 
@@ -28,8 +29,10 @@ export default function Maincontent({
                 popularResult={searchResults?.[0] || {}}
                 tracks={searchResults}
                 addToNext={onAddToNext}
-                addToNextAndPlay={onAddToNextAndPlay}/>
+                addToNextAndPlay={onAddToNextAndPlay}
+                refreshPlaylists={refreshPlaylists}
             />
+
         </div>)
     }
 }

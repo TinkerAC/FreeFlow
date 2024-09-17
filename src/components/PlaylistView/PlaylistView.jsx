@@ -36,21 +36,21 @@ const Track = ({
 
             <td className="py-2 flex items-center">
                 <img
-                    src={track?.cover_src || 'path/to/default-cover.jpg'}
+                    src={track?.cover_src || '../assets/default-cover.png'}
                     alt="Album cover"
                     className="w-10 h-10 mr-4"
                 />
                 <div>
-                    <div>{track?.title || '未知标题'}</div>
-                    <div className="text-gray-400">{track?.artist || '未知艺术家'}</div>
+                    <div className="whitespace-nowrap">{track?.title || '未知标题'}</div>
+                    <div className="text-gray-400 whitespace-nowrap">{track?.artist || '未知艺术家'}</div>
                 </div>
             </td>
 
-            <td className="py-2">{track?.album || '未知专辑'}</td>
+            <td className="py-2 whitespace-nowrap">{track?.album || '未知专辑'}</td>
 
-            <td className="py-2">{track?.added_at ? timeAgo(track.added_at) : '未知时间'}</td>
+            <td className="py-2 whitespace-nowrap">{track?.added_at ? timeAgo(track.added_at) : '未知时间'}</td>
 
-            <td className="py-2">{track?.duration ? formatTime(track.duration) : '未知时长'}</td>
+            <td className="py-2 whitespace-nowrap">{track?.duration ? formatTime(track.duration) : '未知时长'}</td>
         </tr>
     );
 };

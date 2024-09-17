@@ -3,8 +3,8 @@ import useStateRef from "react-usestateref";
 import getAudioSrc from "../services/loadAudio.js";
 
 // Helper function to fetch track information
-async function fetchTrackInfo(file_path) {
-    return await window.playerAPI.getTrackInfo(file_path);
+async function fetchTrackInfo(file_path, data_href) {
+    return await window.playerAPI.getTrackInfo(file_path, data_href);
 }
 
 
@@ -55,7 +55,7 @@ function useQueue() {
                 const updatedIndexList = [...indexListRef.current];
                 const nextIndex = currentIndexRef.current + 1;
 
-                swapElements(updatedIndexList,nextIndex,targetIndex);
+                swapElements(updatedIndexList, nextIndex, targetIndex);
 
                 setIndexList(updatedIndexList);
                 console.log("曲目已在播放队列中，移动到当前曲目之后", 'queue', queueRef.current, 'indexList', indexListRef.current, 'currentIndex', currentIndexRef.current);
@@ -128,7 +128,7 @@ function usePlaybackControl(audioRef, queueRef, indexListRef, currentIndexRef, s
 
     const playNext = async () => {
         if (indexListRef.current.length === 0) return;
-
+        pause();
         const nextIndex = (currentIndexRef.current + 1) % indexListRef.current.length;
         setCurrentIndex(nextIndex);
 
@@ -170,7 +170,7 @@ function usePlaybackControl(audioRef, queueRef, indexListRef, currentIndexRef, s
 
     const addToNextAndPlay = async (track) => {
         addTrackToNextInQueue(track);
-        playNext();
+        await playNext();
     };
 
     return {
@@ -313,7 +313,7 @@ function usePlayer(audioRef) {
         const completeTrackInfo = async (playerState) => {
             // 每次 dump 仅保留资源 url, 所以需要再加载的时候为队列中的每个歌曲重新获取完整信息
             for (const track of playerState.queue) {
-                const trackInfo = await fetchTrackInfo(track.file_path);
+                const trackInfo = await fetchTrackInfo(track.file_path, track.data_href);
                 track.title = trackInfo.title;
                 track.artist = trackInfo.artist;
                 track.album = trackInfo.album;
@@ -337,6 +337,7 @@ function usePlayer(audioRef) {
                     setIsPlaying(playerState.isPlaying || false);
                     setCurrentTime(playerState.currentTime || 0);
                     setPlaybackMode(playerState.playbackMode || 'loop');
+                    changeVolume(playerState.volume || 0.5);
                     console.log('当前播放模式:', playbackModeRef.current);
                 }
             } catch (error) {
@@ -401,9 +402,23 @@ function usePlayer(audioRef) {
         };
     }, [audioSrcRef]);
 
-    window.queue = queueRef.current
-    window.indexList = indexListRef.current
-    window.currentIndex = currentIndexRef.current
+    function dumpPlayerState() {
+        return {
+            queue: queueRef.current.map(track => ({"file_path": track.file_path, "data_href": track.data_href})),
+            indexList: indexListRef.current,
+            currentIndex: currentIndexRef.current,
+            isPlaying: isPlayingRef.current,
+            currentTime: currentTimeRef.current,
+            playbackMode: playbackModeRef.current,
+            volume: audioRef.current.volume,
+        };
+    }
+
+
+    //方便调试
+    // window.queue = queueRef.current
+    // window.indexList = indexListRef.current
+    // window.currentIndex = currentIndexRef.current
     return {
         queueRef,
         currentIndexRef,
@@ -427,6 +442,7 @@ function usePlayer(audioRef) {
         setAudioSrc,
         setIsPlaying,
         setCurrentTime,
+        dumpPlayerState
     };
 }
 

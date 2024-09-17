@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import usePlayer from './hooks/usePlayer.js';
 import useMusicLibrary from './hooks/useMusicLibrary.js';
 import useMainWindow from './hooks/useMainWindow.js';  // 导入自定义的 useMainWindow Hook
@@ -9,8 +9,10 @@ import Playerbar from './components/Playerbar/Playerbar.jsx';
 import './App.css';
 import RightContent from "./components/RightContent/RightContent.jsx";
 
+
 function App() {
     const audioRef = useRef(null);
+
 
     // 使用 usePlayer Hook 管理播放器状态和逻辑
     const {
@@ -35,6 +37,7 @@ function App() {
         changeVolume,
         setIsPlaying,
         setCurrentTime,
+        dumpPlayerState,
     } = usePlayer(audioRef);
 
     // 使用 useMusicLibrary Hook 管理歌单
@@ -43,8 +46,7 @@ function App() {
         selectedItem,
         selectedPlaylistInfo,
         setSelectedItem,
-        isMusicLibraryCollapsed: initialCollapseState,
-        setIsMusicLibraryCollapsed: setInitialCollapseState,
+        refreshPlaylists,
     } = useMusicLibrary();
 
     // 使用 useMainWindow Hook 管理窗口状态和逻辑
@@ -55,6 +57,23 @@ function App() {
         toggleRightContent,
     } = useMainWindow();
 
+
+    useEffect(() => {
+        // 使用暴露的 API 监听来自主进程的请求
+        window.electron.onRequestPlayerState(() => {
+            // 获取当前播放器状态
+            const state = dumpPlayerState(); // 假设这是一个获取当前播放器状态的函数
+
+            // 通过暴露的 API 将状态发送到主进程
+            window.electron.sendPlayerState(state);
+            console.log('已向主进程发送播放器状态');
+        });
+
+        // 清理函数，以防止内存泄漏
+        return () => {
+            window.electron.onRequestPlayerState(null); // 或者使用 removeListener 的方式移除监听
+        };
+    }, []);
     const [searchResults, setSearchResults] = useState([]); // 用于存储搜索结果
     const [mainContentView, setMainContentView] = useState('playlist'); // 用于控制主内容区域显示的内容
 
@@ -72,7 +91,7 @@ function App() {
                 className="grid h-full w-full overflow-y-hidden overflow-x-auto"
                 style={{
                     display: 'grid',
-                    gridTemplateColumns: `${isMusicLibraryCollapsed ? '72px' : '250px'} minmax(625px, 1fr) ${isRightContentVisible ? 'minmax(0, 300px)' : ''}`,
+                    gridTemplateColumns: `${isMusicLibraryCollapsed ? '72px' : '250px'} minmax(416.67px, 1fr) ${isRightContentVisible ? 'minmax(0, 300px)' : ''}`,
                     gap: '0.5rem',
                     padding: ' 0.5rem',//为左右边界添加间距
                     transition: 'grid-template-columns 0.3s ease', // 可选过渡效果
@@ -98,6 +117,7 @@ function App() {
                     onAddToNext={addToNext}
                     onAddToNextAndPlay={addToNextAndPlay}
                     searchResults={searchResults}
+                    refreshPlaylists={refreshPlaylists}
                 />
                 {/* 右侧栏 */}
                 {isRightContentVisible && (
