@@ -115,7 +115,7 @@ export function PlaylistView({
             <div className="bg-gradient-to-b from-purple-700 to-purple-900 p-8 rounded-lg">
                 <div className="flex items-center">
                     <img
-                        src="https://placehold.co/200x200"
+                        src={playListInfo?.tracks?.[0]?.cover_src || '../assets/default-cover.png'}
                         alt="Playlist cover"
                         className="w-48 h-48 rounded-lg"
                     />

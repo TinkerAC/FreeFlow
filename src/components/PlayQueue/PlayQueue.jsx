@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 
-export default function PlayQueue({ currentTrack = {}, nextTracks = [] }) {
+export default function PlayQueue({ currentTrack = {}, nextTracks = [] ,clearQueue}) {
 
     return (
         <div className="p-4">
@@ -10,7 +10,10 @@ export default function PlayQueue({ currentTrack = {}, nextTracks = [] }) {
                     <span className="active-tab">队列</span>
                     <span>最近播放</span>
                 </div>
-                <i className="fas fa-times"></i>
+                <i className="fas fa-times text-gray-400 cursor-pointer"
+                   title={"清空队列"}
+                   onClick={() => clearQueue()}
+                ></i>
             </div>
 
             {/* 当前播放曲目 */}
@@ -18,7 +21,7 @@ export default function PlayQueue({ currentTrack = {}, nextTracks = [] }) {
                 <h2 className="text-lg mb-2">当前播放</h2>
                 <div className="flex items-center space-x-4">
                     <img
-                        src={currentTrack.cover_src || "../assets/default-cover.jpg"}
+                        src={currentTrack.cover_src || "../assets/default-cover.png"}
                         alt={`Album cover of ${currentTrack.title || "unknown"}`}
                         className="w-12 h-12"
                     />
@@ -36,7 +39,7 @@ export default function PlayQueue({ currentTrack = {}, nextTracks = [] }) {
                     {nextTracks.map((track, index) => (
                         <div key={index} className="flex items-center space-x-4">
                             <img
-                                src={track.cover_src || "../assets/default-cover.jpg"}
+                                src={track.cover_src || "../assets/default-cover.png"}
                                 alt={`Album cover of ${track?.title || "unknown"}`}
                                 className="w-12 h-12"
                             />

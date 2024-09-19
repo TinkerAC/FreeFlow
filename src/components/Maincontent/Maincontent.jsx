@@ -22,6 +22,7 @@ export default function Maincontent({
                 onReplacePlayQueue={onReplacePlayQueue}
                 addToNext={onAddToNext}
                 addToNextAndPlay={onAddToNextAndPlay}/>
+
         </div>)
     } else if (view === "searchResults") {
         return (<div className="main-content">

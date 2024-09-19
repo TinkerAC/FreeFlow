@@ -10,7 +10,7 @@ app.get('/proxy', async (req, res) => {
 
     try {
         const musicLink = await getMusicLink(dataHref); // 获取音乐链接
-
+        console.log('Music link:', musicLink);
         // 使用 request 模块转发请求并添加 Referer 头
         const options = {
             url: musicLink,
@@ -21,7 +21,6 @@ app.get('/proxy', async (req, res) => {
         if (musicLink.includes('hifini')) {
             options.headers['Referer'] = 'https://www.hifini.com/';
         }
-
         // 使用 request 模块转发请求，并将响应返回给客户端
         request(options).pipe(res);
     } catch (error) {

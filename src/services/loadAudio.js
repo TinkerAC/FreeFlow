@@ -8,6 +8,7 @@ export default async function getAudioSrc(track) {
             return filePath;
         } else if (dataHref) {
             // 如果存在 datahref，则使用代理服务器发送请求
+            console.log("正在使用代理服务器加载音频文件...,请求Track:", track);
             const proxyUrl = `http://localhost:3000/proxy?dataHref=${encodeURIComponent(dataHref)}`;
 
             return new Promise((resolve, reject) => {
@@ -26,7 +27,8 @@ export default async function getAudioSrc(track) {
                 };
 
                 xhr.onerror = function () {
-                    reject(new Error('Network error while loading audio via proxy.'));
+                    console.error(`Network error while trying to load audio via proxy. Proxy URL: ${proxyUrl}`);
+                    reject(new Error('Network error while trying to load audio via proxy.'));
                 };
 
                 xhr.send();

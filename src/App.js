@@ -38,6 +38,7 @@ function App() {
         setIsPlaying,
         setCurrentTime,
         dumpPlayerState,
+        clearQueue,
     } = usePlayer(audioRef);
 
     // 使用 useMusicLibrary Hook 管理歌单
@@ -124,6 +125,7 @@ function App() {
                     <RightContent
                         currentTrack={currentTrackInfoRef.current}
                         nextTracks={nextTracksRef.current}
+                        clearQueue={clearQueue}
                     />
                 )}
             </div>

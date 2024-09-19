@@ -1,8 +1,69 @@
-import config from "config";
 import axios from 'axios';
 import {JSDOM} from 'jsdom';
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
+import sqlite3 from 'sqlite3';
+import path from 'path';
+import {fileURLToPath} from "url";
+
+
+// 数据库连接和辅助函数
+let db;
+
+const __filename = fileURLToPath(import.meta.url);  // 获取当前文件的路径
+const __dirname = path.dirname(__filename);  // 获取当前文件所在的目录
+const db_path = path.join(__dirname, "..", "..", "data", 'database.sqlite');  // 使用项目目录下的相对路径
+console.log('数据库路径:', db_path);
+
+
+// dbUtils
+function getDatabase() {
+    return new Promise((resolve, reject) => {
+        if (db) {
+            resolve(db);
+        } else {
+            db = new sqlite3.Database(db_path, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    // 确保表存在
+                    db.run(`CREATE TABLE IF NOT EXISTS hifini_info (
+                        data_href TEXT PRIMARY KEY,
+                        title TEXT,
+                        artist TEXT,
+                        cover_src TEXT,
+                        un_redirected_url TEXT
+                    )`, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(db);
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
+function dbGet(db, sql, params) {
+    return new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function dbRun(db, sql, params) {
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function (err) {
+            if (err) reject(err);
+            else resolve(this);
+        });
+    });
+}
+
 
 // 接受关键词并搜索，返回歌曲结果的 JSON 对象
 async function search(keyword) {
@@ -92,42 +153,29 @@ function generateParam(data) {
 // 获取音乐链接的函数
 export async function getMusicLink(dataHref) {
     try {
-        const html = await fetch("https://hifini.com/" + dataHref).then(res => res.text());
-        const dom = new JSDOM(html);
-        const scripts = dom.window.document.querySelectorAll('script');
+        const db = await getDatabase();
 
-        let scriptContent = '';
-        for (let script of scripts) {
-            if (script.textContent.includes('APlayer')) {
-                scriptContent = script.textContent;
-                break;
-            }
+        // 首先尝试从数据库获取数据
+        const row = await dbGet(db, 'SELECT title, artist, cover_src, un_redirected_url FROM hifini_info WHERE data_href = ?', dataHref);
+
+        let un_redirected_url;
+
+        if (row) {
+            // 数据存在于数据库中
+            un_redirected_url = row.un_redirected_url;
+            console.log('已从数据库中获取未重定向链接:', un_redirected_url);
+        } else {
+            // 数据不存在，抓取并保存信息
+            const data = await fetchAndSaveMusicInfo(dataHref);
+            un_redirected_url = data.un_redirected_url;
         }
 
-        if (scriptContent) {
-            const musicMatch = scriptContent.match(/music:\s*\[(.*?)\]/s);
-            if (!musicMatch) throw new Error('Music array not found in script.');
+        // 获取重定向后的真实链接
+        const final_url = await getRedirectUrl(un_redirected_url);
 
-            const musicItems = musicMatch[1].match(/{[^}]+}/g);
-            for (const item of musicItems) {
-                const urlMatch = item.match(/url:\s*'([^']+)'/);
-                if (urlMatch) {
-                    let url = urlMatch[1];
-                    const paramMatch = item.match(/generateParam\('([^']+)'\)/);
-                    if (paramMatch) {
-                        url += generateParam(paramMatch[1]);
-                    }
+        console.log('重定向后的链接:', final_url);
 
-                    if (!url.startsWith('http')) {
-                        url = 'https://www.hifini.com/' + url;
-                    }
-
-                    return await getRedirectUrl(url);
-                }
-            }
-        }
-
-        throw new Error('未找到音乐链接');
+        return await getRedirectUrl(un_redirected_url);
 
     } catch (error) {
         console.error('Error getting music link:', error);
@@ -138,6 +186,40 @@ export async function getMusicLink(dataHref) {
 // 获取音乐信息的函数
 export async function getMusicInfo(dataHref) {
     try {
+        const db = await getDatabase();
+
+        // 首先尝试从数据库获取数据
+        const row = await dbGet(db, 'SELECT title, artist, cover_src FROM hifini_info WHERE data_href = ?', dataHref);
+
+        console.log('row:', row);
+
+        if (row) {
+            // 数据存在于数据库中
+            const {title, artist, cover_src} = row;
+            return {data_href: dataHref, title, artist, cover_src};
+        } else {
+            // 数据不存在，抓取并保存信息
+            const data = await fetchAndSaveMusicInfo(dataHref);
+            console.info('音乐信息已从网站中获取并保存:', {
+                data_href: dataHref,
+                title: data.title,
+                artist: data.artist,
+                cover_src: data.cover_src
+            });
+            return {data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src};
+        }
+
+    } catch (error) {
+        console.error('Error getting music info:', error);
+        throw error;
+    }
+}
+
+// 抓取并保存音乐信息的辅助函数
+async function fetchAndSaveMusicInfo(dataHref) {
+    try {
+        const db = await getDatabase();
+
         const html = await fetch("https://hifini.com/" + dataHref).then(res => res.text());
         const dom = new JSDOM(html);
         const scripts = dom.window.document.querySelectorAll('script');
@@ -159,14 +241,30 @@ export async function getMusicInfo(dataHref) {
                 const titleMatch = item.match(/title:\s*'([^']+)'/);
                 const authorMatch = item.match(/author:\s*'([^']+)'/);
                 const picMatch = item.match(/pic:\s*'([^']+)'/);
+                const urlMatch = item.match(/url:\s*'([^']+)'/);
 
-                if (titleMatch && authorMatch && picMatch) {
-                    return {
-                        data_href: dataHref,
-                        title: titleMatch[1],
-                        artist: authorMatch[1],
-                        cover_src: picMatch[1],
-                    };
+                if (titleMatch && authorMatch && picMatch && urlMatch) {
+                    let url = urlMatch[1];
+                    const paramMatch = item.match(/generateParam\('([^']+)'\)/);
+                    if (paramMatch) {
+                        url += generateParam(paramMatch[1]);
+                    }
+
+                    if (!url.startsWith('http')) {
+                        url = 'https://www.hifini.com/' + url;
+                    }
+
+                    const title = titleMatch[1];
+                    const artist = authorMatch[1];
+                    const cover_src = picMatch[1];
+                    const un_redirected_url = url;
+
+                    // 保存到数据库
+                    await dbRun(db, 'INSERT INTO hifini_info (data_href, title, artist, cover_src, un_redirected_url) VALUES (?, ?, ?, ?, ?)',
+                        [dataHref, title, artist, cover_src, un_redirected_url]);
+
+
+                    return {data_href: dataHref, title, artist, cover_src, un_redirected_url};
                 }
             }
         }
@@ -174,7 +272,7 @@ export async function getMusicInfo(dataHref) {
         throw new Error('未找到音乐信息');
 
     } catch (error) {
-        console.error('Error getting music info:', error);
+        console.error('Error fetching and saving music info:', error);
         throw error;
     }
 }
@@ -211,208 +309,4 @@ export async function getSearchResults(keyword) {
 }
 
 
-function isCommented(html) {
-    // 如果字符串中含有 "alert-warning"，则返回 False，否则返回 True
-    return !html.includes('alert-warning');
-}
-
-async function createComment(dataHref) {
-    const trackNo = dataHref.match(/\d+/)[0];
-    const url = `https://www.hifini.com/post-create-${trackNo}-1.htm`;
-
-    const params = {
-        doctype: 1,
-        return_html: 1,
-        quotepid: 0,
-        message: '感谢分享'
-    };
-
-    const hifiniCookie = config.get('hifini_cookie');
-    const cookie = `bbs_sid=${hifiniCookie.bbs_sid}; bbs_token=${hifiniCookie.bbs_token}`;
-
-    try {
-        const response = await axios.post(url, params, {
-            headers: {
-                'Cookie': cookie
-            }
-        });
-        console.log('评论成功:', response.data);
-    } catch (error) {
-        console.error('评论失败:', error);
-        throw new Error('评论请求失败');
-    }
-}
-
-async function reloadAndCheckComment(dataHref) {
-    // 从配置文件中获取 bbs_sid 和 bbs_token
-    const hifiniCookie = config.get('hifini_cookie');
-    const cookie = `bbs_sid=${hifiniCookie.bbs_sid}; bbs_token=${hifiniCookie.bbs_token}`;
-
-    const url = `https://www.hifini.com/${dataHref}`;
-
-    // 重新加载页面
-    const response = await fetch(url, {
-        headers: {
-            'cookie': cookie
-        }
-    });
-
-    // 解析新的 HTML 文本
-    const $ = cheerio.load(await response.text());
-
-    // 再次检查是否有评论
-    if (!isCommented($.html())) {
-        throw new Error('评论未成功，请检查');
-    }
-    console.log('评论已成功显示');
-}
-
-export async function parseNetDiskLink(dataHref) {
-    // 从配置文件中获取 bbs_sid 和 bbs_token
-    const hifiniCookie = config.get('hifini_cookie');
-    console.log('hifiniCookie:', hifiniCookie);
-    const cookie = `bbs_sid=${hifiniCookie.bbs_sid}; bbs_token=${hifiniCookie.bbs_token}`;
-
-    const url = `https://www.hifini.com/${dataHref}`;
-
-    const response = await fetch(url, {
-        headers: {
-            'cookie': cookie
-        }
-    });
-
-    // 加载 HTML 文本
-    const $ = cheerio.load(await response.text());
-    // console.log('HTML:', $.html());
-    // 检查是否有评论
-    if (!isCommented($.html())) {
-        console.log('未评论，开始评论');
-        await createComment(dataHref);
-
-        // 等待 3 秒后重新检查评论状态
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        try {
-            await reloadAndCheckComment(dataHref);
-        } catch (error) {
-            console.error('评论检查失败:', error);
-            throw error;  // 抛出错误
-        }
-    } else {
-        console.log('已存在评论');
-    }
-
-    // 调用 extractVisibleClasses 函数来获取可见的 class 名称
-    const visibleClasses = extractVisibleClasses($);
-
-    // 调用 extractCode 函数来提取 code
-    const code = extractCode($, visibleClasses);
-
-    // 定位到包含下载链接的元素 (用CSS选择器而非XPath)
-    const linkElement = $('#body > div > div > div:nth-child(1) > div:nth-child(1) > div > div:nth-child(2) > div:nth-child(3)');
-
-    // 提取链接
-    const link = linkElement.find('a').attr('href');
-
-    return {link, code};
-}
-
-/**
- * 提取 <style> 中 display:inline 的 class
- * @param {CheerioStatic} $ cheerio 实例
- * @returns {Array<string>} 返回可见的 class 名称列表
- */
-function extractVisibleClasses($) {
-
-    const targetDiv = $('.message.break-all')[0];
-
-    if (targetDiv) {
-        const firstStyle = targetDiv.children[0];
-        const secondStyle = targetDiv.children[1];
-
-        console.log(firstStyle);
-        debugger;
-        const extractClasses = (styleElement) => {
-            if (!styleElement || !styleElement.innerHTML) {
-                return [];
-            }
-
-            const text = styleElement.innerHTML;
-
-            // 检查 'display:inline !important;' 是否存在
-            if (!text.includes('{display:inline !important;}')) {
-                return [];
-            }
-
-            // 根据 'display:inline !important;' 分割文本
-            const visibleClass = text.split("{display:inline !important;}")[0];
-
-            // 按逗号分割可见的类名并去除空白
-            const list = visibleClass.split(",").map(item => item.trim());
-
-            // 去掉每个类名前的点并返回结果
-            return list.map(item => item.replace(".", "").trim()); // 返回清理后的类名列表
-        };
-
-        const firstStyles = extractClasses(firstStyle);
-        const secondStyles = extractClasses(secondStyle);
-
-        console.log('First Styles:', firstStyles);
-        console.log('Second Styles:', secondStyles);
-    } else {
-        console.error('Target div not found.');
-    }
-
-
-    const styleContent = $('#body > div > div > div:nth-child(1) > div:nth-child(1) > div > div:nth-child(2) > style:nth-child(2)').html();
-
-    // 正则表达式匹配 display:inline 的 class 名称
-    const inlineClassPattern = /\.([a-zA-Z0-9_-]+)[^{]*\{[^}]*display\s*:\s*inline\s*!important\s*;/g;
-    let match;
-    const visibleClasses = [];
-
-    // 遍历匹配结果并收集类名
-    while ((match = inlineClassPattern.exec(styleContent)) !== null) {
-        visibleClasses.push(match[1]);
-    }
-    return visibleClasses;  // 返回一个数组，包含所有可见的 class 名称
-}
-
-/**
- * 根据 visibleClasses 列表，按顺序提取对应类名的元素内容，并拼接成完整的 code
- * @param {CheerioStatic} $ cheerio 实例
- * @param {Array<string>} visibleClasses 可见的 class 名称列表
- * @returns {string} 拼接成的完整提取码
- */
-function extractCode($, visibleClasses) {
-    let code = '';
-
-    // 遍历 visibleClasses 列表，按顺序提取每个类对应的元素内容
-    visibleClasses.forEach(className => {
-        // 查找对应的元素
-        const element = $(`.${className}`);
-
-        // 如果找到元素，提取内容并拼接
-        if (element.length > 0) {
-            const text = element.text().trim();
-            if (text.length === 1) {
-                code += text;  // 只会是一个字母或数字
-            }
-        }
-    });
-
-    return code;
-}
-
-
-//
-// //测试
-// console.log(await search('周杰伦'));
-//
-// //测试
-// console.log(await getMusicLink('thread-897.htm'));
-//
-// //测试
-// console.log(await getMusicInfo('thread-897.htm'));
-
-// //测试获取网盘链接和提取码
-// console.log(await parseNetDiskLink('thread-897.htm'));
+// fetchAndSaveMusicInfo('thread-897.htm')
