@@ -1,0 +1,4 @@
+/* 正确的隐藏滚动条样式 */
+.Playlist::-webkit-scrollbar {
+    display: none;
+}

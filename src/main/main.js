@@ -1,21 +1,20 @@
-import {app, BrowserWindow, ipcMain, Tray, Menu} from 'electron';
+import {app, BrowserWindow, globalShortcut, ipcMain, Menu, Tray} from 'electron';
 import path from 'path';
 import {fileURLToPath} from 'url';
-import fs from 'fs';
+
 import {
+    addTrackToLibrary,
     extractMusicMeta,
-    generateNewPlaylistNumber,
+    creatNewEmptyPlaylist,
     getPlaylists,
     parseTrackInfo,
 } from '../services/playlistService.js';
-import loadPlayer from '../services/playerService.js';
+import {loadPlayer, savePlayer} from '../services/playerService.js';
 import {updateLocalLibrary} from '../services/localLibraryService.js';
-import {
-    getMusicInfo,
-    getMusicLink,
-    getSearchResults,
-} from '../services/hifiniMusicService.js';
-import {addTrackToLibrary} from "../services/playlistService.js";
+import {getMusicInfo, getMusicLink, getSearchResults} from '../services/hifiniMusicService.js';
+
+
+
 
 // 获取当前文件的目录名
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +24,14 @@ console.log('当前文件目录:', __dirname);
 let mainWindow;   // 主窗口
 let tray = null;  // 系统托盘图标
 let isQuitting = false; // 标志位，标识应用是否正在退出
+
+const environment = process.env.NODE_ENV
+
+console.log('当前环境:', environment);
+const dataPath = app.getPath('userData');
+
+
+
 
 // 创建主窗口的函数
 function createWindow() {
@@ -67,34 +74,13 @@ function createWindow() {
 
     // 监听创建歌单事件
     ipcMain.on('create-playlists', (event) => {
-        const newNumber = generateNewPlaylistNumber();
-
-        // 创建歌单模板
-        const playlistTemplate = {
-            imgSrc: 'https://placehold.co/50x50',
-            title: `未命名歌单 #${newNumber}`,
-            creater: '未知',
-            createdAt: new Date().toISOString(),
-            type: '歌单',
-            songs: [],
-        };
-
-        const playlistDir = path.join(__dirname, 'data', 'playlists');
-
-        // 确保目录存在
-        if (!fs.existsSync(playlistDir)) {
-            fs.mkdirSync(playlistDir, {recursive: true});
+        try {
+            creatNewEmptyPlaylist();
+            event.reply('playlist-created');
+        } catch (error) {
+            console.error('Error in create-playlists:', error);
+            event.reply('playlist-create-failed', error);
         }
-
-        // 将歌单保存为 JSON 文件
-        fs.writeFileSync(
-            path.join(playlistDir, `#${newNumber}.json`),
-            JSON.stringify(playlistTemplate, null, 2),
-            'utf-8'
-        );
-
-        // 回复创建成功的消息
-        event.reply('create-playlists-reply', {status: 'success', message: '歌单创建成功'});
     });
 
     // 监听获取歌单事件
@@ -156,14 +142,24 @@ function createWindow() {
         addTrackToLibrary(tk);
     });
 
-    // 监听窗口的关闭事件，隐藏窗口而不是退出应用
+
+    // 监听窗口的关闭事件，阻止默认关闭行为并请求播放器状态
     mainWindow.on('close', (event) => {
         if (isQuitting) {
             // 如果已经在退出过程中，允许窗口关闭
             mainWindow = null; // 清除引用
         } else {
             event.preventDefault(); // 阻止默认关闭行为
-            mainWindow.hide(); // 隐藏窗口到托盘
+            // 发送消息请求渲染进程的播放器状态
+            mainWindow.webContents.send('request-player-state');
+            console.log('已向渲染进程请求播放器状态');
+            // 在主进程中等待渲染进程的响应
+            ipcMain.once('reply-player-state', (event, state) => {
+                console.log('主进程已收到播放器状态:', state);
+                savePlayer(state); // 保存播放器状态
+                isQuitting = true; // 设置退出标志位，防止重复执行
+                app.quit(); // 退出应用
+            });
         }
     });
 
@@ -194,7 +190,6 @@ function createTray() {
             {
                 label: '退出',
                 click: () => {
-                    isQuitting = true; // 设置退出标志位
                     app.quit(); // 退出应用
                 }
             }
@@ -210,33 +205,93 @@ function createTray() {
 
         console.log('系统托盘已创建');
 
-    }catch (e){
-        console.log("创建托盘时出错",e);
+    } catch (e) {
+        console.log("创建托盘时出错", e);
     }
 }
 
+// 注册全局快捷键
+function registerGlobalShortcuts() {
+    const ret1 = globalShortcut.register('Control+Alt+Left', () => {
+        // 处理 Ctrl + Alt + 左箭头
+        console.log('Ctrl + Alt + 左箭头 按下');
+        mainWindow.webContents.send('global-shortcut', 'prev');
+    });
+
+    if (!ret1) {
+        console.log('注册 Ctrl+Alt+Left 快捷键失败');
+    }
+
+    const ret2 = globalShortcut.register('Control+Alt+Right', () => {
+        // 处理 Ctrl + Alt + 右箭头
+        console.log('Ctrl + Alt + 右箭头 按下');
+        mainWindow.webContents.send('global-shortcut', 'next');
+    });
+
+    if (!ret2) {
+        console.log('注册 Ctrl+Alt+Right 快捷键失败');
+    }
+
+    const ret3 = globalShortcut.register('Control+Alt+P', () => {
+        // 处理 Ctrl + Alt + P
+        console.log('Ctrl + Alt + P 按下');
+        mainWindow.webContents.send('global-shortcut', 'play-pause');
+    });
+
+    if (!ret3) {
+        console.log('注册 Ctrl+Alt+P 快捷键失败');
+    }
+
+    // 调大音量
+    const ret4 = globalShortcut.register('Control+Alt+Up', () => {
+        // 处理 Ctrl + Alt + 上箭头
+        console.log('Ctrl + Alt + 上箭头 按下');
+        mainWindow.webContents.send('global-shortcut', 'volume-up');
+    });
+    if (!ret4) {
+        console.log('注册 Ctrl+Alt+Up 快捷键失败');
+    }
+
+    // 调小音量
+    const ret5 = globalShortcut.register('Control+Alt+Down', () => {
+        // 处理 Ctrl + Alt + 下箭头
+        console.log('Ctrl + Alt + 下箭头 按下');
+        mainWindow.webContents.send('global-shortcut', 'volume-down');
+    });
+
+    if (!ret5) {
+        console.log('注册 Ctrl+Alt+Down 快捷键失败');
+    }
+}
+
+// 注销所有全局快捷键
+function unregisterGlobalShortcuts() {
+    globalShortcut.unregisterAll();
+    console.log('所有全局快捷键已注销');
+}
+
+
 // 应用准备就绪时调用
 app.whenReady().then(() => {
-    createWindow();    // 创建主窗口
-    createTray();      // 创建系统托盘
-    updateLocalLibrary(); // 更新本地音乐库
-});
+    createWindow();           // 创建主窗口
+    createTray();             // 创建系统托盘
+    registerGlobalShortcuts(); // 注册全局快捷键
+    updateLocalLibrary();    // 更新本地音乐库
 
-// 移除 'window-all-closed' 事件监听器，防止应用在所有窗口关闭后退出
-// 如果您需要在 macOS 上有特殊处理，可以在这里添加代码
-// app.on('window-all-closed', () => {
-//     // 不执行任何操作，防止应用退出
-// });
-
-// 当应用被激活（如单击 Dock 图标）时，重新创建窗口
-app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
+    // 在 macOS 上，激活应用时重新创建窗口
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow();
+        }
+    });
 });
 
 // 当应用即将退出时，清理资源
 app.on('before-quit', () => {
-    isQuitting = true; // 设置退出标志位，防止 'close' 事件中阻止退出
     if (tray) tray.destroy(); // 销毁托盘图标
+});
+
+// 应用退出时注销全局快捷键
+app.on('will-quit', () => {
+    unregisterGlobalShortcuts(); // 注销所有全局快捷键
 });

@@ -18,6 +18,7 @@ function usePlayer(audioRef) {
     const [currentTime, setCurrentTime, currentTimeRef] = useStateRef(0);
     const [currentTrackInfo, setCurrentTrackInfo, currentTrackInfoRef] = useStateRef({});
     const [nextTracks, setNextTracks, nextTracksRef] = useStateRef([]);
+    const [volume, setVolume, volumeRef] = useStateRef(0.5);
 
     /** 播放控制方法 **/
     const play = () => {
@@ -39,8 +40,11 @@ function usePlayer(audioRef) {
     };
 
     const playNext = async () => {
-        if (indexListRef.current.length === 0) return;
+        if (isPlayingRef.current) {
+            pause();
+        }
 
+        if (indexListRef.current.length === 0) return;
         const nextIndex = (currentIndexRef.current + 1) % indexListRef.current.length;
         setCurrentIndex(nextIndex);
 
@@ -70,11 +74,13 @@ function usePlayer(audioRef) {
         }
     };
 
-    const changeVolume = (volume) => {
-        if (audioRef.current) {
-            audioRef.current.volume = volume;
-        }
-    };
+
+    //改变音量, -1 <= volumeDiff <= 1
+    const changeVolume = (volumeDiff) => {
+        const newVolume = Math.max(0, Math.min(1, volumeRef.current + volumeDiff));
+        setVolume(newVolume);
+    }
+
 
     /** 队列管理方法 **/
     const addTrackToEnd = (track) => {
@@ -170,6 +176,7 @@ function usePlayer(audioRef) {
         setCurrentIndex(newCurrentIndex);
     };
 
+
     // 更新下一首曲目列表
     useEffect(() => {
         if (queueRef.current.length === 0) {
@@ -190,6 +197,7 @@ function usePlayer(audioRef) {
             setCurrentTrackInfo({});
         }
     }, [queueRef.current, indexListRef.current, currentIndexRef.current]);
+
 
     // 加载播放器状态
     useEffect(() => {
@@ -241,6 +249,14 @@ function usePlayer(audioRef) {
         return () => clearInterval(interval);
     }, [isPlayingRef]);
 
+    //绑定volume和audioRef.current.volume
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = volumeRef.current;
+        }
+    }, [volumeRef.current]);
+
+
     // 处理音频结束事件
     useEffect(() => {
         const handleEnded = () => {
@@ -281,6 +297,8 @@ function usePlayer(audioRef) {
         setCurrentTime(0);
     };
 
+
+
     return {
         // 状态引用
         queueRef,
@@ -291,6 +309,7 @@ function usePlayer(audioRef) {
         playbackModeRef,
         currentTrackInfoRef,
         nextTracksRef,
+        volumeRef,
         // 播放控制方法
         play,
         pause,
@@ -298,6 +317,7 @@ function usePlayer(audioRef) {
         playNext,
         playPrevious,
         seekTo,
+        setVolume,
         changeVolume,
         // 队列管理方法
         addTrackToEnd,
@@ -315,6 +335,9 @@ function usePlayer(audioRef) {
         },
         addToNext: (track) => {
             addTrackToNext(track);
+        },
+        setCurrentTrackInfo: (track) => {
+            setCurrentTrackInfo(track);
         }
     };
 }

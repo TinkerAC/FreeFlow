@@ -76,6 +76,7 @@
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.4",
     "cheerio": "^1.0.0",
+    "colorthief": "^2.6.0",
     "config": "^3.3.12",
     "deep-equal": "^2.2.3",
     "express": "^4.19.2",

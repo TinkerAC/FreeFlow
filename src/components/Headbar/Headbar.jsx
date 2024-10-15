@@ -75,9 +75,9 @@ export default function Headbar({
                     <span>杨</span>
                 </div>
                 <div className="window-controls">
-                    <span onClick={() => window.electron.minimize()}>&#8722;</span>
-                    <span onClick={() => window.electron.maximize()}>&#9633;</span>
-                    <span onClick={() => window.electron.close()}>&times;</span>
+                    <span onClick={() => window.electronAPI.minimize()}>&#8722;</span>
+                    <span onClick={() => window.electronAPI.maximize()}>&#9633;</span>
+                    <span onClick={() => window.electronAPI.close()}>&times;</span>
                 </div>
             </div>
         </div>

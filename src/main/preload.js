@@ -1,6 +1,6 @@
 const {contextBridge, ipcRenderer} = require('electron');
 
-contextBridge.exposeInMainWorld('electron', {
+contextBridge.exposeInMainWorld('electronAPI', {
     minimize: () => ipcRenderer.send('window-controls', 'minimize'),
     maximize: () => ipcRenderer.send('window-controls', 'maximize'),
     close: () => ipcRenderer.send('window-controls', 'close'),
@@ -18,16 +18,26 @@ contextBridge.exposeInMainWorld('electron', {
         return ipcRenderer.invoke('get-playlists');
     },
 
-    //当主进程请求播放器状态时，发送播放器状态
-    sendPlayerState: (state) => {
-        ipcRenderer.send('send-player-state', state);
-    },
+
+    // 监听主进程请求播放器状态事件
     onRequestPlayerState: (callback) => {
-        ipcRenderer.on('request-player-state', (event) => {
-            callback(event);
-        });
+        const listener = () => {
+            callback();
+        };
+        ipcRenderer.on('request-player-state', listener);
+
+        // 返回移除监听器的函数
+        return () => {
+            ipcRenderer.removeListener('request-player-state', listener);
+            console.log("主进程请求播放器状态事件监听已移除");
+        };
     },
 
+    //渲染进程收到主进程请求播放器状态事件后，向主进程发送播放器状态
+    sendPlayerState: (state) => {
+        ipcRenderer.send('reply-player-state', state);
+        console.log("播放器状态已发送");
+    },
 
     //向歌单添加音乐
     addTrackToLibrary: (track, refreshPlaylists) => {
@@ -46,6 +56,16 @@ contextBridge.exposeInMainWorld('electron', {
 contextBridge.exposeInMainWorld('playerAPI', {
     getPlayerState: () => ipcRenderer.invoke('player-state'),
     getTrackInfo: (file_path, data_hraf) => ipcRenderer.invoke('get-track-info', file_path, data_hraf),
+
+    // 监听 'global-shortcut' 事件
+    onShortcut: (callback) => ipcRenderer.on('global-shortcut', (event, message) => {
+        callback(message);
+    }),
+    // 移除 'global-shortcut' 事件监听
+    removeShortcutListener: () => {
+        ipcRenderer.removeAllListeners('global-shortcut');
+        console.log("全局快捷键事件监听已移除");
+    },
 
 });
 

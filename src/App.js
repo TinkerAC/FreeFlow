@@ -39,7 +39,17 @@ function App() {
         setCurrentTime,
         dumpPlayerState,
         clearQueue,
+        setVolume,
+        volumeRef,
+        setCurrentTrackInfo,
     } = usePlayer(audioRef);
+
+
+    window.queue = queueRef.current;
+    window.currentIndex = currentIndexRef.current;
+    window.currentTrackInfo = currentTrackInfoRef.current;
+    window.nextTracks = nextTracksRef.current;
+
 
     // 使用 useMusicLibrary Hook 管理歌单
     const {
@@ -60,23 +70,78 @@ function App() {
 
 
     useEffect(() => {
-        // 使用暴露的 API 监听来自主进程的请求
-        window.electron.onRequestPlayerState(() => {
+        // 定义回调函数
+        const handleRequestPlayerState = () => {
             // 获取当前播放器状态
             const state = dumpPlayerState(); // 假设这是一个获取当前播放器状态的函数
-
             // 通过暴露的 API 将状态发送到主进程
-            window.electron.sendPlayerState(state);
-            console.log('已向主进程发送播放器状态');
-        });
+            window.electronAPI.sendPlayerState(state);
+        };
+
+        // 定义快捷键回调函数
+        const handleShortcut = (data) => {
+            switch (data) {
+                case 'prev':
+                    playPrevious();
+                    break;
+                case 'next':
+                    playNext();
+                    break;
+                case 'play-pause':
+                    togglePlayPause();
+                    break;
+                case 'volume-up':
+                    changeVolume(0.1);
+                    break;
+                case 'volume-down':
+                    changeVolume(-0.1);
+                    break;
+                default:
+                    console.log('未知快捷键操作');
+            }
+        };
+
+        // 使用暴露的 API 监听来自主进程的请求播放器状态的事件
+        const removeRequestPlayerStateListener = window.electronAPI.onRequestPlayerState(handleRequestPlayerState);
+
+        // 使用暴露的 API 监听全局快捷键事件
+        const removeShortcutListener = window.playerAPI.onShortcut(handleShortcut);
 
         // 清理函数，以防止内存泄漏
         return () => {
-            window.electron.onRequestPlayerState(null); // 或者使用 removeListener 的方式移除监听
+            removeRequestPlayerStateListener();
+            removeShortcutListener();
+            console.log('已移除所有 IPC 监听器');
         };
-    }, []);
+    }, []); // 依赖数组为空，确保此副作用只在组件挂载和卸载时运行
+
+
+    useEffect(() => {
+        const audioElement = audioRef.current;
+
+        if (audioElement) {
+            // 当音频的元数据加载完成时，更新音频元数据
+            const handleLoadedMetadata = () => {
+
+                setCurrentTrackInfo({
+                    ...currentTrackInfoRef.current,
+                    duration: audioElement.duration,
+                });
+            }
+
+            // 为 loadedmetadata 事件添加监听器
+            audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+            // 清理函数，移除事件监听器
+            return () => {
+                audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            };
+        }
+    }, [audioSrcRef.current]);  // 当音频源发生变化时重新挂载
+
     const [searchResults, setSearchResults] = useState([]); // 用于存储搜索结果
     const [mainContentView, setMainContentView] = useState('playlist'); // 用于控制主内容区域显示的内容
+
 
     return (
         <div className="App h-full flex flex-col bg-black">
@@ -111,7 +176,6 @@ function App() {
                 />
                 {/* 中间主内容区域 */}
                 <Maincontent
-                    className="h-full"
                     view={mainContentView}
                     selectedPlaylistInfo={selectedPlaylistInfo}
                     onReplacePlayQueue={replacePlayQueue}
@@ -133,6 +197,7 @@ function App() {
             {/* 底部播放条 */}
             <Playerbar
                 className="sticky bottom-0 z-1000 w-full"
+                volumeRef={volumeRef}
                 audioSrc={audioSrcRef.current}
                 isPlaying={isPlayingRef.current}
                 setIsPlaying={setIsPlaying}
@@ -145,7 +210,7 @@ function App() {
                 onTogglePlayPause={togglePlayPause}
                 onCyclePlaybackMode={cyclePlaybackMode}
                 onSeekTo={seekTo}
-                onVolumeChange={changeVolume}
+                onVolumeChange={setVolume}
                 onToggleRightContent={toggleRightContent} // 传递方法给播放条，允许用户控制右侧栏显示状态
             />
         </div>

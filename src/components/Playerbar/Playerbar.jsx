@@ -5,8 +5,6 @@ import {formatTime} from "../../utils/timeUtils.js";
 
 export default function Playerbar({
                                       isPlaying = false,
-                                      setIsPlaying = () => {
-                                      },
                                       currentTime = 0,
                                       setCurrentTime = (time) => {
                                       },
@@ -25,7 +23,8 @@ export default function Playerbar({
                                       onVolumeChange = (volume) => {
                                       },
                                       onToggleRightContent = () => {
-                                      }
+                                      },
+                                        volumeRef = {current: 0.5}
                                   }) {
     const handleSeekTo = (event) => {
         const newTime = parseFloat(event.target.value);
@@ -91,12 +90,14 @@ export default function Playerbar({
                 <i className="fas fa-bars"></i>
                 <i className="fas fa-expand"></i>
                 <input
+                    value={volumeRef.current}
                     type="range"
                     className="volume-slider"
                     onChange={handleVolumeChange}
                     min="0"
                     max="1"
                     step="0.01"
+
                 />
                 <i className="fas fa-expand-arrows-alt"></i>
             </div>

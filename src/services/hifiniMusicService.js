@@ -1,6 +1,5 @@
 import axios from 'axios';
 import {JSDOM} from 'jsdom';
-import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
 import sqlite3 from 'sqlite3';
 import path from 'path';
@@ -32,7 +31,8 @@ function getDatabase() {
                         title TEXT,
                         artist TEXT,
                         cover_src TEXT,
-                        un_redirected_url TEXT
+                        un_redirected_url TEXT,
+                        cached_at TIMESTAMP
                     )`, (err) => {
                         if (err) {
                             reject(err);
@@ -106,12 +106,11 @@ async function search(keyword) {
 // 获取重定向后的真实播放链接
 async function getRedirectUrl(url) {
     try {
-        const response = await fetch(url, {
-            method: 'HEAD',
-            redirect: 'follow',
-            headers: {referer: 'https://www.hifini.com'}
+        const response = await axios.head(url, {
+            headers: {referer: 'https://www.hifini.com'},
+            maxRedirects: 5 // 设置为你想要的重定向次数限制
         });
-        return response.url;
+        return response.request.res.responseUrl; // 获取最终重定向后的 URL
     } catch (error) {
         console.error('Error in fetching redirect URL:', error);
         throw error;
@@ -154,28 +153,32 @@ function generateParam(data) {
 export async function getMusicLink(dataHref) {
     try {
         const db = await getDatabase();
-
-        // 首先尝试从数据库获取数据
-        const row = await dbGet(db, 'SELECT title, artist, cover_src, un_redirected_url FROM hifini_info WHERE data_href = ?', dataHref);
+        const row = await dbGet(db, 'SELECT un_redirected_url, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
 
         let un_redirected_url;
 
         if (row) {
-            // 数据存在于数据库中
-            un_redirected_url = row.un_redirected_url;
-            console.log('已从数据库中获取未重定向链接:', un_redirected_url);
+            const {un_redirected_url: cachedUrl, cached_at} = row;
+            const currentDate = new Date().toISOString().split('T')[0];  // 获取当前日期（YYYY-MM-DD）
+
+            if (cached_at && cached_at.startsWith(currentDate)) {  // 比较日期
+                // 如果缓存日期是今天，使用缓存
+                un_redirected_url = cachedUrl;
+                console.log('使用缓存中的未重定向链接加载dataHref:', dataHref, '链接:', un_redirected_url);
+            } else {
+                // 如果缓存不是当天数据，重新抓取并保存
+                const data = await fetchAndSaveMusicInfo(dataHref);
+                un_redirected_url = data.un_redirected_url;
+            }
         } else {
-            // 数据不存在，抓取并保存信息
+            // 如果数据库中没有记录，抓取并保存
             const data = await fetchAndSaveMusicInfo(dataHref);
             un_redirected_url = data.un_redirected_url;
         }
 
-        // 获取重定向后的真实链接
         const final_url = await getRedirectUrl(un_redirected_url);
-
         console.log('重定向后的链接:', final_url);
-
-        return await getRedirectUrl(un_redirected_url);
+        return final_url;
 
     } catch (error) {
         console.error('Error getting music link:', error);
@@ -187,20 +190,31 @@ export async function getMusicLink(dataHref) {
 export async function getMusicInfo(dataHref) {
     try {
         const db = await getDatabase();
-
-        // 首先尝试从数据库获取数据
-        const row = await dbGet(db, 'SELECT title, artist, cover_src FROM hifini_info WHERE data_href = ?', dataHref);
-
-        console.log('row:', row);
+        const row = await dbGet(db, 'SELECT title, artist, cover_src, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
 
         if (row) {
-            // 数据存在于数据库中
-            const {title, artist, cover_src} = row;
-            return {data_href: dataHref, title, artist, cover_src};
+            const {title, artist, cover_src, cached_at} = row;
+            const currentDate = new Date().toISOString().split('T')[0];  // 获取当前日期（YYYY-MM-DD）
+
+            if (cached_at && cached_at.startsWith(currentDate)) {  // 比较日期
+                // 缓存是当天数据，直接使用缓存
+                console.log("从数据库中获取有效缓存的音乐信息:", {data_href: dataHref, title, artist, cover_src});
+                return {data_href: dataHref, title, artist, cover_src};
+            } else {
+                // 如果缓存不是当天数据，重新抓取并保存
+                const data = await fetchAndSaveMusicInfo(dataHref);
+                console.log("从数据库中获取过期缓存的音乐信息，已更新并保存:", {
+                    data_href: dataHref,
+                    title: data.title,
+                    artist: data.artist,
+                    cover_src: data.cover_src
+                });
+                return {data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src};
+            }
         } else {
-            // 数据不存在，抓取并保存信息
+            // 缓存中不存在数据，直接抓取
             const data = await fetchAndSaveMusicInfo(dataHref);
-            console.info('音乐信息已从网站中获取并保存:', {
+            console.log("缓存中不存在音乐信息，已获取并保存:", {
                 data_href: dataHref,
                 title: data.title,
                 artist: data.artist,
@@ -220,7 +234,11 @@ async function fetchAndSaveMusicInfo(dataHref) {
     try {
         const db = await getDatabase();
 
-        const html = await fetch("https://hifini.com/" + dataHref).then(res => res.text());
+        const html = await axios.get("https://hifini.com/" + dataHref, {
+            headers: {referer: 'https://www.hifini.com'} // 添加请求头，模拟请求来源
+        }).then(response => response.data); // `response.data` 包含 HTML 内容
+
+
         const dom = new JSDOM(html);
         const scripts = dom.window.document.querySelectorAll('script');
 
@@ -259,17 +277,30 @@ async function fetchAndSaveMusicInfo(dataHref) {
                     const cover_src = picMatch[1];
                     const un_redirected_url = url;
 
-                    // 保存到数据库
-                    await dbRun(db, 'INSERT INTO hifini_info (data_href, title, artist, cover_src, un_redirected_url) VALUES (?, ?, ?, ?, ?)',
-                        [dataHref, title, artist, cover_src, un_redirected_url]);
+                    // 检查数据是否存在
+                    const row = await dbGet(db, 'SELECT * FROM hifini_info WHERE data_href = ?', dataHref);
 
+                    if (row) {
+                        // 如果存在，执行 UPDATE
+                        await dbRun(db, `
+                            UPDATE hifini_info 
+                            SET title = ?, artist = ?, cover_src = ?, un_redirected_url = ?, cached_at = CURRENT_TIMESTAMP 
+                            WHERE data_href = ?`,
+                            [title, artist, cover_src, un_redirected_url, dataHref]
+                        );
+                    } else {
+                        // 如果不存在，执行 INSERT
+                        await dbRun(db, `
+                            INSERT INTO hifini_info (data_href, title, artist, cover_src, un_redirected_url, cached_at) 
+                            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                            [dataHref, title, artist, cover_src, un_redirected_url]
+                        );
+                    }
 
                     return {data_href: dataHref, title, artist, cover_src, un_redirected_url};
                 }
             }
         }
-
-        throw new Error('未找到音乐信息');
 
     } catch (error) {
         console.error('Error fetching and saving music info:', error);

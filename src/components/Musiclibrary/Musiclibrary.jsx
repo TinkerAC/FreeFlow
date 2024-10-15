@@ -51,7 +51,7 @@ export default function MusicLibrary({
                         <div className="w-[4rem] h-[4rem] gap-0.5 flex justify-center items-center rounded-lg hover:bg-item-bg-hover">
                             <img
                                 key={index}
-                                src={item.imgSrc}
+                                src={item?.tracks?.[0]?.cover_src || "../assets/default-playlist-cover.png"}
                                 alt={item.title}
                                 className="w-12 h-12 m-1 rounded-md cursor-pointer"
                                 onClick={() => handleSelectItem(index)}
@@ -77,7 +77,7 @@ export default function MusicLibrary({
                     <div className="ml-auto flex items-center">
                         <i
                             className="fas fa-plus text-xl cursor-pointer"
-                            onClick={() => window.electron.createPlaylist()}
+                            onClick={() => window.electronAPI.createPlaylist()}
                         ></i>
                     </div>
                 </div>
@@ -99,7 +99,7 @@ export default function MusicLibrary({
                         {libraryItems.map((item, index) => (
                             <Item
                                 key={index}
-                                imgSrc={item.imgSrc}
+                                imgSrc={item?.tracks?.[0]?.cover_src || "../assets/default-playlist-cover.png"}
                                 altText={item.title}
                                 title={item.title}
                                 details={item.details}

@@ -12,7 +12,7 @@ function useMusicLibrary() {
     const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState(false); // 控制音乐库折叠状态
     const fetchAndCompletePlaylists = async () => {
             try {
-                const playlists = await window.electron.getPlaylists(); // 调用 electron API 获取歌单
+                const playlists = await window.electronAPI.getPlaylists(); // 调用 electron API 获取歌单
                 console.log('初始化歌单:', playlists);
 
                 // 并行获取每个歌曲的完整信息

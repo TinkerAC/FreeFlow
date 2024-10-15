@@ -2,6 +2,12 @@ import fs from 'fs';
 import * as mm from 'music-metadata';
 import path from 'path';
 import {fileURLToPath} from "url";
+import config from "config";
+
+import {getSearchResults} from "./hifiniMusicService.js";
+
+
+
 
 // 创建 __dirname 等效变量
 const __filename = fileURLToPath(import.meta.url);
@@ -44,7 +50,7 @@ function getPlaylists() {
 // 生成新歌单的编号
 function generateNewPlaylistNumber() {
     try {
-        const nameList = fs.readdirSync('./data/playlists');
+        const nameList = fs.readdirSync(playlistsDir);
         let maxNum = 0;
 
         nameList.forEach(name => {
@@ -107,119 +113,272 @@ function addTrackToLibrary(track) {
 }
 
 
-/**
- * 获取图像 Buffer，支持网络链接和 base64 数据
- * @param {string} src - 图片的 src，可能是链接或 base64
- * @returns {Promise<Buffer>} - 图像的 Buffer
- */
-async function getImageBuffer(src) {
-    if (src.startsWith('http')) {
-        // 如果是网络链接，下载图片
-        const response = await axios.get(src, {responseType: 'arraybuffer'});
-        return Buffer.from(response.data, 'binary');
-    } else if (src.startsWith('data:image')) {
-        // 如果是 base64 数据，解析 base64 图片
-        const base64Data = src.split(',')[1];
-        return Buffer.from(base64Data, 'base64');
-    } else {
-        throw new Error('Invalid image src format');
+function creatNewEmptyPlaylist() {
+    // 生成新歌单编号
+    const newNumber = generateNewPlaylistNumber();
+
+    // 创建歌单模板
+    const playlistTemplate = {
+        imgSrc: 'https://placehold.co/50x50',
+        title: `未命名歌单 #${newNumber}`,
+        creater: '未知',
+        createdAt: new Date().toISOString(),
+        type: '歌单',
+        songs: [],
+    };
+
+    const playlistDir = path.join(__dirname, 'data', 'playlists');
+
+    // 确保目录存在
+    if (!fs.existsSync(playlistDir)) {
+        fs.mkdirSync(playlistDir, {recursive: true});
     }
-}
 
-/**
- * 拼接图片并保存
- * @param {Array<string>} imageSources - 图片 src 数组
- * @param {string} outputFilePath - 输出图片的路径
- */
-async function mergeImages(imageSources, outputFilePath) {
-    const imageBuffers = await Promise.all(imageSources.map(src => getImageBuffer(src)));
-
-    // 读取每张图片的 metadata，确保图片大小相同
-    const imageMetas = await Promise.all(imageBuffers.map(buffer => sharp(buffer).metadata()));
-    const width = imageMetas[0].width;
-    const height = imageMetas[0].height;
-
-    // 如果图像大小不一致，可以先调整到相同大小
-    const resizedImages = await Promise.all(
-        imageBuffers.map(buffer => sharp(buffer).resize(width, height).toBuffer())
+    // 将歌单保存为 JSON 文件
+    fs.writeFileSync(
+        path.join(playlistDir, `#${newNumber}.json`),
+        JSON.stringify(playlistTemplate, null, 2),
+        'utf-8'
     );
+}
 
-    // 拼接成 2x2 的图片网格
-    const compositeImage = sharp({
-        create: {
-            width: width * 2,
-            height: height * 2,
-            channels: 4,
-            background: {r: 255, g: 255, b: 255, alpha: 0}
+async function importPlaylistFromList(playlist) {
+    // 从每行为"歌曲名"- "歌手名"的列表中导入歌单
+
+    // 生成新歌单编号
+    const newNumber = generateNewPlaylistNumber();
+
+    // 创建歌单模板
+    const playlistTemplate = {
+        imgSrc: 'https://placehold.co/50x50',
+        title: `未命名歌单 #${newNumber}`,
+        creater: "杨姝",
+        createdAt: new Date().toISOString(),
+        type: '歌单',
+        tracks: [],
+    };
+
+    // 从列表中提取歌曲信息
+    const unbind_tracks = playlist.split('\n').map(line => {
+        const [title, artist] = line.split('-').map(s => s.trim());
+        return {title, artist};
+    });
+
+    const length = unbind_tracks.length;
+
+    // 从 hifini 网站获取歌曲信息
+    for (const [index, track] of unbind_tracks.entries()) {
+        try {
+            const searchResults = await getSearchResults(`${track.title} ${track.artist}`);
+            console.log(`正在处理第${index + 1}/${length}首歌曲: ${track.title} - ${track.artist}`);
+
+            if (searchResults.length > 0) {
+                const firstResult = searchResults[0];
+                playlistTemplate.tracks.push({
+                    data_href: firstResult.data_href,
+                    file_path: null,
+                    added_at: new Date().toISOString(),
+                });
+                console.log(`成功导入${track.title} - ${track.artist}`);
+            } else {
+                console.log(`未找到${track.title} - ${track.artist}`);
+            }
+        } catch (error) {
+            console.error(`Error importing track: ${track.title} - ${track.artist}`, error);
+            console.log(`导入${track.title} - ${track.artist}失败`);
         }
-    }).composite([
-        {input: resizedImages[0], top: 0, left: 0},            // 左上
-        {input: resizedImages[1], top: 0, left: width},         // 右上
-        {input: resizedImages[2], top: height, left: 0},        // 左下
-        {input: resizedImages[3], top: height, left: width}     // 右下
-    ]);
-
-    // 保存拼接后的图片
-    await compositeImage.toFile(outputFilePath);
-}
-
-/**
- * 主函数：处理歌单中的图像
- * @param {number} playlistId - 歌单编号
- * @param {string} jsonPath - 歌单 JSON 文件路径
- * @param {string} outputFilePath - 输出图片的保存路径
- */
-async function processPlaylistImages(playlistId, outputFilePath) {
-    // 读取歌单 JSON 文件
-    const playlist = await fs.readJson(`./data/playlists/#${playlistId}.json`);
-    const tracks = playlist.tracks;
-    const cover_status = playlist.cover_status;
-
-
-    if (!tracks || tracks.length === 0) {
-        throw new Error('The playlist contains no tracks');
     }
 
-    if (tracks.length < 4) {
-        // 如果 tracks 数量小于 4，使用第一首歌曲的封面
-        const firstCoverSrc = tracks[0].cover_src;
-        const firstCoverBuffer = await getImageBuffer(firstCoverSrc);
-        await sharp(firstCoverBuffer).toFile(outputFilePath);
-        console.log(`Saved first track cover as: ${outputFilePath}`);
-    } else {
-        // 如果 tracks 数量大于等于 4，拼接前 4 首的封面图
-        const coverSources = tracks.slice(0, 4).map(track => track.cover_src);
-        await mergeImages(coverSources, outputFilePath);
-        console.log(`Saved merged image as: ${outputFilePath}`);
+    // 保存歌单
+    const playlistDir = path.join(__dirname, 'data', 'playlists');
+
+    // 确保目录存在
+    if (!fs.existsSync(playlistDir)) {
+        fs.mkdirSync(playlistDir, {recursive: true});
     }
+
+    // 将歌单保存为 JSON 文件
+    const playlistPath = path.join(playlistDir, `#${newNumber}.json`);
+    fs.writeFileSync(playlistPath, JSON.stringify(playlistTemplate, null, 2), 'utf-8');
+
+    console.log('Playlist imported and saved successfully.');
 }
 
-// // 示例调用
-// const playlistId = 12345;
-// const jsonPath = './playlist.json';  // 假设歌单 JSON 存在该路径
-// const outputFilePath = path.join(__dirname, `playlist_${playlistId}_cover.png`);
-//
-// processPlaylistImages(playlistId, jsonPath, outputFilePath)
-//   .then(() => console.log('Image processing completed.'))
-//   .catch(err => console.error('Error processing playlist images:', err));
-//
-//
+export {
+    getPlaylists,
+    generateNewPlaylistNumber,
+    extractMusicMeta,
+    parseTrackInfo,
+    addTrackToLibrary,
+    creatNewEmptyPlaylist
+};
 
 
-export {getPlaylists, generateNewPlaylistNumber, extractMusicMeta, parseTrackInfo, addTrackToLibrary};
 
+// importPlaylistFromList("夢灯籠 - RADWIMPS\n" +
+//     "夜的钢琴曲五 - 邓壬鑫\n" +
+//     "想い出は遠くの日々 - 天門\n" +
+//     "二人の時間 - RADWIMPS\n" +
+//     "Someone Like You - Adele\n" +
+//     "Because of You - Kelly Clarkson\n" +
+//     "一样的月光 - 徐佳莹\n" +
+//     "美人鱼 - 林俊杰\n" +
+//     "年少有为 - 李荣浩\n" +
+//     "如果爱忘了 - 戚薇\n" +
+//     "默 - 那英\n" +
+//     "前前前世 绝美钢琴抒情柔版(翻自 RADWIMPS)(cover) - 至尊马甲\n" +
+//     "小情歌 (苏打绿版) - 苏打绿\n" +
+//     "I Really Want to Stay At Your House - Rosa Walton / Hallie Coggins\n" +
+//     "world.execute (me) ; - Mili\n" +
+//     "Letting Go - 蔡健雅\n" +
+//     "So Far Away - Martin Garrix / David Guetta / Jamie Scott / Romy Dya\n" +
+//     "昨日青空 - 尤长靖\n" +
+//     "Please Don't Go - Joel Adams\n" +
+//     "向云端 - 小霞 / 海洋Bo\n" +
+//     "命运 - 家家\n" +
+//     "Dream It Possible - Delacey\n" +
+//     "I Try So Hard - Daniel JM\n" +
+//     "慢慢喜欢你 - 莫文蔚\n" +
+//     "我们 - 陈奕迅\n" +
+//     "麻雀 - 李荣浩\n" +
+//     "哪里都是你 - 队长\n" +
+//     "僕が死のうと思ったのは - 中島美嘉\n" +
+//     "说散就散 - JC 陈咏桐\n" +
+//     "Empty Love - Lulleaux / Kid Princess\n" +
+//     "Take Flight - Lindsey Stirling\n" +
+//     "尘埃 - 家家\n" +
+//     "侧脸 - 于果\n" +
+//     "化身孤岛的鲸 - 周深\n" +
+//     "至少还有你 - 林忆莲\n" +
+//     "传奇 - 王菲\n" +
+//     "后来 - 刘若英\n" +
+//     "时间煮雨 - 郁可唯\n" +
+//     "给电影人的情书 - 单依纯\n" +
+//     "Let Me Down Slowly - Alec Benjamin / Alessia Cara\n" +
+//     "身骑白马 - 徐佳莹\n" +
+//     "Hallelujah - Alexandra Burke\n" +
+//     "是风动 - 银临 / 河图\n" +
+//     "BLUE - Troye Sivan / Alex Hope\n" +
+//     "Counting Stars - OneRepublic\n" +
+//     "I'm In Here - Sia\n" +
+//     "Hello - Adele\n" +
+//     "多远都要在一起 - G.E.M.邓紫棋\n" +
+//     "手掌心 - 丁当\n" +
+//     "すずめ feat.十明 - RADWIMPS / 十明\n" +
+//     "背对背拥抱 - 林俊杰\n" +
+//     "情歌 - 梁静茹\n" +
+//     "Five Hundred Miles - Justin Timberlake / Carey Mulligan / Stark Sands\n" +
+//     "Try - Colbie Caillat\n" +
+//     "偏爱 - 张芸京\n" +
+//     "Free Loop - Daniel Powter\n" +
+//     "最美的太阳 - 张杰\n" +
+//     "明天过后 - 张杰\n" +
+//     "夕日坂 - doriko / 初音ミク\n" +
+//     "ブルーバード - いきものがかり\n" +
+//     "千本桜 - 黒うさP / 初音ミク\n" +
+//     "遇见 - 孙燕姿\n" +
+//     "匆匆那年 - 王菲\n" +
+//     "Illusionary Daytime - Shirfine\n" +
+//     "See You Again - Wiz Khalifa / Charlie Puth\n" +
+//     "左手指月 - 萨顶顶\n" +
+//     "背对背拥抱 - 林俊杰\n" +
+//     "江南 - 林俊杰\n" +
+//     "不为谁而作的歌 - 林俊杰\n" +
+//     "修炼爱情 - 林俊杰\n" +
+//     "她说 - 林俊杰\n" +
+//     "孤勇者 - 陈奕迅\n" +
+//     "起风了 - 吴青峰\n" +
+//     "忘记时间 - 胡歌\n" +
+//     "Outside - Calvin Harris / Ellie Goulding\n" +
+//     "Nightingale - Yanni\n" +
+//     "后会无期 - G.E.M.邓紫棋\n" +
+//     "清明上河图 - 李玉刚\n" +
+//     "海底（Live） - 凤凰传奇\n" +
+//     "失语者 - 蔡健雅\n" +
+//     "万疆 - 李玉刚\n" +
+//     "时光背面的我 - 刘至佳 / 韩瞳\n" +
+//     "如愿 - 葱香科学家（王悠然）\n" +
+//     "在你的身边 - 盛哲\n" +
+//     "风的季节 - 徐小凤\n" +
+//     "朝汐 - 音葉 / 洛天依Official\n" +
+//     "阴天快乐 - 陈奕迅\n" +
+//     "红玫瑰 - 陈奕迅\n" +
+//     "富士山下 - 陈奕迅\n" +
+//     "水星记 - 郭顶\n" +
+//     "なんでもないや (movie ver.) - RADWIMPS\n" +
+//     "可惜没如果 - 林俊杰\n" +
+//     "浪漫血液 - 林俊杰\n" +
+//     "Sosso - Magnus Ludvigsson\n" +
+//     "栖枝 - 双笙（陈元汐）\n" +
+//     "浮生未歇 - 音频怪物\n" +
+//     "Farewell: \"Ten Easy Pieces for Piano\" - Leszek Mozdzer / Zbigniew Preisner\n" +
+//     "错位时空 - 艾辰\n" +
+//     "Windfall - TheFatRat\n" +
+//     "Luv Letter - TSUKINOSORA\n" +
+//     "明天你好 - 牛奶咖啡\n" +
+//     "China-X - 徐梦圆\n" +
+//     "绅士 - 薛之谦\n" +
+//     "三葉のテーマ - RADWIMPS\n" +
+//     "かたわれ時 - RADWIMPS\n" +
+//     "Without You I Am Dying - Painless Destiny\n" +
+//     "Shape of You - Ed Sheeran\n" +
+//     "Sakae In Action - 松本晃彦\n" +
+//     "【洛天依】影子小姐 - 著小生zoki / 洛天依Official\n" +
+//     "老街北 - 闹闹丶 / FFF君 / 小欧Ω / 洛天依Official\n" +
+//     "Flower Dance - DJ Okawari\n" +
+//     "Coming Home - Peter Jeremias\n" +
+//     "The truth that you leave - Pianoboy高至豪\n" +
+//     "Xenogenesis - TheFatRat\n" +
+//     "雪落下的声音 - 张穆庭\n" +
+//     "Peter Jeremias-Coming Home（NotintroYet remix） - notintroyet\n" +
+//     "Dusk - Peter Jeremias\n" +
+//     "天ノ弱 -うぃんぐPiano Ver.- - Akie秋绘\n" +
+//     "夏に花が散る - 羽肿\n" +
+//     "Horizon - Janji\n" +
+//     "Intro - Dreamtale\n" +
+//     "大鱼 - 周深\n" +
+//     "ヨスガノソラ メインテーマ -遠い空へ- - 市川淳\n" +
+//     "勾指起誓 - 洛天依Official / ilem\n" +
+//     "优美的小调(钢琴曲) - 张宇桦\n" +
+//     "aLIEz - 瑞葵(mizuki) / SawanoHiroyuki[nZk]\n" +
+//     "Motherlode - Kevin MacLeod\n" +
+//     "Sonoran Sunset - Zachary Bruno\n" +
+//     "ツナ覚醒 - 佐橋俊彦\n" +
+//     "刚好遇见你 - 李玉刚\n" +
+//     "The Right Path - Thomas Greenberg\n" +
+//     "打上花火 - Daoko / 米津玄師\n" +
+//     "起风了（Cover 高橋優） - 买辣椒也用券\n" +
+//     "Always With Me - 木村弓 / 奥户巴寿\n" +
+//     "風の住む街（风居住的街道） - 磯村由紀子\n" +
+//     "One Love - 広橋真紀子\n" +
+//     "芒种 - 音阙诗听 / 赵方婧\n" +
+//     "God is A Girl - Groove Coverage\n" +
+//     "NEXT TO YOU - Ken Arai\n" +
+//     "好久不见 - 陈奕迅\n" +
+//     "烟火里的尘埃 - 华晨宇\n" +
+//     "夜空中最亮的星 - 逃跑计划\n" +
+//     "虹之间 - 金贵晟\n" +
+//     "Monsters - Katie Sky\n" +
+//     "East of Eden - Zella Day\n" +
+//     "不再见 - 陈学冬\n" +
+//     "浮夸 - 陈奕迅\n" +
+//     "All Time Low - Kurt Hugo Schneider / Sam Tsui / Casey Breves\n" +
+//     "最美的期待 - 周笔畅\n" +
+//     "River Flows In You - Martin Ermen\n" +
+//     "With an Orchid - Yanni\n" +
+//     "canon in d - Brian Crain\n" +
+//     "Wolves - Selena Gomez / Marshmello\n" +
+//     "Radioactive - William Joseph\n" +
+//     "Something Just Like This - The Chainsmokers / Coldplay\n" +
+//     "Trip - Axero\n" +
+//     "Intro - The xx\n" +
+//     "#Lov3 #Ngẫu Hứng - Hoaprox\n" +
+//     "Darkside - Alan Walker / Au/Ra / Tomine Harket\n" +
+//     "The Spectre - Alan Walker\n" +
+//     "Faded - Alan Walker\n" +
+//     "All Falls Down - Alan Walker / Noah Cyrus / Digital Farm Animals / Juliander\n" +
+//     "Sing Me to Sleep - Alan Walker / Iselin Solheim\n" +
+//     "Nevada - Vicetone / Cozi Zuehlsdorff\n" +
+//     "\n").then(console.log).catch(console.error);
 
-// 测试 extractMusicMeta 和 parseTrackInfo 函数
-// extractMusicMeta('E:\\Music\\Kurt Hugo Schneider,Sam Tsui,Casey Breves - All Time Low.flac')
-//     .then(metadata => {
-//         const parsedData = parseTrackInfo(metadata);
-//         console.log(parsedData);
-//     })
-//     .catch(error => {
-//         console.error('Error:', error);
-//     });
-
-// 测试 getPlaylists 函数
-
-// console.log(getPlaylists());
 

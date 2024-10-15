@@ -58,7 +58,7 @@ function NetSearchResultView({
                     className="p-2 hover:bg-gray-100 cursor-pointer text-red-500"
                     onClick={() => {
                         console.log('selectedTrackRef.current', selectedTrackRef.current);
-                        window.electron.addTrackToLibrary(selectedTrackRef.current, refreshPlaylists);
+                        window.electronAPI.addTrackToLibrary(selectedTrackRef.current, refreshPlaylists);
                         handleCloseMenu();
                     }}
                 >
