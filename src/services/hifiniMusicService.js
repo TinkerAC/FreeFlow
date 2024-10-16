@@ -1,27 +1,19 @@
 import axios from 'axios';
-import {JSDOM} from 'jsdom';
+import { JSDOM } from 'jsdom';
 import * as cheerio from 'cheerio';
 import sqlite3 from 'sqlite3';
 import path from 'path';
-import {fileURLToPath} from "url";
-
 
 // 数据库连接和辅助函数
 let db;
 
-const __filename = fileURLToPath(import.meta.url);  // 获取当前文件的路径
-const __dirname = path.dirname(__filename);  // 获取当前文件所在的目录
-const db_path = path.join(__dirname, "..", "..", "data", 'database.sqlite');  // 使用项目目录下的相对路径
-console.log('数据库路径:', db_path);
-
-
 // dbUtils
-function getDatabase() {
+function getDatabase(dbPath) {
     return new Promise((resolve, reject) => {
         if (db) {
             resolve(db);
         } else {
-            db = new sqlite3.Database(db_path, (err) => {
+            db = new sqlite3.Database(dbPath, (err) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -64,7 +56,6 @@ function dbRun(db, sql, params) {
     });
 }
 
-
 // 接受关键词并搜索，返回歌曲结果的 JSON 对象
 async function search(keyword) {
     const extractLiElements = (html) => {
@@ -82,7 +73,7 @@ async function search(keyword) {
         const isExpired = title.includes('失效') ? 1 : 0;
         const heat = parseInt($li('span.eye.comment-o.ml-2.hidden-sm.d-none').text().trim(), 10) || 0;
 
-        return {dataHref, heat, title, isAlbum, formats, isExpired};
+        return { dataHref, heat, title, isAlbum, formats, isExpired };
     };
 
     const searchUrl = `https://hifini.com/search-${encodeURIComponent(keyword)}-1.htm`;
@@ -107,7 +98,7 @@ async function search(keyword) {
 async function getRedirectUrl(url) {
     try {
         const response = await axios.head(url, {
-            headers: {referer: 'https://www.hifini.com'},
+            headers: { referer: 'https://www.hifini.com' },
             maxRedirects: 5 // 设置为你想要的重定向次数限制
         });
         return response.request.res.responseUrl; // 获取最终重定向后的 URL
@@ -150,29 +141,26 @@ function generateParam(data) {
 }
 
 // 获取音乐链接的函数
-export async function getMusicLink(dataHref) {
+export async function getMusicLink(dataHref, dbPath) {
     try {
-        const db = await getDatabase();
+        const db = await getDatabase(dbPath);
         const row = await dbGet(db, 'SELECT un_redirected_url, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
 
         let un_redirected_url;
 
         if (row) {
-            const {un_redirected_url: cachedUrl, cached_at} = row;
-            const currentDate = new Date().toISOString().split('T')[0];  // 获取当前日期（YYYY-MM-DD）
+            const { un_redirected_url: cachedUrl, cached_at } = row;
+            const currentDate = new Date().toISOString().split('T')[0];
 
-            if (cached_at && cached_at.startsWith(currentDate)) {  // 比较日期
-                // 如果缓存日期是今天，使用缓存
+            if (cached_at && cached_at.startsWith(currentDate)) {
                 un_redirected_url = cachedUrl;
                 console.log('使用缓存中的未重定向链接加载dataHref:', dataHref, '链接:', un_redirected_url);
             } else {
-                // 如果缓存不是当天数据，重新抓取并保存
-                const data = await fetchAndSaveMusicInfo(dataHref);
+                const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
                 un_redirected_url = data.un_redirected_url;
             }
         } else {
-            // 如果数据库中没有记录，抓取并保存
-            const data = await fetchAndSaveMusicInfo(dataHref);
+            const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
             un_redirected_url = data.un_redirected_url;
         }
 
@@ -187,40 +175,37 @@ export async function getMusicLink(dataHref) {
 }
 
 // 获取音乐信息的函数
-export async function getMusicInfo(dataHref) {
+export async function getMusicInfo(dataHref, dbPath) {
     try {
-        const db = await getDatabase();
+        const db = await getDatabase(dbPath);
         const row = await dbGet(db, 'SELECT title, artist, cover_src, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
 
         if (row) {
-            const {title, artist, cover_src, cached_at} = row;
-            const currentDate = new Date().toISOString().split('T')[0];  // 获取当前日期（YYYY-MM-DD）
+            const { title, artist, cover_src, cached_at } = row;
+            const currentDate = new Date().toISOString().split('T')[0];
 
-            if (cached_at && cached_at.startsWith(currentDate)) {  // 比较日期
-                // 缓存是当天数据，直接使用缓存
-                console.log("从数据库中获取有效缓存的音乐信息:", {data_href: dataHref, title, artist, cover_src});
-                return {data_href: dataHref, title, artist, cover_src};
+            if (cached_at && cached_at.startsWith(currentDate)) {
+                console.log("从数据库中获取有效缓存的音乐信息:", { data_href: dataHref, title, artist, cover_src });
+                return { data_href: dataHref, title, artist, cover_src };
             } else {
-                // 如果缓存不是当天数据，重新抓取并保存
-                const data = await fetchAndSaveMusicInfo(dataHref);
+                const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
                 console.log("从数据库中获取过期缓存的音乐信息，已更新并保存:", {
                     data_href: dataHref,
                     title: data.title,
                     artist: data.artist,
                     cover_src: data.cover_src
                 });
-                return {data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src};
+                return { data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src };
             }
         } else {
-            // 缓存中不存在数据，直接抓取
-            const data = await fetchAndSaveMusicInfo(dataHref);
+            const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
             console.log("缓存中不存在音乐信息，已获取并保存:", {
                 data_href: dataHref,
                 title: data.title,
                 artist: data.artist,
                 cover_src: data.cover_src
             });
-            return {data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src};
+            return { data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src };
         }
 
     } catch (error) {
@@ -230,14 +215,13 @@ export async function getMusicInfo(dataHref) {
 }
 
 // 抓取并保存音乐信息的辅助函数
-async function fetchAndSaveMusicInfo(dataHref) {
+async function fetchAndSaveMusicInfo(dataHref, dbPath) {
     try {
-        const db = await getDatabase();
+        const db = await getDatabase(dbPath);
 
         const html = await axios.get("https://hifini.com/" + dataHref, {
-            headers: {referer: 'https://www.hifini.com'} // 添加请求头，模拟请求来源
-        }).then(response => response.data); // `response.data` 包含 HTML 内容
-
+            headers: { referer: 'https://www.hifini.com' }
+        }).then(response => response.data);
 
         const dom = new JSDOM(html);
         const scripts = dom.window.document.querySelectorAll('script');
@@ -297,7 +281,7 @@ async function fetchAndSaveMusicInfo(dataHref) {
                         );
                     }
 
-                    return {data_href: dataHref, title, artist, cover_src, un_redirected_url};
+                    return { data_href: dataHref, title, artist, cover_src, un_redirected_url };
                 }
             }
         }
@@ -309,7 +293,7 @@ async function fetchAndSaveMusicInfo(dataHref) {
 }
 
 // 过滤、排序结果并获取音乐信息
-export async function getSearchResults(keyword) {
+export async function getSearchResults(keyword, dbPath) {
     try {
         const searchResults = await search(keyword);
         if (!Array.isArray(searchResults) || searchResults.length === 0) {
@@ -324,7 +308,7 @@ export async function getSearchResults(keyword) {
 
         const musicInfos = await Promise.all(filteredResults.map(async (result) => {
             try {
-                return await getMusicInfo(result.dataHref);
+                return await getMusicInfo(result.dataHref, dbPath);
             } catch (error) {
                 console.error(`获取音乐信息失败: ${error.message}`);
                 return null;
@@ -339,5 +323,5 @@ export async function getSearchResults(keyword) {
     }
 }
 
-
-// fetchAndSaveMusicInfo('thread-897.htm')
+// 示例调用
+// fetchAndSaveMusicInfo('thread-897.htm', 'path/to/your/database.sqlite');

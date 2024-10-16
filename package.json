@@ -1,15 +1,16 @@
 {
-  "name": "spotify",
+  "name": "spotify-clone",
   "version": "1.0.0",
   "description": "",
   "type": "module",
   "main": "src/main/main.js",
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "start": "chcp 65001 && npm run build:css && npm run build && concurrently \"npm run proxy\" \"electron .\"",
+    "dev": "cross-env NODE_ENV=development npm run build:css && cross-env NODE_ENV=development npm run build && cross-env NODE_ENV=development concurrently \"electron .\"",
+    "start": "cross-env NODE_ENV=production npm run build:css && cross-env NODE_ENV=production npm run build && cross-env NODE_ENV=production concurrently \"electron .\"",
     "proxy": "node src/proxy.js",
-    "build:css": "tailwindcss build src/tailwind.css -o public/tailwind.css",
-    "watch:css": "tailwindcss -i ./src/tailwind.css -o ./public/tailwind.css --watch",
+    "build:css": "tailwindcss -i src/tailwind.css -o public/tailwind.css --minify",
+    "watch:css": "tailwindcss -i src/tailwind.css -o public/tailwind.css --watch",
     "electron:build": "electron-builder"
   },
   "build": {
@@ -22,6 +23,7 @@
     "files": [
       "dist/**/*",
       "src/**/*",
+      "config/**/*",
       "package.json",
       "public/**/*"
     ],
@@ -52,6 +54,7 @@
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
     "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
     "crypto-browserify": "^3.12.0",
     "css-loader": "^7.1.2",
     "electron": "^31.3.1",

@@ -1,7 +1,6 @@
 import {app, BrowserWindow, globalShortcut, ipcMain, Menu, Tray} from 'electron';
 import path from 'path';
 import {fileURLToPath} from 'url';
-
 import {
     addTrackToLibrary,
     extractMusicMeta,
@@ -9,13 +8,12 @@ import {
     getPlaylists,
     parseTrackInfo,
 } from '../services/playlistService.js';
+import {isPortOccupied} from "../utils/netUtils.js";
 import {loadPlayer, savePlayer} from '../services/playerService.js';
 import {updateLocalLibrary} from '../services/localLibraryService.js';
 import {getMusicInfo, getMusicLink, getSearchResults} from '../services/hifiniMusicService.js';
-
-
-
-
+import {fork} from 'child_process';
+import * as net from "node:net";
 // 获取当前文件的目录名
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,14 +22,17 @@ console.log('当前文件目录:', __dirname);
 let mainWindow;   // 主窗口
 let tray = null;  // 系统托盘图标
 let isQuitting = false; // 标志位，标识应用是否正在退出
-
+let proxyProcess = null; // 代理服务器进程
 const environment = process.env.NODE_ENV
 
-console.log('当前环境:', environment);
-const dataPath = app.getPath('userData');
+const dataPath = environment === 'development' ? path.join(__dirname, '..', '..', 'data') : path.join(app.getPath('userData'), 'data');
+console.log(`当前环境: ${environment}`);
+console.log('当前数据目录:', dataPath);
 
-
-
+// 定义需要的各种路径
+const playlistsDir = path.join(dataPath, 'playlists');
+const playerStateDumpFile = path.join(dataPath, 'playerState.json');
+const dbFile = path.join(dataPath, 'database.sqlite');
 
 // 创建主窗口的函数
 function createWindow() {
@@ -49,7 +50,9 @@ function createWindow() {
     });
 
     mainWindow.loadFile('src/index.html'); // 加载主界面 HTML 文件
-    mainWindow.webContents.openDevTools(); // 打开开发者工具
+    if (environment === 'development') {
+        mainWindow.webContents.openDevTools(); // 打开开发者工具
+    }
 
     // 监听窗口控制事件（最小化、最大化、关闭）
     ipcMain.on('window-controls', (event, action) => {
@@ -85,12 +88,12 @@ function createWindow() {
 
     // 监听获取歌单事件
     ipcMain.handle('get-playlists', () => {
-        return getPlaylists();
+        return getPlaylists(playlistsDir);
     });
 
     // 监听获取播放器状态事件
     ipcMain.handle('player-state', () => {
-        return loadPlayer();
+        return loadPlayer(playerStateDumpFile);
     });
 
     // 监听获取曲目信息事件
@@ -100,7 +103,7 @@ function createWindow() {
                 const metaData = await extractMusicMeta(file_path);
                 return parseTrackInfo(metaData);
             } else if (data_href) {
-                return await getMusicInfo(data_href);
+                return await getMusicInfo(data_href, dbFile);
             } else {
                 console.error('Error in get-track-info: no file_path or data_href provided');
             }
@@ -140,6 +143,10 @@ function createWindow() {
             "added_at": new Date().toISOString(),
         };
         addTrackToLibrary(tk);
+    });
+
+    ipcMain.handle('get-user-data-path', async (event) => {
+        return dataPath;
     });
 
 
@@ -270,9 +277,34 @@ function unregisterGlobalShortcuts() {
     console.log('所有全局快捷键已注销');
 }
 
+// 管理代理子进程
+async function startProxyProcess() {
+    const isOccupied = await isPortOccupied(3000);
+    if (isOccupied) {
+        console.error('端口 3000 已被占用');
+        return;
+    }
+    proxyProcess = fork(path.join(__dirname, '..', 'proxy.js'), [], {
+        env: {...process.env, DATA_PATH: dataPath},
+        stdio: 'inherit',
+    });
+
+
+    console.log('代理进程已启动');
+}
+
+// 停止代理子进程
+function stopProxyProcess() {
+    if (proxyProcess) {
+        proxyProcess.kill();
+        proxyProcess = null;
+        console.log('代理进程已停止');
+    }
+}
 
 // 应用准备就绪时调用
 app.whenReady().then(() => {
+    startProxyProcess();       // 启动代理服务器
     createWindow();           // 创建主窗口
     createTray();             // 创建系统托盘
     registerGlobalShortcuts(); // 注册全局快捷键
@@ -284,11 +316,17 @@ app.whenReady().then(() => {
             createWindow();
         }
     });
+
+
 });
 
 // 当应用即将退出时，清理资源
+
+
 app.on('before-quit', () => {
+    isQuitting = true;
     if (tray) tray.destroy(); // 销毁托盘图标
+    stopProxyProcess();        // 停止代理进程
 });
 
 // 应用退出时注销全局快捷键
