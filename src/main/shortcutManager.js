@@ -46,8 +46,6 @@ function registerGlobalShortcuts(mainWindow) {
     });
 
 
-
-
 }
 
 function unregisterGlobalShortcuts() {

@@ -1,6 +1,3 @@
-
-
-
 fetch('https://m.hifini.com/music/your-audio-file.m4a', {
     method: 'GET',
     headers: {
@@ -20,15 +17,15 @@ fetch('https://m.hifini.com/music/your-audio-file.m4a', {
         'Sec-CH-UA-Platform': '"Windows"'
     }
 })
-.then(response => {
-    if (response.ok) {
-        return response.blob();
-    }
-    throw new Error('Network response was not ok.');
-})
-.then(blob => {
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.play();
-})
-.catch(error => console.error('There was a problem with your fetch operation:', error));
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Network response was not ok.');
+    })
+    .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
+    })
+    .catch(error => console.error('There was a problem with your fetch operation:', error));

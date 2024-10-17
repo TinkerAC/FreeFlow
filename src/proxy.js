@@ -21,7 +21,7 @@ const app = express();
 // 创建一个 GET 接口，接受客户端请求并转发到目标服务器
 app.get('/proxy', async (req, res) => {
     const dataHref = req.query.dataHref; // 从请求中获取 dataHref 参数
-    console.log('代理服务器接收到请求，dataHref:', dataHref);
+    console.log('代理进程接收到请求，dataHref:', dataHref);
     try {
         const musicLink = await getMusicLink(dataHref, dbFile); // 获取音乐链接
         console.log('Music link:', musicLink);

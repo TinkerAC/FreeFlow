@@ -48,7 +48,8 @@ export default function MusicLibrary({
 
                 <div className="flex justify-center items-center flex-col overflow-y-auto">
                     {libraryItems.map((item, index) => (
-                        <div className="w-[4rem] h-[4rem] gap-0.5 flex justify-center items-center rounded-lg hover:bg-item-bg-hover">
+                        <div
+                            className="w-[4rem] h-[4rem] gap-0.5 flex justify-center items-center rounded-lg hover:bg-item-bg-hover">
                             <img
                                 key={index}
                                 src={item?.tracks?.[0]?.cover_src || "../assets/default-playlist-cover.png"}

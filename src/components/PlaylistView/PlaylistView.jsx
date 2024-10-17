@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 import ColorThief from "colorthief"; // 使用 color-thief 来提取主色调
-import { formatTime, timeAgo } from "../../utils/timeUtils.js";
+import {formatTime, timeAgo} from "../../utils/timeUtils.js";
 import "./PlaylistView.css";
 
 const Track = ({
-    track = {},
-    index = 0,
-    addToNext = (track) => {},
-    addToNextAndPlay = (track) => {},
-}) => {
+                   track = {},
+                   index = 0,
+                   addToNext = (track) => {
+                   },
+                   addToNextAndPlay = (track) => {
+                   },
+               }) => {
     const [hovered, setHovered] = useState(false); // Track 鼠标悬停状态
 
     return (
@@ -59,42 +61,44 @@ const Track = ({
 };
 
 export function Playlist({
-    tracks = [],
-    addToNext = () => {},
-    addToNextAndPlay = () => {},
-}) {
+                             tracks = [],
+                             addToNext = () => {
+                             },
+                             addToNextAndPlay = () => {
+                             },
+                         }) {
     return (
         <div className="mt-6 Playlist"> {/* 增加 Playlist 类名 */}
             <table className="w-full text-left">
                 <thead>
-                    <tr className="border-b border-gray-700">
-                        <th className="py-2">#</th>
-                        <th className="py-2">标题</th>
-                        <th className="py-2">专辑</th>
-                        <th className="py-2">添加日期</th>
-                        <th className="py-2">
-                            <i className="fas fa-clock"></i>
-                        </th>
-                    </tr>
+                <tr className="border-b border-gray-700">
+                    <th className="py-2">#</th>
+                    <th className="py-2">标题</th>
+                    <th className="py-2">专辑</th>
+                    <th className="py-2">添加日期</th>
+                    <th className="py-2">
+                        <i className="fas fa-clock"></i>
+                    </th>
+                </tr>
                 </thead>
                 <tbody>
-                    {tracks.length > 0 ? (
-                        tracks.map((track, index) => (
-                            <Track
-                                key={index}
-                                track={track}
-                                index={index}
-                                addToNext={addToNext}
-                                addToNextAndPlay={addToNextAndPlay}
-                            />
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="5" className="text-center py-4">
-                                无曲目可显示
-                            </td>
-                        </tr>
-                    )}
+                {tracks.length > 0 ? (
+                    tracks.map((track, index) => (
+                        <Track
+                            key={index}
+                            track={track}
+                            index={index}
+                            addToNext={addToNext}
+                            addToNextAndPlay={addToNextAndPlay}
+                        />
+                    ))
+                ) : (
+                    <tr>
+                        <td colSpan="5" className="text-center py-4">
+                            无曲目可显示
+                        </td>
+                    </tr>
+                )}
                 </tbody>
             </table>
         </div>
@@ -102,11 +106,14 @@ export function Playlist({
 }
 
 export function PlaylistView({
-    playListInfo = { title: "未知歌单", creater: "未知创建者", tracks: [] },
-    onReplacePlayQueue = () => {},
-    addToNext = () => {},
-    addToNextAndPlay = () => {}
-}) {
+                                 playListInfo = {title: "未知歌单", creater: "未知创建者", tracks: []},
+                                 onReplacePlayQueue = () => {
+                                 },
+                                 addToNext = () => {
+                                 },
+                                 addToNextAndPlay = () => {
+                                 }
+                             }) {
     const coverImage = playListInfo?.tracks?.[0]?.cover_src || "./assets/default-cover.png";
     const [backgroundColor, setBackgroundColor] = useState("#333"); // 默认背景色
 

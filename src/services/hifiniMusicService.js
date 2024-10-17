@@ -1,60 +1,9 @@
 import axios from 'axios';
-import { JSDOM } from 'jsdom';
+import {JSDOM} from 'jsdom';
 import * as cheerio from 'cheerio';
-import sqlite3 from 'sqlite3';
-import path from 'path';
-
+import {getDatabase, dbGet, dbRun, dbAll} from '../utils/dbUtils.js';
 // 数据库连接和辅助函数
-let db;
 
-// dbUtils
-function getDatabase(dbPath) {
-    return new Promise((resolve, reject) => {
-        if (db) {
-            resolve(db);
-        } else {
-            db = new sqlite3.Database(dbPath, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    // 确保表存在
-                    db.run(`CREATE TABLE IF NOT EXISTS hifini_info (
-                        data_href TEXT PRIMARY KEY,
-                        title TEXT,
-                        artist TEXT,
-                        cover_src TEXT,
-                        un_redirected_url TEXT,
-                        cached_at TIMESTAMP
-                    )`, (err) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(db);
-                        }
-                    });
-                }
-            });
-        }
-    });
-}
-
-function dbGet(db, sql, params) {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
-}
-
-function dbRun(db, sql, params) {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function (err) {
-            if (err) reject(err);
-            else resolve(this);
-        });
-    });
-}
 
 // 接受关键词并搜索，返回歌曲结果的 JSON 对象
 async function search(keyword) {
@@ -73,7 +22,7 @@ async function search(keyword) {
         const isExpired = title.includes('失效') ? 1 : 0;
         const heat = parseInt($li('span.eye.comment-o.ml-2.hidden-sm.d-none').text().trim(), 10) || 0;
 
-        return { dataHref, heat, title, isAlbum, formats, isExpired };
+        return {dataHref, heat, title, isAlbum, formats, isExpired};
     };
 
     const searchUrl = `https://hifini.com/search-${encodeURIComponent(keyword)}-1.htm`;
@@ -98,7 +47,7 @@ async function search(keyword) {
 async function getRedirectUrl(url) {
     try {
         const response = await axios.head(url, {
-            headers: { referer: 'https://www.hifini.com' },
+            headers: {referer: 'https://www.hifini.com'},
             maxRedirects: 5 // 设置为你想要的重定向次数限制
         });
         return response.request.res.responseUrl; // 获取最终重定向后的 URL
@@ -149,7 +98,7 @@ export async function getMusicLink(dataHref, dbPath) {
         let un_redirected_url;
 
         if (row) {
-            const { un_redirected_url: cachedUrl, cached_at } = row;
+            const {un_redirected_url: cachedUrl, cached_at} = row;
             const currentDate = new Date().toISOString().split('T')[0];
 
             if (cached_at && cached_at.startsWith(currentDate)) {
@@ -181,12 +130,12 @@ export async function getMusicInfo(dataHref, dbPath) {
         const row = await dbGet(db, 'SELECT title, artist, cover_src, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
 
         if (row) {
-            const { title, artist, cover_src, cached_at } = row;
+            const {title, artist, cover_src, cached_at} = row;
             const currentDate = new Date().toISOString().split('T')[0];
 
             if (cached_at && cached_at.startsWith(currentDate)) {
-                console.log("从数据库中获取有效缓存的音乐信息:", { data_href: dataHref, title, artist, cover_src });
-                return { data_href: dataHref, title, artist, cover_src };
+                console.log("从数据库中获取有效缓存的音乐信息:", {data_href: dataHref, title, artist, cover_src});
+                return {data_href: dataHref, title, artist, cover_src};
             } else {
                 const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
                 console.log("从数据库中获取过期缓存的音乐信息，已更新并保存:", {
@@ -195,7 +144,7 @@ export async function getMusicInfo(dataHref, dbPath) {
                     artist: data.artist,
                     cover_src: data.cover_src
                 });
-                return { data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src };
+                return {data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src};
             }
         } else {
             const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
@@ -205,7 +154,7 @@ export async function getMusicInfo(dataHref, dbPath) {
                 artist: data.artist,
                 cover_src: data.cover_src
             });
-            return { data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src };
+            return {data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src};
         }
 
     } catch (error) {
@@ -220,7 +169,7 @@ async function fetchAndSaveMusicInfo(dataHref, dbPath) {
         const db = await getDatabase(dbPath);
 
         const html = await axios.get("https://hifini.com/" + dataHref, {
-            headers: { referer: 'https://www.hifini.com' }
+            headers: {referer: 'https://www.hifini.com'}
         }).then(response => response.data);
 
         const dom = new JSDOM(html);
@@ -281,7 +230,7 @@ async function fetchAndSaveMusicInfo(dataHref, dbPath) {
                         );
                     }
 
-                    return { data_href: dataHref, title, artist, cover_src, un_redirected_url };
+                    return {data_href: dataHref, title, artist, cover_src, un_redirected_url};
                 }
             }
         }

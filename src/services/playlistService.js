@@ -1,14 +1,14 @@
 import fs from 'fs';
 import * as mm from 'music-metadata';
 import path from 'path';
-import { getSearchResults } from "./hifiniMusicService.js";
+import {getSearchResults} from "./hifiniMusicService.js";
 
 // 获取歌单列表
 function getPlaylists(playlistsDir) {
     try {
         // 检查目录是否存在，如果不存在则创建
         if (!fs.existsSync(playlistsDir)) {
-            fs.mkdirSync(playlistsDir, { recursive: true }); // 递归创建目录
+            fs.mkdirSync(playlistsDir, {recursive: true}); // 递归创建目录
             console.log('Playlists directory created.');
         }
 
@@ -110,7 +110,7 @@ function creatNewEmptyPlaylist(playlistsDir) {
 
     // 确保目录存在
     if (!fs.existsSync(playlistsDir)) {
-        fs.mkdirSync(playlistsDir, { recursive: true });
+        fs.mkdirSync(playlistsDir, {recursive: true});
     }
 
     // 将歌单保存为 JSON 文件
@@ -138,7 +138,7 @@ async function importPlaylistFromList(playlist, playlistsDir) {
     // 从列表中提取歌曲信息
     const unbind_tracks = playlist.split('\n').map(line => {
         const [title, artist] = line.split('-').map(s => s.trim());
-        return { title, artist };
+        return {title, artist};
     });
 
     const length = unbind_tracks.length;
@@ -168,7 +168,7 @@ async function importPlaylistFromList(playlist, playlistsDir) {
 
     // 确保目录存在
     if (!fs.existsSync(playlistsDir)) {
-        fs.mkdirSync(playlistsDir, { recursive: true });
+        fs.mkdirSync(playlistsDir, {recursive: true});
     }
 
     // 将歌单保存为 JSON 文件

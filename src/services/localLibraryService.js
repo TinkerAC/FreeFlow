@@ -26,7 +26,7 @@ const loadExistingLibrary = async (libraryPath) => {
             return null;
         }
     }
-    return { tracks: [] };
+    return {tracks: []};
 };
 
 export const updateLocalLibrary = async () => {
@@ -74,7 +74,7 @@ export const updateLocalLibrary = async () => {
             for (const directoryPath of paths) {
                 if (await fileExists(directoryPath)) {
                     try {
-                        const files = await fs.readdir(directoryPath, { withFileTypes: true });
+                        const files = await fs.readdir(directoryPath, {withFileTypes: true});
 
                         for (const dirent of files) {
                             if (dirent.isFile()) {
@@ -107,13 +107,13 @@ export const updateLocalLibrary = async () => {
 
         // 将更新后的音乐库写入JSON文件的函数
         const writeLocalLibrary = async (tracks) => {
-            const library = { tracks };
+            const library = {tracks};
 
             try {
                 // 确保目录存在
                 const libraryDir = path.dirname(libraryPath);
                 if (!await fileExists(libraryDir)) {
-                    await fs.mkdir(libraryDir, { recursive: true });
+                    await fs.mkdir(libraryDir, {recursive: true});
                 }
 
                 await fs.writeFile(libraryPath, JSON.stringify(library, null, 2), 'utf8');

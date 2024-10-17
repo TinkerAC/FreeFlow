@@ -3,7 +3,7 @@
     /*background-color: #1DB954;*/
     color: white;
     border-radius: 0.5rem;
-    flex-grow: 1;  /* 填充父容器 */
+    flex-grow: 1; /* 填充父容器 */
     overflow: auto; /* 显示滚动条 */
     height: 100%;
     width: 100%;

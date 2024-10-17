@@ -1,17 +1,17 @@
 import React from 'react';
 import './Maincontent.css';
 import NetSearchResultView from "../SearchResultView/SearchResultView.jsx";
-import { PlaylistView } from "../PlaylistView/PlaylistView.jsx";
+import {PlaylistView} from "../PlaylistView/PlaylistView.jsx";
 
 export default function Maincontent({
-    view,
-    selectedPlaylistInfo,
-    onReplacePlayQueue,
-    onAddToNext,
-    onAddToNextAndPlay,
-    searchResults,
-    refreshPlaylists
-}) {
+                                        view,
+                                        selectedPlaylistInfo,
+                                        onReplacePlayQueue,
+                                        onAddToNext,
+                                        onAddToNextAndPlay,
+                                        searchResults,
+                                        refreshPlaylists
+                                    }) {
     // Render different views inside the main content container
     let viewComponent;
     if (view === "playlist") {

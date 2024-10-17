@@ -24,7 +24,7 @@ export default function Playerbar({
                                       },
                                       onToggleRightContent = () => {
                                       },
-                                        volumeRef = {current: 0.5}
+                                      volumeRef = {current: 0.5}
                                   }) {
     const handleSeekTo = (event) => {
         const newTime = parseFloat(event.target.value);

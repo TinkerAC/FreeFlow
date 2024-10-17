@@ -7,8 +7,8 @@ export default async function getAudioSrc(track) {
             // 如果存在 file_path，则直接返回本地文件路径
             return filePath;
         } else if (dataHref) {
-            // 如果存在 datahref，则使用代理服务器发送请求
-            console.log("正在使用代理服务器加载音频文件...,请求Track:", track);
+            // 如果存在 datahref，则使用代理进程发送请求
+            console.log("正在使用代理进程加载音频文件...,请求Track:", track);
             const proxyUrl = `http://localhost:3000/proxy?dataHref=${encodeURIComponent(dataHref)}`;
 
             return new Promise((resolve, reject) => {
@@ -40,9 +40,6 @@ export default async function getAudioSrc(track) {
         throw new Error(`Error loading audio: ${error.message}`);
     }
 }
-
-
-
 
 
 // 使用示例

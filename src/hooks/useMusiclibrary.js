@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 
-async function fetchTrackInfo(file_path,data_href) {
-    return await window.playerAPI.getTrackInfo(file_path,data_href);
+async function fetchTrackInfo(file_path, data_href) {
+    return await window.playerAPI.getTrackInfo(file_path, data_href);
 }
 
 function useMusicLibrary() {
@@ -11,35 +11,35 @@ function useMusicLibrary() {
 
     const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState(false); // 控制音乐库折叠状态
     const fetchAndCompletePlaylists = async () => {
-            try {
-                const playlists = await window.electronAPI.getPlaylists(); // 调用 electron API 获取歌单
-                console.log('初始化歌单:', playlists);
+        try {
+            const playlists = await window.electronAPI.getPlaylists(); // 调用 electron API 获取歌单
+            console.log('初始化歌单:', playlists);
 
-                // 并行获取每个歌曲的完整信息
-                const completedPlaylists = await Promise.all(
-                    playlists.map(async (playlist) => {
-                        const tracksWithInfo = await Promise.all(
-                            playlist.tracks.map(async (track) => {
-                                const trackInfo = await fetchTrackInfo(track.file_path,track.data_href);
-                                return {
-                                    ...track,
-                                    ...trackInfo
-                                };
-                            })
-                        );
-                        return {
-                            ...playlist,
-                            tracks: tracksWithInfo
-                        };
-                    })
-                );
+            // 并行获取每个歌曲的完整信息
+            const completedPlaylists = await Promise.all(
+                playlists.map(async (playlist) => {
+                    const tracksWithInfo = await Promise.all(
+                        playlist.tracks.map(async (track) => {
+                            const trackInfo = await fetchTrackInfo(track.file_path, track.data_href);
+                            return {
+                                ...track,
+                                ...trackInfo
+                            };
+                        })
+                    );
+                    return {
+                        ...playlist,
+                        tracks: tracksWithInfo
+                    };
+                })
+            );
 
-                setPlaylists(completedPlaylists);
-                console.log('完成歌单:', completedPlaylists);
-            } catch (error) {
-                console.error('Failed to fetch and complete playlists:', error);
-            }
-        };
+            setPlaylists(completedPlaylists);
+            console.log('完成歌单:', completedPlaylists);
+        } catch (error) {
+            console.error('Failed to fetch and complete playlists:', error);
+        }
+    };
 
     // 加载并完善歌单信息
     useEffect(() => {

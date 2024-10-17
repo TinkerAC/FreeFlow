@@ -6,4 +6,4 @@ import App from './App.js';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 // 使用 createRoot 渲染应用
-root.render(<App />);
+root.render(<App/>);
