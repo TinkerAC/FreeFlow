@@ -82,6 +82,7 @@
     "colorthief": "^2.6.0",
     "config": "^3.3.12",
     "deep-equal": "^2.2.3",
+    "electron-localshortcut": "^1.1.1",
     "express": "^4.19.2",
     "js-yaml": "^4.1.0",
     "jsdom": "^24.1.1",
