@@ -110,7 +110,7 @@ function usePlayer(audioRef) {
 
             if (targetIndex === indexListRef.current[currentIndexRef.current]) {
                 // 曲目已在当前播放位置
-                return;
+
             } else {
                 // 将曲目移动到下一首位置
                 const updatedIndexList = [...indexListRef.current];

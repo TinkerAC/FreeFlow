@@ -10,7 +10,10 @@ export default function Maincontent({
                                         onAddToNext,
                                         onAddToNextAndPlay,
                                         searchResults,
-                                        refreshPlaylists
+                                        refreshPlaylists,
+                                        playlists,
+
+
                                     }) {
     // Render different views inside the main content container
     let viewComponent;
@@ -21,6 +24,7 @@ export default function Maincontent({
                 onReplacePlayQueue={onReplacePlayQueue}
                 addToNext={onAddToNext}
                 addToNextAndPlay={onAddToNextAndPlay}
+                refreshPlaylist={refreshPlaylists}
             />
         );
     } else if (view === "searchResults") {
@@ -31,6 +35,7 @@ export default function Maincontent({
                 addToNext={onAddToNext}
                 addToNextAndPlay={onAddToNextAndPlay}
                 refreshPlaylists={refreshPlaylists}
+                playlists={playlists}
             />
         );
     }

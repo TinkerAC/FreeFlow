@@ -2,21 +2,21 @@
 import {app, ipcMain} from 'electron';
 import {
     addTrackToLibrary,
-    extractMusicMeta,
+    addTrackToPlaylist,
     creatNewEmptyPlaylist,
+    extractMusicMeta,
     getPlaylists,
+    modifyPlaylist,
     parseTrackInfo,
 } from '../services/playlistService.js';
 import {loadPlayer, savePlayer} from '../services/playerService.js';
-import {updateLocalLibrary} from '../services/localLibraryService.js';
-import {
-    getMusicInfo,
-    getMusicLink,
-    getSearchResults,
-} from '../services/hifiniMusicService.js';
-import {dataPath, playlistsDir, playerStateDumpFile, dbFile} from './pathConfig.js';
+import {getMusicInfo, getMusicLink, getSearchResults,} from '../services/hifiniMusicService.js';
+import {dataPath, playerStateDumpFile} from './pathConfig.js';
+import {dbGet} from "../utils/dbUtils.js";
+import {isTrackInLibrary} from "../services/libraryService.js";
 
-function setupIpcHandlers(mainWindow) {
+
+function setupIpcHandlers(mainWindow, db) {
     // 窗口控制事件
     ipcMain.on('window-controls', (event, action) => {
         switch (action) {
@@ -41,7 +41,7 @@ function setupIpcHandlers(mainWindow) {
     // 创建歌单事件
     ipcMain.on('create-playlists', (event) => {
         try {
-            creatNewEmptyPlaylist();
+            creatNewEmptyPlaylist(dbFile, "杨姝");
             event.reply('playlist-created');
         } catch (error) {
             console.error('Error in create-playlists:', error);
@@ -50,9 +50,15 @@ function setupIpcHandlers(mainWindow) {
     });
 
     // 获取歌单事件
-    ipcMain.handle('get-playlists', () => {
-        return getPlaylists(playlistsDir);
+    ipcMain.handle('get-playlists', async (event) => {
+        try {
+            return await getPlaylists(db);
+        } catch (error) {
+            console.error('Error in get-playlists:', error);
+            throw error;
+        }
     });
+
 
     // 获取播放器状态事件
     ipcMain.handle('player-state', () => {
@@ -66,7 +72,7 @@ function setupIpcHandlers(mainWindow) {
                 const metaData = await extractMusicMeta(file_path);
                 return parseTrackInfo(metaData);
             } else if (data_href) {
-                return await getMusicInfo(data_href, dbFile);
+                return await getMusicInfo(data_href, db);
             } else {
                 console.error('Error in get-track-info: no file_path or data_href provided');
             }
@@ -78,8 +84,9 @@ function setupIpcHandlers(mainWindow) {
 
     // 搜索音乐事件
     ipcMain.handle('get-search-results', async (event, searchTerm) => {
+        console.log('后端收到搜索请求:', searchTerm);
         try {
-            const results = await getSearchResults(searchTerm);
+            const results = await getSearchResults(searchTerm, db);
             console.log('搜索结果:', results);
             return results;
         } catch (error) {
@@ -87,6 +94,7 @@ function setupIpcHandlers(mainWindow) {
             throw error;
         }
     });
+
 
     // 解析音乐链接事件
     ipcMain.handle('get-music-link', async (event, dataHref) => {
@@ -98,15 +106,53 @@ function setupIpcHandlers(mainWindow) {
         }
     });
 
-    // 添加音乐到歌单事件
-    ipcMain.handle('add-track-to-library', (event, track) => {
+    // 添加音乐到库事件
+    ipcMain.handle('add-track-to-library', async (event, track) => {
         const tk = {
             data_href: track.data_href,
             file_path: track.file_path,
-            added_at: new Date().toISOString(),
         };
-        addTrackToLibrary(tk);
+
+
+        const track_id = await isTrackInLibrary(tk, db);
+
+        if (track_id) {
+            console.log('待添加的音乐已在库中，track_id:', track_id);
+            return track_id;
+        }
+
+        return addTrackToLibrary(tk, db);
     });
+
+    // 添加音乐到歌单事件
+    ipcMain.handle('add-track-to-playlist', async (event, track, playlistId) => {
+        let trackId; // 用 let 以便后续赋值
+
+        try {
+            // 先检查歌曲是否在库中（假设 db.get 是异步的）
+            const row = await dbGet(db, 'SELECT track_id FROM library WHERE data_href = ? OR file_path = ?', [track.data_href, track.file_path]);
+
+            if (!row) {
+                // 如果不在库中，先添加到库
+                trackId = await addTrackToLibrary(track, db);
+                const str = JSON.stringify(trackId);
+                console.log(`待插入歌单歌曲不在库中，已添加到库，track_id: ${str}`);
+            } else {
+                trackId = row.track_id;
+                console.log(`待插入歌单的歌曲已在库中，track_id: ${JSON.stringify(trackId)}`);
+                console.log('row:', row);
+            }
+
+            // 添加到歌单
+            await addTrackToPlaylist(db, playlistId, trackId);
+            return trackId;
+
+        } catch (error) {
+            console.error('Error in add-track-to-playlist:', error);
+            throw error;
+        }
+    });
+
 
     ipcMain.handle('get-user-data-path', async (event) => {
         return dataPath;
@@ -118,6 +164,22 @@ function setupIpcHandlers(mainWindow) {
         savePlayer(state);
         app.quit();
     });
+
+
+    // 修改歌单事件
+
+    ipcMain.handle('modify-playlist', async (event, playlistId, playlist_title, playlist_description) => {
+        try {
+            // 修改歌单信息
+            await modifyPlaylist(db, playlistId, playlist_title, playlist_description);
+            return true;
+        } catch (error) {
+            console.error('Error in modify-playlist:', error);
+            throw error;
+        }
+    });
+
+
 }
 
 export {setupIpcHandlers};

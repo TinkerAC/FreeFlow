@@ -86,7 +86,7 @@ export const updateLocalLibrary = async () => {
                                         // 仅当文件不存在于音乐库中时才添加新的文件数据
                                         const newFile = {
                                             file_path: normalizedPath,
-                                            added_at: getCurrentTimestamp(),
+                                            created_at: getCurrentTimestamp(),
                                         };
                                         tracks.push(newFile);
                                         newTracks.push(newFile); // 记录新增文件信息

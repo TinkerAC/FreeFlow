@@ -4,82 +4,154 @@ import {promisify} from 'util';
 // 单例数据库实例
 let dbInstance = null;
 
-/**
- * 初始化数据库并创建必要的表
- * @param {string} dbPath - 数据库文件路径
- * @returns {Promise<sqlite3.Database>} - 返回数据库实例
- */
-function initDataBase(dbPath) {
+
+async function initDataBase(dbPath) {
     return new Promise((resolve, reject) => {
         // 打开数据库连接
-        const db = new sqlite3.Database(dbPath, (err) => {
+        const db = new sqlite3.Database(dbPath, async (err) => {
             if (err) {
                 console.error('无法连接到数据库:', err.message);
                 return reject(err);
             }
             console.log('已连接到数据库。');
 
-            // 使用 serialize 确保表按顺序创建
-            db.serialize(() => {
-                // 将 db.run 进行 promisify 以便使用 Promise
+            // 启用外键约束
+            db.run('PRAGMA foreign_keys = ON;', async (err) => {
+                if (err) {
+                    console.error('无法启用外键约束:', err.message);
+                    return reject(err);
+                }
+
+                // 将 db.run 进行 promisify 以便使用 async/await
                 const run = promisify(db.run.bind(db));
 
-                // 创建 hifini_info 表
-                const createHifiniInfoTable = `
-                    CREATE TABLE IF NOT EXISTS hifini_info (
-                        data_href TEXT PRIMARY KEY,
-                        title TEXT,
-                        artist TEXT,
-                        cover_src TEXT,
-                        un_redirected_url TEXT,
-                        cached_at TIMESTAMP
-                    )
-                `;
+                try {
+                    // 创建 hifini_info 表
+                    const createHifiniInfoTable = `
+                        CREATE TABLE IF NOT EXISTS hifini_info (
+                            data_href TEXT PRIMARY KEY,
+                            title TEXT,
+                            artist TEXT,
+                            cover_src TEXT,
+                            un_redirected_url TEXT,
+                            cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    `;
+                    await run(createHifiniInfoTable);
+                    console.log("hifini_info 表创建成功或已存在。");
 
-                // 创建 playlists 表
-                const createPlaylistsTable = `
-                    CREATE TABLE IF NOT EXISTS playlists (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        playlistCover TEXT,
-                        title TEXT NOT NULL,
-                        creater TEXT NOT NULL,
-                        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )
-                `;
+                    // 创建 playlists 表
+                    const createPlaylistsTable = `
+                        CREATE TABLE IF NOT EXISTS playlists (
+                            playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            playlist_cover TEXT,
+                            title TEXT NOT NULL,
+                            creator TEXT NOT NULL,
+                            description TEXT,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            modified_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        )
+                    `;
+                    await run(createPlaylistsTable);
+                    console.log("playlists 表创建成功或已存在。");
 
-                // 创建 playlist_detail 表
-                const createPlaylistDetailTable = `
-                    CREATE TABLE IF NOT EXISTS playlist_detail (
-                        playlist_id INTEGER,
-                        track_id INTEGER,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (playlist_id) REFERENCES playlists(id)
-                    )
-                `;
+                    // 创建 library 表
+                    const createLibraryTable = `
+                        CREATE TABLE IF NOT EXISTS library (
+                            track_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            data_href TEXT,
+                            file_path TEXT,
+                            title TEXT,            
+                            artist TEXT,
+                            album TEXT,
+                            duration INTEGER,
+                            cover_src TEXT,
+                            lyrics TEXT,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            modified_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        )
+                    `;
+                    await run(createLibraryTable);
+                    console.log("library 表创建成功或已存在。");
 
-                // 依次执行表创建语句
-                run(createHifiniInfoTable)
-                    .then(() => {
-                        console.log("hifini_info 表创建成功或已存在。");
-                        return run(createPlaylistsTable);
-                    })
-                    .then(() => {
-                        console.log("playlists 表创建成功或已存在。");
-                        return run(createPlaylistDetailTable);
-                    })
-                    .then(() => {
-                        console.log("playlist_detail 表创建成功或已存在。");
-                        dbInstance = db; // 设置单例实例
-                        resolve(db);
-                    })
-                    .catch((err) => {
-                        console.error('创建表时出错:', err.message);
-                        reject(err);
-                    });
+                    // 创建 playlist_detail 表
+                    const createPlaylistDetailTable = `
+                        CREATE TABLE IF NOT EXISTS playlist_detail (
+                            playlist_id INTEGER,
+                            track_id INTEGER,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            modified_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (playlist_id, track_id),
+                            FOREIGN KEY (playlist_id) REFERENCES playlists(playlist_id) ON DELETE CASCADE ON UPDATE CASCADE,
+                            FOREIGN KEY (track_id) REFERENCES library(track_id) ON DELETE CASCADE ON UPDATE CASCADE
+                        )
+                    `;
+                    await run(createPlaylistDetailTable);
+                    console.log("playlist_detail 表创建成功或已存在。");
+
+                    // 为每个表创建触发器，自动更新 modified_at 字段
+                    // hifini_info 表触发器
+                    const createHifiniInfoTrigger = `
+                        CREATE TRIGGER IF NOT EXISTS hifini_info_modified_at
+                        AFTER UPDATE ON hifini_info
+                        FOR EACH ROW
+                        BEGIN
+                            UPDATE hifini_info SET modified_at = CURRENT_TIMESTAMP WHERE data_href = OLD.data_href;
+                        END;
+                    `;
+                    await run(createHifiniInfoTrigger);
+                    console.log("hifini_info 表的 modified_at 触发器创建成功。");
+
+                    // playlists 表触发器
+                    const createPlaylistsTrigger = `
+                        CREATE TRIGGER IF NOT EXISTS playlists_modified_at
+                        AFTER UPDATE ON playlists
+                        FOR EACH ROW
+                        BEGIN
+                            UPDATE playlists SET modified_at = CURRENT_TIMESTAMP WHERE playlist_id = OLD.playlist_id;
+                        END;
+                    `;
+                    await run(createPlaylistsTrigger);
+                    console.log("playlists 表的 modified_at 触发器创建成功。");
+
+                    // library 表触发器
+                    const createLibraryTrigger = `
+                        CREATE TRIGGER IF NOT EXISTS library_modified_at
+                        AFTER UPDATE ON library
+                        FOR EACH ROW
+                        BEGIN
+                            UPDATE library SET modified_at = CURRENT_TIMESTAMP WHERE track_id = OLD.track_id;
+                        END;
+                    `;
+                    await run(createLibraryTrigger);
+                    console.log("library 表的 modified_at 触发器创建成功。");
+
+                    // playlist_detail 表触发器
+                    const createPlaylistDetailTrigger = `
+                        CREATE TRIGGER IF NOT EXISTS playlist_detail_modified_at
+                        AFTER UPDATE ON playlist_detail
+                        FOR EACH ROW
+                        BEGIN
+                            UPDATE playlist_detail SET modified_at = CURRENT_TIMESTAMP WHERE playlist_id = OLD.playlist_id AND track_id = OLD.track_id;
+                        END;
+                    `;
+                    await run(createPlaylistDetailTrigger);
+                    console.log("playlist_detail 表的 modified_at 触发器创建成功。");
+
+                    // 设置单例实例
+                    dbInstance = db;
+
+                    resolve(db);
+                } catch (err) {
+                    console.error('创建表或触发器时出错:', err.message);
+                    reject(err);
+                }
             });
         });
     });
 }
+
 
 /**
  * 获取数据库实例，如果未初始化则进行初始化
@@ -125,7 +197,7 @@ function dbGet(db, sql, params = []) {
  * @param {Array} [params=[]] - 参数
  * @returns {Promise<sqlite3.RunResult>} - 返回 run 操作的结果
  */
-function dbRun(db, sql, params = []) {
+async function dbRun(db, sql, params = []) {
     return new Promise((resolve, reject) => {
         db.run(sql, params, function (err) {
             if (err) {

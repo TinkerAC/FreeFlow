@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import usePlayer from './hooks/usePlayer.js';
 import useMusicLibrary from './hooks/useMusicLibrary.js';
-import useMainWindow from './hooks/useMainWindow.js';  // 导入自定义的 useMainWindow Hook
+import useMainWindow from './hooks/useMainWindow.js'; // 导入自定义的 useMainWindow Hook
 import Headbar from './components/Headbar/Headbar.jsx';
 import Musiclibrary from './components/Musiclibrary/Musiclibrary.jsx';
 import Maincontent from './components/Maincontent/Maincontent.jsx';
@@ -81,10 +81,10 @@ function App() {
         const handleShortcut = (data) => {
             switch (data) {
                 case 'prev':
-                    playPrevious();
+                    playPrevious().then();
                     break;
                 case 'next':
-                    playNext();
+                    playNext().then();
                     break;
                 case 'play-pause':
                     togglePlayPause();
@@ -121,7 +121,6 @@ function App() {
         if (audioElement) {
             // 当音频的元数据加载完成时，更新音频元数据
             const handleLoadedMetadata = () => {
-
                 setCurrentTrackInfo({
                     ...currentTrackInfoRef.current,
                     duration: audioElement.duration,
@@ -182,6 +181,7 @@ function App() {
                     onAddToNextAndPlay={addToNextAndPlay}
                     searchResults={searchResults}
                     refreshPlaylists={refreshPlaylists}
+                    playlists={playlists}
                 />
                 {/* 右侧栏 */}
                 {isRightContentVisible && (

@@ -2,3 +2,11 @@
 .Playlist::-webkit-scrollbar {
     display: none;
 }
+
+
+/* src/components/PlaylistView/PlaylistView.css */
+
+.PlaylistView::-webkit-scrollbar {
+    display: none;
+}
+

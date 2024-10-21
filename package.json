@@ -1,5 +1,5 @@
 {
-  "name": "spotify-clone",
+  "name": "free-flow",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -14,8 +14,8 @@
     "electron:build": "electron-builder"
   },
   "build": {
-    "appId": "com.zufe.spotify",
-    "productName": "Spotify-Clone",
+    "appId": "com.example.app",
+    "productName": "FreeFlow",
     "copyright": "Copyright © 2024",
     "directories": {
       "output": "dist"
@@ -25,11 +25,12 @@
       "src/**/*",
       "config/**/*",
       "package.json",
-      "public/**/*"
+      "public/**/*",
+      "assets/**/*"
     ],
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico"
+      "icon": "assets/icon.png"
     },
     "nsis": {
       "oneClick": false,
@@ -88,11 +89,16 @@
     "jsdom": "^24.1.1",
     "music-metadata": "^10.0.1",
     "node-fetch": "^3.3.2",
+    "pinyin": "^4.0.0-alpha.2",
+    "pinyin-pro": "^3.25.0",
     "postcss": "^8.4.41",
+    "prop-types": "^15.8.1",
+    "random-useragent": "^0.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-usestateref": "^1.0.9",
     "request": "^2.88.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "tiny-pinyin": "^1.3.2"
   }
 }

@@ -34,6 +34,9 @@ export default function MusicLibrary({
         onSelectItem(index);
     };
 
+
+    // console.log(libraryItems);
+
     if (isMusicLibraryCollapsed) {
         // 折叠状态下的渲染
         return (
@@ -51,7 +54,7 @@ export default function MusicLibrary({
                         <div
                             className="w-[4rem] h-[4rem] gap-0.5 flex justify-center items-center rounded-lg hover:bg-item-bg-hover">
                             <img
-                                key={index}
+                                key={item.playlist_id}
                                 src={item?.tracks?.[0]?.cover_src || "../assets/default-playlist-cover.png"}
                                 alt={item.title}
                                 className="w-12 h-12 m-1 rounded-md cursor-pointer"
@@ -97,9 +100,10 @@ export default function MusicLibrary({
                     </div>
                     {/* 设置固定高度，确保滚动生效 */}
                     <div className="flex flex-col gap-2 flex-grow overflow-x-hidden overflow-y-auto">
-                        {libraryItems.map((item, index) => (
+
+                        {(libraryItems !== undefined && libraryItems.length !== 0) ? libraryItems.map((item, index) => (
                             <Item
-                                key={index}
+                                key={item.playlist_id}
                                 imgSrc={item?.tracks?.[0]?.cover_src || "../assets/default-playlist-cover.png"}
                                 altText={item.title}
                                 title={item.title}
@@ -108,7 +112,10 @@ export default function MusicLibrary({
                                 isSelected={selectedItem === index}
                                 onClick={() => handleSelectItem(index)}
                             />
-                        ))}
+                        )) : <div className="text-center text-gray-400">暂无歌单</div>
+
+
+                        }
                     </div>
                 </div>
             </div>

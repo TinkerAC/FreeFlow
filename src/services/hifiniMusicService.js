@@ -1,7 +1,9 @@
 import axios from 'axios';
 import {JSDOM} from 'jsdom';
 import * as cheerio from 'cheerio';
-import {getDatabase, dbGet, dbRun, dbAll} from '../utils/dbUtils.js';
+import {dbGet, dbRun} from '../utils/dbUtils.js';
+import {getRandom} from 'random-useragent';
+
 // 数据库连接和辅助函数
 
 
@@ -30,17 +32,29 @@ async function search(keyword) {
     try {
         const response = await axios.get(searchUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            }
+                'User-Agent': getRandom(),
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Connection': 'keep-alive',
+                'DNT': '1', // 防止部分爬虫检测
+                'Upgrade-Insecure-Requests': '1'
+            },
+            timeout: 10000 // 设置超时时间10秒
         });
 
         const liElements = extractLiElements(response.data);
         return liElements.map(parseLiElement);
 
     } catch (error) {
-        console.error('Error fetching search results:', error);
+        // 检查是否是超时错误
+        if (error.code === 'ECONNABORTED') {
+            console.error('搜索超时:', error.message);
+        } else {
+            console.error('搜索出错:', error);
+        }
         return [];
     }
+
 }
 
 // 获取重定向后的真实播放链接
@@ -90,11 +104,9 @@ function generateParam(data) {
 }
 
 // 获取音乐链接的函数
-export async function getMusicLink(dataHref, dbPath) {
+export async function getMusicLink(dataHref, db) {
     try {
-        const db = await getDatabase(dbPath);
         const row = await dbGet(db, 'SELECT un_redirected_url, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
-
         let un_redirected_url;
 
         if (row) {
@@ -105,12 +117,13 @@ export async function getMusicLink(dataHref, dbPath) {
                 un_redirected_url = cachedUrl;
                 console.log('使用缓存中的未重定向链接加载dataHref:', dataHref, '链接:', un_redirected_url);
             } else {
-                const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
+                const data = await fetchAndSaveMusicInfo(dataHref, db);
                 un_redirected_url = data.un_redirected_url;
             }
         } else {
-            const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
+            const data = await fetchAndSaveMusicInfo(dataHref, db);
             un_redirected_url = data.un_redirected_url;
+
         }
 
         const final_url = await getRedirectUrl(un_redirected_url);
@@ -124,30 +137,29 @@ export async function getMusicLink(dataHref, dbPath) {
 }
 
 // 获取音乐信息的函数
-export async function getMusicInfo(dataHref, dbPath) {
-    try {
-        const db = await getDatabase(dbPath);
-        const row = await dbGet(db, 'SELECT title, artist, cover_src, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
+export async function getMusicInfo(dataHref, db) {
 
+    try {
+        const row = await dbGet(db, 'SELECT title, artist, cover_src, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
         if (row) {
             const {title, artist, cover_src, cached_at} = row;
             const currentDate = new Date().toISOString().split('T')[0];
 
             if (cached_at && cached_at.startsWith(currentDate)) {
-                console.log("从数据库中获取有效缓存的音乐信息:", {data_href: dataHref, title, artist, cover_src});
+                // console.debug("从数据库中获取有效缓存的音乐信息:", {data_href: dataHref, title, artist, cover_src});
                 return {data_href: dataHref, title, artist, cover_src};
             } else {
-                const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
-                console.log("从数据库中获取过期缓存的音乐信息，已更新并保存:", {
-                    data_href: dataHref,
-                    title: data.title,
-                    artist: data.artist,
-                    cover_src: data.cover_src
-                });
+                const data = await fetchAndSaveMusicInfo(dataHref, db);
+                // console.debug("从数据库中获取过期缓存的音乐信息，已更新并保存:", {
+                //     data_href: dataHref,
+                //     title: data.title,
+                //     artist: data.artist,
+                //     cover_src: data.cover_src
+                // });
                 return {data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src};
             }
         } else {
-            const data = await fetchAndSaveMusicInfo(dataHref, dbPath);
+            const data = await fetchAndSaveMusicInfo(dataHref, db);
             console.log("缓存中不存在音乐信息，已获取并保存:", {
                 data_href: dataHref,
                 title: data.title,
@@ -160,13 +172,14 @@ export async function getMusicInfo(dataHref, dbPath) {
     } catch (error) {
         console.error('Error getting music info:', error);
         throw error;
+    } finally {
+        // db.close();
     }
 }
 
 // 抓取并保存音乐信息的辅助函数
-async function fetchAndSaveMusicInfo(dataHref, dbPath) {
+async function fetchAndSaveMusicInfo(dataHref, db) {
     try {
-        const db = await getDatabase(dbPath);
 
         const html = await axios.get("https://hifini.com/" + dataHref, {
             headers: {referer: 'https://www.hifini.com'}
@@ -242,35 +255,63 @@ async function fetchAndSaveMusicInfo(dataHref, dbPath) {
 }
 
 // 过滤、排序结果并获取音乐信息
-export async function getSearchResults(keyword, dbPath) {
+export async function getSearchResults(keyword, db) {
     try {
+        console.log("主进程正在执行搜索操作，关键词:", keyword);
+
+        // 执行搜索操作并记录结果数量
         const searchResults = await search(keyword);
+        console.info(`搜索操作完成，结果数量: ${searchResults ? searchResults.length : 0}`);
+
+        // 检查搜索结果是否有效
         if (!Array.isArray(searchResults) || searchResults.length === 0) {
-            console.error('搜索结果不是有效的数组或为空');
+            console.warn('搜索结果不是有效的数组或为空，返回空数组');
             return [];
         }
 
+        // 过滤非专辑结果并按热度排序
         const filteredResults = searchResults
-            .filter(result => result.isAlbum === 0)
+            .filter(result => result.isAlbum === 0);
+        console.info(`过滤后结果数量: ${filteredResults.length}`);
+
+        if (filteredResults.length === 0) {
+            console.warn('过滤后的结果为空，返回空数组');
+            return [];
+        }
+
+        // 按热度排序并截取前5个
+        const sortedResults = filteredResults
             .sort((a, b) => b.heat - a.heat)
             .slice(0, 5);
+        console.info(`排序并截取前5个结果，准备获取详细信息`);
 
-        const musicInfos = await Promise.all(filteredResults.map(async (result) => {
+        // 获取每个结果的详细信息
+        const musicInfos = await Promise.all(sortedResults.map(async (result, index) => {
             try {
-                return await getMusicInfo(result.dataHref, dbPath);
+                console.log(`正在获取第 ${index + 1} 个结果的音乐信息，链接: ${result.dataHref}`);
+                const musicInfo = await getMusicInfo(result.dataHref, db);
+                console.info(`第 ${index + 1} 个结果的音乐信息获取成功`);
+                return musicInfo;
+
             } catch (error) {
-                console.error(`获取音乐信息失败: ${error.message}`);
+                console.log(`未在${result.dataHref}中找到可播放的音乐`);
                 return null;
             }
         }));
 
-        return musicInfos.filter(info => info);
+        // 过滤掉获取失败的音乐信息
+        const validMusicInfos = musicInfos.filter(info => info);
+        console.info(`成功获取到 ${validMusicInfos.length} 个有效的音乐信息`);
+
+        return validMusicInfos;
 
     } catch (error) {
-        console.error('Error in getSearchResults:', error);
+        console.error('getSearchResults 函数执行出错:', error);
         return [];
     }
 }
 
+
+//
 // 示例调用
-// fetchAndSaveMusicInfo('thread-897.htm', 'path/to/your/database.sqlite');
+// getSearchResults('北京欢迎你', await getDatabase("D:\\Workplace\\NodeProject\\Spotify\\data\\database.sqlite")).then(console.log)

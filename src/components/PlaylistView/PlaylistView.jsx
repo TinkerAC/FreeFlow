@@ -1,121 +1,37 @@
-import React, {useState, useEffect} from "react";
-import ColorThief from "colorthief"; // 使用 color-thief 来提取主色调
-import {formatTime, timeAgo} from "../../utils/timeUtils.js";
+import React, {useEffect, useState} from "react";
+import ColorThief from "colorthief";
+import PropTypes from "prop-types";
 import "./PlaylistView.css";
+import ModalModifyPlaylist from "./ModalModifyPlaylist.jsx";
+import {Playlist} from "./Playlist.jsx";
 
-const Track = ({
-                   track = {},
-                   index = 0,
-                   addToNext = (track) => {
-                   },
-                   addToNextAndPlay = (track) => {
-                   },
-               }) => {
-    const [hovered, setHovered] = useState(false); // Track 鼠标悬停状态
-
-    return (
-        <tr
-            className={`${index === 0 ? "border-t border-gray-700" : ""} hover:bg-[#2A2A2A]`}
-            onDoubleClick={() => addToNext(track)}
-        >
-            <td
-                className="py-2 cursor-pointer"
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
-            >
-                {hovered ? (
-                    <i
-                        className="fas fa-play"
-                        onClick={() => {
-                            addToNextAndPlay(track);
-                        }}
-                    ></i>
-                ) : (
-                    index + 1
-                )}
-            </td>
-
-            <td className="py-2 flex items-center">
-                <img
-                    src={track?.cover_src || "./assets/default-cover.png"}
-                    alt="Album cover"
-                    className="w-10 h-10 mr-4"
-                />
-                <div>
-                    <div className="whitespace-nowrap">{track?.title || "未知标题"}</div>
-                    <div className="text-gray-400 whitespace-nowrap">{track?.artist || "未知艺术家"}</div>
-                </div>
-            </td>
-
-            <td className="py-2 whitespace-nowrap">{track?.album || "未知专辑"}</td>
-
-            <td className="py-2 whitespace-nowrap">
-                {track?.added_at ? timeAgo(track.added_at) : "未知时间"}
-            </td>
-
-            <td className="py-2 whitespace-nowrap">
-                {track?.duration ? formatTime(track.duration) : "未知时长"}
-            </td>
-        </tr>
-    );
-};
-
-export function Playlist({
-                             tracks = [],
-                             addToNext = () => {
-                             },
-                             addToNextAndPlay = () => {
-                             },
-                         }) {
-    return (
-        <div className="mt-6 Playlist"> {/* 增加 Playlist 类名 */}
-            <table className="w-full text-left">
-                <thead>
-                <tr className="border-b border-gray-700">
-                    <th className="py-2">#</th>
-                    <th className="py-2">标题</th>
-                    <th className="py-2">专辑</th>
-                    <th className="py-2">添加日期</th>
-                    <th className="py-2">
-                        <i className="fas fa-clock"></i>
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-                {tracks.length > 0 ? (
-                    tracks.map((track, index) => (
-                        <Track
-                            key={index}
-                            track={track}
-                            index={index}
-                            addToNext={addToNext}
-                            addToNextAndPlay={addToNextAndPlay}
-                        />
-                    ))
-                ) : (
-                    <tr>
-                        <td colSpan="5" className="text-center py-4">
-                            无曲目可显示
-                        </td>
-                    </tr>
-                )}
-                </tbody>
-            </table>
-        </div>
-    );
-}
 
 export function PlaylistView({
-                                 playListInfo = {title: "未知歌单", creater: "未知创建者", tracks: []},
+                                 playListInfo,
                                  onReplacePlayQueue = () => {
                                  },
                                  addToNext = () => {
                                  },
                                  addToNextAndPlay = () => {
-                                 }
+                                 },
+                                 refreshPlaylist = () => {
+                                 },
                              }) {
     const coverImage = playListInfo?.tracks?.[0]?.cover_src || "./assets/default-cover.png";
-    const [backgroundColor, setBackgroundColor] = useState("#333"); // 默认背景色
+    const [backgroundColor, setBackgroundColor] = useState("#333");
+    const [modalVisible, setModalVisible] = useState(false);
+    const [filteredTracks, setFilteredTracks] = useState(playListInfo?.tracks || []);
+    const [searchKeyword, setSearchKeyword] = useState("");
+
+    const openModalModifyPlaylist = () => {
+        setModalVisible(true);
+        console.log("打开修改歌单对话框");
+    };
+
+    const closeModalModifyPlaylist = () => {
+        setModalVisible(false);
+        console.log("关闭修改歌单对话框");
+    };
 
     // 提取封面主色调
     useEffect(() => {
@@ -138,54 +54,167 @@ export function PlaylistView({
         };
     }, [coverImage]);
 
+    // 当 playListInfo 变化时更新过滤后的歌曲列表
+    useEffect(() => {
+        setFilteredTracks(playListInfo?.tracks || []);
+    }, [playListInfo]);
+
+    //保存关键词的钩子
+    useEffect(() => {
+        search(searchKeyword);
+    }, [searchKeyword]);
+
+
+    //实现了歌曲搜索功能
+    const search = (keyword) => {
+        if (!keyword) {
+            setFilteredTracks(playListInfo?.tracks || []);
+            return;
+        }
+
+        const lowerCaseKeyword = keyword.toLowerCase();
+
+        const result = playListInfo?.tracks?.filter((track) => {
+            // 获取歌曲的标题、艺术家和专辑名称
+            const title = track.title || '';
+            const artist = track.artist || '';
+            const album = track.album || '';
+            //
+            // // 将中文转换为拼音全拼和首字母
+            // const titlePinyin = pinyin(title, {style: pinyin.STYLE_NORMAL}).join('');
+            // const titleInitials = pinyin(title, {style: pinyin.STYLE_FIRST_LETTER}).join('');
+            //
+            // const artistPinyin = pinyin(artist, {style: pinyin.STYLE_NORMAL}).join('');
+            // const artistInitials = pinyin(artist, {style: pinyin.STYLE_FIRST_LETTER}).join('');
+            //
+            // const albumPinyin = pinyin(album, {style: pinyin.STYLE_NORMAL}).join('');
+            // const albumInitials = pinyin(album, {style: pinyin.STYLE_FIRST_LETTER}).join('');
+
+            // 检查关键词是否匹配中文、拼音全拼或拼音首字母
+            return (
+                title.toLowerCase().includes(lowerCaseKeyword) ||
+                artist.toLowerCase().includes(lowerCaseKeyword) ||
+                album.toLowerCase().includes(lowerCaseKeyword)
+                // titlePinyin.toLowerCase().includes(lowerCaseKeyword) ||
+                // titleInitials.toLowerCase().includes(lowerCaseKeyword) ||
+                // artistPinyin.toLowerCase().includes(lowerCaseKeyword) ||
+                // artistInitials.toLowerCase().includes(lowerCaseKeyword) ||
+                // albumPinyin.toLowerCase().includes(lowerCaseKeyword) ||
+                // albumInitials.toLowerCase().includes(lowerCaseKeyword)
+            );
+        });
+
+        setFilteredTracks(result);
+    };
+
+
     return (
         <div
-            className="p-4 relative w-full h-full Playlist" // 增加 Playlist 类名
+            className="p-4 relative w-full h-full PlaylistView"
             style={{
                 background: `linear-gradient(to bottom, ${backgroundColor}, #000)`,
-                overflowY: "scroll"
+                overflowY: "auto",
             }}
         >
-            <div className="relative z-10 flex items-center mb-6">
+            <div className="relative z-10 flex flex-col md:flex-row items-center mb-6">
                 <img
                     src={coverImage}
                     alt="Playlist cover"
-                    className="w-48 h-48 rounded-lg"
+                    className="w-48 h-48 rounded-lg object-cover"
                 />
-                <div className="ml-6">
-                    <h2 className="text-lg">歌单</h2>
-                    <h1 className="sm:text-lg lg:text-6xl font-bold mt-2">
+                <div className="ml-0 md:ml-6 mt-4 md:mt-0 text-center md:text-left">
+                    <h2 className="text-lg text-gray-300">歌单</h2>
+                    <h1
+                        className="text-4xl font-bold mt-2 cursor-pointer hover:underline"
+                        onClick={openModalModifyPlaylist}
+                    >
                         {playListInfo?.title || "未知歌单"}
                     </h1>
-                    <p className="mt-2">
-                        {playListInfo?.creater || "未知创建者"} •{" "}
+                    <p className="mt-2 text-gray-400">
+                        {playListInfo?.creator || "未知创建者"} •{" "}
                         {playListInfo?.tracks?.length || 0} 首歌曲
                     </p>
                 </div>
             </div>
 
-            {/* 控制按钮 */}
             <div className="flex items-center relative z-10 mb-4">
                 <button
-                    className="bg-green-500 p-4 rounded-full text-2xl mr-4"
-                    onClick={() => onReplacePlayQueue(playListInfo?.tracks || [])}
+                    className="bg-green-500 p-4 rounded-full text-2xl mr-4 hover:bg-green-600 focus:outline-none"
+                    onClick={() => (filteredTracks.forEach((track) => addToNext(track)))}
+                    aria-label="播放全部"
                 >
                     <i className="fas fa-play"></i>
                 </button>
-                <button className="text-2xl mr-4">
+                <button
+                    className="text-2xl mr-4 hover:text-gray-300 focus:outline-none"
+                    aria-label="随机播放"
+                >
                     <i className="fas fa-random"></i>
                 </button>
-                <button className="text-2xl">
+
+                <button
+                    className="text-2xl hover:text-gray-300 focus:outline-none"
+                    aria-label="下载歌单"
+                >
                     <i className="fas fa-download"></i>
                 </button>
+
+                {/* 歌曲搜索框 */}
+                <input
+                    type="text"
+                    placeholder="搜索歌曲"
+                    className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500 ml-auto"
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        setSearchKeyword("");
+                    }}
+                    value={searchKeyword}
+
+                />
             </div>
 
-            {/* 播放列表 */}
             <Playlist
-                tracks={playListInfo?.tracks || []}
+                filteredTracks={filteredTracks}
                 addToNext={addToNext}
                 addToNextAndPlay={addToNextAndPlay}
             />
+
+            {modalVisible && (
+                <ModalModifyPlaylist
+                    onClose={closeModalModifyPlaylist}
+                    playListInfo={playListInfo}
+                    refreshPlaylist={refreshPlaylist}
+                />
+            )}
         </div>
     );
 }
+
+// PropTypes 类型检查
+PlaylistView.propTypes = {
+    playListInfo: PropTypes.shape({
+        playlist_id: PropTypes.number,
+        description: PropTypes.string,
+        title: PropTypes.string,
+        creator: PropTypes.string,
+        tracks: PropTypes.arrayOf(
+            PropTypes.shape({
+                track_id: PropTypes.number,
+                title: PropTypes.string,
+                artist: PropTypes.string,
+                album: PropTypes.string,
+                cover_src: PropTypes.string,
+                created_at: PropTypes.string,
+                duration: PropTypes.number,
+                description: PropTypes.string,
+            })
+        ),
+    }),
+    onReplacePlayQueue: PropTypes.func,
+    addToNext: PropTypes.func,
+    addToNextAndPlay: PropTypes.func,
+    onUpdatePlaylist: PropTypes.func,
+};
+
+export default PlaylistView;

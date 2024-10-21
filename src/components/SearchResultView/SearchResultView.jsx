@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import useStateRef from "react-usestateref";
+import useStateRef from 'react-usestateref';
+import ContextMenu from "../ContextMenu/contextMenu.jsx";
 
 // 定义 NetSearchResultView 组件
 function NetSearchResultView({
@@ -8,9 +9,10 @@ function NetSearchResultView({
                                  addToNext,
                                  addToNextAndPlay,
                                  refreshPlaylists,
+                                 playlists = []      // 新增传入的播放列表
                              }) {
-    const [contextMenu, setContextMenu, contextMenuRef] = useState(null);  // 保存右键菜单的位置
-    const [selectedTrack, setSelectedTrack, selectedTrackRef] = useStateRef(null);  // 保存右键点击的曲目
+    const [contextMenu, setContextMenu, contextMenuRef] = useState(null); // 保存右键菜单的位置
+    const [selectedTrack, setSelectedTrack, selectedTrackRef] = useStateRef(null); // 保存右键点击的曲目
 
     // 右键点击事件处理
     const handleContextMenu = (event, track) => {
@@ -26,46 +28,6 @@ function NetSearchResultView({
     const handleCloseMenu = () => {
         setContextMenu(null);
         setSelectedTrack(null);
-    };
-
-    // 渲染右键菜单
-    const renderContextMenu = () => {
-        if (!contextMenu || !selectedTrack) return null;
-
-        return (
-            <div
-                style={{
-                    position: 'absolute',
-                    top: `${contextMenu.y}px`,
-                    left: `${contextMenu.x}px`,
-                    backgroundColor: 'white',
-                    border: '1px solid #ccc',
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                    zIndex: 1000,
-                }}
-                className="p-2"
-            >
-                <div
-                    className="p-2 hover:bg-gray-100 cursor-pointer text-blue-500"
-                    onClick={() => {
-                        addToNext(selectedTrack);
-                        handleCloseMenu();
-                    }}
-                >
-                    添加到下一首播放
-                </div>
-                <div
-                    className="p-2 hover:bg-gray-100 cursor-pointer text-red-500"
-                    onClick={() => {
-                        console.log('selectedTrackRef.current', selectedTrackRef.current);
-                        window.electronAPI.addTrackToLibrary(selectedTrackRef.current, refreshPlaylists);
-                        handleCloseMenu();
-                    }}
-                >
-                    添加到库
-                </div>
-            </div>
-        );
     };
 
     return (
@@ -135,7 +97,18 @@ function NetSearchResultView({
             )}
 
             {/* 渲染右键菜单 */}
-            {renderContextMenu()}
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    track={selectedTrackRef.current}
+                    addToNext={addToNext}
+                    addToLibrary={(track) => window.electronAPI.addTrackToLibrary(track, refreshPlaylists)}
+                    addTrackToPlaylist={(track, playlist_id) => window.electronAPI.addTrackToPlaylist(track, playlist_id, refreshPlaylists)}
+                    playlists={playlists}                  // 传入播放列表
+                    handleCloseMenu={handleCloseMenu}
+                />
+            )}
 
             {/* 点击页面其他部分时关闭右键菜单 */}
             {contextMenu && (

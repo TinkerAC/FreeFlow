@@ -1,5 +1,5 @@
 // windowManager.js
-import {BrowserWindow, ipcMain} from 'electron';
+import {BrowserWindow} from 'electron';
 import path from 'path';
 import {fileURLToPath} from 'url';
 import {setupIpcHandlers} from './ipcHandlers.js';
@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow;
 
-function createWindow() {
+function createWindow(db) {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
@@ -23,14 +23,15 @@ function createWindow() {
         },
     });
 
-    mainWindow.loadFile('src/index.html');
+    console.log('加载主窗口, File:', path.join(__dirname, '..', 'index.html'));
+    mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
 
     if (process.env.NODE_ENV === 'development') {
         mainWindow.webContents.openDevTools();
     }
 
     // 初始化 IPC 事件处理
-    setupIpcHandlers(mainWindow);
+    setupIpcHandlers(mainWindow, db);
 
     // 窗口事件处理
     mainWindow.on('close', (event) => {

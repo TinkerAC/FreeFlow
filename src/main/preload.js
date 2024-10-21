@@ -39,7 +39,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         console.log("播放器状态已发送");
     },
 
-    //向歌单添加音乐
+    //向库中添加音乐
     addTrackToLibrary: (track, refreshPlaylists) => {
         const tk = {
             "data_href": track.data_href,
@@ -49,6 +49,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
             refreshPlaylists();
         });
     },
+
+    //向歌单中添加音乐
+    addTrackToPlaylist: (track, playlistId, refreshPlaylists) => {
+        ipcRenderer.invoke('add-track-to-playlist', track, playlistId).then(() => {
+                console.log("歌曲添加成功");
+                refreshPlaylists();
+            }
+        );
+    },
+
+    //修改歌单信息
+    modifyPlaylist: (playlistId, playlist_title, playlist_description, refreshPlaylists) => {
+        ipcRenderer.invoke('modify-playlist', playlistId, playlist_title, playlist_description).then(() => {
+            console.log("歌单修改成功");
+            refreshPlaylists();
+        });
+    }
 
 
 });

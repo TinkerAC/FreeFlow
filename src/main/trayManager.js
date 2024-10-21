@@ -1,5 +1,5 @@
 // trayManager.js
-import {Tray, Menu, app} from 'electron';
+import {app, Menu, Tray} from 'electron';
 import path from 'path';
 import {fileURLToPath} from "url";
 
@@ -28,7 +28,7 @@ function createTray(mainWindow) {
         },
     ]);
 
-    tray.setToolTip('你的应用名称');
+    tray.setToolTip('FreeFlow');
     tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {

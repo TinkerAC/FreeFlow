@@ -2,8 +2,6 @@
 import {globalShortcut} from 'electron';
 
 
-import electronLocalShortcut from 'electron-localshortcut';
-
 function registerGlobalShortcuts(mainWindow) {
 
     //需要发送的快捷键

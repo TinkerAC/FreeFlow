@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import './HeadBar.css'; // 引入组件样式
 
 async function getSearchResults(searchTerm) {
