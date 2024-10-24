@@ -141,7 +141,7 @@ export function PlaylistView({
             <div className="flex items-center relative z-10 mb-4">
                 <button
                     className="bg-green-500 p-4 rounded-full text-2xl mr-4 hover:bg-green-600 focus:outline-none"
-                    onClick={() => (filteredTracks.forEach((track) => addToNext(track)))}
+                    onClick={() => onReplacePlayQueue(playListInfo?.tracks || [])}
                     aria-label="播放全部"
                 >
                     <i className="fas fa-play"></i>

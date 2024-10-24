@@ -23,13 +23,14 @@ export async function addTrackToLibrary(track, db) {
         await dbRun(db, 'BEGIN TRANSACTION;');
         // 插入新歌曲
         const insertSql = 'INSERT INTO library (data_href, file_path, title, artist, album, duration, cover_src) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        const trackId = await dbRun(db, insertSql, [track.data_href, track.file_path, track.title, track.artist, track.album, track.duration, track.cover_src]);
-        console.log(`新歌曲插入成功，track_id: ${trackId}`);
+        const runResult = await dbRun(db, insertSql, [track.data_href, track.file_path, track.title, track.artist, track.album, track.duration, track.cover_src]);
+
+        console.log(`新歌曲插入音乐库成功，track_id: ${runResult.lastID}`);
 
         // 提交事务
         await dbRun(db, 'COMMIT;');
 
-        return trackId;
+        return runResult.lastID;
     } catch (err) {
         console.error('添加音乐到库时出错:', err.message);
         // 回滚事务
@@ -51,7 +52,6 @@ export async function removeTrackFromLibrary(trackId, db) {
         throw err;
     }
 }
-
 
 
 // const track = {

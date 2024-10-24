@@ -99,19 +99,19 @@ async function creatNewEmptyPlaylist(db, creator) {
 
         // 插入新歌单，使用临时标题
         const insertSql = 'INSERT INTO playlists (playlist_cover, title, creator) VALUES (?, ?, ?)';
-        const playlistId = await dbRun(db, insertSql, [null, '未命名歌单', creator]);
-        console.log(`新播放列表插入成功，playlist_id: ${playlistId}`);
+        const runResult = await dbRun(db, insertSql, [null, '未命名歌单', creator]);
+        console.log(`新播放列表插入成功，playlist_id: ${runResult.lastID}`);
 
         // 更新歌单标题，包含 playlistId
-        const newTitle = `未命名歌单${playlistId}`;
+        const newTitle = `未命名歌单${runResult.lastID}`;
         const updateSql = 'UPDATE playlists SET title = ? WHERE playlist_id = ?';
-        await dbRun(db, updateSql, [newTitle, playlistId]);
+        await dbRun(db, updateSql, [newTitle, runResult.lastID]);
         console.log(`播放列表标题更新为: ${newTitle}`);
 
         // 提交事务
         await dbRun(db, 'COMMIT;');
 
-        return playlistId;
+        return runResult.lastID;
     } catch (err) {
         console.error('创建新歌单时出错:', err.message);
         // 回滚事务
