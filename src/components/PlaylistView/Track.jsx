@@ -9,6 +9,8 @@ const Track = ({
                    },
                    addToNextAndPlay = (track) => {
                    },
+                   onRightClick = (e, track) => {
+                   }
                }) => {
     const [hovered, setHovered] = useState(false);
 
@@ -22,13 +24,16 @@ const Track = ({
             className={`${
                 index === 0 ? "border-t border-gray-700" : ""
             } hover:bg-[#2A2A2A]`}
+            onContextMenu={(e) => onRightClick(e, track)}
             onDoubleClick={() => addToNext(track)}
+
         >
             <td
                 className="py-2 cursor-pointer text-center"
                 onMouseEnter={() => setHovered(true)}
                 onMouseLeave={() => setHovered(false)}
             >
+                {/*实现悬浮后显示播放按钮,点击播放按钮播放*/}
                 {hovered ? (
                     <i
                         className="fas fa-play cursor-pointer"

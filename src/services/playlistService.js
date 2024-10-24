@@ -62,28 +62,6 @@ function parseTrackInfo(metadata) {
     };
 }
 
-async function addTrackToLibrary(track, db) {
-    //出错时回滚
-    try {
-        // 开始事务
-        await dbRun(db, 'BEGIN TRANSACTION;');
-        // 插入新歌曲
-        const insertSql = 'INSERT INTO library (data_href, file_path, title, artist, album, duration, cover_src) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        const trackId = await dbRun(db, insertSql, [track.data_href, track.file_path, track.title, track.artist, track.album, track.duration, track.cover_src]);
-        console.log(`新歌曲插入成功，track_id: ${trackId}`);
-
-        // 提交事务
-        await dbRun(db, 'COMMIT;');
-
-        return trackId;
-    } catch (err) {
-        console.error('添加音乐到库时出错:', err.message);
-        // 回滚事务
-        await dbRun(db, 'ROLLBACK;');
-        throw err;
-    }
-}
-
 
 async function addTrackToPlaylist(db, playlistId, trackId) {
 
@@ -203,15 +181,62 @@ async function modifyPlaylist(db, playlistId, playlist_title, playlist_descripti
 }
 
 
+async function removeTrackFromPlaylist(db, playlistId, trackId) {
+
+    if (!playlistId || !trackId) {
+        throw new Error('playlistId 和 trackId 不能为空');
+    }
+
+    try {
+        // 开始事务
+        await dbRun(db, 'BEGIN TRANSACTION;');
+
+        // 删除歌曲
+        const deleteSql = 'DELETE FROM playlist_detail WHERE playlist_id = ? AND track_id = ?';
+        await dbRun(db, deleteSql, [playlistId, trackId]);
+        console.log(`歌曲删除成功，playlist_id: ${playlistId}, track_id: ${trackId}`);
+
+        // 提交事务
+        await dbRun(db, 'COMMIT;');
+    } catch (err) {
+        console.error('删除歌曲时出错:', err.message);
+        // 回滚事务
+        await dbRun(db, 'ROLLBACK;');
+        throw err;
+    }
+}
+
+
+async function removePlaylist(db, playlistId) {
+    try {
+        // 开始事务
+        await dbRun(db, 'BEGIN TRANSACTION;');
+
+        // 删除歌单
+        const deleteSql = 'DELETE FROM playlists WHERE playlist_id = ?';
+        await dbRun(db, deleteSql, [playlistId]);
+        console.log(`歌单删除成功，playlist_id: ${playlistId}`);// 由于外键约束存在, 删除歌单时会自动删除歌单详情中的记录
+
+        // 提交事务
+        await dbRun(db, 'COMMIT;');
+    } catch (err) {
+        console.error('删除歌单时出错:', err.message);
+        // 回滚事务
+        await dbRun(db, 'ROLLBACK;');
+        throw err;
+    }
+}
+
 export {
     getPlaylists,
     extractMusicMeta,
     parseTrackInfo,
-    addTrackToLibrary,
     creatNewEmptyPlaylist,
     importPlaylistFromList,
     addTrackToPlaylist,
     modifyPlaylist,
+    removeTrackFromPlaylist,
+    removePlaylist,
 };
 
 //

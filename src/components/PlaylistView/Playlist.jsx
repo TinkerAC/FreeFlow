@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import PropTypes from "prop-types";
 import Track from "./Track.jsx";
+import ContextMenu from "./ContextMenu.jsx";
 
 export function Playlist({
                              filteredTracks = [],
@@ -8,24 +9,29 @@ export function Playlist({
                              },
                              addToNextAndPlay = () => {
                              },
+                             addTrackToPlaylist = () => {
+                             },
+                             playlists = [],
+                             currentPlaylist = {},
+                             refreshPlaylists = () => {
+                             },
                          }) {
     const [showScrollToTop, setShowScrollToTop] = useState(false);
+    const [contextMenuVisible, setContextMenuVisible] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({x: 0, y: 0});
+    const [selectedTrack, setSelectedTrack] = useState(null); // 添加 selectedTrack 状态
 
     // 监听滚动事件，显示/隐藏返回顶部按钮
     useEffect(() => {
         const handleScroll = () => {
-            console.log("滚动事件");
             if (window.scrollY > 0) {
                 setShowScrollToTop(true);
-                console.log("显示返回顶部按钮");
             } else {
                 setShowScrollToTop(false);
-                console.log("隐藏返回顶部按钮");
             }
         };
 
         window.addEventListener("scroll", handleScroll);
-
         return () => {
             window.removeEventListener("scroll", handleScroll);
         };
@@ -38,6 +44,41 @@ export function Playlist({
             behavior: "smooth",
         });
     };
+
+    const handleRightClick = (e, track) => {
+        e.preventDefault();
+        setContextMenuPosition({x: e.pageX - window.scrollX, y: e.pageY - window.scrollY});
+        setSelectedTrack(track); // 设置选中的 track
+        setContextMenuVisible(true);
+    };
+
+    const handleCloseMenu = () => {
+        setContextMenuVisible(false);
+        setSelectedTrack(null); // 清除选中的 track
+    };
+
+
+    // 点击页面其他地方时隐藏右键菜单
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (contextMenuVisible) {
+                setContextMenuVisible(false); // 点击页面其他地方时隐藏菜单
+            }
+        };
+
+        // 监听全局点击事件
+        window.addEventListener('click', handleClickOutside);
+
+        return () => {
+            // 清除事件监听器
+            window.removeEventListener('click', handleClickOutside);
+        };
+    }, [contextMenuVisible]);
+
+
+    window.contextMenuVisible = contextMenuVisible;
+    window.contextMenuPosition = contextMenuPosition;
+    window.selectedTrack = selectedTrack;
 
 
     return (
@@ -55,8 +96,6 @@ export function Playlist({
                 </tr>
                 </thead>
                 <tbody>
-
-                {/* 动态渲染歌曲列表 */}
                 {filteredTracks.length ? (
                     filteredTracks.map((track, index) => (
                         <Track
@@ -65,6 +104,7 @@ export function Playlist({
                             index={index}
                             addToNext={addToNext}
                             addToNextAndPlay={addToNextAndPlay}
+                            onRightClick={(e) => handleRightClick(e, track)}
                         />
                     ))
                 ) : (
@@ -74,22 +114,34 @@ export function Playlist({
                         </td>
                     </tr>
                 )}
-
-                {/* 返回顶部按钮 */}
-
-                {showScrollToTop && (
-                    <button
-                        className="scroll-to-top-button"
-                        onClick={scrollToTop}
-                        aria-label="返回顶部"
-                    >
-                        <i className="fas fa-arrow-up"></i>
-                    </button>
-                )}
-
-
                 </tbody>
             </table>
+
+            {/* 返回顶部按钮 */}
+            {showScrollToTop && (
+                <button
+                    className="scroll-to-top-button"
+                    onClick={scrollToTop}
+                    aria-label="返回顶部"
+                >
+                    <i className="fas fa-arrow-up"></i>
+                </button>
+            )}
+
+            {/* 渲染右键菜单 */}
+            {contextMenuVisible && (
+                <ContextMenu
+                    x={contextMenuPosition.x}
+                    y={contextMenuPosition.y}
+                    track={selectedTrack} // 使用选中的 track
+                    addToNext={addToNext}
+                    handleCloseMenu={handleCloseMenu}
+                    addTrackToPlaylist={addTrackToPlaylist}
+                    playlists={playlists}
+                    currentPlaylist={currentPlaylist}
+                    refreshPlaylists={refreshPlaylists}
+                />
+            )}
         </div>
     );
 }
@@ -97,7 +149,7 @@ export function Playlist({
 Playlist.propTypes = {
     filteredTracks: PropTypes.arrayOf(
         PropTypes.shape({
-            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+            track_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
             title: PropTypes.string,
             artist: PropTypes.string,
             album: PropTypes.string,

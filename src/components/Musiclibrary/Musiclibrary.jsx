@@ -1,22 +1,6 @@
-import React from 'react';
-
-const Item = ({imgSrc, altText, title, details, index, isSelected, onClick}) => {
-    return (
-        <div
-            onClick={onClick}
-            className={`flex items-center rounded-lg p-2 h-16 cursor-pointer 
-                        ${isSelected ? 'bg-item-bg-selected' : ''}
-                        ${isSelected ? 'hover:bg-item-bg-hover-selected' : 'hover:bg-item-bg-hover'}
-                        active:bg-black`}
-        >
-            <img src={imgSrc} alt={altText} className="w-12 h-12 rounded-lg"/>
-            <div className="ml-4">
-                <p className="text-white text-base whitespace-nowrap">{title}</p>
-                <p className="text-gray-400 text-sm whitespace-nowrap">{details}</p>
-            </div>
-        </div>
-    );
-};
+import React, {useEffect, useState} from 'react';
+import Item from './Item.jsx';
+import ContextMenu from "./ContextMenu.jsx";
 
 export default function MusicLibrary({
                                          libraryItems = [],
@@ -25,14 +9,45 @@ export default function MusicLibrary({
                                          mainContentView,
                                          setMainContentView,
                                          isMusicLibraryCollapsed,
-                                         onToggleMusicLibraryCollapsed
+                                         onToggleMusicLibraryCollapsed,
+                                         refreshPlaylist
                                      }) {
+    const [contextMenuVisible, setContextMenuVisible] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({x: 0, y: 0});
+    const [eventPlaylist, setEventPlaylist] = useState(null);
     const handleSelectItem = (index) => {
         if (mainContentView !== 'playlist') {
             setMainContentView('playlist');
         }
         onSelectItem(index);
     };
+
+    const handleRightClick = (e, playlist_id) => {
+        e.preventDefault();
+        console.log(`右键点击了歌单${playlist_id},当前ContextMenu的位置为${contextMenuPosition},当前ContextMenu是否显示${contextMenuVisible}`);
+        setEventPlaylist(libraryItems.find(item => item.playlist_id === playlist_id));
+        setContextMenuPosition({x: e.clientX, y: e.clientY});
+        setContextMenuVisible(true);
+
+    }
+
+    const handleCloseMenu = () => {
+        setContextMenuVisible(false);
+        setEventPlaylist(null);
+    }
+    // 添加全局点击事件，用于关闭右键菜单
+    useEffect(() => {
+        const handleClickOutside = () => {
+            if (contextMenuVisible) {
+                handleCloseMenu();
+            }
+        };
+
+        window.addEventListener('click', handleClickOutside);
+        return () => {
+            window.removeEventListener('click', handleClickOutside);
+        };
+    }, [contextMenuVisible]);
 
 
     // console.log(libraryItems);
@@ -66,7 +81,7 @@ export default function MusicLibrary({
             </div>
         );
     } else {
-        // 展开状态下的渲染
+        // 展开状态下的渲染,只有展开状态下才允许右键显示菜单
         return (
             <div className="w-full bg-component-bg text-white rounded-lg h-auto flex flex-col">
                 <div className="flex items-center w-full p-6">
@@ -81,7 +96,7 @@ export default function MusicLibrary({
                     <div className="ml-auto flex items-center">
                         <i
                             className="fas fa-plus text-xl cursor-pointer"
-                            onClick={() => window.electronAPI.createPlaylist()}
+                            onClick={() => window.electronAPI.createPlaylist(refreshPlaylist)}
                         ></i>
                     </div>
                 </div>
@@ -111,6 +126,7 @@ export default function MusicLibrary({
                                 index={index}
                                 isSelected={selectedItem === index}
                                 onClick={() => handleSelectItem(index)}
+                                onRightClick={(e) => handleRightClick(e, item.playlist_id)}
                             />
                         )) : <div className="text-center text-gray-400">暂无歌单</div>
 
@@ -118,7 +134,19 @@ export default function MusicLibrary({
                         }
                     </div>
                 </div>
-            </div>
-        );
+
+
+                {/*条件渲染右键菜单*/}
+                {contextMenuVisible && (
+                    <ContextMenu
+                        x={contextMenuPosition.x}
+                        y={contextMenuPosition.y}
+                        eventPlaylist={eventPlaylist}
+                        handleCloseMenu={handleCloseMenu}
+                        refreshPlaylist={refreshPlaylist}
+                    />)};
+
+
+            </div>);
     }
 }

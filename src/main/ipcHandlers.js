@@ -1,19 +1,21 @@
 // ipcHandlers.js
 import {app, ipcMain} from 'electron';
 import {
-    addTrackToLibrary,
     addTrackToPlaylist,
     creatNewEmptyPlaylist,
     extractMusicMeta,
     getPlaylists,
     modifyPlaylist,
     parseTrackInfo,
+    removePlaylist,
+    removeTrackFromPlaylist,
 } from '../services/playlistService.js';
+import {addTrackToLibrary, isTrackInLibrary} from '../services/libraryService.js';
+
 import {loadPlayer, savePlayer} from '../services/playerService.js';
 import {getMusicInfo, getMusicLink, getSearchResults,} from '../services/hifiniMusicService.js';
 import {dataPath, playerStateDumpFile} from './pathConfig.js';
 import {dbGet} from "../utils/dbUtils.js";
-import {isTrackInLibrary} from "../services/libraryService.js";
 
 
 function setupIpcHandlers(mainWindow, db) {
@@ -39,13 +41,13 @@ function setupIpcHandlers(mainWindow, db) {
     });
 
     // 创建歌单事件
-    ipcMain.on('create-playlists', (event) => {
+    ipcMain.handle('create-playlists', async (event) => {
         try {
-            creatNewEmptyPlaylist(dbFile, "杨姝");
-            event.reply('playlist-created');
+            await creatNewEmptyPlaylist(db, '新建歌单', '这是一个新建的歌单');
+
         } catch (error) {
             console.error('Error in create-playlists:', error);
-            event.reply('playlist-create-failed', error);
+
         }
     });
 
@@ -154,6 +156,17 @@ function setupIpcHandlers(mainWindow, db) {
     });
 
 
+    // 从歌单中删除音乐事件
+    ipcMain.handle('remove-track-from-playlist', async (event, playlistId, trackId) => {
+        try {
+            await removeTrackFromPlaylist(db, playlistId, trackId);
+        } catch (error) {
+            console.error('Error in remove-track-from-playlist:', error);
+            throw error;
+        }
+    });
+
+
     ipcMain.handle('get-user-data-path', async (event) => {
         return dataPath;
     });
@@ -179,7 +192,16 @@ function setupIpcHandlers(mainWindow, db) {
         }
     });
 
-
+    //删除歌单事件
+    ipcMain.handle('remove-playlist', async (event, playlistId) => {
+        try {
+            await removePlaylist(db, playlistId);
+            return true;
+        } catch (error) {
+            console.error('Error in remove-playlist:', error);
+            throw error;
+        }
+    });
 }
 
 export {setupIpcHandlers};

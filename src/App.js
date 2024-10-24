@@ -44,10 +44,10 @@ function App() {
     } = usePlayer(audioRef);
 
 
-    window.queue = queueRef.current;
-    window.currentIndex = currentIndexRef.current;
-    window.currentTrackInfo = currentTrackInfoRef.current;
-    window.nextTracks = nextTracksRef.current;
+    // window.queue = queueRef.current;
+    // window.currentIndex = currentIndexRef.current;
+    // window.currentTrackInfo = currentTrackInfoRef.current;
+    // window.nextTracks = nextTracksRef.current;
 
 
     // 使用 useMusicLibrary Hook 管理歌单
@@ -166,6 +166,7 @@ function App() {
                     className="h-full"
                     libraryItems={playlists}
                     selectedItem={selectedItem}
+                    refreshPlaylist={refreshPlaylists}
                     onSelectItem={setSelectedItem}
                     mainContentView={mainContentView}
                     setMainContentView={setMainContentView}

@@ -23,6 +23,7 @@ export function PlaylistView({
     const [filteredTracks, setFilteredTracks] = useState(playListInfo?.tracks || []);
     const [searchKeyword, setSearchKeyword] = useState("");
 
+
     const openModalModifyPlaylist = () => {
         setModalVisible(true);
         console.log("打开修改歌单对话框");
@@ -59,7 +60,7 @@ export function PlaylistView({
         setFilteredTracks(playListInfo?.tracks || []);
     }, [playListInfo]);
 
-    //保存关键词的钩子
+    //保存前端搜索关键词
     useEffect(() => {
         search(searchKeyword);
     }, [searchKeyword]);
@@ -178,6 +179,8 @@ export function PlaylistView({
                 filteredTracks={filteredTracks}
                 addToNext={addToNext}
                 addToNextAndPlay={addToNextAndPlay}
+                currentPlaylist={playListInfo}
+                refreshPlaylists={refreshPlaylist}
             />
 
             {modalVisible && (
