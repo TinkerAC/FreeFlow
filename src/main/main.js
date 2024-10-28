@@ -43,15 +43,23 @@ if (!gotTheLock) {
     });
 
     // 处理应用退出
-    app.on('before-quit', () => {
-        isQuitting = true;
-        if (tray) tray.destroy(); // 销毁系统托盘图标
-        stopProxyProcess();       // 停止代理进程
+    app.on('before-quit', (event) => {
+        if (!isQuitting) {
+            event.preventDefault(); // 阻止默认退出行为
+            isQuitting = true;
+
+            if (tray) tray.destroy(); // 销毁系统托盘图标
+            stopProxyProcess();       // 停止代理进程
+            // 发送请求渲染进程获取播放器状态
+            mainWindow.webContents.send('request-player-state');
+        }
     });
+
 
     // 在应用即将退出时，注销快捷键和关闭数据库连接
     app.on('will-quit', () => {
         unregisterGlobalShortcuts();
         if (db) db.close();  // 关闭数据库连接
+
     });
 }

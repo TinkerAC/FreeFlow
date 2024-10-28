@@ -143,21 +143,8 @@ export async function getMusicInfo(dataHref, db) {
         const row = await dbGet(db, 'SELECT title, artist, cover_src, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
         if (row) {
             const {title, artist, cover_src, cached_at} = row;
-            const currentDate = new Date().toISOString().split('T')[0];
+            return {data_href: dataHref, title, artist, cover_src};
 
-            if (cached_at && cached_at.startsWith(currentDate)) {
-                // console.debug("从数据库中获取有效缓存的音乐信息:", {data_href: dataHref, title, artist, cover_src});
-                return {data_href: dataHref, title, artist, cover_src};
-            } else {
-                const data = await fetchAndSaveMusicInfo(dataHref, db);
-                // console.debug("从数据库中获取过期缓存的音乐信息，已更新并保存:", {
-                //     data_href: dataHref,
-                //     title: data.title,
-                //     artist: data.artist,
-                //     cover_src: data.cover_src
-                // });
-                return {data_href: dataHref, title: data.title, artist: data.artist, cover_src: data.cover_src};
-            }
         } else {
             const data = await fetchAndSaveMusicInfo(dataHref, db);
             console.log("缓存中不存在音乐信息，已获取并保存:", {
@@ -195,7 +182,7 @@ async function fetchAndSaveMusicInfo(dataHref, db) {
                 break;
             }
         }
-
+        //如果有"APlayer"的脚本内容(页面上有外链的音乐播放器)
         if (scriptContent) {
             const musicMatch = scriptContent.match(/music:\s*\[(.*?)\]/s);
             if (!musicMatch) throw new Error('Music array not found in script.');

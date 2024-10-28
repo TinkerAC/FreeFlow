@@ -7,6 +7,7 @@ async function fetchTrackInfo(file_path, data_href) {
     return await window.playerAPI.getTrackInfo(file_path, data_href);
 }
 
+
 function usePlayer(audioRef) {
     // 状态管理
     const [queue, setQueue, queueRef] = useStateRef([]);
@@ -19,6 +20,16 @@ function usePlayer(audioRef) {
     const [currentTrackInfo, setCurrentTrackInfo, currentTrackInfoRef] = useStateRef({});
     const [nextTracks, setNextTracks, nextTracksRef] = useStateRef([]);
     const [volume, setVolume, volumeRef] = useStateRef(0.5);
+
+    //Utils
+    const getNextIndex = () => {
+        return (currentIndexRef.current + 1) % indexListRef.current.length;
+    }
+
+    const getPrevIndex = () => {
+        return (currentIndexRef.current - 1 + indexListRef.current.length) % indexListRef.current.length;
+    }
+
 
     /** 播放控制方法 **/
     const play = () => {
@@ -40,33 +51,110 @@ function usePlayer(audioRef) {
     };
 
     const playNext = async () => {
-        if (isPlayingRef.current) {
-            pause();
+        if (indexListRef.current.length === 0) return;
+
+        let attempts = 0;
+        const maxAttempts = indexListRef.current.length; // 防止无限循环
+
+        while (attempts < maxAttempts) {
+            const nextIndex = getNextIndex(); // 确保 getNextIndex() 已正确定义
+            setCurrentIndex(nextIndex);
+
+
+            const nextTrack = queueRef.current[indexListRef.current[nextIndex]];
+
+            const expectedNextTrack = {
+                ...queueRef.current[indexListRef.current[nextIndex]]
+            };
+
+
+            let audioSrc;
+
+            try {
+                audioSrc = await getAudioSrc(nextTrack);
+            } catch (error) {
+                console.error('获取音频BlobUrl时出错:', error);
+                attempts++;
+                continue; // 跳过本次循环，尝试下一个曲目
+            }
+
+
+            // 检查在异步操作期间，曲目是否已被用户切换
+            if (expectedNextTrack.track_id !== currentTrackInfoRef.current.track_id) {
+                console.error(`用户已切换曲目expected:${expectedNextTrack.track_id} current:${currentTrackInfoRef.current.track_id}`);
+                // 用户已切换曲目，停止当前操作
+                return;
+            }
+
+            // 成功获取音频源，更新状态并开始播放
+            setCurrentTime(0);
+            setAudioSrc(audioSrc);
+
+            audioRef.current.addEventListener('canplaythrough', () => {
+                play();
+            }, {once: true});
+
+            break; // 成功播放，跳出循环
         }
 
-        if (indexListRef.current.length === 0) return;
-        const nextIndex = (currentIndexRef.current + 1) % indexListRef.current.length;
-        setCurrentIndex(nextIndex);
-
-        const nextTrack = queueRef.current[indexListRef.current[nextIndex]];
-        setAudioSrc(await getAudioSrc(nextTrack));
-        setCurrentTime(0);
-
-        audioRef.current.addEventListener('canplaythrough', play, {once: true});
+        if (attempts >= maxAttempts) {
+            console.warn('所有曲目均无法播放');
+            // 可以通知用户或执行其他操作
+        }
+        console.log("播放下一首")
+        console.log(dumpPlayerState())
     };
+
 
     const playPrevious = async () => {
         if (indexListRef.current.length === 0) return;
 
-        const prevIndex = (currentIndexRef.current - 1 + indexListRef.current.length) % indexListRef.current.length;
-        setCurrentIndex(prevIndex);
+        let attempts = 0;
+        const maxAttempts = indexListRef.current.length; // 防止无限循环
 
-        const prevTrack = queueRef.current[indexListRef.current[prevIndex]];
-        setAudioSrc(await getAudioSrc(prevTrack));
-        setCurrentTime(0);
+        while (attempts < maxAttempts) {
+            const prevIndex = getNextIndex()
+            setCurrentIndex(prevIndex);
 
-        audioRef.current.addEventListener('canplaythrough', play, {once: true});
+
+            const prevTrack = queueRef.current[indexListRef.current[prevIndex]];
+            const currentTrackCopy = {...currentTrackInfoRef.current};
+            let audioSrc;
+
+            try {
+                audioSrc = await getAudioSrc(prevTrack);
+            } catch (error) {
+                console.error('获取音频BlobUrl时出错:', error);
+                attempts++;
+                continue; // 跳过本次循环，尝试上一个曲目
+            }
+
+            // 检查在异步操作期间，曲目是否已被用户切换
+            if (currentTrackCopy.track_id !== currentTrackInfoRef.current.track_id) {
+                // 用户已切换曲目，停止当前操作
+                return;
+            }
+
+            // 成功获取音频源，更新状态并开始播放
+            setCurrentTime(0);
+            setAudioSrc(audioSrc);
+
+            audioRef.current.addEventListener('canplaythrough', () => {
+                play();
+            }, {once: true});
+
+            break; // 成功播放，跳出循环
+        }
+
+        if (attempts >= maxAttempts) {
+            console.warn('所有曲目均无法播放');
+            // 可以通知用户或执行其他操作
+        }
+        console.log("播放上一首")
+        console.log(dumpPlayerState())
+
     };
+
 
     const seekTo = (time) => {
         if (audioRef.current) {
@@ -135,16 +223,52 @@ function usePlayer(audioRef) {
     };
 
     const replacePlayQueue = async (tracks) => {
+        // 更新队列
         setQueue(tracks);
-        setIndexList(Array.from({length: tracks.length}, (_, i) => i));
+
+        // 根据当前播放模式设置 indexList
+        let newIndexList;
+        switch (playbackModeRef.current) {
+            case 'loop':
+                newIndexList = Array.from({length: tracks.length}, (_, i) => i);
+                break;
+            case 'shuffle':
+                newIndexList = Array.from({length: tracks.length}, (_, i) => i).sort(() => Math.random() - 0.5);
+                break;
+            case 'repeat':
+                newIndexList = [0];
+                break;
+            default:
+                newIndexList = Array.from({length: tracks.length}, (_, i) => i);
+        }
+        setIndexList(newIndexList);
+
+        // 设置当前索引为 0
         setCurrentIndex(0);
 
-        const initialTrack = tracks[0];
-        setAudioSrc(await getAudioSrc(initialTrack));
-        setCurrentTrackInfo(initialTrack);
+        // 获取初始曲目
+        const initialTrack = queueRef.current[indexListRef.current[currentIndexRef.current]];
+        let audioSrc;
 
-        audioRef.current.addEventListener('canplaythrough', play, {once: true});
+        try {
+            audioSrc = await getAudioSrc(initialTrack);
+            setAudioSrc(audioSrc);
+            audioRef.current.src = audioSrc;
+
+            // 更新当前曲目信息
+            setCurrentTrackInfo(initialTrack);
+
+            // 监听 canplaythrough 事件，播放音频
+            audioRef.current.addEventListener('canplaythrough', () => {
+                play();
+            }, {once: true});
+        } catch (error) {
+            console.error('获取音频BlobUrl时出错:', error);
+            // 尝试播放下一首
+            await playNext();
+        }
     };
+
 
     /** 播放模式管理方法 **/
     const cyclePlaybackMode = () => {
@@ -177,7 +301,7 @@ function usePlayer(audioRef) {
     };
 
 
-    // 更新下一首曲目列表
+    // 自动更新下一首曲目列表
     useEffect(() => {
         if (queueRef.current.length === 0) {
             setNextTracks([]);
@@ -188,7 +312,7 @@ function usePlayer(audioRef) {
         }
     }, [queueRef.current, indexListRef.current, currentIndexRef.current]);
 
-    // 更新当前曲目信息
+    // 自动跟新当前曲目信息
     useEffect(() => {
         if (queueRef.current.length > 0) {
             const currentTrack = queueRef.current[indexListRef.current[currentIndexRef.current]];
@@ -217,7 +341,7 @@ function usePlayer(audioRef) {
                     setPlaybackMode(playerState.playbackMode);
                     setIsPlaying(playerState.isPlaying);
                     setCurrentTime(playerState.currentTime);
-                    changeVolume(playerState.volume);
+                    setVolume(playerState.volume);
 
                     const currentTrack = playerState.queue[playerState.indexList[playerState.currentIndex]];
                     setAudioSrc(await getAudioSrc(currentTrack));
@@ -230,6 +354,19 @@ function usePlayer(audioRef) {
 
         loadPlayerState();
     }, []);
+
+    //初始化的一部分
+    //当音频初始化加载完成后,将playerState的currentTime应用到audioRef.current.currentTime,将playerState的volume应用到audioRef.current.volume
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.addEventListener('canplaythrough', () => {
+                audioRef.current.currentTime = currentTimeRef.current;
+                setVolume(volumeRef.current);
+                audioRef.current.volume = volumeRef.current;
+            }, {once: true});
+        }
+    }, []);
+
 
     // 更新音频源
     useEffect(() => {
@@ -280,10 +417,12 @@ function usePlayer(audioRef) {
             queue: queueRef.current.map(track => ({file_path: track.file_path, data_href: track.data_href})),
             indexList: indexListRef.current,
             currentIndex: currentIndexRef.current,
-            isPlaying: isPlayingRef.current,
+            isPlaying: false,
             currentTime: currentTimeRef.current,
             playbackMode: playbackModeRef.current,
             volume: audioRef.current.volume,
+            currentTrackInfo: currentTrackInfoRef.current,
+            audioSrc: audioSrcRef.current
         };
     };
 
@@ -296,6 +435,9 @@ function usePlayer(audioRef) {
         setIsPlaying(false);
         setCurrentTime(0);
     };
+
+
+    window.playerState = dumpPlayerState;
 
 
     return {

@@ -144,9 +144,9 @@ export default function MusicLibrary({
                         eventPlaylist={eventPlaylist}
                         handleCloseMenu={handleCloseMenu}
                         refreshPlaylist={refreshPlaylist}
-                    />)};
+                    />)}
 
 
-            </div>);
+            </div>)
     }
 }

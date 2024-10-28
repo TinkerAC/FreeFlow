@@ -71,6 +71,7 @@ function setupIpcHandlers(mainWindow, db) {
     ipcMain.handle('get-track-info', async (event, file_path, data_href) => {
         try {
             if (file_path) {
+                //如果是本地文件,提取元数据
                 const metaData = await extractMusicMeta(file_path);
                 return parseTrackInfo(metaData);
             } else if (data_href) {
@@ -174,7 +175,7 @@ function setupIpcHandlers(mainWindow, db) {
     // 监听播放器状态请求
     ipcMain.once('reply-player-state', (event, state) => {
         console.log('主进程已收到播放器状态:', state);
-        savePlayer(state);
+        savePlayer(playerStateDumpFile, state);
         app.quit();
     });
 

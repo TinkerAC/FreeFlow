@@ -25,7 +25,7 @@ const Track = ({
                 index === 0 ? "border-t border-gray-700" : ""
             } hover:bg-[#2A2A2A]`}
             onContextMenu={(e) => onRightClick(e, track)}
-            onDoubleClick={() => addToNext(track)}
+            onDoubleClick={() => addToNextAndPlay(track)}
 
         >
             <td
