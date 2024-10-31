@@ -118,7 +118,13 @@ function usePlayer(audioRef) {
 
 
             const prevTrack = queueRef.current[indexListRef.current[prevIndex]];
-            const currentTrackCopy = {...currentTrackInfoRef.current};
+
+
+            const expectedPrevTrack = {
+                ...queueRef.current[indexListRef.current[prevIndex]]
+            };
+
+
             let audioSrc;
 
             try {
@@ -130,7 +136,7 @@ function usePlayer(audioRef) {
             }
 
             // 检查在异步操作期间，曲目是否已被用户切换
-            if (currentTrackCopy.track_id !== currentTrackInfoRef.current.track_id) {
+            if (expectedPrevTrack.track_id !== currentTrackInfoRef.current.track_id) {
                 // 用户已切换曲目，停止当前操作
                 return;
             }

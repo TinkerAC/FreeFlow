@@ -42,18 +42,3 @@ export default async function getAudioSrc(track) {
 }
 
 
-// 使用示例
-// const track = {
-//     file_path: '/path/to/local/audio-file.mp3', // 本地文件路径
-//     // datahref: 'https://example.com/alternative-audio-file' // 备用网络文件路径
-// };
-//
-// getAudioSrc(track)
-//     .then(url => {
-//         const audioElement = document.querySelector('audio');
-//         audioElement.src = url; // 如果是本地文件路径或 blob URL，都会返回
-//         audioElement.play();
-//     })
-//     .catch(error => {
-//         console.error(error);
-//     });
