@@ -14,6 +14,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
     // 如果无法获得锁，说明已经有一个实例在运行，直接退出应用
+    console.log('Another instance is already running, quitting...');
     app.quit();
 } else {
     // 如果获得了锁，继续启动应用并监听第二个实例的请求

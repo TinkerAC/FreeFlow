@@ -7,66 +7,61 @@ async function fetchTrackInfo(file_path, data_href) {
     return await window.playerAPI.getTrackInfo(file_path, data_href);
 }
 
-
 function usePlayer(audioRef) {
-    // 状态管理
-    const [queue, setQueue, queueRef] = useStateRef([]);
-    const [indexList, setIndexList, indexListRef] = useStateRef([]);
-    const [currentIndex, setCurrentIndex, currentIndexRef] = useStateRef(0);
-    const [playbackMode, setPlaybackMode, playbackModeRef] = useStateRef('loop');
-    const [audioSrc, setAudioSrc, audioSrcRef] = useStateRef('');
-    const [isPlaying, setIsPlaying, isPlayingRef] = useStateRef(false);
-    const [currentTime, setCurrentTime, currentTimeRef] = useStateRef(0);
-    const [currentTrackInfo, setCurrentTrackInfo, currentTrackInfoRef] = useStateRef({});
-    const [nextTracks, setNextTracks, nextTracksRef] = useStateRef([]);
-    const [volume, setVolume, volumeRef] = useStateRef(0.5);
+    // 统一的状态管理
+    const [playerState, setPlayerState, playerStateRef] = useStateRef({
+        queue: [],
+        indexList: [],
+        currentIndex: 0,
+        playbackMode: 'loop',
+        audioSrc: '',
+        isPlaying: false,
+        currentTime: 0,
+        currentTrackInfo: {},
+        nextTracks: [],
+        volume: 0.5,
+    });
 
-    //Utils
+    // 工具函数
     const getNextIndex = () => {
-        return (currentIndexRef.current + 1) % indexListRef.current.length;
-    }
+        return (playerStateRef.current.currentIndex + 1) % playerStateRef.current.indexList.length;
+    };
 
     const getPrevIndex = () => {
-        return (currentIndexRef.current - 1 + indexListRef.current.length) % indexListRef.current.length;
-    }
-
+        return (
+            (playerStateRef.current.currentIndex - 1 + playerStateRef.current.indexList.length) %
+            playerStateRef.current.indexList.length
+        );
+    };
 
     /** 播放控制方法 **/
     const play = () => {
-        audioRef.current.play();
-        setIsPlaying(true);
+        setPlayerState(prev => ({...prev, isPlaying: true}));
     };
 
     const pause = () => {
-        audioRef.current.pause();
-        setIsPlaying(false);
+        setPlayerState(prev => ({...prev, isPlaying: false}));
     };
 
     const togglePlayPause = () => {
-        if (audioRef.current.paused) {
-            play();
-        } else {
-            pause();
-        }
+        setPlayerState(prev => ({...prev, isPlaying: !prev.isPlaying}));
     };
 
     const playNext = async () => {
-        if (indexListRef.current.length === 0) return;
+        pause();
+
+        if (playerStateRef.current.indexList.length === 0) return;
 
         let attempts = 0;
-        const maxAttempts = indexListRef.current.length; // 防止无限循环
+        const maxAttempts = playerStateRef.current.indexList.length;
 
         while (attempts < maxAttempts) {
-            const nextIndex = getNextIndex(); // 确保 getNextIndex() 已正确定义
-            setCurrentIndex(nextIndex);
+            const nextIndex = getNextIndex();
 
+            const nextTrack =
+                playerStateRef.current.queue[playerStateRef.current.indexList[nextIndex]];
 
-            const nextTrack = queueRef.current[indexListRef.current[nextIndex]];
-
-            const expectedNextTrack = {
-                ...queueRef.current[indexListRef.current[nextIndex]]
-            };
-
+            const expectedNextTrack = {...nextTrack};
 
             let audioSrc;
 
@@ -75,55 +70,54 @@ function usePlayer(audioRef) {
             } catch (error) {
                 console.error('获取音频BlobUrl时出错:', error);
                 attempts++;
-                continue; // 跳过本次循环，尝试下一个曲目
+                continue;
             }
 
-
-            // 检查在异步操作期间，曲目是否已被用户切换
-            if (expectedNextTrack.track_id !== currentTrackInfoRef.current.track_id) {
-                console.error(`用户已切换曲目expected:${expectedNextTrack.track_id} current:${currentTrackInfoRef.current.track_id}`);
-                // 用户已切换曲目，停止当前操作
+            if (expectedNextTrack.track_id !== playerStateRef.current.currentTrackInfo.track_id) {
+                console.error(
+                    `用户已切换曲目expected:${expectedNextTrack.track_id} current:${playerStateRef.current.currentTrackInfo.track_id}`
+                );
                 return;
             }
 
-            // 成功获取音频源，更新状态并开始播放
-            setCurrentTime(0);
-            setAudioSrc(audioSrc);
+            setPlayerState(prev => ({
+                ...prev,
+                currentTime: 0,
+                audioSrc,
+                currentIndex: nextIndex,
+            }));
 
-            audioRef.current.addEventListener('canplaythrough', () => {
-                play();
-            }, {once: true});
+            audioRef.current.addEventListener(
+                'canplaythrough',
+                () => {
+                    play();
+                },
+                {once: true}
+            );
 
-            break; // 成功播放，跳出循环
+            break;
         }
 
         if (attempts >= maxAttempts) {
             console.warn('所有曲目均无法播放');
-            // 可以通知用户或执行其他操作
         }
-        console.log("播放下一首")
-        console.log(dumpPlayerState())
+        console.log('播放下一首');
     };
 
-
     const playPrevious = async () => {
-        if (indexListRef.current.length === 0) return;
+        pause();
+        if (playerStateRef.current.indexList.length === 0) return;
 
         let attempts = 0;
-        const maxAttempts = indexListRef.current.length; // 防止无限循环
+        const maxAttempts = playerStateRef.current.indexList.length;
 
         while (attempts < maxAttempts) {
-            const prevIndex = getNextIndex()
-            setCurrentIndex(prevIndex);
+            const prevIndex = getPrevIndex();
 
+            const prevTrack =
+                playerStateRef.current.queue[playerStateRef.current.indexList[prevIndex]];
 
-            const prevTrack = queueRef.current[indexListRef.current[prevIndex]];
-
-
-            const expectedPrevTrack = {
-                ...queueRef.current[indexListRef.current[prevIndex]]
-            };
-
+            const expectedPrevTrack = {...prevTrack};
 
             let audioSrc;
 
@@ -132,226 +126,253 @@ function usePlayer(audioRef) {
             } catch (error) {
                 console.error('获取音频BlobUrl时出错:', error);
                 attempts++;
-                continue; // 跳过本次循环，尝试上一个曲目
+                continue;
             }
 
-            // 检查在异步操作期间，曲目是否已被用户切换
-            if (expectedPrevTrack.track_id !== currentTrackInfoRef.current.track_id) {
-                // 用户已切换曲目，停止当前操作
+            if (expectedPrevTrack.track_id !== playerStateRef.current.currentTrackInfo.track_id) {
                 return;
             }
 
-            // 成功获取音频源，更新状态并开始播放
-            setCurrentTime(0);
-            setAudioSrc(audioSrc);
+            setPlayerState(prev => ({
+                ...prev,
+                currentTime: 0,
+                audioSrc,
+                currentIndex: prevIndex,
+            }));
 
-            audioRef.current.addEventListener('canplaythrough', () => {
-                play();
-            }, {once: true});
+            audioRef.current.addEventListener(
+                'canplaythrough',
+                () => {
+                    play();
+                },
+                {once: true}
+            );
 
-            break; // 成功播放，跳出循环
+            break;
         }
 
         if (attempts >= maxAttempts) {
             console.warn('所有曲目均无法播放');
-            // 可以通知用户或执行其他操作
         }
-        console.log("播放上一首")
-        console.log(dumpPlayerState())
-
+        console.log('播放上一首');
     };
 
-
-    const seekTo = (time) => {
+    const setCurrentTime = time => {
         if (audioRef.current) {
             audioRef.current.currentTime = time;
         }
     };
 
-
-    //改变音量, -1 <= volumeDiff <= 1
-    const changeVolume = (volumeDiff) => {
-        const newVolume = Math.max(0, Math.min(1, volumeRef.current + volumeDiff));
-        setVolume(newVolume);
-    }
-
+    // 改变音量，-1 <= volumeDiff <= 1
+    const changeVolume = volumeDiff => {
+        const newVolume = Math.max(
+            0,
+            Math.min(1, playerStateRef.current.volume + volumeDiff)
+        );
+        setPlayerState(prev => ({...prev, volume: newVolume}));
+    };
 
     /** 队列管理方法 **/
-    const addTrackToEnd = (track) => {
+    const addTrackToEnd = track => {
         if (!track) return;
 
-        setQueue([...queueRef.current, track]);
-        setIndexList([...indexListRef.current, queueRef.current.length]);
+        setPlayerState(prev => {
+            const newQueue = [...prev.queue, track];
+            const newIndexList = [...prev.indexList, newQueue.length - 1];
+            return {...prev, queue: newQueue, indexList: newIndexList};
+        });
     };
 
-    const isTrackInQueue = (track) => {
-        return queueRef.current.some(
-            (item) => item.file_path === track.file_path && item.data_href === track.data_href
+    const isTrackInQueue = track => {
+        return playerStateRef.current.queue.some(
+            item => item.file_path === track.file_path && item.data_href === track.data_href
         );
     };
 
-    const findTrackIndex = (track) => {
-        return queueRef.current.findIndex(
-            (item) => item.file_path === track.file_path && item.data_href === track.data_href
+    const findTrackIndex = track => {
+        return playerStateRef.current.queue.findIndex(
+            item => item.file_path === track.file_path && item.data_href === track.data_href
         );
     };
 
-    const addTrackToNext = (track) => {
+    const addTrackToNext = track => {
         if (!track) return;
 
-        if (isTrackInQueue(track)) {
-            const targetIndex = findTrackIndex(track);
+        setPlayerState(prev => {
+            let {queue, indexList, currentIndex} = prev;
 
-            if (targetIndex === indexListRef.current[currentIndexRef.current]) {
-                // 曲目已在当前播放位置
+            if (isTrackInQueue(track)) {
+                const targetIndex = findTrackIndex(track);
 
+                if (targetIndex === indexList[currentIndex]) {
+                    // 曲目已在当前播放位置
+                } else {
+                    const updatedIndexList = [...indexList];
+                    const nextIndex = currentIndex + 1;
+
+                    const targetPositionInIndexList = indexList.indexOf(targetIndex);
+                    // 从原位置删除
+                    updatedIndexList.splice(targetPositionInIndexList, 1);
+                    // 插入到下一首位置
+                    updatedIndexList.splice(nextIndex, 0, targetIndex);
+
+                    indexList = updatedIndexList;
+                }
             } else {
-                // 将曲目移动到下一首位置
-                const updatedIndexList = [...indexListRef.current];
-                const nextIndex = currentIndexRef.current + 1;
-
-                const targetPositionInIndexList = indexListRef.current.indexOf(targetIndex);
-                // 从原位置删除
-                updatedIndexList.splice(targetPositionInIndexList, 1);
-                // 插入到下一首位置
-                updatedIndexList.splice(nextIndex, 0, targetIndex);
-
-                setIndexList(updatedIndexList);
+                // 添加新曲目到队列末尾并插入到下一首位置
+                queue = [...queue, track];
+                const updatedIndexList = [...indexList];
+                updatedIndexList.splice(currentIndex + 1, 0, queue.length - 1);
+                indexList = updatedIndexList;
             }
-        } else {
-            // 添加新曲目到队列末尾并插入到下一首位置
-            setQueue([...queueRef.current, track]);
 
-            const updatedIndexList = [...indexListRef.current];
-            updatedIndexList.splice(currentIndexRef.current + 1, 0, queueRef.current.length - 1);
-            setIndexList(updatedIndexList);
-        }
+            return {...prev, queue, indexList};
+        });
     };
 
-    const replacePlayQueue = async (tracks) => {
-        // 更新队列
-        setQueue(tracks);
-
-        // 根据当前播放模式设置 indexList
+    const replacePlayQueue = async tracks => {
         let newIndexList;
-        switch (playbackModeRef.current) {
+
+        switch (playerStateRef.current.playbackMode) {
             case 'loop':
-                newIndexList = Array.from({length: tracks.length}, (_, i) => i);
+                newIndexList = tracks.map((_, i) => i);
                 break;
             case 'shuffle':
-                newIndexList = Array.from({length: tracks.length}, (_, i) => i).sort(() => Math.random() - 0.5);
+                newIndexList = tracks.map((_, i) => i).sort(() => Math.random() - 0.5);
                 break;
             case 'repeat':
                 newIndexList = [0];
                 break;
             default:
-                newIndexList = Array.from({length: tracks.length}, (_, i) => i);
+                newIndexList = tracks.map((_, i) => i);
         }
-        setIndexList(newIndexList);
 
-        // 设置当前索引为 0
-        setCurrentIndex(0);
+        setPlayerState(prev => ({
+            ...prev,
+            queue: tracks,
+            indexList: newIndexList,
+            currentIndex: 0,
+        }));
 
-        // 获取初始曲目
-        const initialTrack = queueRef.current[indexListRef.current[currentIndexRef.current]];
+        const initialTrack = tracks[newIndexList[0]];
         let audioSrc;
 
         try {
             audioSrc = await getAudioSrc(initialTrack);
-            setAudioSrc(audioSrc);
-            audioRef.current.src = audioSrc;
 
-            // 更新当前曲目信息
-            setCurrentTrackInfo(initialTrack);
+            setPlayerState(prev => ({...prev, audioSrc}));
 
-            // 监听 canplaythrough 事件，播放音频
-            audioRef.current.addEventListener('canplaythrough', () => {
-                play();
-            }, {once: true});
+            audioRef.current.addEventListener(
+                'canplaythrough',
+                () => {
+                    play();
+                },
+                {once: true}
+            );
         } catch (error) {
             console.error('获取音频BlobUrl时出错:', error);
-            // 尝试播放下一首
             await playNext();
         }
     };
 
-
     /** 播放模式管理方法 **/
     const cyclePlaybackMode = () => {
         const MODES = ['loop', 'repeat', 'shuffle'];
-        const currentModeIndex = MODES.indexOf(playbackModeRef.current);
+        const currentModeIndex = MODES.indexOf(playerStateRef.current.playbackMode);
         const nextMode = MODES[(currentModeIndex + 1) % MODES.length];
-        setPlaybackMode(nextMode);
 
-        const playingIndex = indexListRef.current[currentIndexRef.current];
+        setPlayerState(prev => {
+            const playingIndex = prev.indexList[prev.currentIndex];
+            let newIndexList;
 
-        let newIndexList;
+            switch (nextMode) {
+                case 'loop':
+                    newIndexList = prev.queue.map((_, i) => i);
+                    break;
+                case 'shuffle':
+                    newIndexList = prev.queue
+                        .map((_, i) => i)
+                        .sort(() => Math.random() - 0.5);
+                    break;
+                case 'repeat':
+                    newIndexList = [playingIndex];
+                    break;
+                default:
+                    newIndexList = prev.indexList;
+            }
 
-        switch (nextMode) {
-            case 'loop':
-                newIndexList = Array.from({length: queueRef.current.length}, (_, i) => i);
-                break;
-            case 'shuffle':
-                newIndexList = Array.from({length: queueRef.current.length}, (_, i) => i).sort(() => Math.random() - 0.5);
-                break;
-            case 'repeat':
-                newIndexList = [playingIndex];
-                break;
-            default:
-                newIndexList = indexListRef.current;
-        }
+            const newCurrentIndex = newIndexList.indexOf(playingIndex);
 
-        const newCurrentIndex = newIndexList.indexOf(playingIndex);
-        setIndexList(newIndexList);
-        setCurrentIndex(newCurrentIndex);
+            return {
+                ...prev,
+                playbackMode: nextMode,
+                indexList: newIndexList,
+                currentIndex: newCurrentIndex,
+            };
+        });
     };
-
 
     // 自动更新下一首曲目列表
     useEffect(() => {
-        if (queueRef.current.length === 0) {
-            setNextTracks([]);
+        if (playerStateRef.current.queue.length === 0) {
+            setPlayerState(prev => ({...prev, nextTracks: []}));
         } else {
-            const nextIndices = indexListRef.current.slice(currentIndexRef.current + 1);
-            const nextTracks = nextIndices.map(index => queueRef.current[index]);
-            setNextTracks(nextTracks);
+            const nextIndices = playerStateRef.current.indexList.slice(
+                playerStateRef.current.currentIndex + 1
+            );
+            const nextTracks = nextIndices.map(
+                index => playerStateRef.current.queue[index]
+            );
+            setPlayerState(prev => ({...prev, nextTracks}));
         }
-    }, [queueRef.current, indexListRef.current, currentIndexRef.current]);
+    }, [
+        playerStateRef.current.queue,
+        playerStateRef.current.indexList,
+        playerStateRef.current.currentIndex,
+    ]);
 
-    // 自动跟新当前曲目信息
+    // 自动更新 currentTrackInfo
     useEffect(() => {
-        if (queueRef.current.length > 0) {
-            const currentTrack = queueRef.current[indexListRef.current[currentIndexRef.current]];
-            setCurrentTrackInfo(currentTrack);
+        if (playerStateRef.current.queue.length > 0) {
+            const currentTrack =
+                playerStateRef.current.queue[
+                    playerStateRef.current.indexList[playerStateRef.current.currentIndex]
+                    ];
+            setPlayerState(prev => ({...prev, currentTrackInfo: currentTrack}));
         } else {
-            setCurrentTrackInfo({});
+            setPlayerState(prev => ({...prev, currentTrackInfo: {}}));
         }
-    }, [queueRef.current, indexListRef.current, currentIndexRef.current]);
-
+    }, [
+        playerStateRef.current.queue,
+        playerStateRef.current.indexList,
+        playerStateRef.current.currentIndex,
+    ]);
 
     // 加载播放器状态
     useEffect(() => {
         const loadPlayerState = async () => {
             try {
-                const playerState = await window.playerAPI.getPlayerState();
-                if (playerState) {
+                const savedState = await window.playerAPI.getPlayerState();
+                if (savedState) {
                     // 补全曲目信息
-                    for (let track of playerState.queue) {
-                        const trackInfo = await fetchTrackInfo(track.file_path, track.data_href);
+                    for (let track of savedState.queue) {
+                        const trackInfo = await fetchTrackInfo(
+                            track.file_path,
+                            track.data_href
+                        );
                         Object.assign(track, trackInfo);
                     }
 
-                    setQueue(playerState.queue);
-                    setIndexList(playerState.indexList);
-                    setCurrentIndex(playerState.currentIndex);
-                    setPlaybackMode(playerState.playbackMode);
-                    setIsPlaying(playerState.isPlaying);
-                    setCurrentTime(playerState.currentTime);
-                    setVolume(playerState.volume);
+                    const currentTrack =
+                        savedState.queue[
+                            savedState.indexList[savedState.currentIndex]
+                            ];
 
-                    const currentTrack = playerState.queue[playerState.indexList[playerState.currentIndex]];
-                    setAudioSrc(await getAudioSrc(currentTrack));
-                    setCurrentTrackInfo(currentTrack);
+                    setPlayerState({
+                        ...savedState,
+                        audioSrc: await getAudioSrc(currentTrack),
+                        currentTrackInfo: currentTrack,
+                    });
                 }
             } catch (error) {
                 console.error('Failed to load player state:', error);
@@ -361,44 +382,58 @@ function usePlayer(audioRef) {
         loadPlayerState();
     }, []);
 
-    //初始化的一部分
-    //当音频初始化加载完成后,将playerState的currentTime应用到audioRef.current.currentTime,将playerState的volume应用到audioRef.current.volume
+    // 初始化音频设置
     useEffect(() => {
         if (audioRef.current) {
-            audioRef.current.addEventListener('canplaythrough', () => {
-                audioRef.current.currentTime = currentTimeRef.current;
-                setVolume(volumeRef.current);
-                audioRef.current.volume = volumeRef.current;
-            }, {once: true});
+            audioRef.current.addEventListener(
+                'canplaythrough',
+                () => {
+                    audioRef.current.currentTime = playerStateRef.current.currentTime;
+                    audioRef.current.volume = playerStateRef.current.volume;
+                },
+                {once: true}
+            );
         }
     }, []);
-
 
     // 更新音频源
     useEffect(() => {
         if (audioRef.current) {
-            audioRef.current.src = audioSrcRef.current;
+            audioRef.current.src = playerStateRef.current.audioSrc;
         }
-    }, [audioSrcRef]);
+    }, [playerStateRef.current.audioSrc]);
 
-    // 定时更新播放时间
+    // 定期更新 currentTime
     useEffect(() => {
         const interval = setInterval(() => {
-            if (audioRef.current && isPlayingRef.current) {
-                setCurrentTime(audioRef.current.currentTime);
+            if (audioRef.current && playerStateRef.current.isPlaying) {
+                setPlayerState(prev => ({
+                    ...prev,
+                    currentTime: audioRef.current.currentTime,
+                }));
             }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isPlayingRef]);
+    }, [playerStateRef.current.isPlaying]);
 
-    //绑定volume和audioRef.current.volume
+    // 同步音量和 audio 元素
     useEffect(() => {
         if (audioRef.current) {
-            audioRef.current.volume = volumeRef.current;
+            audioRef.current.volume = playerStateRef.current.volume;
         }
-    }, [volumeRef.current]);
+    }, [playerStateRef.current.volume]);
 
+    // 同步播放状态和 audio 元素
+    useEffect(() => {
+        if (audioRef.current) {
+            if (playerStateRef.current.isPlaying) {
+                audioRef.current.play();
+            } else {
+                audioRef.current.pause();
+            }
+        }
+    }, [playerStateRef.current.isPlaying]);
 
     // 处理音频结束事件
     useEffect(() => {
@@ -420,51 +455,41 @@ function usePlayer(audioRef) {
     // 导出播放器状态
     const dumpPlayerState = () => {
         return {
-            queue: queueRef.current.map(track => ({file_path: track.file_path, data_href: track.data_href})),
-            indexList: indexListRef.current,
-            currentIndex: currentIndexRef.current,
-            isPlaying: false,
-            currentTime: currentTimeRef.current,
-            playbackMode: playbackModeRef.current,
+            ...playerStateRef.current,
+            queue: playerStateRef.current.queue.map(track => ({
+                file_path: track.file_path,
+                data_href: track.data_href,
+            })),
             volume: audioRef.current.volume,
-            currentTrackInfo: currentTrackInfoRef.current,
-            audioSrc: audioSrcRef.current
         };
     };
 
     // 清空播放队列
     const clearQueue = () => {
-        setQueue([]);
-        setIndexList([]);
-        setCurrentIndex(0);
-        setAudioSrc('');
-        setIsPlaying(false);
-        setCurrentTime(0);
+        setPlayerState({
+            ...playerStateRef.current,
+            queue: [],
+            indexList: [],
+            currentIndex: 0,
+            audioSrc: '',
+            isPlaying: false,
+            currentTime: 0,
+        });
     };
-
 
     window.playerState = dumpPlayerState;
 
-
     return {
         // 状态引用
-        queueRef,
-        currentIndexRef,
-        audioSrcRef,
-        isPlayingRef,
-        currentTimeRef,
-        playbackModeRef,
-        currentTrackInfoRef,
-        nextTracksRef,
-        volumeRef,
+        playerStateRef,
         // 播放控制方法
         play,
         pause,
         togglePlayPause,
         playNext,
         playPrevious,
-        seekTo,
-        setVolume,
+        setCurrentTime,
+        setVolume: volume => setPlayerState(prev => ({...prev, volume})),
         changeVolume,
         // 队列管理方法
         addTrackToEnd,
@@ -475,17 +500,20 @@ function usePlayer(audioRef) {
         // 其他方法
         dumpPlayerState,
         clearQueue,
-        //遗留的老方法
-        addToNextAndPlay: (track) => {
+        // 遗留的老方法
+        addToNextAndPlay: track => {
             addTrackToNext(track);
             playNext();
         },
-        addToNext: (track) => {
+        addToNext: track => {
             addTrackToNext(track);
         },
-        setCurrentTrackInfo: (track) => {
-            setCurrentTrackInfo(track);
-        }
+        setCurrentTrackInfoDuration: duration => {
+            setPlayerState(prev => ({
+                ...prev,
+                currentTrackInfo: {...prev.currentTrackInfo, duration},
+            }));
+        },
     };
 }
 
