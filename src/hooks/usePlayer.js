@@ -61,7 +61,6 @@ function usePlayer(audioRef) {
             const nextTrack =
                 playerStateRef.current.queue[playerStateRef.current.indexList[nextIndex]];
 
-            const expectedNextTrack = {...nextTrack};
 
             let audioSrc;
 
@@ -73,12 +72,6 @@ function usePlayer(audioRef) {
                 continue;
             }
 
-            if (expectedNextTrack.track_id !== playerStateRef.current.currentTrackInfo.track_id) {
-                console.error(
-                    `用户已切换曲目expected:${expectedNextTrack.track_id} current:${playerStateRef.current.currentTrackInfo.track_id}`
-                );
-                return;
-            }
 
             setPlayerState(prev => ({
                 ...prev,
@@ -117,7 +110,6 @@ function usePlayer(audioRef) {
             const prevTrack =
                 playerStateRef.current.queue[playerStateRef.current.indexList[prevIndex]];
 
-            const expectedPrevTrack = {...prevTrack};
 
             let audioSrc;
 
@@ -127,10 +119,6 @@ function usePlayer(audioRef) {
                 console.error('获取音频BlobUrl时出错:', error);
                 attempts++;
                 continue;
-            }
-
-            if (expectedPrevTrack.track_id !== playerStateRef.current.currentTrackInfo.track_id) {
-                return;
             }
 
             setPlayerState(prev => ({
@@ -231,6 +219,9 @@ function usePlayer(audioRef) {
     };
 
     const replacePlayQueue = async tracks => {
+
+        pause();
+
         let newIndexList;
 
         switch (playerStateRef.current.playbackMode) {
