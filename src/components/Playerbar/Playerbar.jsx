@@ -4,12 +4,8 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import {formatTime} from "../../utils/timeUtils.js";
 
 export default function Playerbar({
-                                      isPlaying = false,
-                                      currentTime = 0,
                                       setCurrentTime = (time) => {
                                       },
-                                      trackInfo = {},
-                                      playbackMode = 'loop',
                                       onPlayNext = () => {
                                       },
                                       onPlayPrevious = () => {
@@ -18,19 +14,32 @@ export default function Playerbar({
                                       },
                                       onCyclePlaybackMode = () => {
                                       },
-                                      onSeekTo = (newTime) => {
-                                      },
                                       onVolumeChange = (volume) => {
                                       },
                                       onToggleRightContent = () => {
                                       },
-                                      volumeRef = {current: 0.5}
+                                      playerState = {
+                                          queue: [],
+                                          indexList: [],
+                                          currentIndex: 0,
+                                          playbackMode: 'loop',
+                                          audioSrc: '',
+                                          isPlaying: false,
+                                          currentTime: 0,
+                                          currentTrackInfo: {},
+                                          nextTracks: [],
+                                          volume: 0.5,
+                                      }// 使用默认值避免解构时出现 undefined
                                   }) {
+    // 从播放器状态中提取所需信息
+
+    const { playbackMode, isPlaying, currentTime,currentTrackInfo, volume} = playerState;
+
+
     const handleSeekTo = (event) => {
         const newTime = parseFloat(event.target.value);
-        if (!isNaN(newTime) && newTime >= 0 && newTime <= (trackInfo.duration || 0)) {
+        if (!isNaN(newTime) && newTime >= 0 && newTime <= (currentTrackInfo.duration || 0)) {
             setCurrentTime(newTime);
-            onSeekTo(newTime);
         }
     };
 
@@ -44,11 +53,11 @@ export default function Playerbar({
     return (
         <div className="player-bar max-h-32 overflow-y-hidden">
             <div className="left-section w-1/4">
-                <img src={trackInfo.cover_src || ""} alt="album cover" className="album-cover"/>
+                <img src={currentTrackInfo.cover_src || ""} alt="album cover" className="album-cover"/>
                 <div className="playerState-info overflow-x-hidden">
-                    <div className="playerState-title text-sm text-nowrap">{trackInfo.title || '未知标题'}</div>
+                    <div className="playerState-title text-sm text-nowrap">{currentTrackInfo.title || '未知标题'}</div>
                     <div
-                        className="playerState-artist text-sm text-gray-400 text-nowrap">{trackInfo.artist || '未知艺术家'}</div>
+                        className="playerState-artist text-sm text-gray-400 text-nowrap">{currentTrackInfo.artist || '未知艺术家'}</div>
                 </div>
             </div>
 
@@ -72,12 +81,12 @@ export default function Playerbar({
                             type="range"
                             className="progress-slider"
                             min="0"
-                            max={trackInfo.duration || 0}
+                            max={currentTrackInfo.duration || 0}
                             value={currentTime}
                             step="1"
                             onChange={handleSeekTo}
                         />
-                        <span className="total-time">{formatTime(trackInfo.duration || 0)}</span>
+                        <span className="total-time">{formatTime(currentTrackInfo.duration || 0)}</span>
                     </div>
                 </div>
             </div>
@@ -90,7 +99,7 @@ export default function Playerbar({
                 <i className="fas fa-bars"></i>
                 <i className="fas fa-expand"></i>
                 <input
-                    value={volumeRef.current}
+                    value={volume}
                     type="range"
                     className="volume-slider"
                     onChange={handleVolumeChange}
