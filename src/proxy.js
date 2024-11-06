@@ -22,6 +22,7 @@ let db = null;
 db = await getDatabase(dbPath);
 console.log('代理进程数据库已连接');
 
+
 // 创建一个 GET 接口，接受客户端请求并转发到目标服务器
 app.get('/proxy', async (req, res) => {
     const dataHref = req.query.dataHref; // 从请求中获取 dataHref 参数
@@ -39,23 +40,30 @@ app.get('/proxy', async (req, res) => {
         if (musicLink.includes('hifini')) {
             options.headers['Referer'] = 'https://www.hifini.com/';
         }
+        // 使用request请求,并判断,正常则直接pipe到res,如果返回了-1,说明请求的资源不存在,需要更新未重定向的URL
+
         // 使用 request 模块转发请求，并将响应返回给客户端
         request(options).pipe(res);
+
     } catch (error) {
         console.error('Error fetching music link:', error.message);
         res.status(500).send('Error fetching music link.');
     }
 });
 
+let port = 3000;
+
 
 let isPortInUse = await isPortOccupied(3000);
-if (isPortInUse) {
-    console.error('端口 3000 已被占用');
-    process.exit(1);
+
+while (isPortInUse) {
+    console.warn('端口 ' + port + ' 已被占用,尝试使用下一个端口');
+    port++;
+    isPortInUse = await isPortOccupied(port);
 }
 
 
-// 启动服务器，监听 3000 端口
-app.listen(3000, () => {
-    console.log('Proxy server listening on port 3000');
+// 启动服务器,监听port端口
+app.listen(port, () => {
+    console.log('Proxy server listening on port ' + port);
 });

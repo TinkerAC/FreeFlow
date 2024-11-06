@@ -12,7 +12,7 @@ let db;
 // 单实例锁
 const gotTheLock = app.requestSingleInstanceLock();
 
-if (!gotTheLock) {
+if (!gotTheLock && process.env.NODE_ENV !== 'development') { //开发环境下不作限制
     // 如果无法获得锁，说明已经有一个实例在运行，直接退出应用
     console.log('Another instance is already running, quitting...');
     app.quit();

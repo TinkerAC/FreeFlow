@@ -1,3 +1,4 @@
+// 返回dataHref的BlobUrl或者file_path对应的音频文件路径
 export default async function getAudioSrc(track) {
     try {
         const filePath = track.file_path;
@@ -17,7 +18,10 @@ export default async function getAudioSrc(track) {
                 xhr.responseType = 'blob';
 
                 xhr.onload = function () {
+
+
                     if (xhr.status === 200 || xhr.status === 206) {
+
                         const blob = xhr.response;
                         const blobUrl = URL.createObjectURL(blob);
                         resolve(blobUrl); // 返回生成的 blob URL
@@ -39,6 +43,8 @@ export default async function getAudioSrc(track) {
     } catch (error) {
         throw new Error(`Error loading audio: ${error.message}`);
     }
+
+
 }
 
 
