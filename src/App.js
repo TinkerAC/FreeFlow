@@ -5,7 +5,7 @@ import useMainWindow from './hooks/useMainWindow.js'; // 导入自定义的 useM
 import Headbar from './components/Headbar/Headbar.jsx';
 import Musiclibrary from './components/Musiclibrary/Musiclibrary.jsx';
 import Maincontent from './components/Maincontent/Maincontent.jsx';
-import Playerbar from './components/Playerbar/Playerbar.jsx';
+import PlayerBar from './components/Playerbar/PlayerBar.jsx';
 import './App.css';
 import RightContent from "./components/RightContent/RightContent.jsx";
 
@@ -15,32 +15,19 @@ function App() {
 
     // 使用 usePlayer Hook 管理播放器状态和逻辑
     const {
-        queueRef,
-        currentIndexRef,
-        audioSrcRef,
-        isPlayingRef,
-        currentTimeRef,
-        playbackModeRef,
-        currentTrackInfoRef,
-        nextTracksRef,
-        play,
-        pause,
-        togglePlayPause,
-        playNext,
-        playPrevious,
-        cyclePlaybackMode,
+        playerStateRef,
+        dumpPlayerState,
+        replacePlayQueue,
         addToNext,
         addToNextAndPlay,
-        replacePlayQueue,
-        seekTo,
-        changeVolume,
-        setIsPlaying,
-        setCurrentTime,
-        dumpPlayerState,
         clearQueue,
+        playPrevious,
+        playNext,
+        togglePlayPause,
         setVolume,
-        volumeRef,
-        setCurrentTrackInfo,
+        setCurrentTime,
+        cyclePlaybackMode,
+        setCurrentTrackInfoDuration,
     } = usePlayer(audioRef);
 
 
@@ -121,10 +108,7 @@ function App() {
         if (audioElement) {
             // 当音频的元数据加载完成时，更新音频元数据
             const handleLoadedMetadata = () => {
-                setCurrentTrackInfo({
-                    ...currentTrackInfoRef.current,
-                    duration: audioElement.duration,
-                });
+                setCurrentTrackInfoDuration(audioElement.duration);
             }
 
             // 为 loadedmetadata 事件添加监听器
@@ -135,15 +119,17 @@ function App() {
                 audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
             };
         }
-    }, [audioSrcRef.current]);  // 当音频源发生变化时重新挂载
+    }, [playerStateRef.current.audioSrc]); // 当音频地址改变时重新绑定事件监听器
 
     const [searchResults, setSearchResults] = useState([]); // 用于存储搜索结果
     const [mainContentView, setMainContentView] = useState('playlist'); // 用于控制主内容区域显示的内容
 
 
     return (
+
         <div className="App h-full flex flex-col bg-black">
-            <audio ref={audioRef} src={audioSrcRef.current} hidden/>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <audio ref={audioRef} src={playerStateRef.current.audioSrc} hidden={true}/>
             <Headbar
                 className="sticky top-0 z-1000 w-full"
                 onSwitchView={setMainContentView}
@@ -187,29 +173,23 @@ function App() {
                 {/* 右侧栏 */}
                 {isRightContentVisible && (
                     <RightContent
-                        currentTrack={currentTrackInfoRef.current}
-                        nextTracks={nextTracksRef.current}
+                        currentTrack={playerStateRef.current.currentTrackInfo}
+                        nextTracks={playerStateRef.current.nextTracks}
                         clearQueue={clearQueue}
                     />
                 )}
             </div>
 
             {/* 底部播放条 */}
-            <Playerbar
+            <PlayerBar
                 className="sticky bottom-0 z-1000 w-full"
-                volumeRef={volumeRef}
-                audioSrc={audioSrcRef.current}
-                isPlaying={isPlayingRef.current}
-                setIsPlaying={setIsPlaying}
-                currentTime={currentTimeRef.current}
+                playerState={playerStateRef.current}
                 setCurrentTime={setCurrentTime}
-                trackInfo={currentTrackInfoRef.current}
-                playbackMode={playbackModeRef.current}
                 onPlayNext={playNext}
                 onPlayPrevious={playPrevious}
                 onTogglePlayPause={togglePlayPause}
                 onCyclePlaybackMode={cyclePlaybackMode}
-                onSeekTo={seekTo}
+                onSeekTo={setVolume}
                 onVolumeChange={setVolume}
                 onToggleRightContent={toggleRightContent} // 传递方法给播放条，允许用户控制右侧栏显示状态
             />
