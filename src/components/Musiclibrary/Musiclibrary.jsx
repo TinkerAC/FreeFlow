@@ -65,15 +65,19 @@ export default function MusicLibrary({
                 </div>
 
                 <div className="flex justify-center items-center flex-col overflow-y-auto">
+
+
                     {libraryItems.map((item, index) => (
+
                         <div
                             className="w-[4rem] h-[4rem] gap-0.5 flex justify-center items-center rounded-lg hover:bg-item-bg-hover">
                             <img
                                 key={item.playlist_id}
                                 src={item?.tracks?.[0]?.cover_src || "../assets/default-playlist-cover.png"}
-                                alt={item.title}
+                                alt={item.title + 'key:' + item.playlist_id}
                                 className="w-12 h-12 m-1 rounded-md cursor-pointer"
                                 onClick={() => handleSelectItem(index)}
+
                             />
                         </div>
                     ))}
@@ -120,7 +124,7 @@ export default function MusicLibrary({
                             <Item
                                 key={item.playlist_id}
                                 imgSrc={item?.tracks?.[0]?.cover_src || "../assets/default-playlist-cover.png"}
-                                altText={item.title}
+                                altText={item.title + "key:" + item.playlist_id}
                                 title={item.title}
                                 details={item.details}
                                 index={index}

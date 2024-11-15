@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {JSDOM} from 'jsdom';
 import * as cheerio from 'cheerio';
-import {dbGet, dbRun, getDatabase} from '../utils/dbUtils.js';
+import {dbGet, dbRun} from '../utils/dbUtils.js';
 import {getRandom} from 'random-useragent';
 import path from "path";
 import {fileURLToPath} from "url";
@@ -18,7 +18,6 @@ const __dirname = path.dirname(__filename);
 
 // console.log('sqlite3:', path.join(__dirname, '..','..', 'data', 'database.sqlite'));
 
-// 数据库连接和辅助函数
 
 
 // 接受关键词并搜索，返回歌曲结果的 JSON 对象
@@ -52,8 +51,6 @@ async function search(keyword) {
                 'Connection': 'keep-alive',
                 'DNT': '1', // 防止部分爬虫检测
                 'Upgrade-Insecure-Requests': '1',
-                "bbs_sid": "o85cgb08s953nl5j6svv907tvu",
-                "bbs_token": "IIz1_2B5G44mUlrX3GvpJJEs1_2F_2FYAMJ3rpOnu7G97O147AcdoMAvp_2BMn0TBRVrfJk7pXdsOevjoPHuEVNleJSvGh2d17Y_3D"
             },
             timeout: 10000 // 设置超时时间10秒
         });
@@ -187,6 +184,10 @@ async function fetchAndSaveMusicInfo(dataHref, db) {
         "bbs_sid": "96ua2fkhk0r2e2eb7khsn4f15g",
         "bbs_token": "kiceFZBMuXi0zyDiXXQ9rnaZJ5kJe0f5V18lgcV5VzJanHEFwm5i_2FXTilTsG5gcbhkrX3_2B_2FTWpJ7rSyYPng1IWNPae4ObKlb"
     }
+
+
+
+
     try {
         const cookieString =
             Object.entries(cookies)

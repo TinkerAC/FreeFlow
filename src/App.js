@@ -128,14 +128,12 @@ function App() {
     return (
 
         <div className="App h-full flex flex-col bg-black">
-            <script src="https://cdn.tailwindcss.com"></script>
             <audio ref={audioRef} src={playerStateRef.current.audioSrc} hidden={true}/>
             <TopBar
                 className="sticky top-0 z-1000 w-full"
                 onSwitchView={setMainContentView}
                 currentView={mainContentView}
                 setSearchResults={setSearchResults}
-                onToggleRightContent={toggleRightContent} // 传递方法给头部栏，允许用户控制右侧栏显示状态
             />
             <div
                 className="grid h-full w-full overflow-y-hidden overflow-x-auto"
@@ -173,8 +171,7 @@ function App() {
                 {/* 右侧栏 */}
                 {isRightContentVisible && (
                     <RightContent
-                        currentTrack={playerStateRef.current.currentTrackInfo}
-                        nextTracks={playerStateRef.current.nextTracks}
+                        playerState={playerStateRef.current}
                         clearQueue={clearQueue}
                     />
                 )}
@@ -189,7 +186,6 @@ function App() {
                 onPlayPrevious={playPrevious}
                 onTogglePlayPause={togglePlayPause}
                 onCyclePlaybackMode={cyclePlaybackMode}
-                onSeekTo={setVolume}
                 onVolumeChange={setVolume}
                 onToggleRightContent={toggleRightContent} // 传递方法给播放条，允许用户控制右侧栏显示状态
             />

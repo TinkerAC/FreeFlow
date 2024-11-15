@@ -20,6 +20,7 @@ export default function RightContent({
 
     // 从播放器状态中提取所需信息
     const {currentTrackInfo, nextTracks} = playerState;
+    // console.log(currentTrackInfo, nextTracks);
 
 
     if (!currentTrackInfo || !nextTracks || nextTracks.length === 0) {

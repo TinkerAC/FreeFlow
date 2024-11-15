@@ -329,14 +329,15 @@ function usePlayer(audioRef) {
                 playerStateRef.current.queue[
                     playerStateRef.current.indexList[playerStateRef.current.currentIndex]
                     ];
-            setPlayerState(prev => ({...prev, currentTrackInfo: currentTrack}));
+            setPlayerState(
+                prev => ({...prev, currentTrackInfo: currentTrack}),
+            );
+
         } else {
             setPlayerState(prev => ({...prev, currentTrackInfo: {}}));
         }
     }, [
-        playerStateRef.current.queue,
-        playerStateRef.current.indexList,
-        playerStateRef.current.currentIndex,
+        playerStateRef.current.queue[playerStateRef.current.indexList[playerStateRef.current.currentIndex]],
     ]);
 
     // 加载播放器状态
