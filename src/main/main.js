@@ -13,10 +13,11 @@ let db;
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock && process.env.NODE_ENV !== 'development') { //开发环境下不作限制
-    // 如果无法获得锁，说明已经有一个实例在运行，直接退出应用
     console.log('Another instance is already running, quitting...');
+    // 如果无法获得锁，说明已经有一个实例在运行，直接退出应用
     app.quit();
 } else {
+    console.log('App is running...');
     // 如果获得了锁，继续启动应用并监听第二个实例的请求
     app.on('second-instance', async (event, commandLine, workingDirectory) => {
         // 当用户试图再次启动应用时，这里会被触发
@@ -32,7 +33,11 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') { //开发环境下�
 
         await startProxyProcess();            // 启动代理进程
         createWindow(db);               // 创建主窗口
-        createTray(mainWindow);         // 创建系统托盘图标
+
+        // 在 Windows 上，创建系统托盘图标
+        if (process.platform === 'win32') {
+            createTray(mainWindow);
+        }  // 创建系统托盘图标
         registerGlobalShortcuts(mainWindow);  // 注册全局快捷键
 
         // 在 macOS 上，激活应用时重新创建窗口

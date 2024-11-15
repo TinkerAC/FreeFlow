@@ -10,6 +10,7 @@ async function initDataBase(dbPath) {
         // 打开数据库连接
         const db = new sqlite3.Database(dbPath, async (err) => {
             if (err) {
+                console.log('数据库文件路径:', dbPath);
                 console.error('无法连接到数据库:', err.message);
                 return reject(err);
             }

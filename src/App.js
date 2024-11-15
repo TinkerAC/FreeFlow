@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import usePlayer from './hooks/usePlayer.js';
 import useMusicLibrary from './hooks/useMusicLibrary.js';
 import useMainWindow from './hooks/useMainWindow.js'; // 导入自定义的 useMainWindow Hook
-import Headbar from './components/Headbar/Headbar.jsx';
+import TopBar from './components/Headbar/TopBar.jsx';
 import Musiclibrary from './components/Musiclibrary/Musiclibrary.jsx';
 import Maincontent from './components/Maincontent/Maincontent.jsx';
 import PlayerBar from './components/Playerbar/PlayerBar.jsx';
@@ -130,7 +130,7 @@ function App() {
         <div className="App h-full flex flex-col bg-black">
             <script src="https://cdn.tailwindcss.com"></script>
             <audio ref={audioRef} src={playerStateRef.current.audioSrc} hidden={true}/>
-            <Headbar
+            <TopBar
                 className="sticky top-0 z-1000 w-full"
                 onSwitchView={setMainContentView}
                 currentView={mainContentView}

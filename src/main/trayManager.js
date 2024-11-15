@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 let tray = null;
 
 function createTray(mainWindow) {
-    const trayIconPath = path.join(__dirname, '..', '..', 'assets', 'icon.jpg');
+    const trayIconPath = path.join(__dirname, '..', '..', 'assets', 'icon.ico');
     tray = new Tray(trayIconPath);
 
     const contextMenu = Menu.buildFromTemplate([

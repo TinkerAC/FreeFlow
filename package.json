@@ -11,7 +11,8 @@
     "proxy": "node src/proxy.js",
     "build:css": "tailwindcss -i src/tailwind.css -o public/tailwind.css --minify",
     "watch:css": "tailwindcss -i src/tailwind.css -o public/tailwind.css --watch",
-    "electron:build": "electron-builder"
+    "electron:build": "electron-builder",
+    "electron:build:mac": "electron-builder --mac"
   },
   "build": {
     "appId": "app.freeflow",
@@ -30,7 +31,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -38,6 +39,23 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": false
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.productivity"
+    },
+    "dmg": {
+      "icon": "assets/icon.icns",
+      "iconSize": 128,
+      "window": {
+        "width": 600,
+        "height": 400
+      },
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
     }
   },
   "browser": {
@@ -84,6 +102,7 @@
     "config": "^3.3.12",
     "deep-equal": "^2.2.3",
     "electron-localshortcut": "^1.1.1",
+    "electron-store": "^10.0.0",
     "express": "^4.19.2",
     "js-yaml": "^4.1.0",
     "jsdom": "^24.1.1",

@@ -1,8 +1,22 @@
 import axios from 'axios';
 import {JSDOM} from 'jsdom';
 import * as cheerio from 'cheerio';
-import {dbGet, dbRun} from '../utils/dbUtils.js';
+import {dbGet, dbRun, getDatabase} from '../utils/dbUtils.js';
 import {getRandom} from 'random-useragent';
+import path from "path";
+import {fileURLToPath} from "url";
+
+
+// 获取环境变量中的 dataPath
+
+
+// 获取当前模块的文件名
+const __filename = fileURLToPath(import.meta.url);
+
+// 获取当前模块的目录名
+const __dirname = path.dirname(__filename);
+
+// console.log('sqlite3:', path.join(__dirname, '..','..', 'data', 'database.sqlite'));
 
 // 数据库连接和辅助函数
 
@@ -37,7 +51,9 @@ async function search(keyword) {
                 'Accept-Language': 'en-US,en;q=0.5',
                 'Connection': 'keep-alive',
                 'DNT': '1', // 防止部分爬虫检测
-                'Upgrade-Insecure-Requests': '1'
+                'Upgrade-Insecure-Requests': '1',
+                "bbs_sid": "o85cgb08s953nl5j6svv907tvu",
+                "bbs_token": "IIz1_2B5G44mUlrX3GvpJJEs1_2F_2FYAMJ3rpOnu7G97O147AcdoMAvp_2BMn0TBRVrfJk7pXdsOevjoPHuEVNleJSvGh2d17Y_3D"
             },
             timeout: 10000 // 设置超时时间10秒
         });
@@ -166,10 +182,20 @@ export async function getMusicInfo(dataHref, db) {
 
 // 抓取并保存音乐信息的辅助函数
 async function fetchAndSaveMusicInfo(dataHref, db) {
-    try {
 
+    const cookies = {
+        "bbs_sid": "96ua2fkhk0r2e2eb7khsn4f15g",
+        "bbs_token": "kiceFZBMuXi0zyDiXXQ9rnaZJ5kJe0f5V18lgcV5VzJanHEFwm5i_2FXTilTsG5gcbhkrX3_2B_2FTWpJ7rSyYPng1IWNPae4ObKlb"
+    }
+    try {
+        const cookieString =
+            Object.entries(cookies)
+                .map(([key, value]) => `${key}=${value}`)
         const html = await axios.get("https://hifini.com/" + dataHref, {
-            headers: {referer: 'https://www.hifini.com'}
+            headers: {
+                referer: 'https://www.hifini.com',
+                cookie: cookieString,
+            },
         }).then(response => response.data);
 
         const dom = new JSDOM(html);
@@ -302,3 +328,9 @@ export async function getSearchResults(keyword, db) {
 //
 // 示例调用
 // getSearchResults('北京欢迎你', await getDatabase("D:\\Workplace\\NodeProject\\Spotify\\data\\database.sqlite")).then(console.log)
+
+
+// fetchAndSaveMusicInfo(
+//     "thread-22709.htm",
+//     await getDatabase(path.join(__dirname, '..', '..', 'data', 'database.sqlite'))
+// ).then(console.log);

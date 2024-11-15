@@ -7,7 +7,7 @@ async function getSearchResults(searchTerm) {
     return results;
 }
 
-export default function Headbar({
+export default function TopBar({
                                     onSwitchView,
                                     currentView,
                                     setSearchResults
