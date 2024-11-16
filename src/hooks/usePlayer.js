@@ -448,6 +448,8 @@ function usePlayer(audioRef) {
     const dumpPlayerState = () => {
         return {
             ...playerStateRef.current,
+            //总是将playerState中的isPlaying设置为false
+            isPlaying: false,
             queue: playerStateRef.current.queue.map(track => ({
                 file_path: track.file_path,
                 data_href: track.data_href,
