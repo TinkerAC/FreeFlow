@@ -5,6 +5,7 @@ import {registerGlobalShortcuts, unregisterGlobalShortcuts} from './shortcutMana
 import {startProxyProcess, stopProxyProcess} from './proxyManager.js';
 import {getDatabase} from "../utils/dbUtils.js";
 import {dbPath} from "./pathConfig.js";
+import {updateLocalLibrary} from "../services/localLibraryService.js";
 
 let isQuitting = false;
 let db;
@@ -30,6 +31,8 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') { //开发环境下�
     // 在 app 准备好时执行初始化工作
     app.whenReady().then(async () => {
         db = await getDatabase(dbPath);  // 初始化数据库
+
+        await updateLocalLibrary(db);         // 更新本地音乐库
 
         await startProxyProcess();            // 启动代理进程
         createWindow(db);               // 创建主窗口
