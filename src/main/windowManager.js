@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow;
 
-function createWindow(db) {
+function createWindow(db, store) {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
@@ -31,7 +31,7 @@ function createWindow(db) {
     }
 
     // 初始化 IPC 事件处理
-    setupIpcHandlers(mainWindow, db);
+    setupIpcHandlers(mainWindow,db,store);
 
     // 窗口事件处理
     mainWindow.on('close', (event) => {

@@ -1,10 +1,10 @@
 // proxyManager.js
-import {fork} from 'child_process';
+import { spawn } from 'child_process';
 import path from 'path';
-import {isPortOccupied} from '../utils/netUtils.js';
-import {dataPath} from './pathConfig.js';
-import {fileURLToPath} from "url";
-
+import { isPortOccupied } from '../utils/netUtils.js';
+import { dataPath } from './pathConfig.js';
+import { fileURLToPath } from 'url';
+import {app} from "electron";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,10 +16,16 @@ async function startProxyProcess() {
         console.error('端口 3000 已被占用');
         return;
     }
-    proxyProcess = fork(path.join(__dirname, '..', 'proxy.js'), [], {
-        env: {...process.env, DATA_PATH: dataPath},
+    proxyProcess = spawn(process.execPath, [path.join(__dirname, '..', 'proxy.js')], {
+        env: { ...process.env, DATA_PATH: dataPath ,STORE_CWD:app.getPath('userData')},
         stdio: 'inherit',
     });
+
+    proxyProcess.on('exit', (code) => {
+        console.log(`代理进程已退出，退出码 ${code}`);
+        proxyProcess = null;
+    });
+
     console.log('代理进程已启动');
 }
 
@@ -31,4 +37,4 @@ function stopProxyProcess() {
     }
 }
 
-export {startProxyProcess, stopProxyProcess};
+export { startProxyProcess, stopProxyProcess };

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import './HeadBar.css'; // 引入组件样式
+import './HeadBar.css';
 
 async function getSearchResults(searchTerm) {
     const results = await window.networkAPI.getSearchResults(searchTerm);
@@ -8,14 +8,14 @@ async function getSearchResults(searchTerm) {
 }
 
 export default function TopBar({
-                                    onSwitchView,
-                                    currentView,
-                                    setSearchResults
-                                }) {
+                                   onSwitchView,
+                                   currentView,
+                                   setSearchResults,
+                               }) {
 
     // 状态来存储搜索输入
     const [searchTerm, setSearchTerm] = useState('');
-
+    const [userName, setUserName] = useState(''); // 用户名
     // 防抖动搜索方法
     useEffect(() => {
         const debounceTimeout = setTimeout(() => {
@@ -27,6 +27,14 @@ export default function TopBar({
         // 清除超时以避免多余的搜索调用
         return () => clearTimeout(debounceTimeout);
     }, [searchTerm]); // 当 searchTerm 变化时触发
+
+
+    useEffect(() => {
+        // 获取用户名
+        window.electronAPI.getConfig('user_name').then((name) => {
+            setUserName(name);
+        });
+    }, []);
 
 
     // 占位符搜索方法
@@ -71,8 +79,19 @@ export default function TopBar({
                 <div className="icon">
                     <i className="fa fa-users"></i>
                 </div>
-                <div className="user-icon">
-                    <span>杨</span>
+                <div className="user-icon"
+                     onClick={
+                         () => {
+                             if (currentView !== 'profile') {
+                                 onSwitchView('profile');
+                             }
+                         }
+                     }
+                >
+                    <span className="whitespace-nowrap overflow-hidden"
+                    >{
+                        userName || "无"
+                    }</span>
                 </div>
                 <div className="window-controls">
                     <span onClick={() => window.electronAPI.minimize()}>&#8722;</span>

@@ -5,9 +5,7 @@ import {dbGet, dbRun} from '../utils/dbUtils.js';
 import {getRandom} from 'random-useragent';
 import path from "path";
 import {fileURLToPath} from "url";
-
-
-// 获取环境变量中的 dataPath
+import {getConfig} from "./ConfigService.js";
 
 
 // 获取当前模块的文件名
@@ -15,9 +13,6 @@ const __filename = fileURLToPath(import.meta.url);
 
 // 获取当前模块的目录名
 const __dirname = path.dirname(__filename);
-
-// console.log('sqlite3:', path.join(__dirname, '..','..', 'data', 'database.sqlite'));
-
 
 
 // 接受关键词并搜索，返回歌曲结果的 JSON 对象
@@ -117,40 +112,38 @@ function generateParam(data) {
 }
 
 // 获取音乐链接的函数
-export async function getMusicLink(dataHref, db) {
+export async function getMusicLink(dataHref, db, store) {
     try {
+        // 从数据库中获取相关记录
         const row = await dbGet(db, 'SELECT un_redirected_url, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
         let un_redirected_url;
 
-        if (row) {
-            const {un_redirected_url: cachedUrl, cached_at} = row;
-            const currentDate = new Date().toISOString().split('T')[0];
+        // 获取当前日期的字符串格式（YYYY-MM-DD）
+        const currentDate = new Date().toISOString().split('T')[0];
 
-            if (cached_at && cached_at.startsWith(currentDate)) {
-                un_redirected_url = cachedUrl;
-                console.log('使用缓存中的未重定向链接加载dataHref:', dataHref, '链接:', un_redirected_url);
-            } else {
-                const data = await fetchAndSaveMusicInfo(dataHref, db);
-                un_redirected_url = data.un_redirected_url;
-            }
+        if (row && row.cached_at && row.cached_at.startsWith(currentDate)) {
+            // 如果缓存存在且是今天的，使用缓存的未重定向链接
+            un_redirected_url = row.un_redirected_url;
+            console.log('使用缓存中的未重定向链接加载 dataHref:', dataHref, '链接:', un_redirected_url);
+
         } else {
-            const data = await fetchAndSaveMusicInfo(dataHref, db);
+            // 如果没有缓存或缓存已过期，获取新的音乐信息并保存
+            const data = await fetchAndSaveMusicInfo(dataHref, db, store);
             un_redirected_url = data.un_redirected_url;
-
+            console.log('使用新获取的未重定向链接加载 dataHref:', dataHref, '链接:', un_redirected_url);
         }
 
-        const final_url = await getRedirectUrl(un_redirected_url);
-        console.log('重定向后的链接:', final_url);
-        return final_url;
+        // 获取重定向后的最终链接
+        return await getRedirectUrl(un_redirected_url);
 
     } catch (error) {
-        console.error('Error getting music link:', error);
+        console.error('获取音乐链接时出错:', error);
         throw error;
     }
 }
 
 // 获取音乐信息的函数
-export async function getMusicInfo(dataHref, db) {
+export async function getMusicInfo(dataHref, db, store) {
 
     try {
         const row = await dbGet(db, 'SELECT title, artist, cover_src, cached_at FROM hifini_info WHERE data_href = ?', dataHref);
@@ -159,7 +152,7 @@ export async function getMusicInfo(dataHref, db) {
             return {data_href: dataHref, title, artist, cover_src};
 
         } else {
-            const data = await fetchAndSaveMusicInfo(dataHref, db);
+            const data = await fetchAndSaveMusicInfo(dataHref, db, store);
             console.log("缓存中不存在音乐信息，已获取并保存:", {
                 data_href: dataHref,
                 title: data.title,
@@ -178,15 +171,13 @@ export async function getMusicInfo(dataHref, db) {
 }
 
 // 抓取并保存音乐信息的辅助函数
-async function fetchAndSaveMusicInfo(dataHref, db) {
+async function fetchAndSaveMusicInfo(dataHref, db, store) {
 
-    const cookies = {
-        "bbs_sid": "96ua2fkhk0r2e2eb7khsn4f15g",
-        "bbs_token": "kiceFZBMuXi0zyDiXXQ9rnaZJ5kJe0f5V18lgcV5VzJanHEFwm5i_2FXTilTsG5gcbhkrX3_2B_2FTWpJ7rSyYPng1IWNPae4ObKlb"
+    const cookies = getConfig(store, 'hifini_cookie');
+
+    if (!cookies) {
+        throw new Error('未找到 hifini_cookie');
     }
-
-
-
 
     try {
         const cookieString =

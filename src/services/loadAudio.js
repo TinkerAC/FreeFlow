@@ -18,8 +18,6 @@ export default async function getAudioSrc(track) {
                 xhr.responseType = 'blob';
 
                 xhr.onload = function () {
-
-
                     if (xhr.status === 200 || xhr.status === 206) {
 
                         const blob = xhr.response;

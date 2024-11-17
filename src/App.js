@@ -134,6 +134,7 @@ function App() {
                 onSwitchView={setMainContentView}
                 currentView={mainContentView}
                 setSearchResults={setSearchResults}
+                setMainContentView={setMainContentView}
             />
             <div
                 className="grid h-full w-full overflow-y-hidden overflow-x-auto"

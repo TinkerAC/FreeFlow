@@ -2,6 +2,7 @@ import React from 'react';
 import './Maincontent.css';
 import NetSearchResultView from "../SearchResultView/SearchResultView.jsx";
 import {PlaylistView} from "../PlaylistView/PlaylistView.jsx";
+import ProfileView from "../ProfileView/ProfileView.jsx";
 
 export default function Maincontent({
                                         view,
@@ -12,7 +13,6 @@ export default function Maincontent({
                                         searchResults,
                                         refreshPlaylists,
                                         playlists,
-
 
                                     }) {
     // Render different views inside the main content container
@@ -36,6 +36,13 @@ export default function Maincontent({
                 addToNextAndPlay={onAddToNextAndPlay}
                 refreshPlaylists={refreshPlaylists}
                 playlists={playlists}
+            />
+        );
+    } else if (view === "profile") {
+        viewComponent = (
+            <ProfileView
+                playlists={playlists}
+                refreshPlaylists={refreshPlaylists}
             />
         );
     }

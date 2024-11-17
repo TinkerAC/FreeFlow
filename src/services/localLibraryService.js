@@ -1,9 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
-import config from 'config';
-import {dbGet, dbRun, getDatabase} from "../utils/dbUtils.js";
+import {dbGet, dbRun} from "../utils/dbUtils.js";
 import {fileURLToPath} from 'url';
-
+import {getConfig} from "./ConfigService.js";
 
 const __dirname = fileURLToPath(import.meta.url);
 const __filename = path.join(__dirname, 'localLibraryService.js');
@@ -37,10 +36,14 @@ const loadExistingLibrary = async (libraryPath) => {
 
 
 // 更新本地音乐库的函数
-export async function updateLocalLibrary(db) {
-    const scanPaths = config.get('scan_paths');
-    const supportedFormats = config.get('supported_formats').map(ext => ext.toLowerCase());
+export async function updateLocalLibrary(db, store) {
 
+    const scanPaths = getConfig(store, 'scan_paths');
+    if (scanPaths.length === 0) {
+        console.warn('没有配置扫描路径,将跳过更新音乐库');
+        return;
+    }
+    const supportedFormats = getConfig('supported_formats').map(ext => ext.toLowerCase());
     console.log('scanPaths:', scanPaths);
     console.log('supportedFormats:', supportedFormats);
 
@@ -127,6 +130,3 @@ export async function updateLocalLibrary(db) {
 // updateLocalLibrary();
 
 
-// updateLocalLibrary(await
-//     getDatabase(path.join(__dirname, '..', '..', 'data', 'database.sqlite'))
-// ).then();

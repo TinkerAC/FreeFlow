@@ -6,9 +6,16 @@ import {startProxyProcess, stopProxyProcess} from './proxyManager.js';
 import {getDatabase} from "../utils/dbUtils.js";
 import {dbPath} from "./pathConfig.js";
 import {updateLocalLibrary} from "../services/localLibraryService.js";
+import {initConfig} from "./configInit.js";
+import Store from "electron-store";
 
 let isQuitting = false;
 let db;
+
+let store = new Store({
+    watch: true,
+});
+
 
 // 单实例锁
 const gotTheLock = app.requestSingleInstanceLock();
@@ -30,12 +37,16 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') { //开发环境下�
 
     // 在 app 准备好时执行初始化工作
     app.whenReady().then(async () => {
+        await initConfig(
+            store
+        );// 初始化配置
+
         db = await getDatabase(dbPath);  // 初始化数据库
 
-        await updateLocalLibrary(db);         // 更新本地音乐库
+        await updateLocalLibrary(db,store)        // 更新本地音乐库
 
         await startProxyProcess();            // 启动代理进程
-        createWindow(db);               // 创建主窗口
+        createWindow(db,store)    // 创建主窗口
 
         // 在 Windows 上，创建系统托盘图标
         if (process.platform === 'win32') {
@@ -46,7 +57,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') { //开发环境下�
         // 在 macOS 上，激活应用时重新创建窗口
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) {
-                createWindow(db);
+                createWindow(db,store);
             }
         });
     });

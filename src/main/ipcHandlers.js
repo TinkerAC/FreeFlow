@@ -16,9 +16,10 @@ import {loadPlayer, savePlayer} from '../services/playerService.js';
 import {getMusicInfo, getMusicLink, getSearchResults,} from '../services/hifiniMusicService.js';
 import {dataPath, playerStateDumpFile} from './pathConfig.js';
 import {dbGet} from "../utils/dbUtils.js";
+import {getConfig, setConfig} from "../services/ConfigService.js";
 
 
-function setupIpcHandlers(mainWindow, db) {
+function setupIpcHandlers(mainWindow, db, store) {
     // 窗口控制事件
     ipcMain.on('window-controls', (event, action) => {
         switch (action) {
@@ -75,7 +76,7 @@ function setupIpcHandlers(mainWindow, db) {
                 const metaData = await extractMusicMeta(file_path);
                 return parseTrackInfo(metaData);
             } else if (data_href) {
-                return await getMusicInfo(data_href, db);
+                return await getMusicInfo(data_href, db,store);
             } else {
                 console.error('Error in get-track-info: no file_path or data_href provided');
             }
@@ -102,7 +103,7 @@ function setupIpcHandlers(mainWindow, db) {
     // 解析音乐链接事件
     ipcMain.handle('get-music-link', async (event, dataHref) => {
         try {
-            return await getMusicLink(dataHref);
+            return await getMusicLink(dataHref,db,store);
         } catch (error) {
             console.error('Error in get-music-link:', error);
             throw error;
@@ -202,6 +203,16 @@ function setupIpcHandlers(mainWindow, db) {
             console.error('Error in remove-playlist:', error);
             throw error;
         }
+    });
+
+
+    ipcMain.handle('get-config', (event, key) => {
+        return getConfig(store, key);
+    });
+
+    ipcMain.handle('set-config', (event, key, value) => {
+        setConfig(store, key, value);
+        return true; // 如果需要，可以返回一个值
     });
 }
 

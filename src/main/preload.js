@@ -1,5 +1,6 @@
 const {contextBridge, ipcRenderer} = require('electron');
 
+
 contextBridge.exposeInMainWorld('electronAPI', {
     minimize: () => ipcRenderer.send('window-controls', 'minimize'),
     maximize: () => ipcRenderer.send('window-controls', 'maximize'),
@@ -85,8 +86,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
             console.log("歌单删除成功");
             refreshPlaylists();
         });
-    }
+    },
 
+    getConfig: (key) => ipcRenderer.invoke('get-config', key),
+    setConfig: (key, value) => ipcRenderer.invoke('set-config', key, value),
 
 });
 
