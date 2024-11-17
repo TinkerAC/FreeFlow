@@ -173,9 +173,10 @@ export async function getMusicInfo(dataHref, db, store) {
 // 抓取并保存音乐信息的辅助函数
 async function fetchAndSaveMusicInfo(dataHref, db, store) {
 
-    const cookies = getConfig(store, 'hifini_cookie');
+    const cookies = await getConfig(store, 'hifini_cookie');
+    console.log('获取到的 hifini_cookie:', cookies);
 
-    if (!cookies) {
+    if (!cookies || !cookies.bbs_sid || !cookies.bbs_token) {
         throw new Error('未找到 hifini_cookie');
     }
 

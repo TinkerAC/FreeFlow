@@ -43,10 +43,10 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') { //开发环境下�
 
         db = await getDatabase(dbPath);  // 初始化数据库
 
-        await updateLocalLibrary(db,store)        // 更新本地音乐库
+        await updateLocalLibrary(db, store)        // 更新本地音乐库
 
-        await startProxyProcess();            // 启动代理进程
-        createWindow(db,store)    // 创建主窗口
+        await startProxyProcess(app.getPath('userData'));            // 启动代理进程
+        createWindow(db, store)    // 创建主窗口
 
         // 在 Windows 上，创建系统托盘图标
         if (process.platform === 'win32') {
@@ -57,7 +57,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') { //开发环境下�
         // 在 macOS 上，激活应用时重新创建窗口
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) {
-                createWindow(db,store);
+                createWindow(db, store);
             }
         });
     });

@@ -1,4 +1,7 @@
-import React, { useEffect, useState } from 'react';
+// ProfileView.js
+// ProfileView.js
+import React, {useEffect, useState} from 'react';
+
 
 function getConfig(key) {
     return window.electronAPI.getConfig(key);
@@ -15,8 +18,10 @@ function ProfileView() {
     const [bbsToken, setBbsToken] = useState('');
     const [bbsSid, setBbsSid] = useState('');
     const [message, setMessage] = useState('');
+    const [scanPaths, setScanPaths] = useState([]);
+    const [newScanPath, setNewScanPath] = useState('');
 
-    // 通过 ipcRenderer 发送消息给主进程
+    // 获取配置
     useEffect(() => {
         async function fetchConfig() {
             const avatar = await getConfig('avatar_path');
@@ -30,6 +35,9 @@ function ProfileView() {
 
             const sid = await getConfig('hifini_cookie.bbs_sid');
             setBbsSid(sid || '');
+
+            const paths = await getConfig('scan_paths');
+            setScanPaths(paths || []);
         }
 
         fetchConfig();
@@ -41,6 +49,7 @@ function ProfileView() {
         await setConfig('user_name', username);
         await setConfig('hifini_cookie.bbs_token', bbsToken);
         await setConfig('hifini_cookie.bbs_sid', bbsSid);
+        await setConfig('scan_paths', scanPaths);
         setMessage('已保存');
     };
 
@@ -52,10 +61,19 @@ function ProfileView() {
         }
     };
 
+    // 添加新的扫描路径
+    const handleAddScanPath = () => {
+        if (newScanPath.trim() !== '') {
+            setScanPaths([...scanPaths, newScanPath.trim()]);
+            setNewScanPath('');
+        }
+    };
+
     return (
         <div className="p-8">
             <h1 className="text-4xl font-bold mb-8">个人资料</h1>
 
+            {/* 头像上传 */}
             <div className="mb-8">
                 <h2 className="text-xl font-bold mb-2">头像</h2>
                 <input
@@ -73,6 +91,7 @@ function ProfileView() {
                 )}
             </div>
 
+            {/* 用户名 */}
             <div className="mb-8">
                 <label className="block text-gray-400 mb-2">用户名:</label>
                 <input
@@ -83,6 +102,7 @@ function ProfileView() {
                 />
             </div>
 
+            {/* bbs_token */}
             <div className="mb-8">
                 <label className="block text-gray-400 mb-2">bbs_token:</label>
                 <input
@@ -93,6 +113,7 @@ function ProfileView() {
                 />
             </div>
 
+            {/* bbs_sid */}
             <div className="mb-8">
                 <label className="block text-gray-400 mb-2">bbs_sid:</label>
                 <input
@@ -103,6 +124,29 @@ function ProfileView() {
                 />
             </div>
 
+            {/* 本地音乐扫描路径 */}
+            <div className="mb-8">
+                <h2 className="text-xl font-bold mb-2">本地音乐扫描路径:</h2>
+                <ScanPathList items={scanPaths} onItemsChange={setScanPaths}/>
+
+                <div className="mt-4 flex">
+                    <input
+                        type="text"
+                        value={newScanPath}
+                        onChange={(e) => setNewScanPath(e.target.value)}
+                        className="bg-gray-700 text-white px-4 py-2 rounded w-full"
+                        placeholder="添加新的扫描路径"
+                    />
+                    <button
+                        onClick={handleAddScanPath}
+                        className="ml-2 bg-green-500 text-white px-4 py-2 rounded"
+                    >
+                        添加
+                    </button>
+                </div>
+            </div>
+
+            {/* 保存按钮 */}
             <button
                 onClick={handleSave}
                 className="bg-gray-700 text-white px-4 py-2 rounded-full"
@@ -115,3 +159,82 @@ function ProfileView() {
 }
 
 export default ProfileView;
+
+
+function ScanPathList({items, onItemsChange}) {
+    const [editIndex, setEditIndex] = useState(null);
+    const [editValue, setEditValue] = useState('');
+
+    const handleEdit = (index) => {
+        setEditIndex(index);
+        setEditValue(items[index]);
+    };
+
+    const handleDelete = (index) => {
+        const newItems = items.filter((_, i) => i !== index);
+        onItemsChange(newItems);
+    };
+
+    const handleSave = () => {
+        const newItems = items.map((item, index) =>
+            index === editIndex ? editValue : item
+        );
+        onItemsChange(newItems);
+        setEditIndex(null);
+        setEditValue('');
+    };
+
+    const handleCancel = () => {
+        setEditIndex(null);
+        setEditValue('');
+    };
+
+    return (
+        <ul>
+            {items.map((item, index) => (
+                <li key={index} className="flex items-center mb-2">
+                    {editIndex === index ? (
+                        <>
+                            <input
+                                type="text"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="bg-gray-700 text-white px-2 py-1 rounded w-full"
+                            />
+                            <button
+                                onClick={handleSave}
+                                className="ml-2 bg-green-500 text-white px-2 py-1 rounded"
+                            >
+                                保存
+                            </button>
+                            <button
+                                onClick={handleCancel}
+                                className="ml-2 bg-gray-500 text-white px-2 py-1 rounded"
+                            >
+                                取消
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <span className="flex-grow">{item}</span>
+                            <button
+                                onClick={() => handleEdit(index)}
+                                className="ml-2 bg-blue-500 text-white px-2 py-1 rounded"
+                            >
+                                编辑
+                            </button>
+                            <button
+                                onClick={() => handleDelete(index)}
+                                className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
+                            >
+                                删除
+                            </button>
+                        </>
+                    )}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+

@@ -29,7 +29,7 @@ export async function initConfig(store) {
     }
 
 
-    if (!hasConfig(store, 'data_path')) {
+    if (!hasConfig(store, 'hifini_cookie')) {
         console.log('hifini_cookie initialized');
         setConfig(store, 'hifini_cookie', {
             "bbs_sid": "",

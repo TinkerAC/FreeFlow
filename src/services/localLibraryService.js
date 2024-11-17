@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import {dbGet, dbRun} from "../utils/dbUtils.js";
+import {dbAll, dbGet, dbRun} from "../utils/dbUtils.js";
 import {fileURLToPath} from 'url';
 import {getConfig} from "./ConfigService.js";
 
@@ -38,12 +38,27 @@ const loadExistingLibrary = async (libraryPath) => {
 // 更新本地音乐库的函数
 export async function updateLocalLibrary(db, store) {
 
+    //检测所有本地文件是否存在,如果不存在则invalidate 数据记录
+
+    // const local_tracks = await dbAll(db, 'SELECT * FROM library WHERE file_path IS NOT NULL AND file_path != ""');
+
+    //
+    // for (const track of local_tracks) {
+    //     if (!await fileExists(track.file_path)) {
+    //         console.log(`文件不存在: ${track.file_path},执行软删除`);
+    //         await dbRun(db, 'UPDATE library SET file_path = NULL WHERE track_id = ?', [track.track_id]);
+    //     }else {
+    //         console.log(`文件存在: ${track.file_path}`);
+    //     }
+    // }
+
+
     const scanPaths = getConfig(store, 'scan_paths');
     if (scanPaths.length === 0) {
         console.warn('没有配置扫描路径,将跳过更新音乐库');
         return;
     }
-    const supportedFormats = getConfig('supported_formats').map(ext => ext.toLowerCase());
+    const supportedFormats = getConfig(store, 'supported_formats').map(ext => ext.toLowerCase());
     console.log('scanPaths:', scanPaths);
     console.log('supportedFormats:', supportedFormats);
 
