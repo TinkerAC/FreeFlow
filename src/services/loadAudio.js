@@ -16,7 +16,6 @@ export default async function getAudioSrc(track) {
                 const xhr = new XMLHttpRequest();
                 xhr.open('GET', proxyUrl, true);
                 xhr.responseType = 'blob';
-
                 xhr.onload = function () {
                     if (xhr.status === 200 || xhr.status === 206) {
 

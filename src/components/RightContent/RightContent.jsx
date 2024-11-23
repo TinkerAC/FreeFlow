@@ -23,8 +23,7 @@ export default function RightContent({
     // console.log(currentTrackInfo, nextTracks);
 
 
-    if (!currentTrackInfo || !nextTracks || nextTracks.length === 0) {
-
+    if (!currentTrackInfo && nextTracks.length === 0) {
         return <div className="right-content">
             <div className="empty-play-queue">
                 <i className="fas fa-music text-4xl text-gray-400"></i>

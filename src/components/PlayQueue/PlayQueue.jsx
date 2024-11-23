@@ -19,17 +19,22 @@ export default function PlayQueue({currentTrack = {}, nextTracks = [], clearQueu
             {/* 当前播放曲目 */}
             <div className="mb-4">
                 <h2 className="text-lg mb-2">当前播放</h2>
-                <div className="flex items-center space-x-4">
-                    <img
-                        src={currentTrack.cover_src || "../assets/default-cover.png"}
-                        alt={`Album cover of ${currentTrack.title || "unknown"}`}
-                        className="w-12 h-12"
-                    />
-                    <div>
-                        <div className="current-song">{currentTrack.title || "unknown title"}</div>
-                        <div>{currentTrack.artist || "unknown artist"}</div>
-                    </div>
-                </div>
+
+                {(currentTrack && !currentTrack.isEmpty) ?
+                    (<div className="flex items-center space-x-4">
+                        <img
+                            src={currentTrack.cover_src || "../assets/default-cover.png"}
+                            alt={`Album cover of ${currentTrack.title || "unknown"}`}
+                            className="w-12 h-12"
+                        />
+                        <div>
+                            <div className="current-song">{currentTrack?.title || "unknown title"}</div>
+                            <div>{currentTrack.artist || "unknown artist"}</div>
+                        </div>
+
+                    </div>) : (
+                        <div className="text-gray-400">暂无播放曲目</div>)
+                }
             </div>
 
             {/* 下一首曲目列表 */}

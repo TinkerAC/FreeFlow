@@ -45,5 +45,10 @@ export async function initConfig(store) {
         setConfig(store, 'avatar_path', '');
     }
 
+    if (!hasConfig(store, 'cacheTime')) {
+        console.log('cacheTime initialized');
+        setConfig(store, 'cacheTime', 86400);
+    }
+
 
 }
