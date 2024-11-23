@@ -111,6 +111,17 @@ function generateParam(data) {
     return base32Encode(outText);
 }
 
+function isRedirectedUrlValid(redirected_url) {
+
+    //黑名单
+    if (redirected_url.includes("https://music.163.com/m/download")){
+        return false;
+    }
+
+    return redirected_url;
+
+}
+
 // 获取音乐链接的函数
 export async function getMusicLink(dataHref, db, store) {
     try {
@@ -140,7 +151,12 @@ export async function getMusicLink(dataHref, db, store) {
         }
 
         // 获取重定向后的最终链接
-        return await getRedirectUrl(un_redirected_url);
+        const redirected_url = await getRedirectUrl(un_redirected_url);
+
+        if (!isRedirectedUrlValid(redirected_url)) {
+            throw new Error('重定向后的链接无效');
+        }
+        return redirected_url;
 
     } catch (error) {
         console.error('获取音乐链接时出错:', error);

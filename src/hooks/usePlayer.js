@@ -23,13 +23,17 @@ function usePlayer(audioRef) {
     });
 
     // 工具函数
-    const getNextIndex = () => {
-        return (playerStateRef.current.currentIndex + 1) % playerStateRef.current.indexList.length;
+    const getNextIndex = (
+        step = 1,
+    ) => {
+        return (playerStateRef.current.currentIndex + step) % playerStateRef.current.indexList.length;
     };
 
-    const getPrevIndex = () => {
+    const getPrevIndex = (
+        step = 1,
+    ) => {
         return (
-            (playerStateRef.current.currentIndex - 1 + playerStateRef.current.indexList.length) %
+            (playerStateRef.current.currentIndex - step + playerStateRef.current.indexList.length) %
             playerStateRef.current.indexList.length
         );
     };
@@ -56,22 +60,22 @@ function usePlayer(audioRef) {
         const maxAttempts = playerStateRef.current.indexList.length;
 
         while (attempts < maxAttempts) {
-            const nextIndex = getNextIndex();
+            const nextIndex = getNextIndex(
+                attempts + 1
+            );
 
             const nextTrack =
                 playerStateRef.current.queue[playerStateRef.current.indexList[nextIndex]];
-
 
             let audioSrc;
 
             try {
                 audioSrc = await getAudioSrc(nextTrack);
             } catch (error) {
-                console.error('获取音频BlobUrl时出错:', error);
+                console.warn(`音频 ${nextTrack.title} 音源获取失败, 尝试下一首`);
                 attempts++;
                 continue;
             }
-
 
             setPlayerState(prev => ({
                 ...prev,
@@ -105,18 +109,18 @@ function usePlayer(audioRef) {
         const maxAttempts = playerStateRef.current.indexList.length;
 
         while (attempts < maxAttempts) {
-            const prevIndex = getPrevIndex();
+            const prevIndex = getPrevIndex(
+                attempts + 1
+            );
 
             const prevTrack =
                 playerStateRef.current.queue[playerStateRef.current.indexList[prevIndex]];
-
-
             let audioSrc;
 
             try {
                 audioSrc = await getAudioSrc(prevTrack);
             } catch (error) {
-                console.error('获取音频BlobUrl时出错:', error);
+                console.warn(`音频 ${prevTrack.title} 音源获取失败, 尝试下一首`);
                 attempts++;
                 continue;
             }
@@ -261,7 +265,8 @@ function usePlayer(audioRef) {
                 {once: true}
             );
         } catch (error) {
-            console.error('获取音频BlobUrl时出错:', error);
+            console.warn(`音频 ${initialTrack.title} 音源获取失败, 尝试下一首`);
+
             await playNext();
         }
     };
