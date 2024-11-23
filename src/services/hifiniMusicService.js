@@ -129,7 +129,13 @@ export async function getMusicLink(dataHref, db, store) {
         } else {
             // 如果没有缓存或缓存已过期，获取新的音乐信息并保存
             const data = await fetchAndSaveMusicInfo(dataHref, db, store);
+
+            if (!data.un_redirected_url) {
+                throw new Error('未找到未重定向链接,可能原因: 网页上没有音乐播放器、登录状态失效');
+            }
+
             un_redirected_url = data.un_redirected_url;
+
             console.log('使用新获取的未重定向链接加载 dataHref:', dataHref, '链接:', un_redirected_url);
         }
 
@@ -252,6 +258,9 @@ async function fetchAndSaveMusicInfo(dataHref, db, store) {
                     return {data_href: dataHref, title, artist, cover_src, un_redirected_url};
                 }
             }
+        } else {
+            console.warn('页面上没有外链的音乐播放器,dataHref:', dataHref, '链接:', 'https://hifini.com/' + dataHref);
+            return {data_href: dataHref};
         }
 
     } catch (error) {

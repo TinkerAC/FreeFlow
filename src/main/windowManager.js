@@ -24,7 +24,7 @@ function createWindow(db, store) {
     });
 
     console.log('加载主窗口, File:', path.join(__dirname, '..', 'index.html'));
-    mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
+    mainWindow.loadFile(path.join(__dirname, '..', 'index.html')).then(r => console.log('加载主窗口成功'));
 
     if (process.env.NODE_ENV === 'development') {
         mainWindow.webContents.openDevTools();
@@ -45,6 +45,8 @@ function createWindow(db, store) {
     mainWindow.on('show', () => {
         console.log('窗口已显示');
     });
+
+    return mainWindow;
 }
 
 export {createWindow, mainWindow};

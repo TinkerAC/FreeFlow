@@ -36,6 +36,7 @@ function createTray(mainWindow) {
     });
 
     console.log('系统托盘已创建');
+    return tray;
 }
 
 export {createTray, tray};
