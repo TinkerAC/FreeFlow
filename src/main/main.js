@@ -55,7 +55,11 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') { // 开发环境下�
 
         // 在 macOS 上，激活应用时重新创建窗口
         app.on('activate', () => {
-            if (BrowserWindow.getAllWindows().length === 0) {
+            if (mainWindow) {
+                if (mainWindow.isMinimized()) mainWindow.restore();
+                if (!mainWindow.isVisible()) mainWindow.show();
+                mainWindow.focus();
+            } else {
                 mainWindow = createWindow(db, store);
             }
         });
@@ -68,8 +72,8 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') { // 开发环境下�
             isQuitting = true;
 
             if (tray) tray.destroy(); // 销毁系统托盘图标
-            // 不再需要停止代理进程，因为它已集成到主进程中
             // 发送请求给渲染进程获取播放器状态
+
             mainWindow.webContents.send('request-player-state');
         }
     });

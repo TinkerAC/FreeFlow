@@ -1,37 +1,67 @@
 import * as mm from 'music-metadata';
 import {getSearchResults} from "./hifiniMusicService.js";
 import {dbAll, dbRun} from "../utils/dbUtils.js";
+import fs from "fs";
 
+async function checkLocalTrackExistence(track) {
+    return fs.existsSync(track.file_path);
+}
 
+// 获取歌单列表
 // 获取歌单列表
 async function getPlaylists(db) {
     try {
-        // 读取歌单目录
-        const playlists = await dbAll(db, 'SELECT * FROM playlists');
+        // Step 1: 获取库中的所有 Track，并检查文件是否存在
+        const libraryTracks = await dbAll(db, 'SELECT * FROM library');
+        const validTracks = [];
 
-        // 遍历每个歌单，从SQLite数据库中获取歌曲信息
-        for (const playlist of playlists) {
-            playlist.tracks = await dbAll(db, 'SELECT * FROM library WHERE track_id IN (SELECT track_id FROM playlist_detail WHERE playlist_id = ?)', [playlist.playlist_id]);
+        for (const track of libraryTracks) {
+            if (track.file_path && !track.data_href) { // 仅检查本地文件的歌曲
+                track.file_exist = await checkLocalTrackExistence(track);
+                if (!track.file_exist) {
+                    console.warn(`歌曲文件不存在: ${track.file_path}，在此设备上无法播放`);
+                } else {
+                    validTracks.push(track); // 仅保留存在的文件
+                }
+            } else {
+                validTracks.push(track); // 网络资源直接保留
+            }
         }
 
-        // 获取库作为一个单独的歌单
-        const libraryTracks = await dbAll(db, 'SELECT * FROM library');
+        console.log(`库中有效歌曲数量: ${validTracks.length} / ${libraryTracks.length}`);
 
+        // Step 2: 获取所有歌单的基本信息
+        const playlists = await dbAll(db, 'SELECT * FROM playlists');
+
+        // Step 3: 获取每个歌单对应的歌曲列表，并过滤无效歌曲
+        for (const playlist of playlists) {
+            const playlistTracks = await dbAll(
+                db,
+                'SELECT * FROM library WHERE track_id IN (SELECT track_id FROM playlist_detail WHERE playlist_id = ?)',
+                [playlist.playlist_id]
+            );
+
+            // 过滤不存在的歌曲
+            playlist.tracks = playlistTracks.filter(track => validTracks.some(valid => valid.track_id === track.track_id));
+            console.log(`歌单: ${playlist.title} 获取到有效歌曲数量: ${playlist.tracks.length}`);
+        }
+
+        // Step 4: 添加音乐库歌单
         playlists.push({
-            playlist_id: 0,
+            playlist_id: 0, // 特殊 ID，代表整个音乐库
             title: '音乐库',
             creator: 'System',
-            tracks: libraryTracks,
+            tracks: validTracks,
         });
-        console.log(`共获取到歌单数量: ${playlists.length}+1库`);
+
+        console.log(`共获取到歌单数量: ${playlists.length}`);
         return playlists;
     } catch (err) {
-        console.error('Error reading playlists from database:', err);
+        // 错误处理：捕获并记录所有错误
+        console.error('从数据库读取歌单时出错:', err);
         return [];
-    } finally {
     }
 }
-
 
 // 获取音乐文件的元数据
 async function extractMusicMeta(file_path) {

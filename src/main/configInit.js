@@ -38,7 +38,7 @@ export async function initConfig(store) {
     }
     if (!hasConfig(store, 'user_name')) {
         console.log('user_name initialized');
-        setConfig('user_name', '');
+        setConfig(store, 'user_name', '');
     }
     if (!hasConfig(store, 'avatar_path')) {
         console.log('avatar_path initialized');
