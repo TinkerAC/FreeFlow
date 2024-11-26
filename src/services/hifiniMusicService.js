@@ -286,7 +286,7 @@ async function fetchAndSaveMusicInfo(dataHref, db, store) {
 }
 
 // 过滤、排序结果并获取音乐信息
-export async function getSearchResults(keyword, db) {
+export async function getSearchResults(keyword, db,store) {
     try {
         console.log("主进程正在执行搜索操作，关键词:", keyword);
 
@@ -313,14 +313,14 @@ export async function getSearchResults(keyword, db) {
         // 按热度排序并截取前5个
         const sortedResults = filteredResults
             .sort((a, b) => b.heat - a.heat)
-            .slice(0, 5);
+            // .slice(0, 5);
         console.info(`排序并截取前5个结果，准备获取详细信息`);
 
         // 获取每个结果的详细信息
         const musicInfos = await Promise.all(sortedResults.map(async (result, index) => {
             try {
                 console.log(`正在获取第 ${index + 1} 个结果的音乐信息，链接: ${result.dataHref}`);
-                const musicInfo = await getMusicInfo(result.dataHref, db);
+                const musicInfo = await getMusicInfo(result.dataHref, db,store);
                 console.info(`第 ${index + 1} 个结果的音乐信息获取成功`);
                 return musicInfo;
 
@@ -331,7 +331,7 @@ export async function getSearchResults(keyword, db) {
         }));
 
         // 过滤掉获取失败的音乐信息
-        const validMusicInfos = musicInfos.filter(info => info);
+        const validMusicInfos = musicInfos.filter(info => info.cover_src); //如果cover_src存在则认为是有效的音乐信息
         console.info(`成功获取到 ${validMusicInfos.length} 个有效的音乐信息`);
 
         return validMusicInfos;

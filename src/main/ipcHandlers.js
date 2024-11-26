@@ -90,7 +90,7 @@ function setupIpcHandlers(mainWindow, db, store) {
     ipcMain.handle('get-search-results', async (event, searchTerm) => {
         console.log('后端收到搜索请求:', searchTerm);
         try {
-            const results = await getSearchResults(searchTerm, db);
+            const results = await getSearchResults(searchTerm, db,store);
             console.log('搜索结果:', results);
             return results;
         } catch (error) {

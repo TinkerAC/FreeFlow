@@ -151,7 +151,7 @@ async function creatNewEmptyPlaylist(db, creator) {
 }
 
 
-async function importPlaylistFromList(db, playlist) {
+async function importPlaylistFromList(db, playlist,store) {
 
     // 从列表中提取歌曲信息
     const unbind_tracks = playlist.split('\n').map(line => {
@@ -164,7 +164,7 @@ async function importPlaylistFromList(db, playlist) {
     // 从 hifini 网站获取歌曲信息
     for (const [index, track] of unbind_tracks.entries()) {
         try {
-            const searchResults = await getSearchResults(`${track.title} ${track.artist}`, db);
+            const searchResults = await getSearchResults(`${track.title} ${track.artist}`, db,store);
             console.log(`正在处理第${index + 1}/${length}首歌曲: ${track.title} - ${track.artist}`);
 
             if (searchResults.length > 0) {
