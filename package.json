@@ -1,8 +1,8 @@
 {
-  "name": "electron-react-typescript-webpack-2023",
-  "productName": "ERWT",
-  "version": "8.1.0",
-  "description": "Robust project for developing Desktop Application with Electron, React, Webpack & TypeScript.",
+  "name": "freeflow",
+  "productName": "FreeFlow",
+  "version": "2.0.1",
+  "description": "一个基于ts-react-webpack-electron的复刻SpotifyUI的免费音乐播放器",
   "main": ".webpack/main",
   "scripts": {
     "start": "cross-env NODE_ENV=development electron-forge start",
@@ -23,18 +23,14 @@
     "ERWT"
   ],
   "author": {
-    "name": "codesbiome",
-    "url": "https://github.com/codesbiome"
+    "name": "tinker",
+    "url": "https://github.com/tinkerAC"
   },
   "contributors": [
-    {
-      "name": "guasam",
-      "url": "https://github.com/guasam"
-    }
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/codesbiome/electron-react-webpack-typescript-2023"
+    "url": "https://github.com/tinkerAC/FreeFlow"
   },
   "license": "MIT",
   "config": {
