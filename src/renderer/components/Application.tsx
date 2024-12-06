@@ -41,7 +41,7 @@ const Application: React.FC = () => {
   // window.nextTracks = nextTracksRef.current;
 
 
-  // 使用 useMusicLibrary Hook 管理歌单
+  // 使用 useMusiclibrary Hook 管理歌单
   const {
     playlists,
     selectedItem,

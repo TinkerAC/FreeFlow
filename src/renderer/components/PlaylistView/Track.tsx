@@ -1,25 +1,24 @@
 import React, { useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
+import { TrackModel } from '@src/shared/types';
 
 interface TrackProps {
-  track: any,
+  track: TrackModel;
   index: number;
-  addToNext: (track: any) => void;
-  addToNextAndPlay: (track: any) => void;
-  onRightClick: (e: any, track: any) => void;
+  addToNext: (track: TrackModel) => void;
+  addToNextAndPlay: (track: TrackModel) => void;
+  onRightClick: (e: any, track: TrackModel) => void;
+
 }
 
 
-const Track = ({
-                 track = {},
-                 index = 0,
-                 addToNext = (track) => {
-                 },
-                 addToNextAndPlay = (track) => {
-                 },
-                 onRightClick = (e, track) => {
-                 },
-               }: TrackProps) => {
+const Track: React.FC<TrackProps>
+  = ({
+       track,
+       index,
+       addToNextAndPlay,
+       onRightClick,
+     }: TrackProps) => {
   const [hovered, setHovered] = useState(false);
 
   const handlePlayClick = (e: { stopPropagation: () => void; }) => {

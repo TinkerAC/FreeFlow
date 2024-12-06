@@ -1,33 +1,18 @@
 import React, { useState } from 'react';
 
-interface Track {
-  track_id: number;
-  artist: string;
-  cover_src: string;
-  data_href: string;
-  file_path: string;
-  title: string;
-}
-
-interface Playlist {
-  playlist_id: number;
-  title: string;
-}
+import { PlaylistModel, TrackModel } from '@src/shared/types';
 
 
 interface ContextMenuProps {
   x: number;
   y: number;
-  track: Track;
-  addToNext: (track: Track) => void;
-  addToLibrary: (track: Track) => void;
+  track: TrackModel;
+  addToNext: (track: TrackModel) => void;
+  addToLibrary: (track: TrackModel) => void;
   handleCloseMenu: () => void;
-  addTrackToPlaylist: (track: Track, playlistId: number) => void;
-  playlists: Playlist[];
+  addTrackToPlaylist: (track: TrackModel, playlistId: number) => void;
+  playlists: PlaylistModel[];
 }
-
-
-
 
 
 function ContextMenu(

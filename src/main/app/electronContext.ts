@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron';
+import { TrackModel } from '@src/shared/types';
 
 const electronContext = {
   getPlatform: () => ipcRenderer.invoke('get-platform'),
@@ -6,11 +7,10 @@ const electronContext = {
   maximize: () => ipcRenderer.send('window-controls', 'maximize'),
   close: () => ipcRenderer.send('window-controls', 'close'),
 
-  createPlaylist: async (refreshPlaylists: () => void) => {
+  createPlaylist: async () => {
     try {
       await ipcRenderer.invoke('create-playlists');
       console.log('歌单创建成功');
-      refreshPlaylists();
     } catch (error) {
       console.error('Error in create-playlists:', error);
     }
@@ -21,8 +21,8 @@ const electronContext = {
     return ipcRenderer.invoke('get-local-library');
   },
   // 读取歌单
-  getPlaylists: () => {
-    return ipcRenderer.invoke('get-playlists');
+  getPlaylists: async () => {
+    return await ipcRenderer.invoke('get-playlists');
   },
 
   // 监听主进程请求播放器状态事件
@@ -46,22 +46,13 @@ const electronContext = {
   },
 
   // 向库中添加音乐
-  addTrackToLibrary: (track: any, refreshPlaylists: () => void) => {
-    const tk = {
-      data_href: track.data_href,
-      file_path: track.file_path,
-    };
-    ipcRenderer.invoke('add-track-to-library', tk).then(() => {
-      refreshPlaylists();
-    });
+  addTrackToLibrary: async (track: TrackModel) => {
+    await ipcRenderer.invoke('add-track-to-library', track);
   },
 
   // 向歌单中添加音乐
-  addTrackToPlaylist: (track: any, playlistId: number, refreshPlaylists: () => void) => {
-    ipcRenderer.invoke('add-track-to-playlist', track, playlistId).then(() => {
-      console.log('歌曲添加成功');
-      refreshPlaylists();
-    });
+  addTrackToPlaylist: async (track: TrackModel, playlistId: number) => {
+    await ipcRenderer.invoke('add-track-to-playlist', track, playlistId);
   },
 
   // 修改歌单信息
@@ -103,8 +94,6 @@ const electronContext = {
   setConfig: (key: string, value: any) => ipcRenderer.invoke('set-config', key, value),
 
   getPlayerState: () => ipcRenderer.invoke('player-state'),
-  getTrackInfo: (file_path?: string, data_href?: string) =>
-    ipcRenderer.invoke('get-track-info', file_path, data_href),
 
   // 监听 'global-shortcut' 事件
   onShortcut: (callback: (message: string) => void) =>

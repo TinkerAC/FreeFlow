@@ -6,13 +6,17 @@ module.exports = {
   // Packager Config
   packagerConfig: {
     // Create asar archive for main, renderer process files
-    asar: true,
+    asar: {
+      'unpack': '**/node_modules/**/*',
+    },
+
     // Set executable name
-    executableName: 'ERWT Boilerplate',
+    executableName: 'FreeFlow',
     // Set application copyright
-    appCopyright: 'Copyright (C) 2021 Codesbiome, Guasam',
+    appCopyright: 'Copyright (C) 2024 Tinker',
     // Set application icon
-    icon: path.resolve('assets/images/appIcon.ico'),
+    icon: path.resolve('assets/images/appIcon'),
+
   },
   // Forge Makers
   makers: [
@@ -21,7 +25,7 @@ module.exports = {
       // Windows applications and is therefore the most user friendly you can get.
       name: '@electron-forge/maker-squirrel',
       config: {
-        name: 'electron-react-typescript-webpack-2022',
+        name: 'freeflow',
       },
     },
     {

@@ -1,11 +1,11 @@
 import * as net from "node:net";
 
 
-function isPortOccupied(port, host = 'localhost') {
+function isPortOccupied(port:number, host = 'localhost') {
     return new Promise((resolve, reject) => {
         const server = net.createServer();
 
-        server.once('error', (err) => {
+        server.once('error', (err: { code: string; }) => {
             if (err.code === 'EADDRINUSE') {
                 resolve(true); // 端口被占用
             } else {

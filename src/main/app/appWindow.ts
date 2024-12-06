@@ -1,9 +1,7 @@
 // file: src/main/appWindow.ts
-import { app, BrowserWindow } from 'electron';
+import {  BrowserWindow } from 'electron';
 import path from 'path';
 import { setupIpcHandlers } from './ipcHandlers';
-import Store from 'electron-store';
-import { Database } from 'sqlite3';
 
 // Electron Forge automatically creates these entry points
 declare const APP_WINDOW_WEBPACK_ENTRY: string;
@@ -15,7 +13,7 @@ let appWindow: BrowserWindow;
  * Create Application Window
  * @returns {BrowserWindow} Application Window Instance
  */
-export function createAppWindow(db: Database, store: Store): BrowserWindow {
+export function createAppWindow(): BrowserWindow {
   // Create new window instance
   appWindow = new BrowserWindow({
     width: 800,
@@ -47,7 +45,7 @@ export function createAppWindow(db: Database, store: Store): BrowserWindow {
   appWindow.on('ready-to-show', () => appWindow.show());
 
   // 初始化 IPC 事件处理
-  setupIpcHandlers(appWindow, db, store);
+  setupIpcHandlers(appWindow)
 
   // 开发环境下打开开发者工具
   if (process.env.NODE_ENV === 'development') {

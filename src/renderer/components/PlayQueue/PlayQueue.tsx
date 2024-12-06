@@ -1,13 +1,14 @@
 import React from 'react';
+import { TrackModel } from '@src/shared/types';
 
 
 interface PlayQueueProps {
-  currentTrack: any;
-  nextTracks: any[];
+  currentTrack: TrackModel;
+  nextTracks: TrackModel[];
   clearQueue: () => void;
 }
 
-export default function PlayQueue({ currentTrack = {}, nextTracks = [], clearQueue }: PlayQueueProps) {
+export default function PlayQueue({ currentTrack, nextTracks = [], clearQueue }: PlayQueueProps) {
 
   return (
     <div className="p-4">
@@ -26,7 +27,7 @@ export default function PlayQueue({ currentTrack = {}, nextTracks = [], clearQue
       <div className="mb-4">
         <h2 className="text-lg mb-2">当前播放</h2>
 
-        {(currentTrack && !currentTrack.isEmpty) ?
+        {(currentTrack && currentTrack.title) ?
           (<div className="flex items-center space-x-4">
             <img
               src={currentTrack.cover_src || '../assets/default-cover.png'}

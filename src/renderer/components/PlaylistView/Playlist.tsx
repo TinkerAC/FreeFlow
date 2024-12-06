@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import Track from './Track';
+import { PlaylistModel, TrackModel } from '@src/shared/types';
 import ContextMenu from './ContextMenu';
-
+import Track from '@components/PlaylistView/Track';
 interface PlaylistProps {
-  filteredTracks: any[];
-  addToNext: (track: any) => void;
-  addToNextAndPlay: (track: any) => void;
-  addTrackToPlaylist: (track: any, playlistId: number) => void;
-  playlists: any[];
-  currentPlaylist: any;
+  filteredTracks: TrackModel[];
+  addToNext: (track: TrackModel) => void;
+  addToNextAndPlay: (track: TrackModel) => void;
+  addTrackToPlaylist: (track: TrackModel, playlistId: number) => void;
+  playlists: PlaylistModel[];
+  currentPlaylist: PlaylistModel;
   refreshPlaylists: () => void;
 }
 
 
 export function Playlist({
-                           filteredTracks = [],
+                           filteredTracks,
                            addToNext = () => {
                            },
                            addToNextAndPlay = () => {
@@ -22,14 +22,14 @@ export function Playlist({
                            addTrackToPlaylist = () => {
                            },
                            playlists = [],
-                           currentPlaylist = {},
+                           currentPlaylist,
                            refreshPlaylists = () => {
                            },
                          }: PlaylistProps) {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const [selectedTrack, setSelectedTrack] = useState(null); // 添加 selectedTrack 状态
+  const [selectedTrack, setSelectedTrack] = useState<TrackModel>(null); // 添加 selectedTrack 状态
 
   // 监听滚动事件，显示/隐藏返回顶部按钮
   useEffect(() => {
@@ -55,7 +55,7 @@ export function Playlist({
     });
   };
 
-  const handleRightClick = (e: any, track: any) => {
+  const handleRightClick = (e: { preventDefault: () => void; pageX: number; pageY: number; }, track: TrackModel) => {
     e.preventDefault();
     setContextMenuPosition({ x: e.pageX - window.scrollX, y: e.pageY - window.scrollY });
     setSelectedTrack(track); // 设置选中的 track
@@ -70,7 +70,7 @@ export function Playlist({
 
   // 点击页面其他地方时隐藏右键菜单
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
+    const handleClickOutside = () => {
       if (contextMenuVisible) {
         setContextMenuVisible(false); // 点击页面其他地方时隐藏菜单
       }

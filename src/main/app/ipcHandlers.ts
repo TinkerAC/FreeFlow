@@ -1,23 +1,22 @@
 // file: src/main/ipcHandlers.ts
 import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
-import { Database } from 'sqlite3';
-import {
-  addTrackToPlaylist,
-  creatNewEmptyPlaylist,
-  extractMusicMeta,
-  getPlaylists,
-  modifyPlaylist,
-  parseTrackInfo,
-  removePlaylist,
-  removeTrackFromPlaylist,
-} from '@main/services/playlistService';
-import { addTrackToLibrary, isTrackInLibrary } from '@main/services/libraryService';
+import PlaylistService from '@main/services/playlistService';
 import { loadPlayer, savePlayer } from '@main/services/playerService';
-import { getMusicInfo, getMusicLink, getSearchResults } from '@main/services/hifiniMusicService';
 import { dataPath, playerStateDumpFile } from './pathConfig';
-import { dbGet } from '@src/utils/dbUtils';
+import { PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
+import { container } from '@main/di/di-container';
+import HifiniMusicService from '@main/services/HifiniMusicService';
+import TrackRepository from '@main/repository/TrackRepository';
+import TrackService from '@main/services/TrackService';
 
-export function setupIpcHandlers(mainWindow: BrowserWindow, db: Database, store: any): void {
+
+const hifiniMusicService: HifiniMusicService = container.get('HifiniMusicService');
+const trackRepository: TrackRepository = container.get('TrackRepository');
+const playlistService: PlaylistService = container.get('PlaylistService');
+const store: any = container.get('Store');
+const trackService: TrackService = container.get('TrackService');
+
+export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
 
   ipcMain.handle('get-platform', async () => {
@@ -47,22 +46,14 @@ export function setupIpcHandlers(mainWindow: BrowserWindow, db: Database, store:
   });
 
   // 创建歌单事件
-  ipcMain.handle('create-playlists', async (event: IpcMainInvokeEvent) => {
-    try {
-      await creatNewEmptyPlaylist(db, '新建歌单这是一个新建的歌单');
-    } catch (error) {
-      console.error('Error in create-playlists:', error);
-    }
+  ipcMain.handle('create-playlists', async () => {
+    return await playlistService.creatNewEmptyPlaylist();
   });
 
   // 获取歌单事件
-  ipcMain.handle('get-playlists', async (event: IpcMainInvokeEvent) => {
-    try {
-      return await getPlaylists(db);
-    } catch (error) {
-      console.error('Error in get-playlists:', error);
-      throw error;
-    }
+  ipcMain.handle('get-playlists', async () => {
+
+    return await playlistService.getPlaylists();
   });
 
   // 获取播放器状态事件
@@ -72,22 +63,9 @@ export function setupIpcHandlers(mainWindow: BrowserWindow, db: Database, store:
 
   // 获取曲目信息事件
   ipcMain.handle(
-    'get-track-info',
-    async (event: IpcMainInvokeEvent, file_path?: string, data_href?: string) => {
-      try {
-        if (file_path) {
-          // 如果是本地文件,提取元数据
-          const metaData = await extractMusicMeta(file_path);
-          return parseTrackInfo(metaData);
-        } else if (data_href) {
-          return await getMusicInfo(data_href, db, store);
-        } else {
-          console.error('Error in get-track-info: no file_path or data_href provided');
-        }
-      } catch (error) {
-        console.error('Error in get-track-info:', error);
-        throw error;
-      }
+    'get-track-info'
+    , async (_event: IpcMainInvokeEvent, track_id: number) => {
+      return await trackService.getTrackInfo(track_id);
     },
   );
 
@@ -95,7 +73,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow, db: Database, store:
   ipcMain.handle('get-search-results', async (event: IpcMainInvokeEvent, searchTerm: string) => {
     console.log('后端收到搜索请求:', searchTerm);
     try {
-      const results = await getSearchResults(searchTerm, db, store);
+      const results = await hifiniMusicService.getSearchResults(searchTerm);
       console.log('搜索结果:', results);
       return results;
     } catch (error) {
@@ -107,7 +85,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow, db: Database, store:
   // 解析音乐链接事件
   ipcMain.handle('get-music-link', async (event: IpcMainInvokeEvent, dataHref: string) => {
     try {
-      return await getMusicLink(dataHref, db, store);
+      return await hifiniMusicService.getMusicLink(dataHref);
     } catch (error) {
       console.error('Error in get-music-link:', error);
       throw error;
@@ -115,62 +93,23 @@ export function setupIpcHandlers(mainWindow: BrowserWindow, db: Database, store:
   });
 
   // 添加音乐到库事件
-  ipcMain.handle('add-track-to-library', async (event: IpcMainInvokeEvent, track: any) => {
-    const tk = {
-      data_href: track.data_href,
-      file_path: track.file_path,
-    };
-
-    const track_id = await isTrackInLibrary(tk, db);
-
-    if (track_id) {
-      console.log('待添加的音乐已在库中，track_id:', track_id);
-      return track_id;
-    }
-
-    return addTrackToLibrary(tk, db);
+  ipcMain.handle('add-track-to-library', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
+    return await trackService.addTrackToLibrary(track);
   });
 
   // 添加音乐到歌单事件
   ipcMain.handle(
-    'add-track-to-playlist',
-    async (event: IpcMainInvokeEvent, track: any, playlistId: number) => {
-      let trackId: number;
-
-      try {
-        // 先检查歌曲是否在库中
-        const row: any
-          = await dbGet(db, 'SELECT track_id FROM library WHERE data_href = ? OR file_path = ?', [
-          track.data_href,
-          track.file_path,
-        ]);
-
-        if (!row) {
-          // 如果不在库中，先添加到库
-          trackId = await addTrackToLibrary(track, db);
-          console.log(`待插入歌单歌曲不在库中，已添加到库，track_id: ${trackId}`);
-        } else {
-          trackId = row.track_id;
-          console.log(`待插入歌单的歌曲已在库中，track_id: ${trackId}`);
-          console.log('row:', row);
-        }
-
-        // 添加到歌单
-        await addTrackToPlaylist(db, playlistId, trackId);
-        return trackId;
-      } catch (error) {
-        console.error('Error in add-track-to-playlist:', error);
-        throw error;
-      }
+    'add-track-to-playlist', async (_event: IpcMainInvokeEvent, track: TrackModel, playlistId: number) => {
+      return await trackService.addTrackToPlaylist(playlistId, track);
     },
   );
 
   // 从歌单中删除音乐事件
   ipcMain.handle(
     'remove-track-from-playlist',
-    async (event: IpcMainInvokeEvent, playlistId: number, trackId: number) => {
+    async (_event: IpcMainInvokeEvent, playlistId: number, trackId: number) => {
       try {
-        await removeTrackFromPlaylist(db, playlistId, trackId);
+        await playlistService.removeTrackFromPlaylist(playlistId, trackId);
       } catch (error) {
         console.error('Error in remove-track-from-playlist:', error);
         throw error;
@@ -178,12 +117,12 @@ export function setupIpcHandlers(mainWindow: BrowserWindow, db: Database, store:
     },
   );
 
-  ipcMain.handle('get-user-data-path', async (event: IpcMainInvokeEvent) => {
+  ipcMain.handle('get-user-data-path', async () => {
     return dataPath;
   });
 
   // 监听播放器状态请求
-  ipcMain.once('reply-player-state', (event: IpcMainEvent, state: any) => {
+  ipcMain.once('reply-player-state', (event: IpcMainEvent, state: PlayerState) => {
     console.log('主进程已收到播放器状态:', state);
     savePlayer(playerStateDumpFile, state);
     app.quit();
@@ -193,38 +132,23 @@ export function setupIpcHandlers(mainWindow: BrowserWindow, db: Database, store:
   ipcMain.handle(
     'modify-playlist',
     async (
-      event: IpcMainInvokeEvent,
-      playlistId: number,
-      playlist_title: string,
-      playlist_description: string,
+      _event: IpcMainInvokeEvent,
+      playlistModel: PlaylistModel,
     ) => {
-      try {
-        // 修改歌单信息
-        await modifyPlaylist(db, playlistId, playlist_title, playlist_description);
-        return true;
-      } catch (error) {
-        console.error('Error in modify-playlist:', error);
-        throw error;
-      }
-    },
-  );
+      return await playlistService.modifyPlaylist(playlistModel);
+    });
 
   // 删除歌单事件
-  ipcMain.handle('remove-playlist', async (event: IpcMainInvokeEvent, playlistId: number) => {
-    try {
-      await removePlaylist(db, playlistId);
-      return true;
-    } catch (error) {
-      console.error('Error in remove-playlist:', error);
-      throw error;
-    }
+  ipcMain.handle('remove-playlist', async (_event: IpcMainInvokeEvent, playlistId: number) => {
+    return await playlistService.removePlaylist(
+      playlistId);
   });
 
-  ipcMain.handle('get-config', (event: IpcMainInvokeEvent, key: string) => {
+  ipcMain.handle('get-config', (_event: IpcMainInvokeEvent, key: string) => {
     return store.get(key);
   });
 
-  ipcMain.handle('set-config', (event: IpcMainInvokeEvent, key: string, value: any) => {
+  ipcMain.handle('set-config', (_event: IpcMainInvokeEvent, key: string, value: string) => {
     store.set(key, value);
     return true;
   });

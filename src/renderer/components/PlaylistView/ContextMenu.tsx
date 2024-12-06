@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import Track from '@components/PlaylistView/Track';
 import context from '@main/app/electronContextApi';
+import { PlaylistModel, TrackModel } from '@src/shared/types';
 
 interface ContextMenuProps {
   x: number;
   y: number;
-  track: any;
-  addToNext: (track: any) => void;
-  addToLibrary: (track: any) => void;
+  track: TrackModel;
+  addToNext: (track: TrackModel) => void;
+  addToLibrary: (track: TrackModel) => void;
   handleCloseMenu: () => void;
-  addTrackToPlaylist: (track: any, playlistId: number) => void;
-  playlists: any[];
-  currentPlaylist: any;
+  addTrackToPlaylist: (track: TrackModel, playlistId: number) => void;
+  playlists: PlaylistModel[];
+  currentPlaylist: PlaylistModel;
   refreshPlaylists: () => void;
 }
 

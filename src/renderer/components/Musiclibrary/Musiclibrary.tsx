@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import Item from './Item';
 import ContextMenu from './ContextMenu';
 import context from '@main/app/electronContextApi';
+import { PlaylistModel } from '@src/shared/types';
 
 interface MusicLibraryProps {
   className?: string;
-  libraryItems: any[];
+  libraryItems: PlaylistModel[];
   selectedItem: number;
   onSelectItem: (index: number) => void;
   mainContentView: string;
@@ -38,7 +39,11 @@ export default function MusicLibrary({
     onSelectItem(index);
   };
 
-  const handleRightClick = (e: { preventDefault: () => void; clientX: any; clientY: any; }, playlist_id: any) => {
+  const handleRightClick = (e: {
+    preventDefault: () => void;
+    clientX: number;
+    clientY: number;
+  }, playlist_id: number) => {
     e.preventDefault();
     console.log(`右键点击了歌单${playlist_id},当前ContextMenu的位置为${contextMenuPosition},当前ContextMenu是否显示${contextMenuVisible}`);
     setEventPlaylist(libraryItems.find(item => item.playlist_id === playlist_id));
@@ -82,10 +87,9 @@ export default function MusicLibrary({
 
         <div className="flex justify-center items-center flex-col overflow-y-auto">
 
-
           {libraryItems.map((item, index) => (
-
             <div
+              key={item.playlist_id}
               className="w-[4rem] h-[4rem] gap-0.5 flex justify-center items-center rounded-lg hover:bg-item-bg-hover">
               <img
                 key={item.playlist_id}
@@ -116,7 +120,7 @@ export default function MusicLibrary({
           <div className="ml-auto flex items-center">
             <i
               className="fas fa-plus text-xl cursor-pointer"
-              onClick={() => context.createPlaylist(refreshPlaylist)}
+              onClick={() => context.createPlaylist().then(refreshPlaylist)}
             ></i>
           </div>
         </div>
@@ -142,14 +146,14 @@ export default function MusicLibrary({
                 imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
                 altText={item.title + 'key:' + item.playlist_id}
                 title={item.title}
-                details={item.details}
+                description={item.description}
                 index={index}
                 isSelected={selectedItem === index}
                 onClick={() => handleSelectItem(index)}
                 onRightClick={(e: {
                   preventDefault: () => void;
-                  clientX: any;
-                  clientY: any;
+                  clientX: number,
+                  clientY: number,
                 }) => handleRightClick(e, item.playlist_id)}
               />
             )) : <div className="text-center text-gray-400">暂无歌单</div>

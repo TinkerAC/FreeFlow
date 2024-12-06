@@ -1,29 +1,30 @@
-import React, { useState } from 'react';
+import React from 'react';
 import useStateRef from 'react-usestateref';
 import ContextMenu from '../ContextMenu/contextMenu';
 import context from '@main/app/electronContextApi';
+import { PlaylistModel, TrackModel } from '@src/shared/types';
 
 interface NetSearchResultViewProps {
-  popularResult: any;
-  tracks: any[];
-  addToNext: (track: any) => void;
-  addToNextAndPlay: (track: any) => void;
+  popularResult: TrackModel;
+  tracks: TrackModel[];
+  addToNext: (track: TrackModel) => void;
+  addToNextAndPlay: (track: TrackModel) => void;
   refreshPlaylists: () => void;
-  playlists: any[];
+  playlists: PlaylistModel[];
 }
 
 
 // 定义 NetSearchResultView 组件
 function NetSearchResultView({
-                               popularResult = {},
+                               popularResult,
                                tracks = [],
                                addToNext,
                                addToNextAndPlay,
                                refreshPlaylists,
                                playlists = [],      // 新增传入的播放列表
                              }: NetSearchResultViewProps) {
-  const [contextMenu, setContextMenu, contextMenuRef] = useStateRef(null); // 保存右键菜单的位置
-  const [selectedTrack, setSelectedTrack, selectedTrackRef] = useStateRef(null); // 保存右键点击的曲目
+  const [contextMenu, setContextMenu] = useStateRef(null); // 保存右键菜单的位置
+  const [, setSelectedTrack, selectedTrackRef] = useStateRef(null); // 保存右键点击的曲目
 
   // 右键点击事件处理
   const handleContextMenu = (event: React.MouseEvent<HTMLDivElement, MouseEvent>, track: any) => {
@@ -114,11 +115,8 @@ function NetSearchResultView({
           y={contextMenu.y}
           track={selectedTrackRef.current}
           addToNext={addToNext}
-          addToLibrary={(track) => context.addTrackToLibrary(track, refreshPlaylists)}
-          addTrackToPlaylist={(track, playlist_id) => context.addTrackToPlaylist(track, playlist_id, refreshPlaylists)}
-
-
-
+          addToLibrary={(track) => context.addTrackToLibrary(track).then(refreshPlaylists)}
+          addTrackToPlaylist={(track, playlist_id) => context.addTrackToPlaylist(track, playlist_id).then(refreshPlaylists)}
           playlists={playlists}                  // 传入播放列表
           handleCloseMenu={handleCloseMenu}
         />

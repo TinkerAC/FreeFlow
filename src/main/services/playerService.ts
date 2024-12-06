@@ -1,17 +1,20 @@
 import fs from 'fs';
+import { PlayerState } from '@src/shared/types';
 
 function loadPlayer(playerStateDumpFile: string) {
   try {
     const playerData = fs.readFileSync(playerStateDumpFile, 'utf-8');
     return JSON.parse(playerData);
   } catch (e) {
-    console.error('加载播放器状态时出错:', e);
+    if (e.code === 'ENOENT') {
+      console.warn('未找到播放器状态文件:', playerStateDumpFile);
+    }
     return {};
   }
 }
 
 function savePlayer(playerStateDumpFile: string
-  , playerState: any,
+  , playerState: PlayerState
 ) {
 
   try {

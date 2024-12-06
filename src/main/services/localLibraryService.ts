@@ -1,118 +1,102 @@
+// localLibraryService.ts
+
 import fs from 'fs/promises';
 import path from 'path';
-import { dbAll, dbGet, dbRun } from '@src/utils/dbUtils';
-import { fileURLToPath } from 'url';
+import { inject, injectable } from 'inversify';
 import { getConfig } from '@main/services/ConfigService';
-import sqlite3 from 'sqlite3';
+import { fileExists } from '@src/utils/helpers';
+import TrackRepository from '@main/repository/TrackRepository';
+import { TrackModel } from '@src/shared/types';
+import Store from 'electron-store';
 
-const __dirname = fileURLToPath(import.meta.url);
-const __filename = path.join(__dirname, 'localLibraryService.js');
-
-// 帮助函数：检查文件或目录是否存在
-const fileExists = async (filePath: string) => {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-// 获取当前时间戳的函数
-const getCurrentTimestamp = () => new Date().toISOString();
-
-
-// 更新本地音乐库的函数
-export async function updateLocalLibrary(db: sqlite3.Database, store: any) {
-  const scanPaths = getConfig(store, 'scan_paths');
-  if (scanPaths.length === 0) {
-    console.warn('没有配置扫描路径,将跳过更新音乐库');
-    return;
-  }
-  const supportedFormats = getConfig(store, 'supported_formats').map((ext: string) => ext.toLowerCase());
-  console.log('scanPaths:', scanPaths);
-  console.log('supportedFormats:', supportedFormats);
-
-  // Validate configuration
-  if (!Array.isArray(scanPaths)) {
-    console.error('配置错误：scan_paths 应为数组');
-    return;
-  }
-  if (!Array.isArray(supportedFormats)) {
-    console.error('配置错误：supported_formats 应为数组');
-    return;
+@injectable()
+class LocalLibraryService {
+  constructor(
+    @inject('TrackRepository') private trackRepository: TrackRepository,
+    @inject('Store') private store: Store,
+    // 注入其他需要的依赖
+  ) {
   }
 
-  try {
-    // Start transaction
-    await dbRun(db, 'BEGIN TRANSACTION');
+  public async updateLocalLibrary(): Promise<void> {
+    const scanPaths = getConfig(this.store, 'scan_paths');
+    if (!scanPaths || scanPaths.length === 0) {
+      console.warn('没有配置扫描路径，将跳过更新音乐库');
+      return;
+    }
 
-    // Function to scan directory and get valid audio files
-    const getTracksFromPaths = async (paths:string[], formats: string | any[]) => {
-      const tracks = [];
-      for (const directoryPath of paths) {
-        if (await fileExists(directoryPath)) {
-          try {
-            const files = await fs.readdir(directoryPath, { withFileTypes: true });
-            for (const dirent of files) {
-              if (dirent.isFile()) {
-                const ext = path.extname(dirent.name).substring(1).toLowerCase();
-                if (formats.includes(ext)) {
-                  const filePath = path.resolve(directoryPath, dirent.name);
-                  const normalizedPath = path.resolve(filePath);
+    const supportedFormats = getConfig(this.store, 'supported_formats').map((ext: string) => ext.toLowerCase());
+    console.log('scanPaths:', scanPaths);
+    console.log('supportedFormats:', supportedFormats);
 
-                  // Check if the file already exists in the library
-                  const sql = 'SELECT * FROM library WHERE file_path = ?';
-                  const result = await dbGet(db, sql, [normalizedPath]);
 
-                  if (!result) {
-                    console.log(`发现新文件: ${normalizedPath}`);
-                    tracks.push({ file_path: normalizedPath, created_at: getCurrentTimestamp() });
-                  }
+    try {
+
+      // 获取需要添加的曲目列表
+      const tracks = await this.getTracksFromPaths(scanPaths, supportedFormats);
+
+      // 如果找到新曲目，插入数据库
+      if (tracks.length > 0) {
+        for (const track of tracks) {
+          await this.trackRepository.create(track);
+        }
+      } else {
+        console.log('没有找到新的音频文件');
+      }
+
+      // 提交事务（如果适用）
+      // await this.trackRepository.commitTransaction();
+
+      console.log('音乐库更新完成');
+    } catch (error) {
+      // 回滚事务（如果适用）
+      // await this.trackRepository.rollbackTransaction();
+
+      console.error(`更新本地音乐库时出错: ${error.message}`);
+      console.error(error);
+    }
+  }
+
+  private async getTracksFromPaths(paths: string[], formats: string[]): Promise<TrackModel[]> {
+    const tracks: TrackModel[] = [];
+
+    for (const directoryPath of paths) {
+      if (await fileExists(directoryPath)) {
+        try {
+          const files = await fs.readdir(directoryPath, { withFileTypes: true });
+          for (const dirent of files) {
+            if (dirent.isFile()) {
+              const ext = path.extname(dirent.name).substring(1).toLowerCase();
+              if (formats.includes(ext)) {
+                const filePath = path.resolve(directoryPath, dirent.name);
+                const normalizedPath = path.resolve(filePath);
+
+                // 检查文件是否已存在于库中
+                const existingTrack = await this.trackRepository.findByFilePath(normalizedPath);
+
+                if (!existingTrack) {
+                  console.log(`发现新文件: ${normalizedPath}`);
+                  //@ts-ignore
+                  const trackData: TrackModel = {
+                    file_path: normalizedPath,
+                    created_at: new Date(),
+                    // 添加其他必要的字段
+                  };
+                  tracks.push(trackData);
                 }
               }
             }
-          } catch (error) {
-            console.error(`读取目录 ${directoryPath} 时出错: ${error.message}`);
           }
-        } else {
-          console.warn(`目录不存在: ${directoryPath}`);
+        } catch (error) {
+          console.error(`读取目录 ${directoryPath} 时出错: ${error.message}`);
         }
+      } else {
+        console.warn(`目录不存在: ${directoryPath}`);
       }
-      return tracks;
-    };
-
-    // Insert new tracks into the database
-    const insertTracksIntoLibrary = async (tracks: any) => {
-      const insertSql = 'INSERT INTO library (file_path, created_at) VALUES (?, ?)';
-      for (const track of tracks) {
-        await dbRun(db, insertSql, [track.file_path, track.created_at]);
-      }
-    };
-
-    // Get valid tracks from scanPaths
-    const tracks = await getTracksFromPaths(scanPaths, supportedFormats);
-
-    // If we found new tracks, insert them into the database
-    if (tracks.length > 0) {
-      await insertTracksIntoLibrary(tracks);
-    } else {
-      console.log('没有找到新的音频文件');
     }
 
-    // Commit transaction
-    await dbRun(db, 'COMMIT');
-    console.log('音乐库更新完成');
-
-  } catch (error) {
-    // Rollback transaction in case of error
-    await dbRun(db, 'ROLLBACK');
-    console.error(`更新本地音乐库时出错: ${error.message}`);
-    console.error(error);
+    return tracks;
   }
 }
 
-// 测试函数调用
-// updateLocalLibrary();
-
-
+export default LocalLibraryService;

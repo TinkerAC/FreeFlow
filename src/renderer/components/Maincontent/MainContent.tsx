@@ -3,16 +3,17 @@ import './Maincontent.css';
 import NetSearchResultView from '@components/SearchResultView/SearchResultView';
 import PlaylistView from '@components/PlaylistView/PlaylistView';
 import ProfileView from '@components/ProfileView/ProfileView';
+import { PlaylistModel, TrackModel } from '@src/shared/types';
 
 interface MainContentProps {
   view: string;
-  selectedPlaylistInfo: any;
-  onReplacePlayQueue: (tracks: any[]) => void;
-  onAddToNext: (tracks: any[]) => void;
-  onAddToNextAndPlay: (tracks: any[]) => void;
+  selectedPlaylistInfo: PlaylistModel;
+  onReplacePlayQueue: (tracks: TrackModel[]) => void;
+  onAddToNext: (track: TrackModel) => void;
+  onAddToNextAndPlay: (track: TrackModel) => void;
   searchResults: any[];
   refreshPlaylists: () => void;
-  playlists: any[];
+  playlists: PlaylistModel[];
 }
 
 

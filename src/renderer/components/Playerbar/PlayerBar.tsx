@@ -2,6 +2,7 @@ import React from 'react';
 import './PlayerBar.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { formatTime } from '@src/utils/timeUtils';
+import { PlayerState } from '@src/shared/types';
 
 interface PlayerBarProps {
   className?: string;
@@ -12,12 +13,12 @@ interface PlayerBarProps {
   onCyclePlaybackMode?: () => void;
   onVolumeChange?: (volume: number) => void;
   onToggleRightContent?: () => void;
-  playerState: any,
+  playerState: PlayerState;
 }
 
 
 export default function PlayerBar({
-                                    setCurrentTime = (time: number) => {
+                                    setCurrentTime = () => {
                                     },
                                     onPlayNext = () => {
                                     },
@@ -27,8 +28,7 @@ export default function PlayerBar({
                                     },
                                     onCyclePlaybackMode = () => {
                                     },
-                                    onVolumeChange = (volume: any) => {
-                                    },
+                                    onVolumeChange,
                                     onToggleRightContent = () => {
                                     },
                                     playerState = {
@@ -39,7 +39,18 @@ export default function PlayerBar({
                                       audioSrc: '',
                                       isPlaying: false,
                                       currentTime: 0,
-                                      currentTrackInfo: {},
+                                      currentTrackInfo: {
+                                        track_id: 0,
+                                        data_href: '',
+                                        file_path: '',
+                                        title: '',
+                                        artist: '',
+                                        album: '',
+                                        duration: 0,
+                                        cover_src: '',
+                                        created_at: new Date(),
+                                        source: '',
+                                      },
                                       nextTracks: [],
                                       volume: 0.5,
                                     },// 使用默认值避免解构时出现 undefined
@@ -49,14 +60,14 @@ export default function PlayerBar({
   const { playbackMode, isPlaying, currentTime, currentTrackInfo, volume } = playerState;
 
 
-  const handleSeekTo = (event: any) => {
+  const handleSeekTo = (event: { target: { value: string; }; }) => {
     const newTime = parseFloat(event.target.value);
     if (!isNaN(newTime) && newTime >= 0 && newTime <= (currentTrackInfo.duration || 0)) {
       setCurrentTime(newTime);
     }
   };
 
-  const handleVolumeChange = (event: any) => {
+  const handleVolumeChange = (event: { target: { value: string; }; }) => {
     const volume = parseFloat(event.target.value);
     if (!isNaN(volume) && volume >= 0 && volume <= 1) {
       onVolumeChange(volume);
@@ -66,11 +77,11 @@ export default function PlayerBar({
   return (
     <div className={`player-bar sticky w-full bottom-0`}>
       <div className="left-section w-1/4">
-        <img src={currentTrackInfo.cover_src || ''} alt="album cover" className="album-cover" />
+        <img src={currentTrackInfo?.cover_src || ''} alt="album cover" className="album-cover" />
         <div className="playerState-info overflow-x-hidden">
-          <div className="playerState-title text-sm text-nowrap">{currentTrackInfo.title || '未知标题'}</div>
+          <div className="playerState-title text-sm text-nowrap">{currentTrackInfo?.title || '未知标题'}</div>
           <div
-            className="playerState-artist text-sm text-gray-400 text-nowrap">{currentTrackInfo.artist || '未知艺术家'}</div>
+            className="playerState-artist text-sm text-gray-400 text-nowrap">{currentTrackInfo?.artist || '未知艺术家'}</div>
         </div>
       </div>
 
@@ -94,12 +105,12 @@ export default function PlayerBar({
               type="range"
               className="progress-slider"
               min="0"
-              max={currentTrackInfo.duration || 0}
+              max={currentTrackInfo?.duration || 0}
               value={currentTime}
               step="1"
               onChange={handleSeekTo}
             />
-            <span className="total-time">{formatTime(currentTrackInfo.duration || 0)}</span>
+            <span className="total-time">{formatTime(currentTrackInfo?.duration || 0)}</span>
           </div>
         </div>
       </div>

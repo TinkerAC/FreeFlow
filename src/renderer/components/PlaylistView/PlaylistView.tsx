@@ -1,36 +1,23 @@
 import React, { useEffect, useState } from 'react';
-// @ts-ignore
+
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-expect-error
 import ColorThief from 'colorthief';
 import './PlaylistView.css';
 import ModalModifyPlaylist from '@components/PlaylistView/ModalModifyPlaylist';
+import { PlaylistModel, TrackModel } from '@src/shared/types';
+
 import { Playlist } from '@components/PlaylistView/Playlist';
 
-interface Track {
-  track_id: number;
-  title: string;
-  artist: string;
-  album: string;
-  cover_src: string;
-  created_at: string;
-  duration: number;
-  description: string;
-}
-
-interface PlaylistInfo {
-  playlist_id: number;
-  description: string;
-  title: string;
-  creator: string;
-  tracks: Track[];
-}
 
 interface PlaylistViewProps {
-  playListInfo: PlaylistInfo;
-  onReplacePlayQueue: (tracks: Track[]) => void;
-  addToNext: any;
-  addToNextAndPlay: any;
+  playListInfo: PlaylistModel;
+  onReplacePlayQueue: (tracks: TrackModel[]) => void;
+  addToNext: (track: TrackModel) => void;
+  addToNextAndPlay: (track: TrackModel) => void;
   refreshPlaylist: () => void;
-  onUpdatePlaylist: (updatedPlaylist: PlaylistInfo) => void;
+  onUpdatePlaylist: (updatedPlaylist: PlaylistModel) => void;
 }
 
 export function PlaylistView({
@@ -206,7 +193,7 @@ export function PlaylistView({
         addTrackToPlaylist={() => {
           throw new Error('Function not implemented.');
         }}
-        playlists={["NYI"]}
+        playlists={[]}
         filteredTracks={filteredTracks}
         addToNext={addToNext}
         addToNextAndPlay={addToNextAndPlay}

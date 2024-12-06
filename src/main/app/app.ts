@@ -1,24 +1,24 @@
 // file: src/main/app.ts
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, Tray } from 'electron';
 import { createAppWindow } from './appWindow';
 import electronSquirrelStartup from 'electron-squirrel-startup';
 import { createTray } from './trayManager';
 import { registerGlobalShortcuts, unregisterGlobalShortcuts } from './shortcutManager';
-import { startProxyServer } from './proxyServer';
-import { getDatabase } from '@src/utils/dbUtils';
-import { dbPath } from './pathConfig';
-import { updateLocalLibrary } from '@main/services/localLibraryService';
+import ProxyServerManager from './proxyServer';
 import { initConfig } from './configInit';
-import Store from 'electron-store';
-import { Database } from 'sqlite3';
+
+import { container } from '@main/di/di-container';
+import LocalLibraryService from '@main/services/localLibraryService';
+import { sequelize } from '@main/models';
 
 let isQuitting = false;
-let db: Database;
+
 let mainWindow: BrowserWindow;
-let tray: any;
-const store = new Store({
-  watch: true,
-});
+let tray: Tray;
+
+
+// 初始化数据库
+
 
 // 单实例锁
 const gotTheLock = app.requestSingleInstanceLock();
@@ -42,17 +42,23 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
     app.quit();
   }
 
+  const localLibraryServiceInstance = container.get<LocalLibraryService>('LocalLibraryService');
+  const store = container.get('Store');
+  const proxyServerManager = container.get<ProxyServerManager>('ProxyServerManager');
+
   // 在 app 准备好时执行初始化工作
   app.whenReady().then(async () => {
+
+
+    await sequelize.sync(); // 同步数据库
     await initConfig(store); // 初始化配置
 
-    db = await getDatabase(dbPath); // 初始化数据库
+    await localLibraryServiceInstance.updateLocalLibrary(); // 更新本地音乐库
 
-    await updateLocalLibrary(db, store); // 更新本地音乐库
 
-    await startProxyServer(db, store); // 启动代理服务器
+    await proxyServerManager.start(); // 启动代理服务器
 
-    mainWindow = createAppWindow(db, store); // 创建主窗口
+    mainWindow = createAppWindow(); // 创建主窗口
 
     // 在 Windows 上，创建系统托盘图标
     if (process.platform === 'win32') {
@@ -79,7 +85,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
       if (!mainWindow.isVisible()) mainWindow.show();
       mainWindow.focus();
     } else {
-      mainWindow = createAppWindow(db, store);
+      mainWindow = createAppWindow();
     }
   });
 
@@ -111,6 +117,5 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   // 在应用即将退出时，注销快捷键和关闭数据库连接
   app.on('will-quit', () => {
     unregisterGlobalShortcuts();
-    if (db) db.close(); // 关闭数据库连接
   });
 }
