@@ -30,7 +30,11 @@ const electronContext = {
     const listener = () => {
       callback();
     };
-    ipcRenderer.on('request-player-state', listener);
+    ipcRenderer.on('request-player-state', (event) => {
+      console.log('主进程请求播放器状态事件已触发');
+      listener();
+    });
+    console.log('主进程请求播放器状态事件监听已添加');
 
     // 返回移除监听器的函数
     return () => {

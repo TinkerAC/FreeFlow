@@ -5,14 +5,13 @@ import { IAudioMetadata, parseFile } from 'music-metadata';
 import HifiniMusicService from '@main/services/HifiniMusicService';
 import { TrackModel } from '@src/shared/types';
 import PlaylistDetailRepository from '@main/repository/PlaylistDetailRepository';
-import { Json } from 'sequelize/types/utils';
 
 export default class TrackService {
 
   constructor(
     @inject('TrackRepository') private trackRepository: TrackRepository,
     @inject('HifiniMusicService') private hifiniMusicService: HifiniMusicService,
-    @inject('PlaylistDetailRepository') private playlistDetailRepository: PlaylistDetailRepository
+    @inject('PlaylistDetailRepository') private playlistDetailRepository: PlaylistDetailRepository,
   ) {
   }
 
@@ -63,15 +62,17 @@ export default class TrackService {
         };
       } else if (trackModel.data_href) {
         // 如果是网络资源，从网络获取元数据
-        const metaData = await this.hifiniMusicService.getMusicInfo(trackModel.data_href);
-        return {
-          ...trackModel,
-          ...metaData,
-        };
 
-
-
-
+        try {
+          const metaData = await this.hifiniMusicService.getMusicInfo(trackModel.data_href);
+          return {
+            ...trackModel,
+            ...metaData,
+          };
+        } catch (error) {
+          console.error('Error in get-track-info:', error);
+          return trackModel;
+        }
 
       } else {
         console.error('Error in get-track-info: no file_path or data_href provided');
@@ -135,7 +136,7 @@ export default class TrackService {
   }
 
 
-  public async findTracksByPlaylistId(playlistId: number):Promise<TrackModel[]> {
+  public async findTracksByPlaylistId(playlistId: number): Promise<TrackModel[]> {
 
     const trackIds = await this.playlistDetailRepository.findTrackIdsByPlaylistId(playlistId);
 
@@ -143,7 +144,7 @@ export default class TrackService {
       trackIds.map(async (trackId) => {
         return await this.trackRepository.findById(trackId);
       }),
-    )
+    );
 
 
   }

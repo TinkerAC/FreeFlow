@@ -34,7 +34,7 @@ export default class HifiniMusicService {
       return $('div.card.search div.card-body ul li').toArray();
     };
 
-    const parseLiElement = (liElement:any) => {
+    const parseLiElement = (liElement: any) => {
       const commonFormats = ['FLAC', 'MP3', 'WAV', 'AAC', 'ALAC', 'AIFF', 'DSD', 'APE', 'OGG', 'M4A', 'WMA'];
       const $li = cheerio.load(liElement);
       const dataHref = $li('li').attr('data-href');
@@ -65,7 +65,7 @@ export default class HifiniMusicService {
       const liElements = extractLiElements(response.data);
       return liElements.map(parseLiElement);
 
-    } catch (error){
+    } catch (error) {
       // 检查是否是超时错误
       if (error.code === 'ECONNABORTED') {
         console.error('搜索超时:', error.message);
@@ -140,10 +140,22 @@ export default class HifiniMusicService {
       // 获取当前日期,如果缓存存在且是今天的，使用缓存的未重定向链接
       const currentDate = new Date();
 
+      console.log('threadCache:', threadCache);
+
+
       if (threadCache &&
         threadCache.cached_at &&
         isSameUTCDay(threadCache.cached_at, currentDate)) {
-        // 如果缓存存在且是今天的，使用缓存的未重定向链接
+
+        // // 如果缓存存在且是今天的，使用缓存的未重定向链接
+        // if (threadCache.cached_at ! instanceof Date) {
+        //   console.error('缓存的 cached_at 不是 Date 类型');
+        //   console.log('threadCache:', threadCache);
+        //   console.log(typeof threadCache.cached_at);
+        //   console.log('cached_at value:', threadCache.cached_at);
+        //   console.log('cached_at constructor:', threadCache.cached_at.constructor.name);
+        // }
+
         un_redirected_url = threadCache.un_redirected_url;
         console.log('使用缓存中的未重定向链接加载 dataHref:', dataHref, '链接:', un_redirected_url);
 

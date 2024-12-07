@@ -5,78 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.1.0&#10;-大量适配ts工作,实现之前注释为未实现的方法&#10;-适配mac红绿灯&#10;-成功构建mac应用,应用体积减小至250M">
-      <change afterPath="$PROJECT_DIR$/.idea/FreeFlow.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/webResources.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/library.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/main.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/di/di-container.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/models/HifiniThreadCache.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/models/Playlist.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/models/PlaylistDetail.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/models/Track.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/models/database.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/models/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/HifiniThreadCacheRepository.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/PlaylistDetailRepository.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/PlaylistRepository.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/TrackRepository.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/impl/HifiniThreadCacheRepositoryImpl.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/impl/PlaylistDetailRepositoryImpl.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/impl/PlaylistRepositoryImpl.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/mappers/HifiniThreadCacheMapper.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/mappers/PlaylistMapper.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/repository/mappers/TrackMapper.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/services/TrackService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/shared/types.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/icon.icns" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/appIcon.icns" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/icon.ico" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/appIcon.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/appIcon.ico" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/appIcon.ico" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/database.sqlite" beforeDir="false" afterPath="$PROJECT_DIR$/data/database.sqlite" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/playerState.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/playerState.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/app/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/app.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/appWindow.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/appWindow.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/app/electronContext.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/electronContext.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/pathConfig.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/pathConfig.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/proxyServer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/proxyServer.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/trayManager.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/trayManager.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/hifiniMusicService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/HifiniMusicService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/libraryService.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/loadAudio.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/loadAudio.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/localLibraryService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/localLibraryService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/playerService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/playerService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/repository/mappers/HifiniThreadCacheMapper.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/mappers/HifiniThreadCacheMapper.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/HifiniMusicService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/HifiniMusicService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/TrackService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/TrackService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/services/playlistService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/playlistService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/components/Application.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Application.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/ContextMenu/contextMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/ContextMenu/contextMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Item.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Item.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlayQueue/PlayQueue.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlayQueue/PlayQueue.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Playerbar/Playerbar.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlaylistView/ContextMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlaylistView/ContextMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlaylistView/Playlist.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlaylistView/Playlist.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlaylistView/PlaylistView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlaylistView/PlaylistView.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlaylistView/Track.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlaylistView/Track.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/hooks/useMainWindow.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/useMainWindow.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/hooks/useMusiclibrary.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/useMusiclibrary.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/dbUtils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/dbUtils.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/helpers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/helpers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/netUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/netUtils.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/timeUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/timeUtils.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/forge/forge.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/tools/forge/forge.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,28 +56,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Node.js.app.ts.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "ts",
-    "js.last.introduce.type": "VAR",
-    "last_opened_file_path": "/Users/tinker/WebstormProjects/FreeFlow",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "pnpm",
-    "npm.make.executor": "Run",
-    "npm.package.executor": "Run",
-    "npm.start.executor": "Run",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "ts.external.directory.path": "/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Node.js.app.ts.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ts&quot;,
+    &quot;js.last.introduce.type&quot;: &quot;VAR&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
+    &quot;npm.make.executor&quot;: &quot;Run&quot;,
+    &quot;npm.package.executor&quot;: &quot;Run&quot;,
+    &quot;npm.start.executor&quot;: &quot;Run&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/assets/images" />
@@ -182,8 +121,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="npm.make" />
-        <item itemvalue="npm.package" />
         <item itemvalue="npm.start" />
+        <item itemvalue="npm.package" />
         <item itemvalue="Node.js.app.ts" />
       </list>
     </recent_temporary>
@@ -232,7 +171,10 @@
       <workItem from="1733471341899" duration="489000" />
       <workItem from="1733472815801" duration="10358000" />
       <workItem from="1733485500984" duration="1481000" />
-      <workItem from="1733494863791" duration="6514000" />
+      <workItem from="1733494863791" duration="6627000" />
+      <workItem from="1733538413692" duration="1000" />
+      <workItem from="1733538420951" duration="25000" />
+      <workItem from="1733555875203" duration="4370000" />
     </task>
     <task id="LOCAL-00001" summary="V2.0.1&#10;-重大更新&#10;修改了项目名、package.json 中的相关信息&#10;-迁移架构到ts">
       <option name="closed" value="true" />
@@ -242,7 +184,15 @@
       <option name="project" value="LOCAL" />
       <updated>1733045650614</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="V2.1.0&#10;-大量适配ts工作,实现之前注释为未实现的方法&#10;-适配mac红绿灯&#10;-成功构建mac应用,应用体积减小至250M">
+      <option name="closed" value="true" />
+      <created>1733501487035</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1733501487035</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -276,7 +226,6 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/app/pathConfig.ts</url>
           <line>19</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>

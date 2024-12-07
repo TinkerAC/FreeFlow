@@ -62,9 +62,7 @@ const Application: React.FC = () => {
   useEffect(() => {
     // 定义回调函数
     const handleRequestPlayerState = () => {
-      // 获取当前播放器状态
-      const state: any = dumpPlayerState(); // 假设这是一个获取当前播放器状态的函数
-      // 通过暴露的 API 将状态发送到主进程
+      const state: any = dumpPlayerState();
       context.sendPlayerState(state);
     };
 
@@ -90,17 +88,16 @@ const Application: React.FC = () => {
           console.log('未知快捷键操作');
       }
     };
-
-
-    // 清理函数，以防止内存泄漏
+    // 注册事件监听器
+    const removeRequestPlayerStateListener = context.onRequestPlayerState(handleRequestPlayerState);
+    context.onShortcut(handleShortcut);
     return () => {
-      // 使用暴露的 API 监听来自主进程的请求播放器状态的事件
-      context.onRequestPlayerState(handleRequestPlayerState);
-      // 使用暴露的 API 监听全局快捷键事件
-      context.onShortcut(handleShortcut);
+      // 在清理函数中移除监听器
+      removeRequestPlayerStateListener();
+      context.removeShortcutListener();
       console.log('已移除所有 IPC 监听器');
     };
-  }, []); // 依赖数组为空，确保此副作用只在组件挂载和卸载时运行
+  }, []);
 
 
   useEffect(() => {

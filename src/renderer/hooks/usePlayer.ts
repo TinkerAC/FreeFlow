@@ -5,7 +5,6 @@ import context from '@main/app/electronContextApi';
 import { PlayerState, TrackModel } from '@src/shared/types';
 
 
-
 function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
   // 统一的状态管理
   const [, setPlayerState, playerStateRef] = useStateRef<PlayerState>({
@@ -348,7 +347,8 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
   useEffect(() => {
     const loadPlayerState = async () => {
       try {
-        const savedState = await context?.getPlayerState();
+        const savedState = await context.getPlayerState();
+        console.log('加载播放器状态:', savedState);
         if (savedState) {
           const currentTrack =
             savedState.queue[
@@ -440,16 +440,14 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
   }, [audioRef]);
 
   // 导出播放器状态
-  const dumpPlayerState = () => {
+  const dumpPlayerState = (): PlayerState => {
     return {
       ...playerStateRef.current,
       //总是将playerState中的isPlaying设置为false
       isPlaying: false,
-      queue: playerStateRef.current.queue.map(track => ({
-        file_path: track.file_path,
-        data_href: track.data_href,
-      })),
+      queue: playerStateRef.current.queue,
       volume: audioRef.current.volume,
+
     };
   };
 

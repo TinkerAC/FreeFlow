@@ -21,8 +21,12 @@ export default class HifiniThreadCacheMapper {
       artist: hifiniThreadCache.artist,
       cover_src: hifiniThreadCache.cover_src,
       un_redirected_url: hifiniThreadCache.un_redirected_url,
-      cached_at: hifiniThreadCache.cached_at,
-      modified_at: hifiniThreadCache.modified_at,
+      cached_at: hifiniThreadCache.cached_at
+        ? new Date(hifiniThreadCache.cached_at)
+        : undefined,
+      modified_at: hifiniThreadCache.modified_at
+        ? new Date(hifiniThreadCache.modified_at)
+        : undefined,
     };
   }
 }

@@ -107,11 +107,15 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
     if (!isQuitting) {
       event.preventDefault(); // 阻止默认退出行为
       isQuitting = true;
-
       if (tray) tray.destroy(); // 销毁系统托盘图标
       // 发送请求给渲染进程获取播放器状态
+
       mainWindow.webContents.send('request-player-state');
+      console.log("主进程已发送请求获取播放器状态");
+
+
     }
+
   });
 
   // 在应用即将退出时，注销快捷键和关闭数据库连接

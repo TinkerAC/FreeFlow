@@ -74,25 +74,35 @@ export default class PlaylistService {
       // Step 5: 获取每首歌曲的详细信息
       const enrichedPlaylists = await Promise.all(
         playlists.map(async (playlist: PlaylistModel) => {
-          const tracksWithInfo = await Promise.all(
+          const tracksWithInfo = await Promise.allSettled(
             playlist.tracks.map(async (track) => {
-              const trackInfo = await this.trackService.getTrackInfo(track.track_id);
-
-
-              return {
-                ...track,
-                ...trackInfo,
-              };
+              try {
+                const trackInfo = await this.trackService.getTrackInfo(track.track_id);
+                return {
+                  ...track,
+                  ...trackInfo,
+                };
+              } catch (error) {
+                console.error(`Error fetching info for track ID ${track.track_id}:`, error);
+                return null; // 将错误的 track 标记为 null
+              }
             }),
           );
+
+          // 移除发生错误的 track
+          const validTracks = tracksWithInfo
+            .filter((result) => result.status === 'fulfilled' && result.value !== null)
+            .map((result) => (result as PromiseFulfilledResult<TrackModel>).value);
+
           return {
             ...playlist,
-            tracks: tracksWithInfo,
+            tracks: validTracks,
           };
         }),
       );
 
       return enrichedPlaylists;
+
     } catch (err) {
       // 错误处理：捕获并记录所有错误
       console.error('从数据库读取歌单时出错:', err);
