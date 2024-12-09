@@ -1,8 +1,10 @@
+// src/renderer/components/SearchResultView/SearchResultView.tsx
 import React from 'react';
 import useStateRef from 'react-usestateref';
-import ContextMenu from '../ContextMenu/contextMenu';
+import ContextMenu from '@components/SearchResultView/ContextMenu';
 import context from '@main/app/electronContextApi';
 import { PlaylistModel, TrackModel } from '@src/shared/types';
+import icons from '@components/Icons';
 
 interface NetSearchResultViewProps {
   popularResult: TrackModel;
@@ -13,7 +15,6 @@ interface NetSearchResultViewProps {
   playlists: PlaylistModel[];
 }
 
-
 // 定义 NetSearchResultView 组件
 function NetSearchResultView({
                                popularResult,
@@ -23,16 +24,16 @@ function NetSearchResultView({
                                refreshPlaylists,
                                playlists = [],      // 新增传入的播放列表
                              }: NetSearchResultViewProps) {
-  const [contextMenu, setContextMenu] = useStateRef(null); // 保存右键菜单的位置
-  const [, setSelectedTrack, selectedTrackRef] = useStateRef(null); // 保存右键点击的曲目
+  const [contextMenu, setContextMenu] = useStateRef<{ x: number, y: number } | null>(null); // 保存右键菜单的位置
+  const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackModel | null>(null); // 保存右键点击的曲目
 
   // 右键点击事件处理
-  const handleContextMenu = (event: React.MouseEvent<HTMLDivElement, MouseEvent>, track: any) => {
+  const handleContextMenu = (event: React.MouseEvent<HTMLDivElement, MouseEvent>, track: TrackModel) => {
     event.preventDefault();
     setSelectedTrack(track);
     setContextMenu({
-      x: event.pageX,
-      y: event.pageY,
+      x: event.clientX, // 使用 clientX 和 clientY
+      y: event.clientY,
     });
   };
 
@@ -85,7 +86,10 @@ function NetSearchResultView({
                   <div
                     className="flex items-center space-x-4 p-2 border-b hover:bg-item-bg-hover"
                     key={index}
-                    onDoubleClick={() => addToNextAndPlay(track)}
+                    onDoubleClick={() => {
+                      console.log('添加到下一首并播放');
+                      addToNextAndPlay(track);
+                    }}
                     onContextMenu={(e) => handleContextMenu(e, track)}  // 右键点击触发
                   >
                     <img
@@ -98,6 +102,14 @@ function NetSearchResultView({
                       <div className="text-gray-400">{track.artist}</div>
                     </div>
                     <div className="text-sm text-gray-500">{track.duration}</div>
+                    {/*新增显示歌曲来源平台,根据平台渲染icon*/}
+                    <div>
+                      {track.platform === 'NetEaseCloudMusic' && (
+                        <img src={icons.NetEaseCloudMusic} alt={track.platform} width={20} height={20} />)}
+
+                      {track.platform === 'Hifini' && (
+                        <img src={icons.Hifini} alt={track.platform} width={20} height={20} />)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -109,7 +121,7 @@ function NetSearchResultView({
       )}
 
       {/* 渲染右键菜单 */}
-      {contextMenu && (
+      {contextMenu && selectedTrackRef.current && (
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
@@ -125,7 +137,7 @@ function NetSearchResultView({
       {/* 点击页面其他部分时关闭右键菜单 */}
       {contextMenu && (
         <div
-          className="fixed inset-0 z-0"
+          className="fixed inset-0 z-999" // 确保覆盖全屏
           onClick={handleCloseMenu}
         />
       )}

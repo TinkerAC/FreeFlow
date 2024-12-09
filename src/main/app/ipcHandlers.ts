@@ -6,15 +6,16 @@ import { dataPath, playerStateDumpFile } from './pathConfig';
 import { PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
 import { container } from '@main/di/di-container';
 import HifiniMusicService from '@main/services/HifiniMusicService';
-import TrackRepository from '@main/repository/TrackRepository';
 import TrackService from '@main/services/TrackService';
+import NetEaseCloudMusicService from '@main/services/NetEaseCloudMusicService';
 
 
 const hifiniMusicService: HifiniMusicService = container.get('HifiniMusicService');
-const trackRepository: TrackRepository = container.get('TrackRepository');
 const playlistService: PlaylistService = container.get('PlaylistService');
 const store: any = container.get('Store');
 const trackService: TrackService = container.get('TrackService');
+const netEaseMusicService: NetEaseCloudMusicService = container.get('NetEaseCloudMusicService');
+
 
 export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
@@ -70,16 +71,14 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   );
 
   // 搜索音乐事件
-  ipcMain.handle('get-search-results', async (event: IpcMainInvokeEvent, searchTerm: string) => {
-    console.log('后端收到搜索请求:', searchTerm);
-    try {
-      const results = await hifiniMusicService.getSearchResults(searchTerm);
-      console.log('搜索结果:', results);
-      return results;
-    } catch (error) {
-      console.error('Error in get-search-results:', error);
-      throw error;
-    }
+  ipcMain.handle('get-search-results', async (event: IpcMainInvokeEvent, keywords: string) => {
+    console.log('后端收到搜索请求:', keywords);
+
+    const hifini_results = await hifiniMusicService.getSearchResults(keywords);
+    const netease_results = await netEaseMusicService.cloudSearch(keywords);
+
+    return hifini_results.concat(netease_results);
+
   });
 
   // 解析音乐链接事件
@@ -107,13 +106,8 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   // 从歌单中删除音乐事件
   ipcMain.handle(
     'remove-track-from-playlist',
-    async (_event: IpcMainInvokeEvent, playlistId: number, trackId: number) => {
-      try {
-        await playlistService.removeTrackFromPlaylist(playlistId, trackId);
-      } catch (error) {
-        console.error('Error in remove-track-from-playlist:', error);
-        throw error;
-      }
+    async (_event: IpcMainInvokeEvent, playlistId: number, track: TrackModel) => {
+      return await playlistService.removeTrackFromPlaylist(playlistId, track);
     },
   );
 
@@ -151,5 +145,10 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle('set-config', (_event: IpcMainInvokeEvent, key: string, value: string) => {
     store.set(key, value);
     return true;
+  });
+
+
+  ipcMain.handle('remove-track-from-library', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
+    return await trackService.removeTrackFromLibrary(track);
   });
 }

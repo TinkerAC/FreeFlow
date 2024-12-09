@@ -38,8 +38,7 @@ export default function MainContent({
         addToNext={onAddToNext}
         addToNextAndPlay={onAddToNextAndPlay}
         refreshPlaylist={refreshPlaylists}
-        onUpdatePlaylist={() => {
-        }}
+        playlists={playlists}
       />
     );
   } else if (view === 'searchResults') {

@@ -1,5 +1,4 @@
 import React from 'react';
-import internal from 'node:stream';
 import context from '@main/app/electronContextApi';
 
 interface ContextMenuProps {

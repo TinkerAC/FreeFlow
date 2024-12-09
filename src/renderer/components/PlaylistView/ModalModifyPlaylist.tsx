@@ -1,32 +1,39 @@
 // src/components/PlaylistView/ModalModifyPlaylist.jsx
 
 import React, { useState } from 'react';
-import internal from 'node:stream';
 import context from '@main/app/electronContextApi';
+import { PlaylistModel } from '@src/shared/types';
 
 
 interface ModalModifyPlaylistProps {
   onClose: () => void;
-  playListInfo: any;
+  playList:PlaylistModel;
   refreshPlaylist: () => void;
 }
 
 const ModalModifyPlaylist = ({
                                onClose,
-                               playListInfo,
+                               playList,
                                refreshPlaylist,
                              }: ModalModifyPlaylistProps) => {
 
 
-  const [title, setTitle] = useState(playListInfo.title || '');
-  const [description, setDescription] = useState(playListInfo.description || '');
+  const [title, setTitle] = useState(playList.title || '');
+  const [description, setDescription] = useState(playList.description || '');
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
+
     // 在这里处理保存逻辑，例如调用 API 更新歌单信息
     console.log('正在保存歌单信息:', { title, description });
     // 调用 API 更新歌单信息
-    await context.modifyPlaylist(playListInfo.playlist_id, title, description, refreshPlaylist);
+    await context.modifyPlaylist(
+      {
+        playlist_id: playList.playlist_id,
+        title,
+        description
+      }
+    ).then(refreshPlaylist);
     onClose();
   };
 

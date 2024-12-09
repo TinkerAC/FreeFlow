@@ -30,7 +30,7 @@ const electronContext = {
     const listener = () => {
       callback();
     };
-    ipcRenderer.on('request-player-state', (event) => {
+    ipcRenderer.on('request-player-state', () => {
       console.log('主进程请求播放器状态事件已触发');
       listener();
     });
@@ -60,30 +60,24 @@ const electronContext = {
   },
 
   // 修改歌单信息
-  modifyPlaylist: (
-    playlistId: number,
-    playlist_title: string,
-    playlist_description: string,
-    refreshPlaylists: () => void,
+  modifyPlaylist: async (
+    playlist: { playlist_id: number; description: string; title: string },
   ) => {
-    ipcRenderer
-      .invoke('modify-playlist', playlistId, playlist_title, playlist_description)
-      .then(() => {
-        console.log('歌单修改成功');
-        refreshPlaylists();
-      });
+    await ipcRenderer.invoke('modify-playlist', playlist);
   },
 
   // 从歌单中删除音乐
-  removeTrackFromPlaylist: (
+  removeTrackFromPlaylist: async (
     playlistId: number,
-    trackId: number,
-    refreshPlaylists: () => void,
+    track: TrackModel,
   ) => {
-    ipcRenderer.invoke('remove-track-from-playlist', playlistId, trackId).then(() => {
-      console.log(`从歌单${playlistId}中删除音乐${trackId}成功`);
-      refreshPlaylists();
-    });
+    await ipcRenderer.invoke('remove-track-from-playlist', playlistId, track);
+  },
+
+
+  //从库中删除音乐
+  removeTrackFromLibrary: async (track: TrackModel) => {
+    await ipcRenderer.invoke('remove-track-from-library', track);
   },
 
   // 删除歌单
@@ -95,7 +89,7 @@ const electronContext = {
   },
 
   getConfig: (key: string) => ipcRenderer.invoke('get-config', key),
-  setConfig: (key: string, value: any) => ipcRenderer.invoke('set-config', key, value),
+  setConfig: (key: string, value: string) => ipcRenderer.invoke('set-config', key, value),
 
   getPlayerState: () => ipcRenderer.invoke('player-state'),
 

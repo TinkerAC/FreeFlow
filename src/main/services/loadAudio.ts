@@ -1,17 +1,17 @@
 // 返回dataHref的BlobUrl或者file_path对应的音频文件路径
-export default async function getAudioSrc(track: { file_path: string; data_href: string; }): Promise<string> {
-  try {
-    const filePath = track.file_path;
-    const dataHref = track.data_href;
 
-    if (filePath) {
-      // 如果存在 file_path，则直接返回本地文件路径
-      return filePath;
-    } else if (dataHref) {
-      // 如果存在 datahref，则使用代理进程发送请求
-      console.log('正在使用代理进程加载音频文件...,请求Track:', track);
-      const proxyUrl = `http://localhost:4399/proxy?dataHref=${encodeURIComponent(dataHref)}`;
+import { TrackModel } from '@src/shared/types';
 
+export default async function getAudioSrc(
+  track: TrackModel,
+): Promise<string> {
+
+  switch (track.platform) {
+    case 'Local': {
+      return track.platform_unique_id;
+    }
+    default: {
+      const proxyUrl = `http://localhost:4399/proxy?platform=${track.platform}&platformUniqueId=${track.platform_unique_id}`;
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('GET', proxyUrl, true);
@@ -34,14 +34,8 @@ export default async function getAudioSrc(track: { file_path: string; data_href:
 
         xhr.send();
       });
-    } else {
-      throw new Error('No valid file path or datahref provided in the track object.');
     }
-  } catch (error) {
-    throw new Error(`Error loading audio: ${error.message}`);
   }
-
-
 }
 
 

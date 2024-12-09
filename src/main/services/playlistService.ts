@@ -28,10 +28,10 @@ export default class PlaylistService {
       const validTracks: TrackModel[] = [];
 
       for (const track of libraryTracks) {
-        if (track.file_path && !track.data_href) { // 仅检查本地文件的歌曲
-          const file_exist = await fileExists(track.file_path);
+        if (track.platform === 'Local') {
+          const file_exist = await fileExists(track.platform_unique_id);
           if (!file_exist) {
-            console.warn(`歌曲文件不存在: ${track.file_path}，在此设备上无法播放`);
+            console.warn(`歌曲文件不存在: ${track.platform_unique_id}`);
           } else {
             validTracks.push(track); // 仅保留存在的文件
           }
@@ -77,13 +77,13 @@ export default class PlaylistService {
           const tracksWithInfo = await Promise.allSettled(
             playlist.tracks.map(async (track) => {
               try {
-                const trackInfo = await this.trackService.getTrackInfo(track.track_id);
+                const trackInfo = await this.trackService.getTrackInfo(track.id);
                 return {
                   ...track,
                   ...trackInfo,
                 };
               } catch (error) {
-                console.error(`Error fetching info for track ID ${track.track_id}:`, error);
+                console.error(`Error fetching info for track ID ${track.id}:`, error);
                 return null; // 将错误的 track 标记为 null
               }
             }),
@@ -179,7 +179,7 @@ export default class PlaylistService {
   //   for (const track of tracks) {
   //     try {
   //       const trackId: number = await this.trackService.addTrackToLibrary(track);
-  //       console.log(`成功添加${track.title} - ${track.artist}到库，track_id: ${trackId}`);
+  //       console.log(`成功添加${track.title} - ${track.artist}到库，id: ${trackId}`);
   //     } catch (error) {
   //       console.log(`添加${track.title} - ${track.artist}到库失败`);
   //     }
@@ -192,24 +192,16 @@ export default class PlaylistService {
   public async modifyPlaylist(
     playlistModel: PlaylistModel,
   ) {
-    try {
-      // 更新歌单信息
-      await this.playlistRepository.update(playlistModel);
-      console.log('歌单修改成功');
-      return true;
-    } catch (err) {
-      console.error('修改歌单信息时出错:', err.message);
-      throw err;
-
-    }
+    console.log('主进程: 修改歌单信息:', playlistModel);
+    await this.playlistRepository.update(playlistModel);
   }
 
 
   public async removeTrackFromPlaylist(
     playlistId: number
-    , trackId: number,
+    , track: TrackModel,
   ) {
-    return this.playlistDetailRepository.deleteByPlaylistIdAndTrackId(playlistId, trackId);
+    return this.playlistDetailRepository.deleteByPlaylistIdAndTrackId(playlistId, track.id);
   }
 
 

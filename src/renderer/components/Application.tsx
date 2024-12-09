@@ -133,7 +133,6 @@ const Application: React.FC = () => {
         onSwitchView={setMainContentView}
         currentView={mainContentView}
         setSearchResults={setSearchResults}
-        setMainContentView={setMainContentView}
       />
       {/* 主内容容器 */}
       <div

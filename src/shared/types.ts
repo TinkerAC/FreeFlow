@@ -1,14 +1,13 @@
 export interface TrackModel {
-  track_id: number,
-  data_href: string,
-  file_path: string,
+  id?: number,
+  platform: string,
+  platform_unique_id: string,
   title: string,
   artist: string,
   album: string,
   duration: number,
   cover_src: string,
   created_at: Date,
-  source: string, // 音频来源
 }
 
 export interface PlaylistModel {
@@ -46,3 +45,6 @@ export interface PlayerState {
   nextTracks: TrackModel[],
 
 }
+
+
+

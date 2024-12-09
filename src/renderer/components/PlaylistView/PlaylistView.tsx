@@ -1,15 +1,14 @@
+// src/renderer/components/PlaylistView/PlaylistView.tsx
 import React, { useEffect, useState } from 'react';
-
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-expect-error
 import ColorThief from 'colorthief';
 import './PlaylistView.css';
-import ModalModifyPlaylist from '@components/PlaylistView/ModalModifyPlaylist';
 import { PlaylistModel, TrackModel } from '@src/shared/types';
 
 import { Playlist } from '@components/PlaylistView/Playlist';
-
+import ModalModifyPlaylist from '@components/PlaylistView/ModalModifyPlaylist';
 
 interface PlaylistViewProps {
   playListInfo: PlaylistModel;
@@ -17,10 +16,11 @@ interface PlaylistViewProps {
   addToNext: (track: TrackModel) => void;
   addToNextAndPlay: (track: TrackModel) => void;
   refreshPlaylist: () => void;
-  onUpdatePlaylist: (updatedPlaylist: PlaylistModel) => void;
+  playlists: PlaylistModel[];
 }
 
 export function PlaylistView({
+
                                playListInfo,
                                onReplacePlayQueue = () => {
                                },
@@ -30,13 +30,13 @@ export function PlaylistView({
                                },
                                refreshPlaylist = () => {
                                },
+                               playlists,
                              }: PlaylistViewProps) {
   const coverImage = playListInfo?.tracks?.[0]?.cover_src || './assets/default-cover.png';
   const [backgroundColor, setBackgroundColor] = useState('#333');
   const [modalVisible, setModalVisible] = useState(false);
   const [filteredTracks, setFilteredTracks] = useState(playListInfo?.tracks || []);
   const [searchKeyword, setSearchKeyword] = useState('');
-
 
   const openModalModifyPlaylist = () => {
     setModalVisible(true);
@@ -79,7 +79,6 @@ export function PlaylistView({
     search(searchKeyword);
   }, [searchKeyword]);
 
-
   //实现了歌曲搜索功能
   const search = (keyword: string) => {
     if (!keyword) {
@@ -94,34 +93,17 @@ export function PlaylistView({
       const title = track.title || '';
       const artist = track.artist || '';
       const album = track.album || '';
-      //
-      // // 将中文转换为拼音全拼和首字母
-      // const titlePinyin = pinyin(title, {style: pinyin.STYLE_NORMAL}).join('');
-      // const titleInitials = pinyin(title, {style: pinyin.STYLE_FIRST_LETTER}).join('');
-      //
-      // const artistPinyin = pinyin(artist, {style: pinyin.STYLE_NORMAL}).join('');
-      // const artistInitials = pinyin(artist, {style: pinyin.STYLE_FIRST_LETTER}).join('');
-      //
-      // const albumPinyin = pinyin(album, {style: pinyin.STYLE_NORMAL}).join('');
-      // const albumInitials = pinyin(album, {style: pinyin.STYLE_FIRST_LETTER}).join('');
 
       // 检查关键词是否匹配中文、拼音全拼或拼音首字母
       return (
         title.toLowerCase().includes(lowerCaseKeyword) ||
         artist.toLowerCase().includes(lowerCaseKeyword) ||
         album.toLowerCase().includes(lowerCaseKeyword)
-        // titlePinyin.toLowerCase().includes(lowerCaseKeyword) ||
-        // titleInitials.toLowerCase().includes(lowerCaseKeyword) ||
-        // artistPinyin.toLowerCase().includes(lowerCaseKeyword) ||
-        // artistInitials.toLowerCase().includes(lowerCaseKeyword) ||
-        // albumPinyin.toLowerCase().includes(lowerCaseKeyword) ||
-        // albumInitials.toLowerCase().includes(lowerCaseKeyword)
       );
     });
 
     setFilteredTracks(result);
   };
-
 
   return (
     <div
@@ -185,15 +167,11 @@ export function PlaylistView({
             setSearchKeyword('');
           }}
           value={searchKeyword}
-
         />
       </div>
 
       <Playlist
-        addTrackToPlaylist={() => {
-          throw new Error('Function not implemented.');
-        }}
-        playlists={[]}
+        playlists={playlists}
         filteredTracks={filteredTracks}
         addToNext={addToNext}
         addToNextAndPlay={addToNextAndPlay}
@@ -204,13 +182,12 @@ export function PlaylistView({
       {modalVisible && (
         <ModalModifyPlaylist
           onClose={closeModalModifyPlaylist}
-          playListInfo={playListInfo}
+          playList={playListInfo}
           refreshPlaylist={refreshPlaylist}
         />
       )}
     </div>
   );
 }
-
 
 export default PlaylistView;

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import './TopBar.css';
 import context from '@main/app/electronContextApi';
+import { TrackModel } from '@src/shared/types';
 
 async function getSearchResults(searchTerm: string) {
-  const results = await context?.getSearchResults(searchTerm);
+  const results = await context.getSearchResults(searchTerm);
   console.log('前端收到的搜索结果:', results);
   return results;
 }
@@ -13,8 +14,7 @@ interface TopBarProps {
   className?: string;
   onSwitchView: (view: string) => void;
   currentView: string;
-  setSearchResults: (results: any[]) => void;
-  setMainContentView: (view: string) => void;
+  setSearchResults: (results: TrackModel[]) => void;
 }
 
 
@@ -22,7 +22,6 @@ export default function TopBar({
                                  onSwitchView,
                                  currentView,
                                  setSearchResults,
-                                 setMainContentView,
                                }: TopBarProps) {
 
   const [platform, setPlatform] = useState<string | null>(null); // 状态来存储平台信息
@@ -72,7 +71,6 @@ export default function TopBar({
   // 输入框变化处理函数
   const handleInputChange = (event: any) => {
     setSearchTerm(event.target.value);
-
   };
 
   return (
@@ -106,6 +104,7 @@ export default function TopBar({
           placeholder="想播放什么？"
           value={searchTerm}
           onChange={handleInputChange}
+          onFocus={() => onSwitchView('searchResults')}
         />
       </div>
       <div className="right-icons">

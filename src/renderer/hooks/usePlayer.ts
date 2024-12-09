@@ -175,13 +175,15 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
 
   const isTrackInQueue = (track: TrackModel) => {
     return playerStateRef.current.queue.some(
-      item => item.file_path === track.file_path && item.data_href === track.data_href,
+      item => item.platform === track.platform && item.platform_unique_id === track.platform_unique_id,
     );
+
+
   };
 
   const findTrackIndex = (track: TrackModel) => {
     return playerStateRef.current.queue.findIndex(
-      item => item.file_path === track.file_path && item.data_href === track.data_href,
+      item => item.platform === track.platform && item.platform_unique_id === track.platform_unique_id,
     );
   };
 

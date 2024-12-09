@@ -31,29 +31,7 @@ export default function PlayerBar({
                                     onVolumeChange,
                                     onToggleRightContent = () => {
                                     },
-                                    playerState = {
-                                      queue: [],
-                                      indexList: [],
-                                      currentIndex: 0,
-                                      playbackMode: 'loop',
-                                      audioSrc: '',
-                                      isPlaying: false,
-                                      currentTime: 0,
-                                      currentTrackInfo: {
-                                        track_id: 0,
-                                        data_href: '',
-                                        file_path: '',
-                                        title: '',
-                                        artist: '',
-                                        album: '',
-                                        duration: 0,
-                                        cover_src: '',
-                                        created_at: new Date(),
-                                        source: '',
-                                      },
-                                      nextTracks: [],
-                                      volume: 0.5,
-                                    },// 使用默认值避免解构时出现 undefined
+                                    playerState,// 使用默认值避免解构时出现 undefined
                                   }: PlayerBarProps) {
   // 从播放器状态中提取所需信息
 

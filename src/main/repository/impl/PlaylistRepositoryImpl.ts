@@ -1,6 +1,5 @@
 import { PlaylistModel } from '@src/shared/types';
 import PlaylistRepository from '@main/repository/PlaylistRepository';
-import { Error } from 'sequelize';
 import { Playlist } from '@main/models/Playlist';
 import PlaylistMapper from '@main/repository/mappers/PlaylistMapper';
 
@@ -25,10 +24,19 @@ export default class PlaylistRepositoryImpl implements PlaylistRepository {
     return Promise.resolve(undefined);
   }
 
-  update(playlist: PlaylistModel): Promise<PlaylistModel> {
-    return Promise.resolve(undefined);
-  }
+  async update(playlist: PlaylistModel): Promise<PlaylistModel> {
 
+    await Playlist.update({
+      title: playlist.title,
+      description: playlist.description,
+    }, {
+      where: {
+        playlist_id: playlist.playlist_id,
+      },
+    });
+    return playlist;
+
+  }
 
 
   async create(playlist: PlaylistModel): Promise<PlaylistModel> {

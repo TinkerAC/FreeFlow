@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { PlaylistModel, TrackModel } from '@src/shared/types';
 import ContextMenu from './ContextMenu';
 import Track from '@components/PlaylistView/Track';
+
 interface PlaylistProps {
   filteredTracks: TrackModel[];
   addToNext: (track: TrackModel) => void;
   addToNextAndPlay: (track: TrackModel) => void;
-  addTrackToPlaylist: (track: TrackModel, playlistId: number) => void;
   playlists: PlaylistModel[];
   currentPlaylist: PlaylistModel;
   refreshPlaylists: () => void;
@@ -19,9 +19,7 @@ export function Playlist({
                            },
                            addToNextAndPlay = () => {
                            },
-                           addTrackToPlaylist = () => {
-                           },
-                           playlists = [],
+                           playlists,
                            currentPlaylist,
                            refreshPlaylists = () => {
                            },
@@ -109,7 +107,7 @@ export function Playlist({
         {filteredTracks.length ? (
           filteredTracks.map((track, index) => (
             <Track
-              key={track.track_id}
+              key={track.id}
               track={track}
               index={index}
               addToNext={addToNext}
@@ -146,16 +144,10 @@ export function Playlist({
           track={selectedTrack} // 使用选中的 track
           addToNext={addToNext}
           handleCloseMenu={handleCloseMenu}
-          addTrackToPlaylist={addTrackToPlaylist}
           playlists={playlists}
           currentPlaylist={currentPlaylist}
           refreshPlaylists={refreshPlaylists}
-          addToLibrary={() => {
-            throw new Error('Function not implemented.');
-          }
-          }
-        />
-      )}
+        />)}
     </div>
   );
 }

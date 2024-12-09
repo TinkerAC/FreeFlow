@@ -18,14 +18,15 @@ import TrackService from '@main/services/TrackService';
 import HifiniMusicService from '@main/services/HifiniMusicService';
 import { Track } from '@main/models/Track';
 import PlaylistService from '@main/services/playlistService';
-import {HifiniThreadCache} from '@main/models/HifiniThreadCache';
+import { HifiniThreadCache } from '@main/models/HifiniThreadCache';
+import NetEaseCloudMusicService from '@main/services/NetEaseCloudMusicService';
 
 const container = new Container();
 export { container };
 
 container.bind<any>('Store').toConstantValue(new Store({
     watch: true,
-  }
+  },
 ))
 ;
 
@@ -47,7 +48,7 @@ container.bind<PlaylistDetailRepository>('PlaylistDetailRepository').to(Playlist
 
 container.bind<LocalLibraryService>('LocalLibraryService').to(LocalLibraryService);
 container.bind<TrackService>('TrackService').to(TrackService);
-
+container.bind<NetEaseCloudMusicService>('NetEaseCloudMusicService').to(NetEaseCloudMusicService);
 container.bind<ProxyServerManager>('ProxyServerManager').to(ProxyServerManager);
 
 container.bind<HifiniMusicService>('HifiniMusicService').to(HifiniMusicService);
@@ -55,3 +56,5 @@ container.bind<HifiniMusicService>('HifiniMusicService').to(HifiniMusicService);
 container.bind<PlaylistService>('PlaylistService').to(PlaylistService);
 
 container.bind<PlaylistDetail>('PlaylistDetail').to(PlaylistDetail);
+
+

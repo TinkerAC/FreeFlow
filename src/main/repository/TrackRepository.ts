@@ -1,6 +1,4 @@
-import { Track } from '@main/models';
 import { TrackModel } from '@src/shared/types';
-import { List } from 'postcss/lib/list';
 import { TrackCreationAttributes } from '@main/models/Track';
 
 export default interface TrackRepository {
@@ -14,11 +12,7 @@ export default interface TrackRepository {
 
   update(track: TrackModel): Promise<TrackModel>;
 
-  findByFilePath(filePath: string): Promise<TrackModel | null>;
-
-  findByDataHref(dataHref: string): Promise<TrackModel | null>;
-
-
+  findByPlatformAndPlatformUniqueId(platform: string, platformUniqueId: string): Promise<TrackModel | null>;
 
 
 }

@@ -1,7 +1,6 @@
+// src/renderer/components/SearchResultView/ContextMenu.tsx
 import React, { useState } from 'react';
-
 import { PlaylistModel, TrackModel } from '@src/shared/types';
-
 
 interface ContextMenuProps {
   x: number;
@@ -14,19 +13,16 @@ interface ContextMenuProps {
   playlists: PlaylistModel[];
 }
 
-
-function ContextMenu(
-  {
-    x,
-    y,
-    track,
-    addToNext,
-    addToLibrary,
-    handleCloseMenu,
-    addTrackToPlaylist,
-    playlists,
-  }: ContextMenuProps,
-) {
+function ContextMenu({
+                       x,
+                       y,
+                       track,
+                       addToNext,
+                       addToLibrary,
+                       handleCloseMenu,
+                       addTrackToPlaylist,
+                       playlists,
+                     }: ContextMenuProps) {
 
   const [showSubMenu, setShowSubMenu] = useState(false); // 控制是否显示子菜单
 
@@ -35,19 +31,21 @@ function ContextMenu(
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'fixed', // 使用 fixed 使菜单相对于视口定位
         top: `${y}px`,
         left: `${x}px`,
-        backgroundColor: 'white',
-        border: '1px solid #ccc',
-        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+        backgroundColor: '#333', // 深色背景
+        border: '1px solid #666', // 较浅的边框
+        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)', // 深色阴影
         zIndex: 1000,
+        color: '#fff', // 白色字体
+        width: '200px', // 固定宽度
       }}
-      className="p-2"
+      className="p-2 rounded-lg"
     >
       {/* 添加到下一首播放 */}
       <div
-        className="p-2 hover:bg-gray-100 cursor-pointer text-blue-500"
+        className="p-2 hover:bg-gray-700 cursor-pointer"
         onClick={() => {
           addToNext(track);
           handleCloseMenu();
@@ -58,7 +56,7 @@ function ContextMenu(
 
       {/* 添加到...，显示子菜单 */}
       <div
-        className="relative p-2 hover:bg-gray-100 cursor-pointer text-green-500"
+        className="relative p-2 hover:bg-gray-700 cursor-pointer"
         onMouseEnter={() => setShowSubMenu(true)}  // 鼠标移入显示子菜单
         onMouseLeave={() => setShowSubMenu(false)} // 鼠标移出隐藏子菜单
       >
@@ -70,19 +68,19 @@ function ContextMenu(
               position: 'absolute',
               top: '0',
               left: '100%',
-              backgroundColor: 'white',
-              border: '1px solid #ccc',
-              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+              backgroundColor: '#333', // 深色背景
+              border: '1px solid #666',
+              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
               zIndex: 1001,
               width: '200px',
             }}
-            className="p-2"
+            className="p-2 rounded-lg"
           >
             {/* 遍历所有的播放列表 */}
             {playlists.map((playlist) => (
               <div
                 key={playlist.playlist_id}
-                className="p-2 hover:bg-gray-100 cursor-pointer"
+                className="p-2 hover:bg-gray-700 cursor-pointer"
                 onClick={() => {
                   if (playlist.playlist_id === 0) {
                     addToLibrary(track);

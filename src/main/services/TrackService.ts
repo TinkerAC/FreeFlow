@@ -51,56 +51,49 @@ export default class TrackService {
 
     // only file_path or data_href is provided
     const trackModel = await this.trackRepository.findById(track_id);
-    try {
-      if (trackModel.file_path) {
+
+    switch (trackModel.platform) {
+      case  'Local': {
         // 如果是本地文件,提取元数据
-        const metaData = await this.extractMusicMeta(trackModel.file_path);
+        const metaData = await this.extractMusicMeta(trackModel.platform_unique_id);
         const parse_result = this.parseTrackInfo(metaData);
         return {
           ...trackModel,
           ...parse_result,
         };
-      } else if (trackModel.data_href) {
-        // 如果是网络资源，从网络获取元数据
-
-        try {
-          const metaData = await this.hifiniMusicService.getMusicInfo(trackModel.data_href);
-          return {
-            ...trackModel,
-            ...metaData,
-          };
-        } catch (error) {
-          console.error('Error in get-track-info:', error);
-          return trackModel;
-        }
-
-      } else {
-        console.error('Error in get-track-info: no file_path or data_href provided');
+      }
+      case 'NetEaseCloudMusic': {
+        break;
+      }
+      case 'Hifini': {
+        const metaData = await this.hifiniMusicService.getMusicInfo(trackModel.platform_unique_id);
+        return {
+          ...trackModel,
+          ...metaData,
+        };
       }
 
-
-    } catch (error) {
-      console.error('Error in get-track-info:', error);
-      throw error;
     }
+
+
   }
 
 
-  public async addTrackToLibrary(track: TrackModel) {
+  public async addTrackToLibrary(track: TrackModel): Promise<TrackModel> {
 
-    const track_id = await this.trackRepository.findByDataHref(track.data_href);
-    if (track_id) {
-      console.log('待添加的音乐已在库中，track_id:', track_id);
-      return track_id;
+    const platform: string = track.platform;
+    const platform_unique_id: string = track.platform_unique_id;
+
+    const track1: TrackModel = await this.trackRepository.findByPlatformAndPlatformUniqueId(platform, platform_unique_id);
+
+    if (track1) {
+      console.log('待添加的音乐已在库中，id:', track1.id);
+      return track1;
     }
 
     return await this.trackRepository.create(track);
 
-  }
 
-
-  public async removeTrackFromLibrary(track_id: number) {
-    return await this.trackRepository.delete(track_id);
   }
 
 
@@ -110,16 +103,16 @@ export default class TrackService {
 
     try {
       // 先检查歌曲是否在库中
-      const track1: TrackModel = await this.trackRepository.findByDataHref(track.data_href);
-
+      const track1: TrackModel = await this.trackRepository.findByPlatformAndPlatformUniqueId(track.platform, track.platform_unique_id);
 
       if (!track1) {
         // 如果不在库中，先添加到库
         track = await this.trackRepository.create(track);
-        console.log(`待插入歌单歌曲不在库中，已添加到库，track_id: ${track.track_id}`);
-        trackId = track.track_id;
+        console.log(`待插入歌单歌曲不在库中，已添加到库，track_id: ${track.id}`);
+        trackId = track.id;
+
       } else {
-        trackId = track1.track_id;
+        trackId = track1.id;
         console.log(`待插入歌单的歌曲已在库中，track_id: ${trackId}`);
       }
 
@@ -147,6 +140,11 @@ export default class TrackService {
     );
 
 
+  }
+
+
+  public async removeTrackFromLibrary(track: TrackModel): Promise<number> {
+    return await this.trackRepository.delete(track.id);
   }
 
 

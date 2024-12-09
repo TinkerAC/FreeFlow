@@ -72,13 +72,13 @@ class LocalLibraryService {
                 const normalizedPath = path.resolve(filePath);
 
                 // 检查文件是否已存在于库中
-                const existingTrack = await this.trackRepository.findByFilePath(normalizedPath);
+                const existingTrack = await this.trackRepository.findByPlatformAndPlatformUniqueId('Local', normalizedPath);
 
                 if (!existingTrack) {
                   console.log(`发现新文件: ${normalizedPath}`);
-                  //@ts-ignore
-                  const trackData: TrackModel = {
-                    file_path: normalizedPath,
+                  const trackData: any = {
+                    platform: 'Local',
+                    platform_unique_id: normalizedPath,
                     created_at: new Date(),
                     // 添加其他必要的字段
                   };

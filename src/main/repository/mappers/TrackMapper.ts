@@ -6,16 +6,15 @@ export default class TrackMapper {
     raw: Track,
   ): TrackModel {
     return {
-      data_href: raw.data_href,
-      file_path: raw.file_path,
-      track_id: raw.track_id,
+      id: raw.id,
+      platform: raw.platform,
+      platform_unique_id: raw.platform_unique_id,
       title: raw.title,
       artist: raw.artist,
       album: raw.album,
       duration: raw.duration,
       cover_src: raw.cover_src,
       created_at: raw.created_at,
-      source: 'local',
     };
   }
 
@@ -24,9 +23,9 @@ export default class TrackMapper {
     model: TrackModel,
   ): Track {
     return Track.build({
-      data_href: model.data_href,
-      file_path: model.file_path,
-      track_id: model.track_id,
+      platform: model.platform,
+      platform_unique_id: model.platform_unique_id,
+      id: model.id,
       title: model.title,
       artist: model.artist,
       album: model.album,
