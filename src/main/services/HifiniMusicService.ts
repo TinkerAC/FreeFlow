@@ -42,7 +42,7 @@ export default class HifiniMusicService {
       return $('div.card.search div.card-body ul li').toArray();
     };
 
-    const parseLiElement = (liElement:any): HifiniSearchResult => {
+    const parseLiElement = (liElement: any): HifiniSearchResult => {
       const commonFormats = ['FLAC', 'MP3', 'WAV', 'AAC', 'ALAC', 'AIFF', 'DSD', 'APE', 'OGG', 'M4A', 'WMA'];
       const $li = cheerio.load(liElement);
       const dataHref = $li('li').attr('data-href') || '';
@@ -90,7 +90,9 @@ export default class HifiniMusicService {
         headers: { referer: 'https://www.hifini.com' },
         maxRedirects: 5,
       });
+
       // 需要断言 response.request.res 存在并具有 responseUrl 属性
+
       const finalUrl = (response.request as any)?.res?.responseUrl;
       if (!finalUrl || typeof finalUrl !== 'string') {
         throw new Error('无法获取最终重定向 URL');
@@ -167,12 +169,17 @@ export default class HifiniMusicService {
         console.log('使用新获取的未重定向链接加载 dataHref:', dataHref, '链接:', un_redirected_url);
       }
 
-      const redirected_url = await this.getRedirectUrl(un_redirected_url);
-
-      if (!this.isRedirectedUrlValid(redirected_url)) {
-        throw new Error('重定向后的链接无效');
+      try {
+        const redirected_url = await this.getRedirectUrl(un_redirected_url);
+        console.debug('重定向后的链接:', redirected_url);
+        return redirected_url;
+      } catch (
+        error: unknown
+        ) {
+        console.error(`获取重定向后链接时出错，直接使用未重定向链接: ${un_redirected_url}`, error);
+        return un_redirected_url;
       }
-      return redirected_url;
+
 
     } catch (error: unknown) {
       console.error('获取音乐链接时出错:', error);
