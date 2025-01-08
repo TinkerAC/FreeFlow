@@ -19,7 +19,6 @@ interface MusicLibraryProps {
 
 
 export default function MusicLibrary({
-                                       className,
                                        libraryItems = [],
                                        selectedItem,
                                        onSelectItem,
@@ -76,7 +75,7 @@ export default function MusicLibrary({
   if (isMusicLibraryCollapsed) {
     // 折叠状态下的渲染
     return (
-      <div className={`w-full bg-component-bg text-white rounded-lg h-auto flex flex-col ${className}`}>
+      <div className={`w-full bg-component-bg text-white rounded-lg flex flex-col h-full overflow-y-auto`}>
         <div className="flex items-center w-full p-6">
           {/* 切换图标 */}
           <i
@@ -85,6 +84,7 @@ export default function MusicLibrary({
           ></i>
         </div>
 
+        {/* 折叠状态下的歌单列表 */}
         <div className="flex justify-center items-center flex-col overflow-y-auto">
 
           {libraryItems.map((item, index) => (
@@ -107,7 +107,7 @@ export default function MusicLibrary({
   } else {
     // 展开状态下的渲染,只有展开状态下才允许右键显示菜单
     return (
-      <div className="w-full bg-component-bg text-white rounded-lg h-auto flex flex-col">
+      <div className="w-full bg-component-bg text-white rounded-lg flex flex-col h-full overflow-y-auto">
         <div className="flex items-center w-full p-6">
           {/* 切换图标 */}
           <i
@@ -137,7 +137,8 @@ export default function MusicLibrary({
             <span className="ml-auto whitespace-nowrap">最近播放 <i
               className="fas fa-list text-xl"></i></span>
           </div>
-          {/* 设置固定高度，确保滚动生效 */}
+
+          {/* 歌单项 */}
           <div className="flex flex-col gap-2 flex-grow overflow-x-hidden overflow-y-auto">
 
             {(libraryItems !== undefined && libraryItems.length !== 0) ? libraryItems.map((item, index) => (
@@ -173,6 +174,7 @@ export default function MusicLibrary({
             handleCloseMenu={handleCloseMenu}
             refreshPlaylist={refreshPlaylist}
           />)}
+
       </div>);
   }
 }

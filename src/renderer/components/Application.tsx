@@ -10,6 +10,7 @@ import RightContent from '@components/RightContent/RightContent';
 import useMusicLibrary from '@renderer/hooks/useMusiclibrary';
 import PlayerBar from '@components/Playerbar/PlayerBar';
 import context from '@main/app/electronContextApi';
+import { FusionSearchResult, PlayerState } from '@src/shared/types';
 
 
 const Application: React.FC = () => {
@@ -48,6 +49,7 @@ const Application: React.FC = () => {
     selectedPlaylistInfo,
     setSelectedItem,
     refreshPlaylists,
+    setSelectedPlaylistInfo,
   } = useMusicLibrary();
 
   // 使用 useMainWindow Hook 管理窗口状态和逻辑
@@ -62,12 +64,13 @@ const Application: React.FC = () => {
   useEffect(() => {
     // 定义回调函数
     const handleRequestPlayerState = () => {
-      const state: any = dumpPlayerState();
+      const state: PlayerState = dumpPlayerState();
       context.sendPlayerState(state);
     };
 
     // 定义快捷键回调函数
-    const handleShortcut = (data: any) => {
+    const handleShortcut = (data: string,
+    ) => {
       switch (data) {
         case 'prev':
           playPrevious().then();
@@ -119,7 +122,10 @@ const Application: React.FC = () => {
     }
   }, [playerStateRef.current.audioSrc]); // 当音频地址改变时重新绑定事件监听器
 
-  const [searchResults, setSearchResults] = useState([]); // 用于存储搜索结果
+  const [searchResults, setSearchResults] = useState<FusionSearchResult>({
+    tracks: [],
+    playlists: [],
+  });
   const [mainContentView, setMainContentView] = useState('playlist'); // 用于控制主内容区域显示的内容
 
 
@@ -147,7 +153,7 @@ const Application: React.FC = () => {
       >
         {/* 左侧栏 */}
         <MusicLibrary
-          className="h-full overflow-y-auto"
+
           libraryItems={playlists}
           selectedItem={selectedItem}
           refreshPlaylist={refreshPlaylists}
@@ -167,6 +173,8 @@ const Application: React.FC = () => {
           searchResults={searchResults}
           refreshPlaylists={refreshPlaylists}
           playlists={playlists}
+          setSelectedPlaylistInfo={setSelectedPlaylistInfo}
+          setMainContentView={setMainContentView}
         />
         {/* 右侧栏 */}
         {isRightContentVisible && (

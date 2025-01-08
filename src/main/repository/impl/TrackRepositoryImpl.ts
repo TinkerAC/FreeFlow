@@ -48,7 +48,23 @@ export default class TrackRepositoryImpl implements TrackRepository {
     return Promise.resolve(undefined);
   }
 
+  async findOrCreate(creationAttributes: TrackCreationAttributes): Promise<TrackModel> {
+    if (await Track.findOne({
+      where: {
+        platform: creationAttributes.platform,
+        platform_unique_id: creationAttributes.platform_unique_id,
+      },
+    })) {
+      const track = await Track.findOne({
+        where: {
+          platform: creationAttributes.platform,
+          platform_unique_id: creationAttributes.platform_unique_id,
+        },
+      });
+      return TrackMapper.toDomain(track);
+    }
+    const track_1 = await Track.create(creationAttributes);
+    return TrackMapper.toDomain(track_1);
 
-
-
+  }
 }

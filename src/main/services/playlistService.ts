@@ -4,10 +4,10 @@ import PlaylistRepository from '@main/repository/PlaylistRepository';
 import TrackRepository from '@main/repository/TrackRepository';
 import PlaylistDetailRepository from '@main/repository/PlaylistDetailRepository';
 import { fileExists } from '@src/utils/helpers';
-import { PlaylistDetail } from '@main/models';
 import TrackService from '@main/services/TrackService';
 import HifiniMusicService from '@main/services/HifiniMusicService';
 import ElectronStore from 'electron-store';
+import { Platform } from '@main/enum/Platform';
 
 
 export default class PlaylistService {
@@ -21,14 +21,16 @@ export default class PlaylistService {
   ) {
   }
 
+
   public async getPlaylists(): Promise<PlaylistModel[]> {
+
     try {
       // Step 1: 获取库中的所有 TrackModel，并检查文件是否存在
       const libraryTracks: TrackModel[] = await this.trackRepository.findAll();
       const validTracks: TrackModel[] = [];
 
       for (const track of libraryTracks) {
-        if (track.platform === 'Local') {
+        if (track.platform == Platform.LOCAL) {
           const file_exist = await fileExists(track.platform_unique_id);
           if (!file_exist) {
             console.warn(`歌曲文件不存在: ${track.platform_unique_id}`);
@@ -59,17 +61,21 @@ export default class PlaylistService {
       playlists.push(
         {
           playlist_id: 0,
+          platform: Platform.LOCAL,
+          platform_unique_id: '0',
           title: '音乐库',
           created_at: new Date(),
           tracks: validTracks,
           creator: '系统',
           description: '所有库中的音乐文件',
           modified_at: new Date(),
+          cover_src: '',
+
         },
       );
 
       console.log(`共获取到歌单数量: ${playlists.length}`);
-      console.log('歌单信息:', playlists);
+      // console.log('歌单信息:', playlists);
 
       // Step 5: 获取每首歌曲的详细信息
       const enrichedPlaylists = await Promise.all(
@@ -77,7 +83,7 @@ export default class PlaylistService {
           const tracksWithInfo = await Promise.allSettled(
             playlist.tracks.map(async (track) => {
               try {
-                const trackInfo = await this.trackService.getTrackInfo(track.id);
+                const trackInfo = await this.trackService.getTrackInfo(track.platform, track.platform_unique_id);
                 return {
                   ...track,
                   ...trackInfo,
@@ -111,6 +117,23 @@ export default class PlaylistService {
   }
 
 
+  public async addPlaylist(playlistModel: PlaylistModel) {
+    console.log('主进程: 添加歌单:', playlistModel);
+
+    const track_collection: TrackModel[] = [];
+    // add All Platform Tracks to Library
+    for (const track of playlistModel.tracks) {
+      track_collection.push(await this.trackRepository.findOrCreate(track));
+    }
+
+    const new_playlist = await this.playlistRepository.create(playlistModel);
+
+    // add All Platform Tracks to Playlist
+    for (const track of track_collection) {
+      await this.addTrackToPlaylist(new_playlist.playlist_id, track.id);
+    }
+  }
+
   public async addTrackToPlaylist(
     playlistId: number
     , trackId: number,
@@ -122,16 +145,17 @@ export default class PlaylistService {
     }
 
 
-    await this.playlistDetailRepository.create(new PlaylistDetail({
+    await this.playlistDetailRepository.create({
       playlist_id: playlistId,
       track_id: trackId,
-    }));
+    });
 
   }
 
 
   public async creatNewEmptyPlaylist() {
     return this.playlistRepository.create({
+      cover_src: '',
       playlist_id: 0,
       tracks: [],
       title: '新建歌单',
@@ -139,6 +163,8 @@ export default class PlaylistService {
       creator: '系统',
       created_at: new Date(),
       modified_at: new Date(),
+      platform: Platform.LOCAL,
+      platform_unique_id: '0',
     });
   }
 

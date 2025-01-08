@@ -1,5 +1,6 @@
-import { TrackModel } from '@src/shared/types';
+import { NetEaseCloudMusicTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
 import { injectable } from 'inversify';
+import { Platform } from '@main/enum/Platform';
 
 @injectable()
 export default class NetEaseCloudMusicService {
@@ -27,7 +28,6 @@ export default class NetEaseCloudMusicService {
     const songs = data.result.songs;
 
 
-
     const paidSongsCollection = songs.filter((song) => {
       return song.fee !== 0 && song.fee !== 8;
     });
@@ -47,7 +47,7 @@ ${freeSongsCollection.map((song) => `  - ${song.name}-${song.fee}`).join('\n')}
 `);
 
     return freeSongsCollection.map((song) => {
-      return {
+      return NetEaseCloudMusicTrackModel.build({
         platform: 'NetEaseCloudMusic',
         platform_unique_id: song.id.toString(),
         title: song.name,
@@ -57,10 +57,75 @@ ${freeSongsCollection.map((song) => `  - ${song.name}-${song.fee}`).join('\n')}
         cover_src: song.al.picUrl,
         created_at: new Date(),
         fee: song.fee,
-      };
+      });
     });
 
   }
+
+
+  //todo: merge the two functions below
+  public async cloudSearchPlaylist(keyword: string, type: number = 1000, limit: number = 10, offset: number = 0): Promise<PlaylistModel[]> {
+
+
+    interface NetEaseCloudMusicPlaylist {
+      id: number;
+      name: string;
+      coverImgUrl: string;
+      creator: {
+        nickname: string;
+        userId: number;
+        userType: number;
+        avatarUrl: string | null;
+        authStatus: number;
+        expertTags: string[] | null;
+        experts: string[] | null;
+      };
+      subscribed: boolean;
+      trackCount: number;
+      userId: number;
+      playCount: number;
+      bookCount: number;
+      specialType: number;
+      officialTags: string[] | null;
+      action: string | null;
+      actionType: string | null;
+      recommendText: string | null;
+      score: string | null;
+      description: string;
+      highQuality: boolean;
+    }
+
+
+    interface CloudSearchResponse {
+      result: {
+        playlists: NetEaseCloudMusicPlaylist[];
+        playlistCount: number;
+        code: number;
+      };
+    }
+
+
+    const url = `${this.base_url}cloudsearch?keywords=${keyword}&type=${type}&limit=${limit}&offset=${offset}`;
+
+    const response = await fetch(url);
+    const data: CloudSearchResponse = await response.json();
+    const playlists = data.result.playlists;
+
+
+    return playlists.map((playlist) => {
+      return PlaylistModel.build({
+        playlist_id: playlist.id,
+        title: playlist.name,
+        description: playlist.description,
+        created_at: new Date(),
+        creator: playlist.creator.nickname,
+        modified_at: new Date(),
+        cover_src: playlist.coverImgUrl,
+        platform: Platform.NET_EASE_CLOUD_MUSIC,
+        platform_unique_id: playlist.id.toString(),
+      });
+    });
+  };
 
 
   public async getNetEaseMusicLink(id: string): Promise<string> {
@@ -133,6 +198,123 @@ ${freeSongsCollection.map((song) => `  - ${song.name}-${song.fee}`).join('\n')}
     console.log(`网易云音乐歌曲链接详情:`, trackData);
 
     return trackData.url;
+
+  }
+
+
+  public async getPlaylistDetail(playlist_id: string, limit: number = 1000, offset: number = 0,
+  ): Promise<PlaylistModel> {
+
+    interface Song {
+      name: string; // 歌曲名称
+      id: number; // 歌曲 ID
+      pst: number;
+      t: number;
+      ar: Artist[]; // 歌手信息
+      alia: string[]; // 歌曲别名
+      pop: number; // 热度
+      st: number;
+      rt: string; // 类型
+      fee: number; // 费用类型
+      v: number;
+      crbt: never; // 彩铃信息
+      cf: string;
+      al: Album; // 专辑信息
+      dt: number; // 歌曲时长（毫秒）
+      h?: Quality; // 高质量音频信息
+      m?: Quality; // 中质量音频信息
+      l?: Quality; // 低质量音频信息
+      sq?: Quality; // 超高质量音频信息
+      hr?: unknown; // 无损音频信息
+      a?: never;
+      cd: string; // CD编号
+      no: number; // 歌曲序号
+      rtUrl?: string | null;
+      ftype: number;
+      rtUrls: string[];
+      djId: number;
+      copyright: number; // 版权信息
+      s_id: number;
+      mark: number;
+      originCoverType: number;
+      originSongSimpleData?: never;
+      tagPicList?: never;
+      resourceState: boolean;
+      version: number;
+      songJumpInfo?: never;
+      entertainmentTags?: never;
+      awardTags?: never;
+      single: number;
+      noCopyrightRcmd?: never;
+      mv: number; // MV ID
+      rtype: number;
+      rurl?: string | null;
+      mst: number;
+      cp: number; // 版权公司
+      publishTime: number; // 发布时间（时间戳）
+      tns?: string[]; // 其他标题翻译
+    }
+
+    interface Artist {
+      id: number; // 歌手 ID
+      name: string; // 歌手名称
+      tns: string[]; // 翻译或别名
+      alias: string[]; // 别名
+    }
+
+    interface Album {
+      id: number; // 专辑 ID
+      name: string; // 专辑名称
+      picUrl: string; // 专辑封面 URL
+      tns: string[]; // 翻译或别名
+      pic_str: string; // 封面图片字符串
+      pic: number; // 封面图片 ID
+    }
+
+    interface Quality {
+      br: number; // 比特率（单位：bps）
+      fid: number; // 文件 ID
+      size: number; // 文件大小（单位：字节）
+      vd: number; // 音质评分（负值越小越差）
+      sr: number; // 采样率（单位：Hz）
+    }
+
+
+    interface Result {
+      code: number;
+      songs: Song[];
+    }
+
+
+    const url = `${this.base_url}/playlist/track/all?id=${playlist_id}&limit=${limit}&offset=${offset}`;
+
+    const response = await fetch(url);
+    const data: Result = await response.json();
+    const songs = data.songs;
+
+    return PlaylistModel.build({
+      platform: Platform.NET_EASE_CLOUD_MUSIC,
+      platform_unique_id: playlist_id,
+      title: '',
+      description: '',
+      created_at: new Date(),
+      tracks: songs.map((song) => {
+        return NetEaseCloudMusicTrackModel.build({
+          platform: Platform.NET_EASE_CLOUD_MUSIC,
+          platform_unique_id: song.id.toString(),
+          title: song.name,
+          artist: song.ar.map((artist) => artist.name).join('/'),
+          album: song.al.name,
+          duration: song.dt / 1000,
+          cover_src: song.al.picUrl,
+          created_at: new Date(),
+          fee: song.fee,
+        });
+      }),
+      creator: '',
+      modified_at: new Date(),
+      cover_src: '',
+    });
 
   }
 

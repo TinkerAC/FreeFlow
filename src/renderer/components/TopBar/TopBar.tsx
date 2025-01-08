@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import './TopBar.css';
 import context from '@main/app/electronContextApi';
-import { TrackModel } from '@src/shared/types';
+import { FusionSearchResult } from '@src/shared/types';
 
 async function getSearchResults(searchTerm: string) {
-  const results = await context.getSearchResults(searchTerm);
+  const results: FusionSearchResult = await context.getSearchResults(searchTerm);
   console.log('前端收到的搜索结果:', results);
   return results;
 }
@@ -14,7 +14,7 @@ interface TopBarProps {
   className?: string;
   onSwitchView: (view: string) => void;
   currentView: string;
-  setSearchResults: (results: TrackModel[]) => void;
+  setSearchResults: (results: FusionSearchResult) => void;
 }
 
 

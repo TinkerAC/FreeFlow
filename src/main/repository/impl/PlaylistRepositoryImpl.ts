@@ -13,7 +13,11 @@ export default class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   delete(id: number): Promise<number> {
-    return Promise.resolve(0);
+    return Playlist.destroy({
+      where: {
+        playlist_id: id,
+      },
+    });
   }
 
   findById(id: number): Promise<PlaylistModel> {
@@ -42,6 +46,8 @@ export default class PlaylistRepositoryImpl implements PlaylistRepository {
   async create(playlist: PlaylistModel): Promise<PlaylistModel> {
     const playlist_1 = await Playlist.create(
       {
+        platform: playlist.platform,
+        platform_unique_id: playlist.platform_unique_id,
         title: playlist.title,
         description: playlist.description,
         creator: playlist.creator,

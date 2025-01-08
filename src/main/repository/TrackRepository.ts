@@ -14,5 +14,7 @@ export default interface TrackRepository {
 
   findByPlatformAndPlatformUniqueId(platform: string, platformUniqueId: string): Promise<TrackModel | null>;
 
+  findOrCreate(creationAttributes: TrackCreationAttributes): Promise<TrackModel>;
+
 
 }

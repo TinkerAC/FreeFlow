@@ -36,6 +36,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
     );
   };
 
+
   /** 播放控制方法 **/
   const play = () => {
     setPlayerState(prev => ({ ...prev, isPlaying: true }));
@@ -466,11 +467,13 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
     });
   };
 
+
   //挂载到全局window对象上,方便调试
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   //@ts-expect-error
   window.playerState = dumpPlayerState;
+
 
   return {
     // 状态引用
@@ -502,10 +505,11 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
       addTrackToNext(track);
     },
     setCurrentTrackInfoDuration: (duration: number) => {
-      setPlayerState(prev => ({
-        ...prev,
-        currentTrackInfo: { ...prev.currentTrackInfo, duration },
-      }));
+      setPlayerState(
+        prev => ({
+          ...prev,
+          currentTrackInfo: Object.assign({}, prev.currentTrackInfo, { duration }),
+        }));
     },
   };
 }

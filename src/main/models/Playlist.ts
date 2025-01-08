@@ -2,7 +2,10 @@
 import { DataTypes, Model } from 'sequelize';
 import { sequelize } from './index';
 
+
+
 export class Playlist extends Model {
+
   public playlist_id!: number;
   public playlist_cover?: string;
   public title!: string;
@@ -10,6 +13,8 @@ export class Playlist extends Model {
   public creator!: string;
   public created_at?: Date;
   public modified_at?: Date;
+  public platform: string;
+  public platform_unique_id: string;
 }
 
 Playlist.init(
@@ -36,6 +41,14 @@ Playlist.init(
     modified_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
+    },
+    platform: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    platform_unique_id: {
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
   },
   {

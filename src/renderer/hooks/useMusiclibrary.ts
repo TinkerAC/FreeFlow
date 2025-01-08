@@ -44,6 +44,7 @@ function useMusicLibrary() {
     isMusicLibraryCollapsed,
     setIsMusicLibraryCollapsed,
     refreshPlaylists: fetchAndCompletePlaylists,
+    setSelectedPlaylistInfo
   };
 }
 

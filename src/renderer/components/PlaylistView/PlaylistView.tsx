@@ -9,6 +9,7 @@ import { PlaylistModel, TrackModel } from '@src/shared/types';
 
 import { Playlist } from '@components/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/PlaylistView/ModalModifyPlaylist';
+import context from '@main/app/electronContextApi';
 
 interface PlaylistViewProps {
   playListInfo: PlaylistModel;
@@ -20,7 +21,6 @@ interface PlaylistViewProps {
 }
 
 export function PlaylistView({
-
                                playListInfo,
                                onReplacePlayQueue = () => {
                                },
@@ -155,6 +155,25 @@ export function PlaylistView({
         >
           <i className="fas fa-download"></i>
         </button>
+        {/*是否已经被持久化(以红心显示), 未持久化的歌单可以添加到数据库*/}
+        <button>
+          {playListInfo?.is_persistent ? (
+            <i className="fas fa-heart text-red-500 text-2xl ml-auto"
+               onClick={() => {
+                 context.removePlaylist(playListInfo?.playlist_id).then(refreshPlaylist);
+                 refreshPlaylist();
+               }}
+            ></i>
+          ) : (
+            <i className="far fa-heart text-2xl ml-auto"
+               onClick={() => {
+                 context.addPlayList(playListInfo).then(refreshPlaylist);
+               }}
+            ></i>
+          )}
+        </button>
+
+
 
         {/* 歌曲搜索框 */}
         <input

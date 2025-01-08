@@ -5,6 +5,7 @@ import { IAudioMetadata, parseFile } from 'music-metadata';
 import HifiniMusicService from '@main/services/HifiniMusicService';
 import { TrackModel } from '@src/shared/types';
 import PlaylistDetailRepository from '@main/repository/PlaylistDetailRepository';
+import { Platform } from '@main/enum/Platform';
 
 export default class TrackService {
 
@@ -46,31 +47,29 @@ export default class TrackService {
 
 
   public async getTrackInfo(
-    track_id: number,
+    platform: Platform,
+    platform_unique_id: string,
   ): Promise<TrackModel> {
 
     // only file_path or data_href is provided
-    const trackModel = await this.trackRepository.findById(track_id);
+    const trackModel = await this.trackRepository.findByPlatformAndPlatformUniqueId(platform, platform_unique_id);
+    // console.log('trackModel:', trackModel);
 
     switch (trackModel.platform) {
-      case  'Local': {
+      case  Platform.LOCAL: {
         // 如果是本地文件,提取元数据
         const metaData = await this.extractMusicMeta(trackModel.platform_unique_id);
         const parse_result = this.parseTrackInfo(metaData);
-        return {
-          ...trackModel,
-          ...parse_result,
-        };
+        return Object.assign(trackModel, parse_result);
+
       }
-      case 'NetEaseCloudMusic': {
+      case Platform.NET_EASE_CLOUD_MUSIC: {
         break;
       }
-      case 'Hifini': {
+      case Platform.HIFINI: {
         const metaData = await this.hifiniMusicService.getMusicInfo(trackModel.platform_unique_id);
-        return {
-          ...trackModel,
-          ...metaData,
-        };
+        return Object.assign(trackModel, metaData);
+
       }
 
     }
@@ -93,7 +92,6 @@ export default class TrackService {
 
     return await this.trackRepository.create(track);
 
-
   }
 
 
@@ -108,7 +106,7 @@ export default class TrackService {
       if (!track1) {
         // 如果不在库中，先添加到库
         track = await this.trackRepository.create(track);
-        console.log(`待插入歌单歌曲不在库中，已添加到库，track_id: ${track.id}`);
+        console.log(`待插入歌单歌曲不在库中，已添加到库，track_id: ${track.getIdentifier()}`);
         trackId = track.id;
 
       } else {

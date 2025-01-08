@@ -3,17 +3,19 @@ import './Maincontent.css';
 import NetSearchResultView from '@components/SearchResultView/SearchResultView';
 import PlaylistView from '@components/PlaylistView/PlaylistView';
 import ProfileView from '@components/ProfileView/ProfileView';
-import { PlaylistModel, TrackModel } from '@src/shared/types';
+import { FusionSearchResult, PlaylistModel, TrackModel } from '@src/shared/types';
 
 interface MainContentProps {
   view: string;
   selectedPlaylistInfo: PlaylistModel;
   onReplacePlayQueue: (tracks: TrackModel[]) => void;
   onAddToNext: (track: TrackModel) => void;
+  setSelectedPlaylistInfo: (playlist: PlaylistModel) => void;
   onAddToNextAndPlay: (track: TrackModel) => void;
-  searchResults: any[];
+  searchResults: FusionSearchResult;
   refreshPlaylists: () => void;
   playlists: PlaylistModel[];
+  setMainContentView: (view: string) => void;
 }
 
 
@@ -22,11 +24,12 @@ export default function MainContent({
                                       selectedPlaylistInfo,
                                       onReplacePlayQueue,
                                       onAddToNext,
+                                      setSelectedPlaylistInfo,
                                       onAddToNextAndPlay,
                                       searchResults,
                                       refreshPlaylists,
                                       playlists,
-
+                                  setMainContentView,
                                     }: MainContentProps) {
   // Render different views inside the main content container
   let viewComponent;
@@ -44,12 +47,14 @@ export default function MainContent({
   } else if (view === 'searchResults') {
     viewComponent = (
       <NetSearchResultView
-        popularResult={searchResults?.[0] || {}}
-        tracks={searchResults}
         addToNext={onAddToNext}
         addToNextAndPlay={onAddToNextAndPlay}
         refreshPlaylists={refreshPlaylists}
-        playlists={playlists}
+        fusionSearchResult={searchResults}
+        onSelectOnlinePlaylist={
+          setSelectedPlaylistInfo
+        }
+        setMainContentView={setMainContentView}
       />
     );
   } else if (view === 'profile') {

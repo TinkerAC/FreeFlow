@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron';
-import { TrackModel } from '@src/shared/types';
+import { PlaylistModel, TrackModel } from '@src/shared/types';
 
 const electronContext = {
   getPlatform: () => ipcRenderer.invoke('get-platform'),
@@ -81,11 +81,12 @@ const electronContext = {
   },
 
   // 删除歌单
-  removePlaylist: (playlistId: number, refreshPlaylists: () => void) => {
-    ipcRenderer.invoke('remove-playlist', playlistId).then(() => {
-      console.log('歌单删除成功');
-      refreshPlaylists();
-    });
+  removePlaylist: async (playlistId: number) => {
+    await ipcRenderer.invoke('remove-playlist', playlistId);
+  },
+
+  addPlayList: async (playlist: PlaylistModel) => {
+    await ipcRenderer.invoke('add-playlist', playlist);
   },
 
   getConfig: (key: string) => ipcRenderer.invoke('get-config', key),
@@ -106,6 +107,8 @@ const electronContext = {
 
   getSearchResults: (term: string) => ipcRenderer.invoke('get-search-results', term),
   getMusicLink: (dataHref: string) => ipcRenderer.invoke('get-music-link', dataHref),
+  getNetEaseCloudMusicPlaylistDetail: (playlist_id: string) =>
+    ipcRenderer.invoke('get-netease-cloud-music-playlist-detail', playlist_id),
 };
 
 

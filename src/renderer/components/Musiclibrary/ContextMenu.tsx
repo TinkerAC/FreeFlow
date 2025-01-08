@@ -42,7 +42,7 @@ function ContextMenu({
         style={{ color: '#fff' }}
         onClick={() => {
           console.log(`前端正在删除歌单${eventPlaylist.playlist_id}`);
-          context.removePlaylist(eventPlaylist.playlist_id, refreshPlaylist);
+          context.removePlaylist(eventPlaylist.playlist_id).then(refreshPlaylist);
           handleCloseMenu();
         }}
       >
