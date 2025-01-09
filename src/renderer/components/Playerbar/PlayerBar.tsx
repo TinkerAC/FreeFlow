@@ -35,7 +35,7 @@ export default function PlayerBar({
                                   }: PlayerBarProps) {
   // 从播放器状态中提取所需信息
 
-  const { playbackMode, isPlaying, currentTime, currentTrackInfo, volume, filterPaidTracks } = playerState;
+  const { playbackMode, isPlaying, currentTime, currentTrackInfo, volume} = playerState;
 
 
   const handleSeekTo = (event: { target: { value: string; }; }) => {
@@ -99,7 +99,7 @@ export default function PlayerBar({
            title={'播放列表'} />
         <i className="fas fa-search"></i>
         {/*是否过滤付费歌曲*/}
-        {filterPaidTracks ? <i className="fas fa-filter" title={'播放所有歌曲'} /> : <i className="fas fa-filter" title={'过滤付费歌曲'} />}
+        { <i className="fas fa-filter" title={'播放所有歌曲'} /> }
         <i className="fas fa-expand"></i>
         <input
           value={volume}

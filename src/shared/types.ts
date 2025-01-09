@@ -158,6 +158,7 @@ export class LocalPlayTrackModel extends TrackModel {
 
 
 export class HifiniTrackModel extends TrackModel {
+  id: number;
   album: string;
   artist: string;
   cover_src: string;
@@ -167,8 +168,9 @@ export class HifiniTrackModel extends TrackModel {
   platform_unique_id: string;
   title: string;
 
-  constructor(album: string, artist: string, cover_src: string, created_at: Date, duration: number, platform: string, platform_unique_id: string, title: string) {
+  constructor(id: number, album: string, artist: string, cover_src: string, created_at: Date, duration: number, platform: string, platform_unique_id: string, title: string) {
     super();
+    this.id = id;
     this.album = album;
     this.artist = artist;
     this.cover_src = cover_src;
@@ -181,6 +183,7 @@ export class HifiniTrackModel extends TrackModel {
 
   public static build(json: any): TrackModel {
     return new HifiniTrackModel(
+      json.id,
       json.album,
       json.artist,
       json.cover_src,
@@ -194,7 +197,7 @@ export class HifiniTrackModel extends TrackModel {
 
 
   static empty() {
-    return new HifiniTrackModel('', '', '', new Date(), 0, '', '', '');
+    return new HifiniTrackModel(0, '', '', '', new Date(), 0, '', '', '');
   }
 }
 

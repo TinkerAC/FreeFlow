@@ -103,7 +103,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   // 添加音乐到歌单事件
   ipcMain.handle(
     'add-track-to-playlist', async (_event: IpcMainInvokeEvent, track: TrackModel, playlistId: number) => {
-      return await trackService.addTrackToPlaylist(playlistId, track);
+      return await playlistService.addTrackToPlaylist(playlistId, track);
     },
   );
 

@@ -55,6 +55,7 @@ export default function MainContent({
           setSelectedPlaylistInfo
         }
         setMainContentView={setMainContentView}
+        savedPlaylists={playlists}
       />
     );
   } else if (view === 'profile') {

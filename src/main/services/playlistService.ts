@@ -130,26 +130,24 @@ export default class PlaylistService {
 
     // add All Platform Tracks to Playlist
     for (const track of track_collection) {
-      await this.addTrackToPlaylist(new_playlist.playlist_id, track.id);
+      await this.addTrackToPlaylist(new_playlist.playlist_id, track);
     }
   }
 
-  public async addTrackToPlaylist(
-    playlistId: number
-    , trackId: number,
-  ) {
+  public async addTrackToPlaylist(playlistId: number, trackModel: TrackModel) {
+    console.log(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(trackModel));
 
-    //参数检查
-    if (!playlistId || !trackId) {
-      throw new Error('playlistId 和 trackId 不能为空');
+    try {
+      const track = await this.trackRepository.findOrCreate(trackModel);
+      await this.playlistDetailRepository.create({
+        playlist_id: playlistId,
+        track_id: track.id,
+      });
+      return track.id;
+    } catch (error) {
+      console.error('Error in add-track-to-playlist:', error);
+      throw error;
     }
-
-
-    await this.playlistDetailRepository.create({
-      playlist_id: playlistId,
-      track_id: trackId,
-    });
-
   }
 
 

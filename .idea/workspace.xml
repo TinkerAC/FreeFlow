@@ -4,40 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.2.1&#10;-修复了因head-403 导致的无法收听的问题">
-      <change afterPath="$PROJECT_DIR$/src/main/enum/Platform.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.2.2&#10;-允许搜索歌单并持久化歌单&#10;-修复无法删除歌单的问题">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/appIcon.icns" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/appIcon.icns" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/appIcon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/appIcon.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/database.sqlite" beforeDir="false" afterPath="$PROJECT_DIR$/data/database.sqlite" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/playerState.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/playerState.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/electronContext.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/electronContext.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/models/Playlist.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/models/Playlist.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/repository/TrackRepository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/TrackRepository.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/repository/impl/PlaylistRepositoryImpl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/impl/PlaylistRepositoryImpl.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/repository/mappers/PlaylistMapper.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/mappers/PlaylistMapper.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/repository/mappers/TrackMapper.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/mappers/TrackMapper.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/Decryptor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/Decryptor.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/NetEaseCloudMusicService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/NetEaseCloudMusicService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/services/TrackService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/TrackService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/services/playlistService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/playlistService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Application.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Application.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/ContextMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/ContextMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlaylistView/PlaylistView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlaylistView/PlaylistView.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/hooks/useMusiclibrary.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/useMusiclibrary.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/shared/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,7 +62,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "ts",
     "js.last.introduce.type": "VAR",
-    "last_opened_file_path": "/Users/tinker/WebstormProjects/FreeFlow/assets/images",
+    "last_opened_file_path": "/Users/tinker/WebstormProjects/FreeFlow/data",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.standard": "true",
     "node.js.detected.package.tslint": "true",
@@ -95,7 +72,7 @@
     "nodejs_package_manager_path": "pnpm",
     "npm.make.executor": "Run",
     "npm.package.executor": "Run",
-    "npm.start.executor": "Run",
+    "npm.start.executor": "Debug",
     "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "settings.javascript.linters.eslint",
     "ts.external.directory.path": "/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib",
@@ -109,10 +86,10 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/data" />
       <recent name="$PROJECT_DIR$/assets/images" />
       <recent name="$PROJECT_DIR$/assets/icons" />
       <recent name="$PROJECT_DIR$/assets" />
-      <recent name="$PROJECT_DIR$/data" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/assets/icons" />
@@ -245,7 +222,9 @@
       <workItem from="1735792662817" duration="71000" />
       <workItem from="1736332686820" duration="4337000" />
       <workItem from="1736337035154" duration="9210000" />
-      <workItem from="1736346463273" duration="2872000" />
+      <workItem from="1736346463273" duration="5323000" />
+      <workItem from="1736438148641" duration="7000" />
+      <workItem from="1736438535034" duration="1037000" />
     </task>
     <task id="LOCAL-00001" summary="V2.0.1&#10;-重大更新&#10;修改了项目名、package.json 中的相关信息&#10;-迁移架构到ts">
       <option name="closed" value="true" />
@@ -279,7 +258,15 @@
       <option name="project" value="LOCAL" />
       <updated>1734796337472</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="V2.2.2&#10;-允许搜索歌单并持久化歌单&#10;-修复无法删除歌单的问题">
+      <option name="closed" value="true" />
+      <created>1736349480658</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1736349480658</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -304,7 +291,8 @@
     <MESSAGE value="V2.1.1&#10;-修复无法退出应用,无法保存播放状态的错误" />
     <MESSAGE value="V2.2.0&#10;-重大更新&#10;-支持网易云音乐源&#10;-重构数据库结构,以platform +platform_unique_id 作为主键&#10;-修复icon在MacOS上显示错误的问题" />
     <MESSAGE value="V2.2.1&#10;-修复了因head-403 导致的无法收听的问题" />
-    <option name="LAST_COMMIT_MESSAGE" value="V2.2.1&#10;-修复了因head-403 导致的无法收听的问题" />
+    <MESSAGE value="V2.2.2&#10;-允许搜索歌单并持久化歌单&#10;-修复无法删除歌单的问题" />
+    <option name="LAST_COMMIT_MESSAGE" value="V2.2.2&#10;-允许搜索歌单并持久化歌单&#10;-修复无法删除歌单的问题" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -322,14 +310,24 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/repository/impl/PlaylistDetailRepositoryImpl.ts</url>
           <line>35</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="31" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/app/ipcHandlers.ts</url>
-          <line>141</line>
-          <properties lambdaOrdinal="-1" />
+          <line>140</line>
           <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/main/services/TrackService.ts</url>
+          <line>98</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts</url>
+          <line>51</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="35" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

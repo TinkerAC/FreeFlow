@@ -13,10 +13,7 @@ interface NetSearchResultViewProps {
   fusionSearchResult: FusionSearchResult;
   onSelectOnlinePlaylist: (playlistModel: PlaylistModel) => void;
   setMainContentView: (view: string) => void;
-}
-
-async function getNetEasePlaylistDetail(playlist_id: string) {
-  return await context.getNetEaseCloudMusicPlaylistDetail(playlist_id);
+  savedPlaylists: PlaylistModel[];
 }
 
 // 定义 NetSearchResultView 组件
@@ -27,12 +24,13 @@ function NetSearchResultView({
                                fusionSearchResult,
                                onSelectOnlinePlaylist, //used to jump to playlist view (online)
                                setMainContentView,
+                               savedPlaylists,
                              }: NetSearchResultViewProps) {
   const [contextMenu, setContextMenu] = useStateRef<{ x: number; y: number } | null>(null);
   const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackModel | null>(null);
 
   // 解构赋值
-  const { tracks, playlists } = fusionSearchResult;
+  const { tracks,playlists } = fusionSearchResult;
   const popularResult: TrackModel = tracks[0] || HifiniTrackModel.empty();
 
 
@@ -162,7 +160,7 @@ function NetSearchResultView({
                   onClick={
                     async () => {
                       const playlist_id = playlist.platform_unique_id;
-                      const playlistModel = getNetEasePlaylistDetail(playlist_id);
+                      const playlistModel = await context.getNetEaseCloudMusicPlaylistDetail(playlist_id);
                       onSelectOnlinePlaylist(await playlistModel);
                       setMainContentView('playlist');
                     }} />
@@ -190,7 +188,7 @@ function NetSearchResultView({
           addTrackToPlaylist={(track, playlist_id) =>
             context.addTrackToPlaylist(track, playlist_id).then(refreshPlaylists)
           }
-          playlists={playlists} // 传入播放列表
+          playlists={savedPlaylists}
           handleCloseMenu={handleCloseMenu}
         />
       )}

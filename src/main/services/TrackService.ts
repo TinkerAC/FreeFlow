@@ -95,37 +95,6 @@ export default class TrackService {
   }
 
 
-  public async addTrackToPlaylist(playlistId: number, track: TrackModel) {
-    console.log(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(track));
-    let trackId: number;
-
-    try {
-      // 先检查歌曲是否在库中
-      const track1: TrackModel = await this.trackRepository.findByPlatformAndPlatformUniqueId(track.platform, track.platform_unique_id);
-
-      if (!track1) {
-        // 如果不在库中，先添加到库
-        track = await this.trackRepository.create(track);
-        console.log(`待插入歌单歌曲不在库中，已添加到库，track_id: ${track.getIdentifier()}`);
-        trackId = track.id;
-
-      } else {
-        trackId = track1.id;
-        console.log(`待插入歌单的歌曲已在库中，track_id: ${trackId}`);
-      }
-
-      await this.playlistDetailRepository.create({
-        playlist_id: playlistId,
-        track_id: trackId,
-      });
-
-      return trackId;
-    } catch (error) {
-      console.error('Error in add-track-to-playlist:', error);
-      throw error;
-    }
-  }
-
 
   public async findTracksByPlaylistId(playlistId: number): Promise<TrackModel[]> {
 
