@@ -213,18 +213,31 @@ export interface HifiniThreadCacheModel {
 }
 
 
-export interface PlayerState {
-  queue: TrackModel[],
-  volume: number,
-  indexList: number[],
-  currentIndex: number,
-  playbackMode: 'loop' | 'shuffle' | 'repeat',
-  audioSrc: string,
-  isPlaying: boolean,
-  currentTime: number,
-  currentTrackInfo: TrackModel | null,
-  nextTracks: TrackModel[],
-
+export class PlayerState {
+  queue: TrackModel[];
+  volume: number;
+  indexList: number[];
+  currentIndex: number;
+  playbackMode: 'loop' | 'shuffle' | 'repeat';
+  audioSrc: string;
+  isPlaying: boolean;
+  currentTime: number;
+  currentTrackInfo: TrackModel | null;
+  nextTracks: TrackModel[];
+  static empty(): PlayerState {
+    return {
+      queue: [],
+      volume: 1,
+      indexList: [],
+      currentIndex: 0,
+      playbackMode: 'loop',
+      audioSrc: '',
+      isPlaying: false,
+      currentTime: 0,
+      currentTrackInfo: null,
+      nextTracks: [],
+    };
+  }
 }
 
 

@@ -4,16 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.2.2&#10;-允许搜索歌单并持久化歌单&#10;-修复无法删除歌单的问题">
+    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.2.3&#10;-修复无法收藏某些歌曲的问题">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/database.sqlite" beforeDir="false" afterPath="$PROJECT_DIR$/data/database.sqlite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/playerState.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/playerState.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/TrackService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/TrackService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/playlistService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/playlistService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/Application.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Application.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlayQueue/PlayQueue.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlayQueue/PlayQueue.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/RightContent/RightContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/RightContent/RightContent.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/shared/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -55,30 +50,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Node.js.app.ts.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "ts",
-    "js.last.introduce.type": "VAR",
-    "last_opened_file_path": "/Users/tinker/WebstormProjects/FreeFlow/data",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.standard": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.standard": "",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "pnpm",
-    "npm.make.executor": "Run",
-    "npm.package.executor": "Run",
-    "npm.start.executor": "Debug",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "settings.javascript.linters.eslint",
-    "ts.external.directory.path": "/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Node.js.app.ts.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ts&quot;,
+    &quot;js.last.introduce.type&quot;: &quot;VAR&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/data&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.standard&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.standard&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
+    &quot;npm.make.executor&quot;: &quot;Run&quot;,
+    &quot;npm.package.executor&quot;: &quot;Run&quot;,
+    &quot;npm.start.executor&quot;: &quot;Run&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;settings.javascript.linters.eslint&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="QodanaReportsService">
     <option name="descriptions">
       <ReportDescription localRun="true" path="/private/var/folders/4z/lsjm59x974dck5vt4gxclpdw0000gn/T/qodana_output/qodana.sarif.json" reportGuid="f34058ce-c3e8-485a-8bb3-ed2bbc44239e" reportId="FreeFlow/qodana/2025-01-08" />
@@ -97,7 +92,7 @@
       <recent name="$PROJECT_DIR$/src/main/repository/mappers" />
     </key>
   </component>
-  <component name="RunManager" selected="npm.start">
+  <component name="RunManager" selected="npm.make">
     <configuration name="app.ts" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/main/app/app.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/src/main/app">
       <method v="2" />
     </configuration>
@@ -133,8 +128,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="npm.start" />
         <item itemvalue="npm.make" />
+        <item itemvalue="npm.start" />
         <item itemvalue="npm.package" />
         <item itemvalue="Node.js.app.ts" />
       </list>
@@ -224,7 +219,8 @@
       <workItem from="1736337035154" duration="9210000" />
       <workItem from="1736346463273" duration="5323000" />
       <workItem from="1736438148641" duration="7000" />
-      <workItem from="1736438535034" duration="1037000" />
+      <workItem from="1736438535034" duration="2196000" />
+      <workItem from="1736492847911" duration="316000" />
     </task>
     <task id="LOCAL-00001" summary="V2.0.1&#10;-重大更新&#10;修改了项目名、package.json 中的相关信息&#10;-迁移架构到ts">
       <option name="closed" value="true" />
@@ -266,7 +262,15 @@
       <option name="project" value="LOCAL" />
       <updated>1736349480658</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="V2.2.3&#10;-修复无法收藏某些歌曲的问题">
+      <option name="closed" value="true" />
+      <created>1736439934708</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1736439934708</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -292,7 +296,8 @@
     <MESSAGE value="V2.2.0&#10;-重大更新&#10;-支持网易云音乐源&#10;-重构数据库结构,以platform +platform_unique_id 作为主键&#10;-修复icon在MacOS上显示错误的问题" />
     <MESSAGE value="V2.2.1&#10;-修复了因head-403 导致的无法收听的问题" />
     <MESSAGE value="V2.2.2&#10;-允许搜索歌单并持久化歌单&#10;-修复无法删除歌单的问题" />
-    <option name="LAST_COMMIT_MESSAGE" value="V2.2.2&#10;-允许搜索歌单并持久化歌单&#10;-修复无法删除歌单的问题" />
+    <MESSAGE value="V2.2.3&#10;-修复无法收藏某些歌曲的问题" />
+    <option name="LAST_COMMIT_MESSAGE" value="V2.2.3&#10;-修复无法收藏某些歌曲的问题" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -318,15 +323,8 @@
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/main/services/TrackService.ts</url>
-          <line>98</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="34" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts</url>
           <line>51</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="35" />
         </line-breakpoint>
       </breakpoints>

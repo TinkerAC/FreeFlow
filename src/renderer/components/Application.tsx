@@ -182,6 +182,7 @@ const Application: React.FC = () => {
             className="h-full overflow-y-auto"
             playerState={playerStateRef.current}
             clearQueue={clearQueue}
+            addToNextAndPlay={addToNextAndPlay}
           />
         )}
       </div>

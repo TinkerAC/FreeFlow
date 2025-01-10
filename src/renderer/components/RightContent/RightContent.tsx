@@ -1,28 +1,20 @@
 import React from 'react';
 import './RightContent.css';
 import PlayQueue from '../PlayQueue/PlayQueue';
+import { PlayerState, TrackModel } from '@src/shared/types';
 
 interface RightContentProps {
   className?: string;
   clearQueue: () => void;
-  playerState: any;
+  playerState: PlayerState;
+  addToNextAndPlay: (track: TrackModel) => void;
 }
 
 
 export default function RightContent({
                                        clearQueue,
-                                       playerState = {
-                                         queue: [],
-                                         indexList: [],
-                                         currentIndex: 0,
-                                         playbackMode: 'loop',
-                                         audioSrc: '',
-                                         isPlaying: false,
-                                         currentTime: 0,
-                                         currentTrackInfo: {},
-                                         nextTracks: [],
-                                         volume: 0.5,
-                                       },
+                                       playerState = PlayerState.empty(),
+                                       addToNextAndPlay,
                                      }: RightContentProps) {
 
   // 从播放器状态中提取所需信息
@@ -45,6 +37,8 @@ export default function RightContent({
       currentTrack={currentTrackInfo}
       nextTracks={nextTracks}
       clearQueue={clearQueue}
+      addToNextAndPlay={addToNextAndPlay}
+
     />
 
   </div>;

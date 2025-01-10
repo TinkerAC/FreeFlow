@@ -6,9 +6,15 @@ interface PlayQueueProps {
   currentTrack: TrackModel;
   nextTracks: TrackModel[];
   clearQueue: () => void;
+  addToNextAndPlay: (track: TrackModel) => void;
 }
 
-export default function PlayQueue({ currentTrack, nextTracks = [], clearQueue }: PlayQueueProps) {
+export default function PlayQueue({
+                                    currentTrack,
+                                    nextTracks = [],
+                                    clearQueue,
+                                    addToNextAndPlay,
+                                  }: PlayQueueProps) {
 
   return (
     <div className="p-4">
@@ -54,6 +60,9 @@ export default function PlayQueue({ currentTrack, nextTracks = [], clearQueue }:
                 src={track.cover_src || '../assets/default-cover.png'}
                 alt={`Album cover of ${track?.title || 'unknown'}`}
                 className="w-12 h-12"
+                onDoubleClick={() => {
+                  addToNextAndPlay(track);
+                }}
               />
               <div>
                 <div>{track?.title || 'unknown title'}</div>
