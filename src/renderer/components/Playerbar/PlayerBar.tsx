@@ -1,8 +1,9 @@
+// file: src/renderer/components/Playerbar/PlayerBar.tsx
 import React from 'react';
-import './PlayerBar.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { formatTime } from '@src/utils/timeUtils';
 import { PlayerState } from '@src/shared/types';
+import { DefaultCover } from '@components/static';
 
 interface PlayerBarProps {
   className?: string;
@@ -15,7 +16,6 @@ interface PlayerBarProps {
   onToggleRightContent?: () => void;
   playerState: PlayerState;
 }
-
 
 export default function PlayerBar({
                                     setCurrentTime = () => {
@@ -31,87 +31,131 @@ export default function PlayerBar({
                                     onVolumeChange,
                                     onToggleRightContent = () => {
                                     },
-                                    playerState,// 使用默认值避免解构时出现 undefined
+                                    playerState,
                                   }: PlayerBarProps) {
-  // 从播放器状态中提取所需信息
+  const { playbackMode, isPlaying, currentTime, currentTrackInfo, volume } = playerState;
 
-  const { playbackMode, isPlaying, currentTime, currentTrackInfo, volume} = playerState;
-
-
-  const handleSeekTo = (event: { target: { value: string; }; }) => {
+  const handleSeekTo = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseFloat(event.target.value);
-    if (!isNaN(newTime) && newTime >= 0 && newTime <= (currentTrackInfo.duration || 0)) {
+    if (!isNaN(newTime) && newTime >= 0 && newTime <= (currentTrackInfo?.duration || 0)) {
       setCurrentTime(newTime);
     }
   };
 
-  const handleVolumeChange = (event: { target: { value: string; }; }) => {
-    const volume = parseFloat(event.target.value);
-    if (!isNaN(volume) && volume >= 0 && volume <= 1) {
-      onVolumeChange(volume);
+  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const vol = parseFloat(event.target.value);
+    if (!isNaN(vol) && vol >= 0 && vol <= 1) {
+      onVolumeChange?.(vol);
     }
   };
 
   return (
-    <div className={`player-bar sticky w-full bottom-0`}>
-      <div className="left-section w-1/4">
-        <img src={currentTrackInfo?.cover_src || ''} alt="album cover" className="album-cover" />
-        <div className="playerState-info overflow-x-hidden">
-          <div className="playerState-title text-sm text-nowrap">{currentTrackInfo?.title || '未知标题'}</div>
-          <div
-            className="playerState-artist text-sm text-gray-400 text-nowrap">{currentTrackInfo?.artist || '未知艺术家'}</div>
+    <div className="w-full flex items-center justify-between p-4 bg-black text-white">
+      {/* 左侧：封面 + 曲目信息 */}
+      <div className="flex items-center w-1/4">
+        {/* 专辑封面 */}
+        <img
+          src={currentTrackInfo?.cover_src || DefaultCover}
+          alt="album cover"
+          className="w-12 h-12 rounded-md"
+        />
+        {/* 歌曲信息 */}
+        <div className="ml-4 overflow-x-hidden">
+          <div className="text-sm font-semibold whitespace-nowrap">
+            {currentTrackInfo?.title || '未知标题'}
+          </div>
+          <div className="text-sm text-gray-400 whitespace-nowrap">
+            {currentTrackInfo?.artist || '未知艺术家'}
+          </div>
         </div>
+
+        {/*如果正在加载,显示加载动画*/}
+        {playerState.isLoading && (
+          <div className="ml-4">
+            <i className="fas fa-spinner fa-spin"></i>
+          </div>
+        )}
+
       </div>
 
-      <div className="middle-section">
+      {/* 中间：播放控制 + 进度条 */}
+      <div className="flex items-center justify-center flex-grow">
         <div>
-          <div className="playback-controls">
+          {/* 播放控制按钮组 */}
+          <div className="flex items-center justify-center">
             <i
-              className={`fas 
-                            ${playbackMode === 'loop' ? 'fa-redo' :
-                playbackMode === 'shuffle' ? 'fa-random' : 'fa-sync'}`}
+              className={`fas ${
+                playbackMode === 'loop'
+                  ? 'fa-redo'
+                  : playbackMode === 'shuffle'
+                    ? 'fa-random'
+                    : 'fa-sync'
+              } mx-3 cursor-pointer`}
               onClick={onCyclePlaybackMode}
             />
-            <i className="fas fa-step-backward" onClick={onPlayPrevious} />
-            <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'}`} onClick={onTogglePlayPause} />
-            <i className="fas fa-step-forward" onClick={onPlayNext} />
+            <i className="fas fa-step-backward mx-3 cursor-pointer" onClick={onPlayPrevious} />
+            <i
+              className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'} mx-3 cursor-pointer`}
+              onClick={onTogglePlayPause}
+            />
+            <i className="fas fa-step-forward mx-3 cursor-pointer" onClick={onPlayNext} />
           </div>
 
-          <div className="progress-bar">
-            <span className="current-time">{formatTime(currentTime)}</span>
+          {/* 进度条 */}
+          <div className="flex items-center ml-4 flex-grow">
+            <span className="text-sm mx-2">{formatTime(currentTime)}</span>
             <input
               type="range"
-              className="progress-slider"
+              className="mx-2 flex-grow cursor-pointer"
               min="0"
               max={currentTrackInfo?.duration || 0}
               value={currentTime}
               step="1"
               onChange={handleSeekTo}
             />
-            <span className="total-time">{formatTime(currentTrackInfo?.duration || 0)}</span>
+            <span className="text-sm mx-2">
+              {formatTime(currentTrackInfo?.duration || 0)}
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="right-section">
-        <i className="fas fa-list"
-           onClick={onToggleRightContent}
-           title={'播放列表'} />
-        <i className="fas fa-search"></i>
-        {/*是否过滤付费歌曲*/}
-        { <i className="fas fa-filter" title={'播放所有歌曲'} /> }
-        <i className="fas fa-expand"></i>
+      {/* 右侧：播放列表、音量等功能 */}
+      <div className="flex items-center">
+        <i
+          className="fas fa-list mx-3 cursor-pointer"
+          onClick={onToggleRightContent}
+          title="播放列表"
+        />
+        <i className="fas fa-search mx-3 cursor-pointer" />
+        <i className="fas fa-filter mx-3 cursor-pointer" title="播放所有歌曲" />
+        <i className="fas fa-expand mx-3 cursor-pointer" />
         <input
           value={volume}
           type="range"
-          className="volume-slider"
+          className="mx-2 w-24 cursor-pointer"
           onChange={handleVolumeChange}
           min="0"
           max="1"
           step="0.01"
-
         />
-        <i className="fas fa-expand-arrows-alt"></i>
+
+        {/*全屏/退出全屏*/}
+        {document.fullscreenElement ? (
+          <i
+            className="fas fa-compress mx-3 cursor-pointer"
+            onClick={() => {
+              document.exitFullscreen().then(r => console.log(r));
+            }}
+          />
+        ) : (
+          <i
+            className="fas fa-expand mx-3 cursor-pointer"
+            onClick={() => {
+              document.documentElement.requestFullscreen().then(r => console.log(r));
+            }}
+          />)}
+
       </div>
     </div>
   );

@@ -21,11 +21,11 @@ export default class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   findById(id: number): Promise<PlaylistModel> {
-    return Promise.resolve(undefined);
+    throw new Error('Method not implemented.');
   }
 
   save(playlist: PlaylistModel): Promise<PlaylistModel> {
-    return Promise.resolve(undefined);
+    throw new Error('Method not implemented.');
   }
 
   async update(playlist: PlaylistModel): Promise<PlaylistModel> {

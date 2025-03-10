@@ -2,7 +2,7 @@ import "@main/app/windowPreload";
 
 
 // Say something
-console.log('[ERWT] : Preload execution started');
+console.log('[FreeFlow] : Preload execution started');
 
 // Get versions
 window.addEventListener('DOMContentLoaded', () => {

@@ -10,6 +10,8 @@ import { initConfig } from './configInit';
 import { container } from '@main/di/di-container';
 import LocalLibraryService from '@main/services/localLibraryService';
 import { sequelize } from '@main/models';
+import { is_hifini_cookies_expired } from '@main/services/AuthService';
+import Store from 'electron-store';
 
 let isQuitting = false;
 
@@ -43,7 +45,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   }
 
   const localLibraryServiceInstance = container.get<LocalLibraryService>('LocalLibraryService');
-  const store = container.get('Store');
+  const store:Store = container.get('Store');
   const proxyServerManager = container.get<ProxyServerManager>('ProxyServerManager');
 
   // 在 app 准备好时执行初始化工作
@@ -52,13 +54,23 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 
     await sequelize.sync(); // 同步数据库
     await initConfig(store); // 初始化配置
-
     await localLibraryServiceInstance.updateLocalLibrary(); // 更新本地音乐库
-
 
     await proxyServerManager.start(); // 启动代理服务器
 
     mainWindow = createAppWindow(); // 创建主窗口
+
+    //检查hifini 登陆是否过期, 如果过期则提醒用户重新登陆
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    const cookies:{ [key: string]: string } = store.get('hifini_cookie');
+    console.log('cookies:', cookies);
+    const is_hifini_cookies_expired_result = await is_hifini_cookies_expired(cookies);
+
+    if (is_hifini_cookies_expired_result) {
+      mainWindow.webContents.send('notification', 'Hifini 登陆已过期，请重新登陆');
+    }
 
     // 在 Windows 上，创建系统托盘图标
     if (process.platform === 'win32') {
@@ -111,7 +123,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
       // 发送请求给渲染进程获取播放器状态
 
       mainWindow.webContents.send('request-player-state');
-      console.log("主进程已发送请求获取播放器状态");
+      console.log('主进程已发送请求获取播放器状态');
 
 
     }

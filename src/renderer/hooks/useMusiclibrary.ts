@@ -3,7 +3,6 @@ import useStateRef from 'react-usestateref';
 import context from '@main/app/electronContextApi';
 
 
-
 function useMusicLibrary() {
   const [, setPlaylists, playlistsRef] = useStateRef([]); // 存储所有歌单的状态
   const [, setSelectedItem, selectedItemRef] = useStateRef(null); // 当前选中的歌单索引
@@ -44,7 +43,7 @@ function useMusicLibrary() {
     isMusicLibraryCollapsed,
     setIsMusicLibraryCollapsed,
     refreshPlaylists: fetchAndCompletePlaylists,
-    setSelectedPlaylistInfo
+    setSelectedPlaylistInfo,
   };
 }
 

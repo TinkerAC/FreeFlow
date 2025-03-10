@@ -221,9 +221,11 @@ export class PlayerState {
   playbackMode: 'loop' | 'shuffle' | 'repeat';
   audioSrc: string;
   isPlaying: boolean;
+  isLoading: boolean;
   currentTime: number;
   currentTrackInfo: TrackModel | null;
   nextTracks: TrackModel[];
+
   static empty(): PlayerState {
     return {
       queue: [],
@@ -233,6 +235,7 @@ export class PlayerState {
       playbackMode: 'loop',
       audioSrc: '',
       isPlaying: false,
+      isLoading: false,
       currentTime: 0,
       currentTrackInfo: null,
       nextTracks: [],

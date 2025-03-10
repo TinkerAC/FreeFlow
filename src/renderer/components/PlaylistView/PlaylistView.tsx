@@ -10,6 +10,7 @@ import { PlaylistModel, TrackModel } from '@src/shared/types';
 import { Playlist } from '@components/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/PlaylistView/ModalModifyPlaylist';
 import context from '@main/app/electronContextApi';
+import { DefaultCover } from '@components/static';
 
 interface PlaylistViewProps {
   playListInfo: PlaylistModel;
@@ -32,7 +33,7 @@ export function PlaylistView({
                                },
                                playlists,
                              }: PlaylistViewProps) {
-  const coverImage = playListInfo?.tracks?.[0]?.cover_src || './assets/default-cover.png';
+  const coverImage = playListInfo?.tracks?.[0]?.cover_src || DefaultCover;
   const [backgroundColor, setBackgroundColor] = useState('#333');
   const [modalVisible, setModalVisible] = useState(false);
   const [filteredTracks, setFilteredTracks] = useState(playListInfo?.tracks || []);

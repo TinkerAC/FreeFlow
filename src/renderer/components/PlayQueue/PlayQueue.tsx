@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrackModel } from '@src/shared/types';
-
+import { DefaultCover } from '@components/static';
 
 interface PlayQueueProps {
   currentTrack: TrackModel;
@@ -36,7 +36,7 @@ export default function PlayQueue({
         {(currentTrack && currentTrack.title) ?
           (<div className="flex items-center space-x-4">
             <img
-              src={currentTrack.cover_src || '../assets/default-cover.png'}
+              src={currentTrack.cover_src || DefaultCover}
               alt={`Album cover of ${currentTrack.title || 'unknown'}`}
               className="w-12 h-12"
             />
@@ -57,7 +57,7 @@ export default function PlayQueue({
           {nextTracks.map((track, index) => (
             <div key={index} className="flex items-center space-x-4">
               <img
-                src={track.cover_src || '../assets/default-cover.png'}
+                src={track.cover_src || DefaultCover}
                 alt={`Album cover of ${track?.title || 'unknown'}`}
                 className="w-12 h-12"
                 onDoubleClick={() => {

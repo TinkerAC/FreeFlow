@@ -12,10 +12,8 @@ import PlayerBar from '@components/Playerbar/PlayerBar';
 import context from '@main/app/electronContextApi';
 import { FusionSearchResult, PlayerState } from '@src/shared/types';
 
-
 const Application: React.FC = () => {
-
-  const audioRef = useRef(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   // 使用 usePlayer Hook 管理播放器状态和逻辑
   const {
@@ -35,14 +33,7 @@ const Application: React.FC = () => {
     changeVolume,
   } = usePlayer(audioRef);
 
-
-  // window.queue = queueRef.current;
-  // window.currentIndex = currentIndexRef.current;
-  // window.currentTrackInfo = currentTrackInfoRef.current;
-  // window.nextTracks = nextTracksRef.current;
-
-
-  // 使用 useMusiclibrary Hook 管理歌单
+  // 使用 useMusicLibrary Hook 管理歌单
   const {
     playlists,
     selectedItem,
@@ -60,23 +51,22 @@ const Application: React.FC = () => {
     toggleRightContent,
   } = useMainWindow();
 
-
   useEffect(() => {
-    // 定义回调函数
+    // 注册播放器状态和快捷键事件
     const handleRequestPlayerState = () => {
       const state: PlayerState = dumpPlayerState();
       context.sendPlayerState(state);
     };
-
-    // 定义快捷键回调函数
-    const handleShortcut = (data: string,
-    ) => {
+    const handleNotification = (message: string) => {
+      alert(message);
+    };
+    const handleShortcut = (data: string) => {
       switch (data) {
         case 'prev':
-          playPrevious().then();
+          playPrevious();
           break;
         case 'next':
-          playNext().then();
+          playNext();
           break;
         case 'play-pause':
           togglePlayPause();
@@ -91,69 +81,61 @@ const Application: React.FC = () => {
           console.log('未知快捷键操作');
       }
     };
-    // 注册事件监听器
+
     const removeRequestPlayerStateListener = context.onRequestPlayerState(handleRequestPlayerState);
     context.onShortcut(handleShortcut);
+    context.onNotification(handleNotification);
     return () => {
-      // 在清理函数中移除监听器
       removeRequestPlayerStateListener();
       context.removeShortcutListener();
       console.log('已移除所有 IPC 监听器');
     };
   }, []);
 
-
   useEffect(() => {
     const audioElement = audioRef.current;
-
     if (audioElement) {
-      // 当音频的元数据加载完成时，更新音频元数据
       const handleLoadedMetadata = () => {
         setCurrentTrackInfoDuration(audioElement.duration);
       };
-
-      // 为 loadedmetadata 事件添加监听器
       audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
-
-      // 清理函数，移除事件监听器
       return () => {
         audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
       };
     }
-  }, [playerStateRef.current.audioSrc]); // 当音频地址改变时重新绑定事件监听器
+  }, [playerStateRef.current.audioSrc]);
 
   const [searchResults, setSearchResults] = useState<FusionSearchResult>({
     tracks: [],
     playlists: [],
   });
-  const [mainContentView, setMainContentView] = useState('playlist'); // 用于控制主内容区域显示的内容
-
-
-  // Application.tsx
+  const [mainContentView, setMainContentView] = useState('playlist');
 
   return (
-    <div className="App h-full w-full  flex-col bg-black flex">
+    <div className="App h-full w-full flex flex-col bg-black flex-direction: column">
       {/* 音频元素 */}
-      <audio ref={audioRef} src={playerStateRef.current.audioSrc} hidden={true} />
+      <audio ref={audioRef} src={playerStateRef.current.audioSrc} hidden />
+
+      {/* 顶部导航栏 */}
       <TopBar
         onSwitchView={setMainContentView}
         currentView={mainContentView}
         setSearchResults={setSearchResults}
       />
-      {/* 主内容容器 */}
+
+      {/* 主内容区域：采用 flex-1 占据中间剩余空间 */}
       <div
-        className="grid h-full w-full overflow-hidden "
+        className="flex-1 overflow-hidden grid"
         style={{
-          display: 'grid',
-          gridTemplateColumns: `${isMusicLibraryCollapsed ? '72px' : '250px'} minmax(416.67px, 1fr) ${isRightContentVisible ? 'minmax(0, 300px)' : ''}`,
+          gridTemplateColumns: `${isMusicLibraryCollapsed ? '72px' : '250px'} minmax(416.67px, 1fr) ${
+            isRightContentVisible ? 'minmax(0, 300px)' : ''
+          }`,
           gap: '0.5rem',
           padding: '0.5rem',
           transition: 'grid-template-columns 0.3s ease',
         }}
       >
-        {/* 左侧栏 */}
         <MusicLibrary
-
           libraryItems={playlists}
           selectedItem={selectedItem}
           refreshPlaylist={refreshPlaylists}
@@ -163,7 +145,6 @@ const Application: React.FC = () => {
           isMusicLibraryCollapsed={isMusicLibraryCollapsed}
           onToggleMusicLibraryCollapsed={() => setIsMusicLibraryCollapsed(!isMusicLibraryCollapsed)}
         />
-        {/* 中间主内容区域 */}
         <MainContent
           view={mainContentView}
           selectedPlaylistInfo={selectedPlaylistInfo}
@@ -176,7 +157,6 @@ const Application: React.FC = () => {
           setSelectedPlaylistInfo={setSelectedPlaylistInfo}
           setMainContentView={setMainContentView}
         />
-        {/* 右侧栏 */}
         {isRightContentVisible && (
           <RightContent
             className="h-full overflow-y-auto"
@@ -186,7 +166,8 @@ const Application: React.FC = () => {
           />
         )}
       </div>
-      {/* 底部播放条 */}
+
+      {/* 底部播放条 —— 请确保 PlayerBar 组件中没有使用绝对定位或 z-index 强行置顶 */}
       <PlayerBar
         playerState={playerStateRef.current}
         setCurrentTime={setCurrentTime}

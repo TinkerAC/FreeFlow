@@ -7,6 +7,7 @@ const electronContext = {
   maximize: () => ipcRenderer.send('window-controls', 'maximize'),
   close: () => ipcRenderer.send('window-controls', 'close'),
 
+
   createPlaylist: async () => {
     try {
       await ipcRenderer.invoke('create-playlists');
@@ -105,8 +106,14 @@ const electronContext = {
     console.log('全局快捷键事件监听已移除');
   },
 
+  // 接收主进程提醒
+
+  onNotification: (callback: (message: string) => void) =>
+    ipcRenderer.on('notification', (event, message) => {
+      callback(message);
+    }),
+
   getSearchResults: (term: string) => ipcRenderer.invoke('get-search-results', term),
-  getMusicLink: (dataHref: string) => ipcRenderer.invoke('get-music-link', dataHref),
   getNetEaseCloudMusicPlaylistDetail: (playlist_id: string) =>
     ipcRenderer.invoke('get-netease-cloud-music-playlist-detail', playlist_id),
 };

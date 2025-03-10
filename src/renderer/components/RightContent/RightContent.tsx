@@ -1,7 +1,8 @@
+// file: src/renderer/components/RightContent/RightContent.tsx
 import React from 'react';
-import './RightContent.css';
 import PlayQueue from '../PlayQueue/PlayQueue';
 import { PlayerState, TrackModel } from '@src/shared/types';
+import ContentPanel from '@components/ContentPanel/ContentPenal';
 
 interface RightContentProps {
   className?: string;
@@ -10,40 +11,32 @@ interface RightContentProps {
   addToNextAndPlay: (track: TrackModel) => void;
 }
 
-
 export default function RightContent({
                                        clearQueue,
                                        playerState = PlayerState.empty(),
                                        addToNextAndPlay,
                                      }: RightContentProps) {
-
-  // 从播放器状态中提取所需信息
   const { currentTrackInfo, nextTracks } = playerState;
-  // console.log(currentTrackInfo, nextTracks);
-
 
   if (!currentTrackInfo && nextTracks.length === 0) {
-    return <div className="right-content">
-      <div className="empty-play-queue">
-        <i className="fas fa-music text-4xl text-gray-400"></i>
-        <p className="text-gray-400 whitespace-nowrap">暂无播放队列</p>
-      </div>
-    </div>;
+    return (
+      <ContentPanel className="h-full">
+        <div className="empty-play-queue flex flex-col items-center justify-center h-full">
+          <i className="fas fa-music text-4xl text-gray-400"></i>
+          <p className="text-gray-400 whitespace-nowrap">暂无播放队列</p>
+        </div>
+      </ContentPanel>
+    );
   }
 
-
-  return <div className="right-content">
-    <PlayQueue
-      currentTrack={currentTrackInfo}
-      nextTracks={nextTracks}
-      clearQueue={clearQueue}
-      addToNextAndPlay={addToNextAndPlay}
-
-    />
-
-  </div>;
-
+  return (
+    <ContentPanel className="h-full">
+      <PlayQueue
+        currentTrack={currentTrackInfo}
+        nextTracks={nextTracks}
+        clearQueue={clearQueue}
+        addToNextAndPlay={addToNextAndPlay}
+      />
+    </ContentPanel>
+  );
 }
-
-
-

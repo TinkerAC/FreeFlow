@@ -3,7 +3,7 @@ import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'e
 import PlaylistService from '@main/services/playlistService';
 import { loadPlayer, savePlayer } from '@main/services/playerService';
 import { dataPath, playerStateDumpFile } from './pathConfig';
-import { FusionSearchResult, PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
+import { PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
 import { container } from '@main/di/di-container';
 import HifiniMusicService from '@main/services/HifiniMusicService';
 import TrackService from '@main/services/TrackService';
@@ -70,19 +70,18 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     },
   );
 
-  // 搜索音乐事件
-  ipcMain.handle('get-search-results', async (event: IpcMainInvokeEvent, keywords: string): Promise<FusionSearchResult> => {
+  ipcMain.handle('get-search-results', async (event, keywords) => {
     console.log('后端收到搜索请求:', keywords);
-    const hifini_results = await hifiniMusicService.getSearchResults(keywords);
-    const netease_results = await netEaseMusicService.cloudSearch(keywords);
-    const netease_playlist_results = await netEaseMusicService.cloudSearchPlaylist(keywords);
-
+    const [hifini_results, netease_results, netease_playlist_results] = await Promise.all([
+      hifiniMusicService.getSearchResults(keywords),
+      netEaseMusicService.cloudSearch(keywords),
+      netEaseMusicService.cloudSearchPlaylist(keywords),
+    ]);
 
     return {
       tracks: hifini_results.concat(netease_results),
       playlists: netease_playlist_results,
     };
-
   });
 
   // 解析音乐链接事件

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
 import { TrackModel } from '@src/shared/types';
+import { DefaultCover } from '@components/static';
 
 interface TrackProps {
   track: TrackModel;
   index: number;
   addToNext: (track: TrackModel) => void;
   addToNextAndPlay: (track: TrackModel) => void;
-  onRightClick: (e: any, track: TrackModel) => void;
+  onRightClick: (e: React.MouseEvent<HTMLTableRowElement>, track: TrackModel) => void;
 
 }
 
@@ -54,7 +55,7 @@ const Track: React.FC<TrackProps>
 
       <td className="py-2 flex items-center overflow-hidden">
         <img
-          src={track?.cover_src || './assets/default-cover.png'}
+          src={track?.cover_src || DefaultCover}
           alt="Album cover"
           className="w-10 h-10 mr-4 object-cover rounded flex-shrink-0"
           loading="lazy"

@@ -74,7 +74,7 @@ export default function TopBar({
   };
 
   return (
-    <div className={`top-bar sticky top-0 z-1000 w-full`}>
+    <div className={`top-bar sticky top-0  w-full`}>
 
       {platform === 'darwin' && (
         <div id="traffic-lights">

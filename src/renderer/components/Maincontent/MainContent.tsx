@@ -1,9 +1,10 @@
+// file: src/renderer/components/Maincontent/MainContent.tsx
 import React from 'react';
-import './Maincontent.css';
 import NetSearchResultView from '@components/SearchResultView/SearchResultView';
 import PlaylistView from '@components/PlaylistView/PlaylistView';
 import ProfileView from '@components/ProfileView/ProfileView';
 import { FusionSearchResult, PlaylistModel, TrackModel } from '@src/shared/types';
+import ContentPanel from '@components/ContentPanel/ContentPenal';
 
 interface MainContentProps {
   view: string;
@@ -18,7 +19,6 @@ interface MainContentProps {
   setMainContentView: (view: string) => void;
 }
 
-
 export default function MainContent({
                                       view,
                                       selectedPlaylistInfo,
@@ -29,9 +29,8 @@ export default function MainContent({
                                       searchResults,
                                       refreshPlaylists,
                                       playlists,
-                                  setMainContentView,
+                                      setMainContentView,
                                     }: MainContentProps) {
-  // Render different views inside the main content container
   let viewComponent;
   if (view === 'playlist') {
     viewComponent = (
@@ -51,23 +50,18 @@ export default function MainContent({
         addToNextAndPlay={onAddToNextAndPlay}
         refreshPlaylists={refreshPlaylists}
         fusionSearchResult={searchResults}
-        onSelectOnlinePlaylist={
-          setSelectedPlaylistInfo
-        }
+        onSelectOnlinePlaylist={setSelectedPlaylistInfo}
         setMainContentView={setMainContentView}
         savedPlaylists={playlists}
       />
     );
   } else if (view === 'profile') {
-    viewComponent = (
-      <ProfileView
-      />
-    );
+    viewComponent = <ProfileView />;
   }
 
   return (
-    <div className="main-content">
+    <ContentPanel className="h-full w-full">
       {viewComponent}
-    </div>
+    </ContentPanel>
   );
 }

@@ -13,5 +13,20 @@ export default {
 
     },
   },
-  plugins: [],
-}
+  plugins: [
+    // 一个用于隐藏滚动条的插件,使用词条"no-scrollbar"即可隐藏滚动条
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.no-scrollbar': {
+          '-ms-overflow-style': 'none', /* IE and Edge */
+          'scrollbar-width': 'none', /* Firefox */
+        },
+        '.no-scrollbar::-webkit-scrollbar': {
+          display: 'none', /* Chrome, Safari, Opera */
+        },
+      };
+      addUtilities(newUtilities);
+    },
+
+  ],
+};

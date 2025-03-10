@@ -4,7 +4,7 @@ import useStateRef from 'react-usestateref';
 import ContextMenu from '@components/SearchResultView/ContextMenu';
 import context from '@main/app/electronContextApi';
 import { FusionSearchResult, HifiniTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
-import icons from '@components/Icons';
+import { DefaultCover, Hifini, NetEaseCloudMusic } from '@components/static';
 
 interface NetSearchResultViewProps {
   addToNext: (track: TrackModel) => void;
@@ -116,7 +116,7 @@ function NetSearchResultView({
                     <div>
                       {track.platform === 'NetEaseCloudMusic' && (
                         <img
-                          src={icons.NetEaseCloudMusic}
+                          src={NetEaseCloudMusic}
                           alt={track.platform}
                           width={20}
                           height={20}
@@ -124,7 +124,7 @@ function NetSearchResultView({
                       )}
                       {track.platform === 'Hifini' && (
                         <img
-                          src={icons.Hifini}
+                          src={Hifini}
                           alt={track.platform}
                           width={20}
                           height={20}
@@ -154,7 +154,7 @@ function NetSearchResultView({
               >
                 {/* 假设 PlaylistModel 中有 cover、name、trackCount 等字段 */}
                 <img
-                  src={playlist.cover_src}
+                  src={playlist.cover_src || DefaultCover}
                   alt={playlist.title}
                   className="w-12 h-12 rounded"
                   onClick={
