@@ -28,5 +28,18 @@ export default {
       addUtilities(newUtilities);
     },
 
+    // 一个用于设置窗口拖动区域的插件,使用词条"app-region-drag"即可设置窗口拖动区域
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.draggable': {
+          '-webkit-app-region': 'drag',
+        },
+        '.undraggable': {
+          '-webkit-app-region': 'no-drag',
+        },
+      };
+      addUtilities(newUtilities, ['responsive', 'hover']);
+    },
+
   ],
 };

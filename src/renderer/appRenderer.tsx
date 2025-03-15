@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import Application from './components/Application';
 
 // Say something
-console.log('[ERWT] : Renderer execution started');
+console.log('[FreeFlow] : Renderer execution started');
 
 // Render application in DOM
 createRoot(document.getElementById('app')).render(<Application />);

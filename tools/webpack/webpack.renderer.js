@@ -9,13 +9,13 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css'],
     alias: {
-      // Cusrtom Aliases
+      // Custom Aliases
       ...require('./webpack.aliases'),
     },
   },
   stats: 'minimal',
   /**
-   * Fix: Enable inline-source-map to fix following:
+   * Fix: Enable inline-source-map to fix the following:
    * Dev tools: unable to load source maps over custom protocol
    */
   devtool: 'inline-source-map',

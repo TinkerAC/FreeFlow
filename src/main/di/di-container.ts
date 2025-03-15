@@ -24,7 +24,7 @@ import NetEaseCloudMusicService from '@main/services/NetEaseCloudMusicService';
 const container = new Container();
 export { container };
 
-container.bind<any>('Store').toConstantValue(new Store({
+container.bind<Store>('Store').toConstantValue(new Store({
     watch: true,
   },
 ))

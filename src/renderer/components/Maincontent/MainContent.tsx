@@ -1,4 +1,4 @@
-// file: src/renderer/components/Maincontent/MainContent.tsx
+// file: src/renderer/components/MainContent/MainContent.tsx
 import React from 'react';
 import NetSearchResultView from '@components/SearchResultView/SearchResultView';
 import PlaylistView from '@components/PlaylistView/PlaylistView';

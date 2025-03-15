@@ -6,7 +6,7 @@
     background-color: #000;
     color: white;
     font-family: Arial, sans-serif;
-    -webkit-app-region: drag; /* 使整个 headbar 区域可拖动 */
+    -webkit-app-region: drag; /* 使整个 HeadBar 区域可拖动 */
 }
 
 .left-icons, .right-icons, .search-bar, .premium-btn, .user-icon, .window-controls span {

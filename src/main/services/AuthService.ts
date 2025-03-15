@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Check if the Hifini cookies are expired, taking the cookies dictionary as input
+// Check if the Hifini cookies are expired, taking the cookie dictionary as input
 export async function is_hifini_cookies_expired(cookies: { [key: string]: string }): Promise<boolean> {
-  // Convert cookies object to a string
+  // Convert cookie object to a string
   const cookieString = Object.entries(cookies).map(([key, value]) => `${key}=${value}`).join('; ');
 
   // Making request to the hifini api to check if the cookies are expired

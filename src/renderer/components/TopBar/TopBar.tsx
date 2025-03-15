@@ -69,7 +69,7 @@ export default function TopBar({
   };
 
   // 输入框变化处理函数
-  const handleInputChange = (event: any) => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
@@ -129,7 +129,7 @@ export default function TopBar({
                       userName || '无'
                     }</span>
         </div>
-        {/*show if platform is not macos*/}
+        {/*show if the platform is not macOS*/}
         {platform !== 'darwin' && (
           <div className="window-controls">
             <span onClick={() => context.minimize()}>&#8722;</span>

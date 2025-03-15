@@ -7,6 +7,7 @@ import HifiniMusicService from '@main/services/HifiniMusicService';
 import NetEaseCloudMusicService from '@main/services/NetEaseCloudMusicService';
 import axios from 'axios';
 import { PassThrough } from 'stream';
+import Store from 'electron-store';
 
 @injectable()
 class ProxyServerManager {
@@ -16,7 +17,7 @@ class ProxyServerManager {
   constructor(
     @inject('HifiniMusicService') private hifiniMusicService: HifiniMusicService,
     @inject('NetEaseCloudMusicService') private netEaseCloudMusicService: NetEaseCloudMusicService,
-    @inject('Store') private store: any,
+    @inject('Store') private store: Store,
   ) {
     this.app = express();
     this.port = 4399; // 默认端口

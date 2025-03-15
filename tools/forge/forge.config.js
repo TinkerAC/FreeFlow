@@ -22,7 +22,7 @@ module.exports = {
   makers: [
     {
       // Squirrel.Windows is a no-prompt, no-hassle, no-admin method of installing
-      // Windows applications and is therefore the most user friendly you can get.
+      // Windows applications and is therefore the most user-friendly you can get.
       name: '@electron-forge/maker-squirrel',
       config: {
         name: 'freeflow',
@@ -30,7 +30,7 @@ module.exports = {
     },
     {
       // The Zip target builds basic .zip files containing your packaged application.
-      // There are no platform specific dependencies for using this maker and it will run on any platform.
+      // There are no platform-specific dependencies for using this maker, and it will run on any platform.
       name: '@electron-forge/maker-zip',
       platforms: ['darwin'],
     },
@@ -52,7 +52,7 @@ module.exports = {
     {
       name: '@electron-forge/plugin-webpack',
       config: {
-        // Fix content-security-policy error when image or video src isn't same origin
+        // Fix content-security-policy error when image or video src is different origin
         // Remove 'unsafe-eval' to get rid of console warning in development mode.
         devContentSecurityPolicy: `default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;`,        // Ports
         port: 3000, // Webpack Dev Server port
@@ -63,7 +63,7 @@ module.exports = {
         renderer: {
           // Configuration file path
           config: path.join(rootDir, 'tools/webpack/webpack.renderer.js'),
-          // Entrypoints of the application
+          // Entrypoint of the application
           entryPoints: [
             {
               // Window process name

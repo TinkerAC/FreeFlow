@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron';
-import { PlaylistModel, TrackModel } from '@src/shared/types';
+import { PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
 
 const electronContext = {
   getPlatform: () => ipcRenderer.invoke('get-platform'),
@@ -45,7 +45,7 @@ const electronContext = {
   },
 
   // 渲染进程收到主进程请求播放器状态事件后，向主进程发送播放器状态
-  sendPlayerState: (state: any) => {
+  sendPlayerState: (state: PlayerState) => {
     ipcRenderer.send('reply-player-state', state);
     console.log('播放器状态已发送');
   },

@@ -79,7 +79,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
       } catch (error) {
         console.warn(`音频 ${nextTrack.title} 音源获取失败, 尝试下一首`);
         attempts++;
-        continue;
+
       }
     }
 
@@ -122,7 +122,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
       } catch (error) {
         console.warn(`音频 ${prevTrack.title} 音源获取失败, 尝试下一首`);
         attempts++;
-        continue;
+
       }
     }
 

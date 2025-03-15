@@ -1,7 +1,8 @@
 // file: src/main/configInit.ts
+
 import Store from 'electron-store';
 
-export async function initConfig(store: any): Promise<void> {
+export async function initConfig(store: Store): Promise<void> {
   if (store.get('scan_paths') === undefined) {
     console.log('scan_paths initialized');
     store.set('scan_paths', []);

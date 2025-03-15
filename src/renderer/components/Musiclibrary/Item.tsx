@@ -14,7 +14,7 @@ interface ItemProps {
 
 // Item 组件，用于展示音乐库中的歌单/专辑 item
 export default function Item(
-  { imgSrc, altText, title, description, index, isSelected, onClick, onRightClick }: ItemProps) {
+  { imgSrc, altText, title, description,  isSelected, onClick, onRightClick }: ItemProps) {
   return (
     <div
       onClick={onClick}

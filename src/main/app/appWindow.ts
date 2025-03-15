@@ -41,7 +41,7 @@ export function createAppWindow(): BrowserWindow {
     console.log('加载主窗口成功');
   });
 
-  // Show window when it's ready to
+  // Show the window when it's ready to
   appWindow.on('ready-to-show', () => appWindow.show());
 
   // 初始化 IPC 事件处理
