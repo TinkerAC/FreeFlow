@@ -7,117 +7,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.3.0&#10;-优化UI界面&#10;-修复无法加载默认cover的问题">
+    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.3.2&#10;-尝试引入歌词界面&#10;-尝试引入单元测试">
+      <change afterPath="$PROJECT_DIR$/src/main/services/LyricService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/renderer/components/LyricView/LyricView.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test/lyricService.test.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/FreeFlow.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/FreeFlow.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/add_all.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/addall.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/batch.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/blacklist.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/both_side.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/center.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/change_color.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/check.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/closeDesktopLyrics.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/cloud.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/collect.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/collected.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/comment.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/copy.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/delete.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/digital.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/doubt.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/download.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/edit.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/font.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/fullMode.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/heartbeat.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/horizontal.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_addlist.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_align_0.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_align_1.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_align_2.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_align_3.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_checked.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_dislike.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_link.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_lookfor.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_play.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_share.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icn_translate.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/icon.ico" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/jump.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/left.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/like.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/liked.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/list_mode.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/lock.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/loop.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/mine.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/mini.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/minimize.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/more.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/next.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/next_song.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/oneline.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/openDesktopLyrics.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/open_file.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/order.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/pause.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/play.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/pre.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/quit.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/report.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/right.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/setting.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/share.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/share_qq.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/share_qzone.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/share_source.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/share_wechat.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/share_weibo.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/shuffle.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/sign_out.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/singer.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/singleloop.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/source.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/top.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/translation.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/translation2.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/twoline.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/unlock.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/svg/vertical.svg" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/data/database.sqlite" beforeDir="false" afterPath="$PROJECT_DIR$/data/database.sqlite" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/playerState.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/playerState.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qodana.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/app.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/appWindow.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/appWindow.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/configInit.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/configInit.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/app/electronContext.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/electronContext.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/proxyServer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/proxyServer.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/trayManager.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/trayManager.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/di/di-container.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/di/di-container.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/AuthService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/AuthService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/ConfigService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/ConfigService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/Decryptor.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/HifiniMusicService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/HifiniMusicService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/localLibraryService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/localLibraryService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/app.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/app.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/appPreload.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/appPreload.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/appRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/appRenderer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/playlistService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/playlistService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/Application.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Application.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Item.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Item.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/RightContent/RightContent.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/ProfileView/ProfileView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/ProfileView/ProfileView.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tailwind.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/tailwind.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/forge/forge.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/tools/forge/forge.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/webpack/webpack.helpers.js" beforeDir="false" afterPath="$PROJECT_DIR$/tools/webpack/webpack.helpers.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/webpack/webpack.renderer.js" beforeDir="false" afterPath="$PROJECT_DIR$/tools/webpack/webpack.renderer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/webpack/webpack.rules.js" beforeDir="false" afterPath="$PROJECT_DIR$/tools/webpack/webpack.rules.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/shared/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,8 +35,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript File" />
         <option value="TypeScript JSX File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -162,7 +70,10 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Jest.getLyrics.executor&quot;: &quot;Run&quot;,
+    &quot;Jest.getLyrics.当 track_identifier 为 null 时应返回 undefined.executor&quot;: &quot;Run&quot;,
     &quot;Node.js.AuthService.ts.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.LyricService.ts.executor&quot;: &quot;Run&quot;,
     &quot;Node.js.app.ts.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
@@ -175,6 +86,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.standard&quot;: &quot;&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs.jest.jest_package&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/node_modules/jest&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
     &quot;npm.make.executor&quot;: &quot;Run&quot;,
     &quot;npm.package.executor&quot;: &quot;Run&quot;,
@@ -193,27 +105,40 @@
       <recent name="$PROJECT_DIR$/assets" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$/src/renderer/components/ContentPanel" />
       <recent name="$PROJECT_DIR$/assets/icons" />
       <recent name="$PROJECT_DIR$/assets/images" />
-      <recent name="$PROJECT_DIR$/src/main/repository/mappers" />
     </key>
   </component>
   <component name="RunManager" selected="npm.start">
-    <configuration name="AuthService.ts" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/main/services/AuthService.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/src/main/services">
-      <method v="2" />
-    </configuration>
-    <configuration name="app.ts" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/main/app/app.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/src/main/app">
-      <method v="2" />
-    </configuration>
-    <configuration name="make" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/package.json" />
-      <command value="run" />
-      <scripts>
-        <script value="make" />
-      </scripts>
+    <configuration name="getLyrics" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
       <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$" />
       <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/test/lyricService.test.ts" />
+      <test-names>
+        <test-name value="getLyrics" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="getLyrics.当 track_identifier 为 null 时应返回 undefined" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$" />
+      <envs />
+      <scope-kind value="TEST" />
+      <test-file value="$PROJECT_DIR$/test/lyricService.test.ts" />
+      <test-names>
+        <test-name value="getLyrics" />
+        <test-name value="当 track_identifier 为 null 时应返回 undefined" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="LyricService.ts" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/main/services/LyricService.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/src/main/services">
       <method v="2" />
     </configuration>
     <configuration name="package" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
@@ -239,10 +164,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="npm.start" />
+        <item itemvalue="Node.js.LyricService.ts" />
+        <item itemvalue="Jest.getLyrics.当 track_identifier 为 null 时应返回 undefined" />
+        <item itemvalue="Jest.getLyrics" />
         <item itemvalue="npm.package" />
-        <item itemvalue="npm.make" />
-        <item itemvalue="Node.js.app.ts" />
-        <item itemvalue="Node.js.AuthService.ts" />
       </list>
     </recent_temporary>
   </component>
@@ -350,7 +275,15 @@
       <workItem from="1742026521094" duration="550000" />
       <workItem from="1742037168364" duration="1614000" />
       <workItem from="1742039822792" duration="3046000" />
-      <workItem from="1742048597279" duration="120000" />
+      <workItem from="1742048597279" duration="801000" />
+      <workItem from="1742049820335" duration="734000" />
+      <workItem from="1742101420856" duration="641000" />
+      <workItem from="1742104638260" duration="26000" />
+      <workItem from="1742104667231" duration="11000" />
+      <workItem from="1742106844946" duration="9000" />
+      <workItem from="1742177276164" duration="4367000" />
+      <workItem from="1742182869376" duration="24000" />
+      <workItem from="1742195324459" duration="6510000" />
     </task>
     <task id="LOCAL-00001" summary="V2.0.1&#10;-重大更新&#10;修改了项目名、package.json 中的相关信息&#10;-迁移架构到ts">
       <option name="closed" value="true" />
@@ -416,7 +349,15 @@
       <option name="project" value="LOCAL" />
       <updated>1741605005538</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="V2.3.1&#10;-代码质量优化">
+      <option name="closed" value="true" />
+      <created>1742048752938</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1742048752938</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -445,7 +386,8 @@
     <MESSAGE value="V2.2.3&#10;-修复无法收藏某些歌曲的问题" />
     <MESSAGE value="V2.2.4&#10;-实现通过双击播放列表中的歌曲播放下一首" />
     <MESSAGE value="V2.3.0&#10;-优化UI界面&#10;-修复无法加载默认cover的问题" />
-    <option name="LAST_COMMIT_MESSAGE" value="V2.3.0&#10;-优化UI界面&#10;-修复无法加载默认cover的问题" />
+    <MESSAGE value="V2.3.1&#10;-代码质量优化" />
+    <option name="LAST_COMMIT_MESSAGE" value="V2.3.1&#10;-代码质量优化" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -456,18 +398,13 @@
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/shared/types.ts</url>
-          <line>62</line>
-          <option name="timeStamp" value="19" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/repository/impl/PlaylistDetailRepositoryImpl.ts</url>
           <line>35</line>
           <option name="timeStamp" value="31" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/app/ipcHandlers.ts</url>
-          <line>139</line>
+          <line>141</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">

@@ -3,17 +3,19 @@ import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'e
 import PlaylistService from '@main/services/playlistService';
 import { loadPlayer, savePlayer } from '@main/services/playerService';
 import { dataPath, playerStateDumpFile } from './pathConfig';
-import { PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
+import { ModelFactory, PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
 import { container } from '@main/di/di-container';
 import HifiniMusicService from '@main/services/HifiniMusicService';
 import TrackService from '@main/services/TrackService';
 import NetEaseCloudMusicService from '@main/services/NetEaseCloudMusicService';
 import { Platform } from '@main/enum/Platform';
+import Store from 'electron-store';
+import { getLyrics } from '@main/services/LyricService';
 
 
 const hifiniMusicService: HifiniMusicService = container.get('HifiniMusicService');
 const playlistService: PlaylistService = container.get('PlaylistService');
-const store: any = container.get('Store');
+const store: Store = container.get('Store');
 const trackService: TrackService = container.get('TrackService');
 const netEaseMusicService: NetEaseCloudMusicService = container.get('NetEaseCloudMusicService');
 
@@ -161,5 +163,16 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('add-playlist', async (_event: IpcMainInvokeEvent, playlist: PlaylistModel) => {
     return await playlistService.addPlaylist(playlist);
+  });
+
+  ipcMain.handle('get-lyrics', async (_event: IpcMainInvokeEvent, track_model: TrackModel) => {
+    //如果 track_model 不是TrackModel 的实例,调用工厂方法创建一个
+
+    if (!(track_model instanceof TrackModel)) {
+      track_model = ModelFactory.buildTrackModel(track_model);
+    }
+
+    return await getLyrics(track_model);
+
   });
 }

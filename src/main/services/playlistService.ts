@@ -51,9 +51,8 @@ export default class PlaylistService {
       for (const playlist of playlists) {
 
         // 根据歌曲ID从有效歌曲列表中获取歌曲
-        const playlistTracks = await this.trackService.findTracksByPlaylistId(playlist.playlist_id);
         // 过滤不存在的歌曲
-        playlist.tracks = playlistTracks;
+        playlist.tracks = await this.trackService.findTracksByPlaylistId(playlist.playlist_id);
         console.log(`歌单: ${playlist.title} 获取到有效歌曲数量: ${playlist.tracks.length}`);
       }
 
@@ -78,7 +77,7 @@ export default class PlaylistService {
       // console.log('歌单信息:', playlists);
 
       // Step 5: 获取每首歌曲的详细信息
-      const enrichedPlaylists = await Promise.all(
+      return await Promise.all(
         playlists.map(async (playlist: PlaylistModel) => {
           const tracksWithInfo = await Promise.allSettled(
             playlist.tracks.map(async (track) => {
@@ -106,8 +105,6 @@ export default class PlaylistService {
           };
         }),
       );
-
-      return enrichedPlaylists;
 
     } catch (err) {
       // 错误处理：捕获并记录所有错误

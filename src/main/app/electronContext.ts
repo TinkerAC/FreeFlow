@@ -8,6 +8,8 @@ const electronContext = {
   close: () => ipcRenderer.send('window-controls', 'close'),
 
 
+  getLyrics: (track: TrackModel) => ipcRenderer.invoke('get-lyrics', track),
+
   createPlaylist: async () => {
     try {
       await ipcRenderer.invoke('create-playlists');

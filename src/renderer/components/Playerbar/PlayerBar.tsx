@@ -15,6 +15,7 @@ interface PlayerBarProps {
   onVolumeChange?: (volume: number) => void;
   onToggleRightContent?: () => void;
   playerState: PlayerState;
+  setMainContentView: (view: string) => void;
 }
 
 export default function PlayerBar({
@@ -32,6 +33,7 @@ export default function PlayerBar({
                                     onToggleRightContent = () => {
                                     },
                                     playerState,
+                                    setMainContentView,
                                   }: PlayerBarProps) {
   const { playbackMode, isPlaying, currentTime, currentTrackInfo, volume } = playerState;
 
@@ -129,7 +131,14 @@ export default function PlayerBar({
         />
         <i className="fas fa-search mx-3 cursor-pointer" />
         <i className="fas fa-filter mx-3 cursor-pointer" title="播放所有歌曲" />
-        <i className="fas fa-expand mx-3 cursor-pointer" />
+        {/*切换歌词界面*/}
+        <i className="fas fa-align-center mx-3 cursor-pointer"
+           onClick={
+             () => {
+               setMainContentView('lyric');
+             }
+           }
+        />
         <input
           value={volume}
           type="range"

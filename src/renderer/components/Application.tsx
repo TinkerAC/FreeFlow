@@ -63,10 +63,10 @@ const Application: React.FC = () => {
     const handleShortcut = (data: string) => {
       switch (data) {
         case 'prev':
-          playPrevious();
+          playPrevious().then();
           break;
         case 'next':
-          playNext();
+          playNext().then();
           break;
         case 'play-pause':
           togglePlayPause();
@@ -156,6 +156,8 @@ const Application: React.FC = () => {
           playlists={playlists}
           setSelectedPlaylistInfo={setSelectedPlaylistInfo}
           setMainContentView={setMainContentView}
+          playerState={playerStateRef.current}
+          setCurrentTime={setCurrentTime}
         />
         {isRightContentVisible && (
           <RightContent
@@ -177,6 +179,7 @@ const Application: React.FC = () => {
         onCyclePlaybackMode={cyclePlaybackMode}
         onVolumeChange={setVolume}
         onToggleRightContent={toggleRightContent}
+        setMainContentView={setMainContentView}
       />
     </div>
   );

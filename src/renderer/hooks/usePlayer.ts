@@ -323,7 +323,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
         console.error('Failed to load player state:', error);
       }
     };
-    loadPlayerState();
+    loadPlayerState().then();
   }, []);
 
   // 初始化音频设置
@@ -356,7 +356,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
           currentTime: audioRef.current.currentTime,
         }));
       }
-    }, 1000);
+    }, 333);
     return () => clearInterval(interval);
   }, [playerStateRef.current.isPlaying]);
 
@@ -371,7 +371,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
   useEffect(() => {
     if (audioRef.current) {
       if (playerStateRef.current.isPlaying) {
-        audioRef.current.play();
+        audioRef.current.play().then();
       } else {
         audioRef.current.pause();
       }
@@ -381,7 +381,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
   // 处理音频结束事件
   useEffect(() => {
     const handleEnded = () => {
-      playNext();
+      playNext().then();
     };
     if (audioRef.current) {
       audioRef.current.addEventListener('ended', handleEnded);
@@ -439,7 +439,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
     clearQueue,
     addToNextAndPlay: (track: TrackModel) => {
       addTrackToNext(track);
-      playNext();
+      playNext().then();
     },
     addToNext: (track: TrackModel) => {
       addTrackToNext(track);

@@ -39,7 +39,7 @@ function ProfileView() {
       setScanPaths(paths || []);
     }
 
-    fetchConfig();
+    fetchConfig().then();
   }, []);
 
   // 保存按钮的处理函数
