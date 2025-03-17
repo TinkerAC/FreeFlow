@@ -1,14 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import context from '@main/app/electronContextApi';
-
-function getConfig(key: string): any {
-  return context.getConfig(key);
-}
-
-function setConfig(key: string, value: any): any {
-  return context.setConfig(key, value);
-}
+import { configContext } from '@main/app/electronContextApi';
 
 function ProfileView() {
   // 状态变量
@@ -23,19 +14,19 @@ function ProfileView() {
   // 获取配置
   useEffect(() => {
     async function fetchConfig() {
-      const avatar = await getConfig('avatar_path');
+      const avatar = await configContext.getConfig<string>('avatar_path');
       setAvatarPath(avatar || '');
 
-      const name = await getConfig('user_name');
+      const name = await configContext.getConfig<string>('user_name');
       setUsername(name || '');
 
-      const token = await getConfig('hifini_cookie.bbs_token');
+      const token = await configContext.getConfig<string>('hifini_cookie.bbs_token');
       setBbsToken(token || '');
 
-      const sid = await getConfig('hifini_cookie.bbs_sid');
+      const sid = await configContext.getConfig<string>('hifini_cookie.bbs_sid');
       setBbsSid(sid || '');
 
-      const paths = await getConfig('scan_paths');
+      const paths = await configContext.getConfig<string[]>('scan_paths');
       setScanPaths(paths || []);
     }
 
@@ -44,23 +35,23 @@ function ProfileView() {
 
   // 保存按钮的处理函数
   const handleSave = async () => {
-    await setConfig('avatar_path', avatarPath);
-    await setConfig('user_name', username);
-    await setConfig('hifini_cookie.bbs_token', bbsToken);
-    await setConfig('hifini_cookie.bbs_sid', bbsSid);
-    await setConfig('scan_paths', scanPaths);
+    await configContext.setConfig('avatar_path', avatarPath);
+    await configContext.setConfig('user_name', username);
+    await configContext.setConfig('hifini_cookie.bbs_token', bbsToken);
+    await configContext.setConfig<string>('hifini_cookie.bbs_sid', bbsSid);
+    await configContext.setConfig<string[]>('scan_paths', scanPaths);
     setMessage('已保存');
   };
 
   // 处理头像文件选择
-  const handleAvatarChange = (e: any) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files[0];
     if (file) {
       setAvatarPath(file.path);
     }
   };
 
-  // 添加新的扫描路径
+  // 添加新扫描路径
   const handleAddScanPath = () => {
     if (newScanPath.trim() !== '') {
       setScanPaths([...scanPaths, newScanPath.trim()]);

@@ -1,4 +1,4 @@
-// file: src/main/ipcHandlers.ts
+// file: src/main/ipc.ts
 import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import PlaylistService from '@main/services/playlistService';
 import { loadPlayer, savePlayer } from '@main/services/playerService';
@@ -23,7 +23,7 @@ const netEaseMusicService: NetEaseCloudMusicService = container.get('NetEaseClou
 export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
 
-  ipcMain.handle('get-platform', async () => {
+  ipcMain.handle('get-platformContext', async () => {
     return process.platform;
   });
 
@@ -60,7 +60,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   });
 
   // 获取播放器状态事件
-  ipcMain.handle('player-state', () => {
+  ipcMain.handle('playerContext-state', () => {
     return loadPlayer(playerStateDumpFile);
   });
 
@@ -72,7 +72,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     },
   );
 
-  ipcMain.handle('get-search-results', async (event, keywords) => {
+  ipcMain.handle('get-searchContext-results', async (event, keywords) => {
     console.log('后端收到搜索请求:', keywords);
     const [hifini_results, netease_results, netease_playlist_results] = await Promise.all([
       hifiniMusicService.getSearchResults(keywords),
@@ -97,20 +97,20 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   });
 
   // 添加音乐到库事件
-  ipcMain.handle('add-track-to-library', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
+  ipcMain.handle('add-track-to-libraryContext', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
     return await trackService.addTrackToLibrary(track);
   });
 
   // 添加音乐到歌单事件
   ipcMain.handle(
-    'add-track-to-playlist', async (_event: IpcMainInvokeEvent, track: TrackModel, playlistId: number) => {
+    'add-track-to-playlistContext', async (_event: IpcMainInvokeEvent, track: TrackModel, playlistId: number) => {
       return await playlistService.addTrackToPlaylist(playlistId, track);
     },
   );
 
   // 从歌单中删除音乐事件
   ipcMain.handle(
-    'remove-track-from-playlist',
+    'remove-track-from-playlistContext',
     async (_event: IpcMainInvokeEvent, playlistId: number, track: TrackModel) => {
       return await playlistService.removeTrackFromPlaylist(playlistId, track);
     },
@@ -121,7 +121,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   });
 
   // 监听播放器状态请求
-  ipcMain.once('reply-player-state', (event: IpcMainEvent, state: PlayerState) => {
+  ipcMain.once('reply-playerContext-state', (event: IpcMainEvent, state: PlayerState) => {
     console.log('主进程已收到播放器状态:', state);
     savePlayer(playerStateDumpFile, state);
     app.quit();
@@ -129,7 +129,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
   // 修改歌单事件
   ipcMain.handle(
-    'modify-playlist',
+    'modify-playlistContext',
     async (
       _event: IpcMainInvokeEvent,
       playlistModel: PlaylistModel,
@@ -138,34 +138,34 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     });
 
   // 删除歌单事件
-  ipcMain.handle('remove-playlist', async (_event: IpcMainInvokeEvent, playlistId: number) => {
+  ipcMain.handle('remove-playlistContext', async (_event: IpcMainInvokeEvent, playlistId: number) => {
     return await playlistService.removePlaylist(playlistId);
   });
 
-  ipcMain.handle('get-config', (_event: IpcMainInvokeEvent, key: string) => {
+  ipcMain.handle('get-configContext', (_event: IpcMainInvokeEvent, key: string) => {
     return store.get(key);
   });
 
-  ipcMain.handle('set-config', (_event: IpcMainInvokeEvent, key: string, value: string) => {
+  ipcMain.handle('set-configContext', (_event: IpcMainInvokeEvent, key: string, value: string) => {
     store.set(key, value);
     return true;
   });
 
 
-  ipcMain.handle('remove-track-from-library', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
+  ipcMain.handle('remove-track-from-libraryContext', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
     return await trackService.removeTrackFromLibrary(track);
   });
 
 
-  ipcMain.handle('get-netease-cloud-music-playlist-detail', async (_event: IpcMainInvokeEvent, playlist_id: string) => {
+  ipcMain.handle('get-netease-cloud-music-playlistContext-detail', async (_event: IpcMainInvokeEvent, playlist_id: string) => {
     return await netEaseMusicService.getPlaylistDetail(playlist_id);
   });
 
-  ipcMain.handle('add-playlist', async (_event: IpcMainInvokeEvent, playlist: PlaylistModel) => {
+  ipcMain.handle('add-playlistContext', async (_event: IpcMainInvokeEvent, playlist: PlaylistModel) => {
     return await playlistService.addPlaylist(playlist);
   });
 
-  ipcMain.handle('get-lyrics', async (_event: IpcMainInvokeEvent, track_model: TrackModel) => {
+  ipcMain.handle('get-lyricsContext', async (_event: IpcMainInvokeEvent, track_model: TrackModel) => {
     //如果 track_model 不是TrackModel 的实例,调用工厂方法创建一个
 
     if (!(track_model instanceof TrackModel)) {

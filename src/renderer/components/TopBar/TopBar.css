@@ -77,22 +77,6 @@
 }
 
 /* styles.css */
-#title-bar {
-    -webkit-user-select: none;
-    -webkit-app-region: drag; /* Make the title bar draggable */
-    height: 28px;
-    background-color: #f5f5f5; /* Match the macOS title bar color */
-    display: flex;
-    align-items: center;
-    padding-left: 12px;
-}
-
-#traffic-lights {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    margin-left: 14px; /* Adjust as needed */
-}
 
 .traffic-light {
     width: 12px;

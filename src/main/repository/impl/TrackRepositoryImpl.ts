@@ -44,8 +44,20 @@ export default class TrackRepositoryImpl implements TrackRepository {
   }
 
 
-  update(track: TrackModel): Promise<TrackModel> {
-    return Promise.resolve(undefined);
+  async update(track: TrackModel): Promise<TrackModel> {
+    return await Track.update({
+      title: track.title,
+      artist: track.artist,
+      album: track.album,
+      duration: track.duration,
+      cover_src: track.cover_src,
+    }, {
+      where: {
+        id: track.id,
+      },
+    }).then(() => {
+      return track;
+    });
   }
 
   async findOrCreate(creationAttributes: TrackCreationAttributes): Promise<TrackModel> {

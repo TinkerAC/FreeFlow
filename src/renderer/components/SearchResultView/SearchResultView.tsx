@@ -2,9 +2,9 @@
 import React from 'react';
 import useStateRef from 'react-usestateref';
 import ContextMenu from '@components/SearchResultView/ContextMenu';
-import context from '@main/app/electronContextApi';
 import { FusionSearchResult, HifiniTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
 import { DefaultCover, Hifini, NetEaseCloudMusic } from '@components/static';
+import { libraryContext, playlistContext, searchContext } from '@main/app/electronContextApi';
 
 interface NetSearchResultViewProps {
   addToNext: (track: TrackModel) => void;
@@ -22,7 +22,7 @@ function NetSearchResultView({
                                addToNextAndPlay,
                                refreshPlaylists,
                                fusionSearchResult,
-                               onSelectOnlinePlaylist, //used to jump to playlist view (online)
+                               onSelectOnlinePlaylist, //used to jump to playlistContext view (online)
                                setMainContentView,
                                savedPlaylists,
                              }: NetSearchResultViewProps) {
@@ -30,7 +30,7 @@ function NetSearchResultView({
   const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackModel | null>(null);
 
   // 解构赋值
-  const { tracks,playlists } = fusionSearchResult;
+  const { tracks, playlists } = fusionSearchResult;
   const popularResult: TrackModel = tracks[0] || HifiniTrackModel.empty();
 
 
@@ -160,7 +160,7 @@ function NetSearchResultView({
                   onClick={
                     async () => {
                       const playlist_id = playlist.platform_unique_id;
-                      const playlistModel = await context.getNetEaseCloudMusicPlaylistDetail(playlist_id);
+                      const playlistModel = await searchContext.getNetEaseCloudMusicPlaylistDetail(playlist_id);
                       onSelectOnlinePlaylist(await playlistModel);
                       setMainContentView('playlist');
                     }} />
@@ -184,9 +184,9 @@ function NetSearchResultView({
           y={contextMenu.y}
           track={selectedTrackRef.current}
           addToNext={addToNext}
-          addToLibrary={(track) => context.addTrackToLibrary(track).then(refreshPlaylists)}
+          addToLibrary={(track) => libraryContext.addTrackToLibrary(track).then(refreshPlaylists)}
           addTrackToPlaylist={(track, playlist_id) =>
-            context.addTrackToPlaylist(track, playlist_id).then(refreshPlaylists)
+            playlistContext.addTrackToPlaylist(track, playlist_id).then(refreshPlaylists)
           }
           playlists={savedPlaylists}
           handleCloseMenu={handleCloseMenu}

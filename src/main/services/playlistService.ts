@@ -142,7 +142,7 @@ export default class PlaylistService {
       });
       return track.id;
     } catch (error) {
-      console.error('Error in add-track-to-playlist:', error);
+      console.error('Error in add-track-to-playlistContext:', error);
       throw error;
     }
   }
@@ -164,10 +164,10 @@ export default class PlaylistService {
   }
 
 
-  // public async importPlaylistFromList(db: sqlite3.Database, playlist: any, store: any) {
+  // public async importPlaylistFromList(db: sqlite3.Database, playlistContext: any, store: any) {
   //
   //   // 从列表中提取歌曲信息
-  //   const unbind_tracks = playlist.split('\n').map((line: any) => {
+  //   const unbind_tracks = playlistContext.split('\n').map((line: any) => {
   //     const [title, artist] = line.split('-').map((s: any) => s.trim());
   //     return { title, artist };
   //   });

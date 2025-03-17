@@ -20,12 +20,22 @@ export default class PlaylistRepositoryImpl implements PlaylistRepository {
     });
   }
 
-  findById(id: number): Promise<PlaylistModel> {
-    throw new Error('Method not implemented.');
+  async findById(id: number): Promise<PlaylistModel> {
+    const playlist = await Playlist.findByPk(id);
+    return PlaylistMapper.toModel(playlist);
   }
 
-  save(playlist: PlaylistModel): Promise<PlaylistModel> {
-    throw new Error('Method not implemented.');
+  async save(playlist: PlaylistModel): Promise<PlaylistModel> {
+    const playlist_1 = await Playlist.create({
+      platform: playlist.platform,
+      platform_unique_id: playlist.platform_unique_id,
+      title: playlist.title,
+      description: playlist.description,
+      creator: playlist.creator,
+      created_at: playlist.created_at,
+      modified_at: playlist.modified_at,
+    });
+    return PlaylistMapper.toModel(playlist_1);
   }
 
   async update(playlist: PlaylistModel): Promise<PlaylistModel> {

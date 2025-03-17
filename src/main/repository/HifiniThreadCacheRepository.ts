@@ -6,7 +6,7 @@ export default interface HifiniThreadCacheRepository {
 
   create(hifiniThreadCache: HifiniThreadCacheModel): Promise<HifiniThreadCacheModel>;
 
-  delete(dataHref: string): Promise<void>;
+  delete(dataHref: string): Promise<number>;
 
   save(hifiniThreadCache: HifiniThreadCacheModel): Promise<HifiniThreadCacheModel>;
 

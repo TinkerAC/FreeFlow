@@ -1,4 +1,4 @@
-import type { AxiosResponse } from 'axios';
+import type  { AxiosResponse } from 'axios';
 import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import * as cheerio from 'cheerio';
@@ -41,16 +41,18 @@ export default class HifiniMusicService {
     this.__dirname = path.dirname(this.__filename);
   }
 
-  // 搜索函数，返回搜索结果数组
+  /**
+   * 搜索函数：根据关键词返回搜索结果数组
+   */
   public async search(keyword: string): Promise<HifiniSearchResult[]> {
-    // 提取 li 元素，返回数组（类型为 cheerio.Element[]）
+    // 从 HTML 中提取包含搜索结果的 li 元素
     const extractLiElements = (html: string): cheerio.Element[] => {
       const $ = cheerio.load(html);
-      return $('div.card.search div.card-body ul li').toArray();
+      return $('div.card.searchContext div.card-body ul li').toArray();
     };
 
-    // 解析单个 li 元素，返回 HifiniSearchResult 对象
-    const parseLiElement = (liElement: any): HifiniSearchResult => {
+    // 解析单个 li 元素为 HifiniSearchResult 对象
+    const parseLiElement = (liElement: cheerio.Element): HifiniSearchResult => {
       const commonFormats: string[] = ['FLAC', 'MP3', 'WAV', 'AAC', 'ALAC', 'AIFF', 'DSD', 'APE', 'OGG', 'M4A', 'WMA'];
       const $li = cheerio.load(liElement);
       const dataHref: string = $li('li').attr('data-href') || '';
@@ -58,6 +60,7 @@ export default class HifiniMusicService {
       const isAlbum: number = title.includes('专辑') ? 1 : 0;
       const formats: string[] = commonFormats.filter(format => title.toUpperCase().includes(format));
       const isExpired: number = title.includes('失效') ? 1 : 0;
+      // 提取热度值，转换为数字，若解析失败则默认 0
       const heat: number = parseInt($li('span.eye.comment-o.ml-2.hidden-sm.d-none').text().trim(), 10) || 0;
 
       return { dataHref, heat, title, isAlbum, formats, isExpired };
@@ -77,7 +80,6 @@ export default class HifiniMusicService {
         },
         timeout: 10000,
       });
-
       const liElements: cheerio.Element[] = extractLiElements(response.data);
       return liElements.map(parseLiElement);
     } catch (error: unknown) {
@@ -90,15 +92,16 @@ export default class HifiniMusicService {
     }
   }
 
-  // 获取重定向后的真实播放链接
+  /**
+   * 获取重定向后的真实播放链接
+   */
   private async getRedirectUrl(url: string): Promise<string> {
     try {
       const response: AxiosResponse = await axios.head(url, {
         headers: { referer: 'https://www.hifini.com' },
         maxRedirects: 5,
       });
-
-      const finalUrl: unknown = (response.request as any)?.res?.responseUrl;
+      const finalUrl: string = (response.request as any)?.res?.responseUrl;
       if (!finalUrl || typeof finalUrl !== 'string') {
         throw new Error('无法获取最终重定向 URL');
       }
@@ -109,7 +112,9 @@ export default class HifiniMusicService {
     }
   }
 
-  // Base32 编码函数
+  /**
+   * Base32 编码函数
+   */
   private base32Encode(str: string): string {
     const base32chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
     let bits: string = '', base32: string = '';
@@ -128,7 +133,9 @@ export default class HifiniMusicService {
       .replace(/=/g, 'HiFiNiYINYUECICHANG');
   }
 
-  // 生成参数
+  /**
+   * 生成参数，用于构造播放链接
+   */
   private generateParam(data: string): string {
     const key: string = '95wwwHiFiNicom27';
     let outText: string = '';
@@ -137,7 +144,6 @@ export default class HifiniMusicService {
       if (j === key.length) j = 0;
       outText += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(j));
     }
-
     return this.base32Encode(outText);
   }
 
@@ -145,14 +151,17 @@ export default class HifiniMusicService {
     return !redirected_url.includes('https://music.163.com/m/download');
   }
 
-  // 获取音乐链接的函数
+  /**
+   * 获取音乐链接
+   * 优化流程：先检查缓存，如果存在当天缓存则直接使用，否则调用 fetchAndSaveMusicInfo 获取新数据，
+   * 然后尝试获取重定向后的链接，出错时直接返回未重定向链接。
+   */
   public async getMusicLink(dataHref: string, forceReload: boolean = false): Promise<string> {
     try {
       const threadCache: HifiniThreadCacheModel | null = await this.hifiniThreadCacheRepository.findByDataHref(dataHref);
       let un_redirected_url: string;
 
       const currentDate: Date = new Date();
-
       console.log('threadCache:', threadCache);
 
       if (
@@ -186,7 +195,9 @@ export default class HifiniMusicService {
     }
   }
 
-  // 获取音乐信息函数
+  /**
+   * 获取音乐信息：先尝试从缓存中获取，如果不存在则调用 fetchAndSaveMusicInfo
+   */
   public async getMusicInfo(dataHref: string): Promise<HifiniThreadCacheModel> {
     try {
       const threadCache: HifiniThreadCacheModel | null = await this.hifiniThreadCacheRepository.findByDataHref(dataHref);
@@ -211,9 +222,14 @@ export default class HifiniMusicService {
     }
   }
 
-  // 从网页获取并保存音乐信息
+  /**
+   * 从网页获取并保存音乐信息
+   * 优化流程：提取 cookies 后直接构造请求的 cookie 字符串，
+   * 利用 JSDOM 与 cheerio 提取包含音乐信息的脚本内容，
+   * 通过正则匹配解析出音乐信息，并保存到缓存库中。
+   */
   private async fetchAndSaveMusicInfo(dataHref: string): Promise<HifiniThreadCacheModel | null> {
-    // 指定 cookies 的类型为 HifiniCookie
+    // 获取 hifini_cookie 配置，所有配置项均为字符串
     const cookies: HifiniCookie = getConfig<HifiniCookie>(this.store, 'hifini_cookie');
     console.log('获取到的 hifini_cookie:', cookies);
 
@@ -222,17 +238,17 @@ export default class HifiniMusicService {
     }
 
     try {
+      // 构造 cookie 字符串
       const cookieString: string = Object.entries(cookies)
-        .map(([key, value]: [string, string]) => `${key}=${value}`)
+        .map(([key, value]) => `${key}=${value}`)
         .join('; ');
-      const html: string = await axios
-        .get('https://hifini.com/' + dataHref, {
-          headers: {
-            referer: 'https://www.hifini.com',
-            cookie: cookieString,
-          },
-        })
-        .then((response: AxiosResponse<string>) => response.data);
+
+      const html: string = await axios.get('https://hifini.com/' + dataHref, {
+        headers: {
+          referer: 'https://www.hifini.com',
+          cookie: cookieString,
+        },
+      }).then((response: AxiosResponse<string>) => response.data);
 
       const dom: JSDOM = new JSDOM(html);
       const scripts: NodeListOf<HTMLScriptElement> = dom.window.document.querySelectorAll('script');
@@ -245,74 +261,77 @@ export default class HifiniMusicService {
         }
       }
 
-      if (scriptContent) {
-        // @ts-ignore
-        const musicMatch: RegExpMatchArray | null = scriptContent.match(/music:\s*\[(.*?)\]/s);
-        if (!musicMatch) throw new Error('Music array not found in script.');
-
-        const musicItems: RegExpMatchArray | null = musicMatch[1].match(/{[^}]+}/g);
-        if (!musicItems) {
-          console.warn('No valid music items found.');
-          return null;
-        }
-
-        for (const item of musicItems) {
-          const titleMatch: RegExpMatchArray | null = item.match(/title:\s*'([^']+)'/);
-          const authorMatch: RegExpMatchArray | null = item.match(/author:\s*'([^']+)'/);
-          const picMatch: RegExpMatchArray | null = item.match(/pic:\s*'([^']+)'/);
-          const urlMatch: RegExpMatchArray | null = item.match(/url:\s*'([^']+)'/);
-
-          if (titleMatch && authorMatch && picMatch && urlMatch) {
-            let url: string = urlMatch[1];
-            const paramMatch: RegExpMatchArray | null = item.match(/generateParam\('([^']+)'\)/);
-            if (paramMatch) {
-              url += this.generateParam(paramMatch[1]);
-            }
-
-            if (!url.startsWith('http')) {
-              url = 'https://www.hifini.com/' + url;
-            }
-
-            const title: string = titleMatch[1];
-            const artist: string = authorMatch[1];
-            const cover_src: string = picMatch[1];
-            const un_redirected_url: string = url;
-
-            return await this.hifiniThreadCacheRepository.save({
-              data_href: dataHref,
-              title,
-              artist,
-              cover_src,
-              un_redirected_url,
-              cached_at: new Date(),
-              modified_at: new Date(),
-            });
-          }
-        }
-        return null;
-      } else {
+      if (!scriptContent) {
         console.warn('页面上没有外链的音乐播放器, dataHref:', dataHref, '链接:', 'https://hifini.com/' + dataHref);
         return null;
       }
+
+      // 解析脚本内容中包含音乐信息的部分
+      const musicMatch: RegExpMatchArray | null = scriptContent.match(/music:\s*\[(.*?)]/s);
+      if (!musicMatch) throw new Error('Music array not found in script.');
+
+      const musicItems: RegExpMatchArray | null = musicMatch[1].match(/{[^}]+}/g);
+      if (!musicItems) {
+        console.warn('No valid music items found.');
+        return null;
+      }
+
+      for (const item of musicItems) {
+        const titleMatch: RegExpMatchArray | null = item.match(/title:\s*'([^']+)'/);
+        const authorMatch: RegExpMatchArray | null = item.match(/author:\s*'([^']+)'/);
+        const picMatch: RegExpMatchArray | null = item.match(/pic:\s*'([^']+)'/);
+        const urlMatch: RegExpMatchArray | null = item.match(/url:\s*'([^']+)'/);
+
+        if (titleMatch && authorMatch && picMatch && urlMatch) {
+          let url: string = urlMatch[1];
+          const paramMatch: RegExpMatchArray | null = item.match(/generateParam\('([^']+)'\)/);
+          if (paramMatch) {
+            url += this.generateParam(paramMatch[1]);
+          }
+
+          if (!url.startsWith('http')) {
+            url = 'https://www.hifini.com/' + url;
+          }
+
+          const title: string = titleMatch[1];
+          const artist: string = authorMatch[1];
+          const cover_src: string = picMatch[1];
+          const un_redirected_url: string = url;
+
+          return await this.hifiniThreadCacheRepository.save({
+            data_href: dataHref,
+            title,
+            artist,
+            cover_src,
+            un_redirected_url,
+            cached_at: new Date(),
+            modified_at: new Date(),
+          });
+        }
+      }
+      return null;
     } catch (error: unknown) {
       console.error('Error fetching and saving music info:', error);
       throw error;
     }
   }
 
-  // 获取搜索结果，并转换为 TrackModel 数组
+  /**
+   * 获取搜索结果，并转换为 TrackModel 数组
+   */
   public async getSearchResults(keyword: string): Promise<TrackModel[]> {
     try {
       const searchResults: HifiniSearchResult[] = await this.search(keyword);
-      console.info(`搜索操作完成，结果数量: ${searchResults ? searchResults.length : 0}`);
+      console.info(`搜索操作完成，结果数量: ${searchResults?.length || 0}`);
 
       if (!Array.isArray(searchResults) || searchResults.length === 0) {
-        console.warn('搜索结果不是有效的数组或为空，返回空数组');
+        console.warn('搜索结果为空，返回空数组');
         return [];
       }
 
+      // 过滤掉专辑
       const filteredResults: HifiniSearchResult[] = searchResults.filter(
-        (result: HifiniSearchResult): boolean => result.isAlbum === 0,
+        (result: HifiniSearchResult) => result.isAlbum === 0,
       );
       console.info(`过滤后结果数量: ${filteredResults.length}`);
 
@@ -321,9 +340,11 @@ export default class HifiniMusicService {
         return [];
       }
 
+      // 按热度降序排序，并截取前5个
       const sortedResults: HifiniSearchResult[] = filteredResults.sort((a, b) => b.heat - a.heat).slice(0, 5);
       console.info(`排序并截取前5个结果，准备获取详细信息`);
 
+      // 获取每个搜索结果对应的音乐信息
       const musicInfos: (HifiniThreadCacheModel | null)[] = await Promise.all(
         sortedResults.map(async (result: HifiniSearchResult, index: number): Promise<HifiniThreadCacheModel | null> => {
           try {
@@ -339,10 +360,11 @@ export default class HifiniMusicService {
       );
 
       const validMusicInfos: HifiniThreadCacheModel[] = musicInfos.filter(
-        (info: HifiniThreadCacheModel | null): info is HifiniThreadCacheModel => !!info && !!info.cover_src,
+        (info): info is HifiniThreadCacheModel => !!info && !!info.cover_src,
       );
       console.info(`成功获取到 ${validMusicInfos.length} 个有效的音乐信息`);
 
+      // 转换为 TrackModel 数组（仅设置必要字段）
       return validMusicInfos.map((info: HifiniThreadCacheModel): TrackModel => {
         return {
           platform: 'Hifini',

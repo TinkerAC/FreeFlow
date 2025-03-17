@@ -5475,7 +5475,7 @@ packages:
 
   xterm-addon-search@0.8.2:
     resolution: {integrity: sha512-I1863mjn8P6uVrqm/X+btalVsqjAKLhnhpbP7SavAOpEkI1jJhbHU2UTp7NjeRtcKTks6UWk/ycgds5snDSejg==}
-    deprecated: This package is now deprecated. Move to @xterm/addon-search instead.
+    deprecated: This package is now deprecated. Move to @xterm/addon-searchContext instead.
     peerDependencies:
       xterm: ^4.0.0
 

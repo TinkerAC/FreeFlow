@@ -122,7 +122,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
       if (tray) tray.destroy(); // 销毁系统托盘图标
       // 发送请求给渲染进程获取播放器状态
 
-      mainWindow.webContents.send('request-player-state');
+      mainWindow.webContents.send('request-playerContext-state');
       console.log('主进程已发送请求获取播放器状态');
 
 

@@ -18,8 +18,12 @@ export default class HifiniThreadCacheRepositoryImpl implements HifiniThreadCach
     return HifiniThreadCacheMapper.toModel(hifiniThreadCache);
   }
 
-  delete(dataHref: string): Promise<void> {
-    return Promise.resolve(undefined);
+  delete(dataHref: string): Promise<number> {
+    return HifiniThreadCache.destroy({
+      where: {
+        data_href: dataHref,
+      },
+    });
   }
 
   async findByDataHref(dataHref: string): Promise<HifiniThreadCacheModel | null> {

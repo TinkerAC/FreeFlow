@@ -1,13 +1,13 @@
 // src/components/PlaylistView/ModalModifyPlaylist.jsx
 
 import React, { useState } from 'react';
-import context from '@main/app/electronContextApi';
 import { PlaylistModel } from '@src/shared/types';
+import { playlistContext } from '@main/app/electronContextApi';
 
 
 interface ModalModifyPlaylistProps {
   onClose: () => void;
-  playList:PlaylistModel;
+  playList: PlaylistModel;
   refreshPlaylist: () => void;
 }
 
@@ -27,12 +27,12 @@ const ModalModifyPlaylist = ({
     // 在这里处理保存逻辑，例如调用 API 更新歌单信息
     console.log('正在保存歌单信息:', { title, description });
     // 调用 API 更新歌单信息
-    await context.modifyPlaylist(
+    await playlistContext.modifyPlaylist(
       {
         playlist_id: playList.playlist_id,
         title,
-        description
-      }
+        description,
+      },
     ).then(refreshPlaylist);
     onClose();
   };
@@ -83,10 +83,6 @@ const ModalModifyPlaylist = ({
           </div>
         </form>
 
-        {/* 说明文字 */}
-        <p className="text-gray-400 text-xs mt-4 text-center">
-          继续下一步，则表示你已同意Spotify获取你选择上传的图像。请确保你有上传此图像的权利。
-        </p>
       </div>
     </div>
   );

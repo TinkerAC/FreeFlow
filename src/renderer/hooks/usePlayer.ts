@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import useStateRef from 'react-usestateref';
 import getAudioSrc from '@main/services/loadAudio';
-import context from '@main/app/electronContextApi';
 import { PlayerState, TrackModel } from '@src/shared/types';
+import { playerContext } from '@main/app/electronContextApi';
 
 function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
   // 统一的状态管理，新增 isLoading 用于显示加载状态
@@ -306,7 +306,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
   useEffect(() => {
     const loadPlayerState = async () => {
       try {
-        const savedState = await context.getPlayerState();
+        const savedState = await playerContext.getPlayerState();
         console.log('加载播放器状态:', savedState);
         if (savedState) {
           const currentTrack = savedState.queue[savedState.indexList[savedState.currentIndex]];
@@ -320,7 +320,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
           });
         }
       } catch (error) {
-        console.error('Failed to load player state:', error);
+        console.error('Failed to load playerContext state:', error);
       }
     };
     loadPlayerState().then();

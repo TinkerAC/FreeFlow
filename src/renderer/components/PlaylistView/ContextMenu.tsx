@@ -1,7 +1,7 @@
 // src/renderer/components/SearchResultView/contextMenu.tsx
 import React, { useState } from 'react';
 import { PlaylistModel, TrackModel } from '@src/shared/types';
-import context from '@main/app/electronContextApi';
+import { libraryContext, playlistContext } from '@main/app/electronContextApi';
 
 interface ContextMenuProps {
   x: number,
@@ -88,9 +88,9 @@ function ContextMenu({
                   className="p-2 hover:bg-gray-700 cursor-pointer"
                   onClick={() => {
                     if (playlist.playlist_id === 0) {
-                      context.addTrackToLibrary(track).then(refreshPlaylists);
+                      libraryContext.addTrackToLibrary(track).then(refreshPlaylists);
                     } else {
-                      context.addTrackToPlaylist(track, playlist.playlist_id).then(refreshPlaylists);
+                      playlistContext.addTrackToPlaylist(track, playlist.playlist_id).then(refreshPlaylists);
                     }
                     handleCloseMenu();
                   }}
@@ -110,10 +110,10 @@ function ContextMenu({
         onClick={async () => {
           switch (currentPlaylist?.playlist_id) {
             case 0:
-              await context.removeTrackFromLibrary(track).then(refreshPlaylists);
+              await libraryContext.removeTrackFromLibrary(track).then(refreshPlaylists);
               break;
             default:
-              await context.removeTrackFromPlaylist(currentPlaylist.playlist_id, track).then(refreshPlaylists);
+              await libraryContext.removeTrackFromLibrary(currentPlaylist.playlist_id, track).then(refreshPlaylists);
               break;
           }
         }}>

@@ -1,4 +1,4 @@
-// jest.config.js
+// jest.configContext.js
 module.exports = {
   preset: 'ts-jest', // 使用 ts-jest 预设
   testEnvironment: 'node',

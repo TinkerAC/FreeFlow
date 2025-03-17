@@ -1,4 +1,4 @@
-// file: src/renderer/components/Playerbar/PlayerBar.tsx
+// file: src/renderer/components/PlayerBar/PlayerBar.tsx
 import React from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { formatTime } from '@src/utils/timeUtils';

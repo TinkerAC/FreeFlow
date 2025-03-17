@@ -1,4 +1,4 @@
-// postcss.config.js
+// postcss.configContext.js
 module.exports = {
     plugins: {
         tailwindcss: {},

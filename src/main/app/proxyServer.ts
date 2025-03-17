@@ -42,7 +42,7 @@ class ProxyServerManager {
       console.log('代理服务器收到请求:', platform, platformUniqueId);
 
       if (!platform || !platformUniqueId) {
-        res.status(400).send('Error: Missing platform or platformUniqueId.');
+        res.status(400).send('Error: Missing platformContext or platformUniqueId.');
         return;
       }
 
@@ -59,7 +59,7 @@ class ProxyServerManager {
               console.log(`NetEaseCloudMusic music link${forceReload ? ' (forceReload)' : ''}:`, musicLink);
               break;
             default:
-              res.status(400).send('Error: Unsupported platform.');
+              res.status(400).send('Error: Unsupported platformContext.');
               return;
           }
 
@@ -132,13 +132,13 @@ class ProxyServerManager {
         // 首次尝试
         try {
           await performRequest(false);
-        } catch (err: any) {
+        } catch (err) {
           // 如果是第一次出现 "-1" 错误，则forceReload重试
           if (err.message && err.message.includes('-1')) {
             console.log('检测到-1，使用 forceReload 重试...');
             try {
               await performRequest(true);
-            } catch (secondErr: any) {
+            } catch (secondErr) {
               console.error('第二次重试仍然失败:', secondErr.message);
               if (!res.headersSent) {
                 res.status(500).send('Error fetching music link after forced reload.');
@@ -152,7 +152,7 @@ class ProxyServerManager {
           }
         }
 
-      } catch (error){
+      } catch (error) {
         console.error('Error fetching music link:', error.message);
         if (!res.headersSent) {
           res.status(500).send('Error fetching music link.');

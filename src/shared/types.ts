@@ -89,7 +89,7 @@ export class NetEaseCloudMusicTrackModel extends TrackModel {
     duration: number,
     platform: string,
     platform_unique_id: string,
-    title: string
+    title: string,
   ) {
     super();
     this.id = id;
@@ -117,7 +117,7 @@ export class NetEaseCloudMusicTrackModel extends TrackModel {
       json.duration,
       json.platform,
       json.platform_unique_id,
-      json.title
+      json.title,
     );
   }
 
@@ -157,7 +157,7 @@ export class LocalPlayTrackModel extends TrackModel {
     duration: number,
     platform: string,
     platform_unique_id: string,
-    title: string
+    title: string,
   ) {
     super();
     this.album = album;
@@ -174,7 +174,7 @@ export class LocalPlayTrackModel extends TrackModel {
    * 根据 JSON 数据构建本地歌曲实例
    * @param json JSON 数据
    */
-  public static build(json: any): TrackModel {
+  public static build(json): TrackModel {
     return new LocalPlayTrackModel(
       json.album,
       json.artist,
@@ -183,7 +183,7 @@ export class LocalPlayTrackModel extends TrackModel {
       json.duration,
       json.platform,
       json.platform_unique_id,
-      json.title
+      json.title,
     );
   }
 
@@ -218,7 +218,7 @@ export class HifiniTrackModel extends TrackModel {
     duration: number,
     platform: string,
     platform_unique_id: string,
-    title: string
+    title: string,
   ) {
     super();
     this.id = id;
@@ -246,7 +246,7 @@ export class HifiniTrackModel extends TrackModel {
       json.duration,
       json.platform,
       json.platform_unique_id,
-      json.title
+      json.title,
     );
   }
 
@@ -378,7 +378,7 @@ export class PlaylistModel {
     tracks: TrackModel[],
     creator: string,
     modified_at: Date,
-    cover_src: string
+    cover_src: string,
   ) {
     this.playlist_id = playlist_id;
     this.platform = platform;
@@ -410,7 +410,7 @@ export class PlaylistModel {
       json.tracks, // 这里 tracks 数组需要进一步处理转换成 TrackModel 实例
       json.creator,
       json.modified_at,
-      json.cover_src
+      json.cover_src,
     );
   }
 }
@@ -424,7 +424,7 @@ export class PlaylistModel {
 export class ModelFactory {
   /**
    * 根据 JSON 数据构建 TrackModel 子类实例
-   * @param json JSON 数据，必须包含 platform 字段
+   * @param json JSON 数据，必须包含 platformContext 字段
    */
   public static buildTrackModel(json: any): TrackModel {
     if (!json || !json.platform) {

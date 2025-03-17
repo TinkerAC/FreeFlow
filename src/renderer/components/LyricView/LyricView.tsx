@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Lyric, PlayerState } from '@src/shared/types';
-import electronContextApi from '@main/app/electronContextApi';
+import { lyricsContext } from '@main/app/electronContextApi';
 
 interface LyricViewProps {
   playerState: PlayerState;
@@ -31,7 +31,7 @@ const LyricView: React.FC<LyricViewProps> = ({ playerState, setCurrentTime }) =>
         return;
       }
       try {
-        const lyricData = await electronContextApi.getLyrics(playerState.currentTrackInfo);
+        const lyricData = await lyricsContext.getLyrics(playerState.currentTrackInfo);
         console.log('[fetchLyric] 获取歌词成功：', lyricData);
         setLyric(lyricData);
       } catch (err) {
@@ -40,7 +40,7 @@ const LyricView: React.FC<LyricViewProps> = ({ playerState, setCurrentTime }) =>
       }
     }
 
-    fetchLyric();
+    fetchLyric().then();
   }, [playerState.currentTrackInfo]);
 
   // 添加用户交互事件监听（监听 wheel、mousedown、touchstart）
@@ -85,38 +85,30 @@ const LyricView: React.FC<LyricViewProps> = ({ playerState, setCurrentTime }) =>
   useEffect(() => {
     if (activeIndex === null || !lyricsContainerRef.current || !lyric) return;
 
-    console.log('[AutoScroll] activeIndex 变化为：', activeIndex);
     // 如果 activeIndex 与上次相同，则不触发滚动
     if (lastActiveIndexRef.current === activeIndex) {
-      console.log('[AutoScroll] 当前歌词行未变化，取消自动滚动');
       return;
     }
 
     const now = Date.now();
-    console.log('[AutoScroll] 检测时间：', now, 'lastUserInteractionRef：', lastUserInteractionRef.current, '间隔：', now - lastUserInteractionRef.current);
     if (now - lastUserInteractionRef.current < 3500) {
-      console.log('[AutoScroll] 用户交互未超时，取消自动滚动');
       return;
     }
 
     // 更新 lastActiveIndexRef 为当前 activeIndex
     lastActiveIndexRef.current = activeIndex;
 
-    const currentTimeMs = playerState.currentTime * 1000;
-    console.log('[AutoScroll] 当前时间(ms)：', currentTimeMs, '自动滚动选中的歌词行索引：', activeIndex);
     const activeElem = lyricsContainerRef.current.querySelector(`[data-index="${activeIndex}"]`);
     if (activeElem) {
       const containerHeight = lyricsContainerRef.current.clientHeight;
       const elemOffsetTop = (activeElem as HTMLElement).offsetTop;
       const elemHeight = (activeElem as HTMLElement).clientHeight;
       const scrollTop = elemOffsetTop - containerHeight / 2 + elemHeight / 2;
-      console.log('[AutoScroll] 自动滚动目标 scrollTop：', scrollTop);
       isAutoScrollingRef.current = true;
       lyricsContainerRef.current.scrollTo({ top: scrollTop, behavior: 'smooth' });
       // 延时重置自动滚动标记
       setTimeout(() => {
         isAutoScrollingRef.current = false;
-        console.log('[AutoScroll] 自动滚动结束，重置 isAutoScrollingRef');
       }, 1500);
     }
   }, [activeIndex, playerState.currentTime, lyric]);
@@ -139,7 +131,7 @@ const LyricView: React.FC<LyricViewProps> = ({ playerState, setCurrentTime }) =>
         }`}
       >
         <span className="text-sm text-gray-500 mr-2">
-          {new Date(line.time).toISOString().substr(14, 5)}
+          {new Date(line.time).toISOString().slice(14, -5)}
         </span>
         {line.text}
       </p>

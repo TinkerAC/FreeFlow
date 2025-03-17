@@ -9,8 +9,8 @@ import { PlaylistModel, TrackModel } from '@src/shared/types';
 
 import { Playlist } from '@components/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/PlaylistView/ModalModifyPlaylist';
-import context from '@main/app/electronContextApi';
 import { DefaultCover } from '@components/static';
+import { playlistContext } from '@main/app/electronContextApi';
 
 interface PlaylistViewProps {
   playListInfo: PlaylistModel;
@@ -161,14 +161,14 @@ export function PlaylistView({
           {playListInfo?.is_persistent ? (
             <i className="fas fa-heart text-red-500 text-2xl ml-auto"
                onClick={() => {
-                 context.removePlaylist(playListInfo?.playlist_id).then(refreshPlaylist);
+                 playlistContext.removePlaylist(playListInfo?.playlist_id).then(refreshPlaylist);
                  refreshPlaylist();
                }}
             ></i>
           ) : (
             <i className="far fa-heart text-2xl ml-auto"
                onClick={() => {
-                 context.addPlayList(playListInfo).then(refreshPlaylist);
+                 playlistContext.addPlaylist(playListInfo).then(refreshPlaylist);
                }}
             ></i>
           )}

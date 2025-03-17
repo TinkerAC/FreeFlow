@@ -23,7 +23,7 @@ export default async function getAudioSrc(
             const blobUrl = URL.createObjectURL(blob);
             resolve(blobUrl); // 返回生成的 blob URL
           } else {
-            reject(new Error(`Failed to load audio from datahref via proxy: ${xhr.status} ${xhr.statusText}`));
+            reject(new Error(`Failed to load audio from data_href via proxy: ${xhr.status} ${xhr.statusText}`));
           }
         };
 

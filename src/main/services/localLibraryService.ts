@@ -6,8 +6,9 @@ import { inject, injectable } from 'inversify';
 import { getConfig } from '@main/services/ConfigService';
 import { fileExists } from '@src/utils/helpers';
 import TrackRepository from '@main/repository/TrackRepository';
-import { TrackModel } from '@src/shared/types';
+import { ModelFactory, TrackModel } from '@src/shared/types';
 import Store from 'electron-store';
+import { Platform } from '@main/enum/Platform';
 
 @injectable()
 class LocalLibraryService {
@@ -77,12 +78,14 @@ class LocalLibraryService {
 
                 if (!existingTrack) {
                   console.log(`发现新文件: ${normalizedPath}`);
-                  const trackData: any = {
-                    platform: 'Local',
-                    platform_unique_id: normalizedPath,
-                    created_at: new Date(),
-                    // 添加其他必要的字段
-                  };
+                  const trackData: TrackModel =
+                    ModelFactory.buildTrackModel(
+                      {
+                        platform: Platform.LOCAL,
+                        platform_unique_id: normalizedPath,
+                        created_at: new Date(),
+                        // 添加其他必要的字段
+                      });
                   tracks.push(trackData);
                 }
               }

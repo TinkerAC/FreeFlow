@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import './TopBar.css';
-import context from '@main/app/electronContextApi';
 import { FusionSearchResult } from '@src/shared/types';
+import { configContext, platformContext, searchContext, windowControlContext } from '@main/app/electronContextApi';
+
 
 async function getSearchResults(searchTerm: string) {
-  const results: FusionSearchResult = await context.getSearchResults(searchTerm);
+  const results: FusionSearchResult = await searchContext.getSearchResults(searchTerm);
   console.log('前端收到的搜索结果:', results);
   return results;
 }
@@ -31,7 +32,7 @@ export default function TopBar({
 
   useEffect(() => {
     // 获取平台信息
-    context.getPlatform().then((platform: string) => {
+    platformContext.getPlatform().then((platform: string) => {
       setPlatform(platform);
     });
   }, []);
@@ -51,7 +52,7 @@ export default function TopBar({
 
   useEffect(() => {
     // 获取用户名
-    context?.getConfig('user_name').then((name: string) => {
+    configContext.getConfig('user_name').then((name: string) => {
       setUserName(name);
     });
   }, []);
@@ -79,13 +80,13 @@ export default function TopBar({
       {platform === 'darwin' && (
         <div id="traffic-lights">
           <button className="traffic-light close"
-                  onClick={() => context.close()}
+                  onClick={() => windowControlContext.close()}
           ></button>
           <button className="traffic-light minimize"
-                  onClick={() => context.minimize()}
+                  onClick={() => windowControlContext.minimize()}
           ></button>
           <button className="traffic-light maximize"
-                  onClick={() => context.maximize()}
+                  onClick={() => windowControlContext.maximize()}
           ></button>
         </div>)}
 
@@ -129,12 +130,12 @@ export default function TopBar({
                       userName || '无'
                     }</span>
         </div>
-        {/*show if the platform is not macOS*/}
+        {/*show if the platformContext is not macOS*/}
         {platform !== 'darwin' && (
           <div className="window-controls">
-            <span onClick={() => context.minimize()}>&#8722;</span>
-            <span onClick={() => context.maximize()}>&#9633;</span>
-            <span onClick={() => context.close()}>&times;</span>
+            <span onClick={() => windowControlContext.minimize()}>&#8722;</span>
+            <span onClick={() => windowControlContext.maximize()}>&#9633;</span>
+            <span onClick={() => windowControlContext.close()}>&times;</span>
           </div>)}
 
 

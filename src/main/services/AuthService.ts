@@ -28,10 +28,3 @@ export async function is_hifini_cookies_expired(cookies: { [key: string]: string
   }
 }
 
-//
-// is_hifini_cookies_expired({}).then(console.log);
-//
-// is_hifini_cookies_expired({
-//   'bbs_sid': 'n4rmgpn9qp6e2c4lfkcscj9ivo',
-//   'bbs_token': 'pBU5WoT0aNRincnpUJB4aiNdEFy3SIkEGHsjHnQ2PquW2rPS2KhRFWo2muCG9VDirYz3dAAGWaOrGU8WNq10OAow6utY4sG2',
-// }).then(console.log);

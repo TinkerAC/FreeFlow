@@ -38,7 +38,7 @@ export function registerGlobalShortcuts(mainWindow: BrowserWindow): void {
     shortcuts.forEach(({ key, action }) => {
         const ret = globalShortcut.register(key, () => {
             console.log(`${key} 按下`);
-            mainWindow.webContents.send('global-shortcut', action);
+            mainWindow.webContents.send('global-shortcutContext', action);
         });
 
         if (!ret) {

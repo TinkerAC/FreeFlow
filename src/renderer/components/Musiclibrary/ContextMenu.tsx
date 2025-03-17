@@ -1,12 +1,13 @@
 import React from 'react';
-import context from '@main/app/electronContextApi';
+import { PlaylistModel } from '@src/shared/types';
+import { playlistContext } from '@main/app/electronContextApi';
 
 interface ContextMenuProps {
 
   x: number;
   y: number;
   handleCloseMenu: () => void;
-  eventPlaylist: any;
+  eventPlaylist: PlaylistModel;
   refreshPlaylist: () => void;
 
 }
@@ -42,7 +43,7 @@ function ContextMenu({
         style={{ color: '#fff' }}
         onClick={() => {
           console.log(`前端正在删除歌单${eventPlaylist.playlist_id}`);
-          context.removePlaylist(eventPlaylist.playlist_id).then(refreshPlaylist);
+          playlistContext.removePlaylist(eventPlaylist.playlist_id).then(refreshPlaylist);
           handleCloseMenu();
         }}
       >

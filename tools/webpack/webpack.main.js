@@ -4,7 +4,7 @@ module.exports = {
    * that runs in the main process.
    */
   entry: ['./src/main/app/app.ts'],
-  // Put your normal webpack config below here
+  // Put your normal webpack configContext below here
   module: {
     rules: require('./webpack.rules'),
   },

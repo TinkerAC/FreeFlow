@@ -9,8 +9,8 @@ import MainContent from '@components/Maincontent/MainContent';
 import RightContent from '@components/RightContent/RightContent';
 import useMusicLibrary from '@renderer/hooks/useMusiclibrary';
 import PlayerBar from '@components/Playerbar/PlayerBar';
-import context from '@main/app/electronContextApi';
 import { FusionSearchResult, PlayerState } from '@src/shared/types';
+import { playerContext, shortcutContext } from '@main/app/electronContextApi';
 
 const Application: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -55,7 +55,7 @@ const Application: React.FC = () => {
     // 注册播放器状态和快捷键事件
     const handleRequestPlayerState = () => {
       const state: PlayerState = dumpPlayerState();
-      context.sendPlayerState(state);
+      playerContext.sendPlayerState(state);
     };
     const handleNotification = (message: string) => {
       alert(message);
@@ -82,12 +82,12 @@ const Application: React.FC = () => {
       }
     };
 
-    const removeRequestPlayerStateListener = context.onRequestPlayerState(handleRequestPlayerState);
-    context.onShortcut(handleShortcut);
-    context.onNotification(handleNotification);
+    const removeRequestPlayerStateListener = playerContext.onRequestPlayerState(handleRequestPlayerState);
+    shortcutContext.onShortcut(handleShortcut);
+    playerContext.onNotification(handleNotification);
     return () => {
       removeRequestPlayerStateListener();
-      context.removeShortcutListener();
+      shortcutContext.removeShortcutListener();
       console.log('已移除所有 IPC 监听器');
     };
   }, []);

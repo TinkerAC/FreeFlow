@@ -7,25 +7,61 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.3.2&#10;-尝试引入歌词界面&#10;-尝试引入单元测试">
-      <change afterPath="$PROJECT_DIR$/src/main/services/LyricService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/renderer/components/LyricView/LyricView.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/lyricService.test.ts" afterDir="false" />
+    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.4.0&#10;-添加歌词支持">
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/configApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/libraryApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/lyricsApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/platformApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/playerApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/playlistApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/searchApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/shortcutApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/app/ipc/windowControlApi.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/搞懂Ipc.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/FreeFlow.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/FreeFlow.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/database.sqlite" beforeDir="false" afterPath="$PROJECT_DIR$/data/database.sqlite" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/playerState.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/playerState.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jest.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/jest.config.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postcss.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/postcss.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/app.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/app/electronContext.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/electronContext.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/electronContextApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/electronContextApi.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/proxyServer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/proxyServer.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/shortcutManager.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/shortcutManager.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/windowPreload.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/windowPreload.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/repository/HifiniThreadCacheRepository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/HifiniThreadCacheRepository.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/repository/impl/HifiniThreadCacheRepositoryImpl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/impl/HifiniThreadCacheRepositoryImpl.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/repository/impl/PlaylistRepositoryImpl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/impl/PlaylistRepositoryImpl.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/repository/mappers/TrackMapper.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/mappers/TrackMapper.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/AuthService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/AuthService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/HifiniMusicService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/HifiniMusicService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/LyricService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/LyricService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/loadAudio.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/loadAudio.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/localLibraryService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/localLibraryService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/services/playlistService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/playlistService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/components/Application.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Application.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Maincontent/MainContent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/LyricView/LyricView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/LyricView/LyricView.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/ContextMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/ContextMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlaylistView/ContextMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlaylistView/ContextMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlaylistView/ModalModifyPlaylist.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlaylistView/ModalModifyPlaylist.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/PlaylistView/PlaylistView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/PlaylistView/PlaylistView.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/components/ProfileView/ProfileView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/ProfileView/ProfileView.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/TopBar/TopBar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/hooks/useMusiclibrary.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/useMusiclibrary.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/shared/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/lyricService.test.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/forge/forge.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/tools/forge/forge.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/webpack/webpack.main.js" beforeDir="false" afterPath="$PROJECT_DIR$/tools/webpack/webpack.main.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,35 +104,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Jest.getLyrics.executor&quot;: &quot;Run&quot;,
-    &quot;Jest.getLyrics.当 track_identifier 为 null 时应返回 undefined.executor&quot;: &quot;Run&quot;,
-    &quot;Node.js.AuthService.ts.executor&quot;: &quot;Run&quot;,
-    &quot;Node.js.LyricService.ts.executor&quot;: &quot;Run&quot;,
-    &quot;Node.js.app.ts.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;ts&quot;,
-    &quot;js.last.introduce.type&quot;: &quot;VAR&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/data&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.standard&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.standard&quot;: &quot;&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs.jest.jest_package&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/node_modules/jest&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
-    &quot;npm.make.executor&quot;: &quot;Run&quot;,
-    &quot;npm.package.executor&quot;: &quot;Run&quot;,
-    &quot;npm.start.executor&quot;: &quot;Run&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;settings.javascript.linters.eslint&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Jest.getLyrics.executor": "Run",
+    "Jest.getLyrics.当 track_identifier 为 null 时应返回 undefined.executor": "Run",
+    "Node.js.AuthService.ts.executor": "Run",
+    "Node.js.LyricService.ts.executor": "Run",
+    "Node.js.app.ts.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "ts",
+    "js.last.introduce.type": "VAR",
+    "last_opened_file_path": "/Users/tinker/WebstormProjects/FreeFlow/data",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.standard": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.standard": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs.jest.jest_package": "/Users/tinker/WebstormProjects/FreeFlow/node_modules/jest",
+    "nodejs_package_manager_path": "pnpm",
+    "npm.lint.executor": "Run",
+    "npm.make.executor": "Run",
+    "npm.package.executor": "Run",
+    "npm.start.executor": "Run",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "settings.javascript.linters.eslint",
+    "ts.external.directory.path": "/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/data" />
@@ -105,40 +142,35 @@
       <recent name="$PROJECT_DIR$/assets" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/app" />
+      <recent name="$PROJECT_DIR$/src/renderer" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$/src/renderer/components/ContentPanel" />
-      <recent name="$PROJECT_DIR$/assets/icons" />
-      <recent name="$PROJECT_DIR$/assets/images" />
     </key>
   </component>
   <component name="RunManager" selected="npm.start">
-    <configuration name="getLyrics" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
-      <node-interpreter value="project" />
-      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
-      <working-dir value="$PROJECT_DIR$" />
-      <envs />
-      <scope-kind value="SUITE" />
-      <test-file value="$PROJECT_DIR$/test/lyricService.test.ts" />
-      <test-names>
-        <test-name value="getLyrics" />
-      </test-names>
-      <method v="2" />
-    </configuration>
-    <configuration name="getLyrics.当 track_identifier 为 null 时应返回 undefined" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
-      <node-interpreter value="project" />
-      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
-      <working-dir value="$PROJECT_DIR$" />
-      <envs />
-      <scope-kind value="TEST" />
-      <test-file value="$PROJECT_DIR$/test/lyricService.test.ts" />
-      <test-names>
-        <test-name value="getLyrics" />
-        <test-name value="当 track_identifier 为 null 时应返回 undefined" />
-      </test-names>
-      <method v="2" />
-    </configuration>
     <configuration name="LyricService.ts" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/main/services/LyricService.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/src/main/services">
+      <method v="2" />
+    </configuration>
+    <configuration name="lint" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="lint" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="make" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="make" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
       <method v="2" />
     </configuration>
     <configuration name="package" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
@@ -164,10 +196,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="npm.start" />
-        <item itemvalue="Node.js.LyricService.ts" />
-        <item itemvalue="Jest.getLyrics.当 track_identifier 为 null 时应返回 undefined" />
-        <item itemvalue="Jest.getLyrics" />
+        <item itemvalue="npm.lint" />
+        <item itemvalue="npm.make" />
         <item itemvalue="npm.package" />
+        <item itemvalue="Node.js.LyricService.ts" />
       </list>
     </recent_temporary>
   </component>
@@ -283,7 +315,8 @@
       <workItem from="1742106844946" duration="9000" />
       <workItem from="1742177276164" duration="4367000" />
       <workItem from="1742182869376" duration="24000" />
-      <workItem from="1742195324459" duration="6510000" />
+      <workItem from="1742195324459" duration="7375000" />
+      <workItem from="1742209301892" duration="9548000" />
     </task>
     <task id="LOCAL-00001" summary="V2.0.1&#10;-重大更新&#10;修改了项目名、package.json 中的相关信息&#10;-迁移架构到ts">
       <option name="closed" value="true" />
@@ -357,7 +390,15 @@
       <option name="project" value="LOCAL" />
       <updated>1742048752938</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="V2.4.0&#10;-添加歌词支持">
+      <option name="closed" value="true" />
+      <created>1742201889960</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1742201889960</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -387,7 +428,8 @@
     <MESSAGE value="V2.2.4&#10;-实现通过双击播放列表中的歌曲播放下一首" />
     <MESSAGE value="V2.3.0&#10;-优化UI界面&#10;-修复无法加载默认cover的问题" />
     <MESSAGE value="V2.3.1&#10;-代码质量优化" />
-    <option name="LAST_COMMIT_MESSAGE" value="V2.3.1&#10;-代码质量优化" />
+    <MESSAGE value="V2.4.0&#10;-添加歌词支持" />
+    <option name="LAST_COMMIT_MESSAGE" value="V2.4.0&#10;-添加歌词支持" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -409,7 +451,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts</url>
-          <line>51</line>
+          <line>63</line>
           <option name="timeStamp" value="35" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
@@ -419,7 +461,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/services/HifiniMusicService.ts</url>
-          <line>101</line>
+          <line>104</line>
           <option name="timeStamp" value="37" />
         </line-breakpoint>
       </breakpoints>

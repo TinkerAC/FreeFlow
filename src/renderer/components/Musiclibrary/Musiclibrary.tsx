@@ -2,9 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import Item from './Item';
 import ContextMenu from './ContextMenu';
-import context from '@main/app/electronContextApi';
 import { PlaylistModel } from '@src/shared/types';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
+import { playlistContext } from '@main/app/electronContextApi';
 
 
 interface MusicLibraryProps {
@@ -86,7 +86,7 @@ export default function MusicLibrary({
               className="w-[4rem] h-[4rem] flex justify-center items-center rounded-lg hover:bg-item-bg-hover"
             >
               <img
-                src={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
+                src={item?.tracks?.[0]?.cover_src || '../assets/default-playlistContext-cover.png'}
                 alt={`${item.title} key:${item.playlist_id}`}
                 className="w-12 h-12 m-1 rounded-md cursor-pointer"
                 onClick={() => handleSelectItem(index)}
@@ -111,7 +111,7 @@ export default function MusicLibrary({
             <div className="ml-auto flex items-center">
               <i
                 className="fas fa-plus text-xl cursor-pointer"
-                onClick={() => context.createPlaylist().then(refreshPlaylist)}
+                onClick={() => playlistContext.createPlaylist().then(refreshPlaylist)}
               ></i>
             </div>
           </div>
@@ -139,7 +139,7 @@ export default function MusicLibrary({
               libraryItems.map((item, index) => (
                 <Item
                   key={item.playlist_id}
-                  imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
+                  imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlistContext-cover.png'}
                   altText={`${item.title} key:${item.playlist_id}`}
                   title={item.title}
                   description={item.description}

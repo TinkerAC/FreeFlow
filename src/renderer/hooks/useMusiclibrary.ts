@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import useStateRef from 'react-usestateref';
-import context from '@main/app/electronContextApi';
+import { playlistContext } from '@main/app/electronContextApi';
 
 
 function useMusicLibrary() {
@@ -11,7 +11,7 @@ function useMusicLibrary() {
   const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState(false); // 控制音乐库折叠状态
   const fetchAndCompletePlaylists = async () => {
     try {
-      const playlists = await context.getPlaylists(); // 调用 electron API 获取歌单
+      const playlists = await playlistContext.getPlaylists(); // 调用 electron API 获取歌单
       console.log('playlists:', playlists);
       setPlaylists(playlists); // 更新歌单状态
     } catch (error) {
