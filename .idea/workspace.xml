@@ -7,27 +7,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.4.1&#10;-代码质量优化,拆分context">
-      <change afterPath="$PROJECT_DIR$/src/shared/enum/Platform.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/shared/types/playlist.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/shared/types/track.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/database.sqlite" beforeDir="false" afterPath="$PROJECT_DIR$/data/database.sqlite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/playerState.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/playerState.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/app.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/electronContext.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/electronContextApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/electronContextApi.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipc/lyricsApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipc/lyricsApi.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipc/platformApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipc/platformApi.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipc/playerApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipc/playerApi.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipc/searchApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipc/searchApi.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/windowPreload.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/windowPreload.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/Application.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Application.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/ProfileView/ProfileView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/ProfileView/ProfileView.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/hooks/usePlayer.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/shared/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types.ts" afterDir="false" />
-    </list>
+    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.4.2&#10;-代码质量优化,新建reveal database in fs" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -290,7 +270,7 @@
       <workItem from="1742294442182" duration="432000" />
       <workItem from="1742295540663" duration="150000" />
       <workItem from="1742973075165" duration="195000" />
-      <workItem from="1743430928804" duration="830000" />
+      <workItem from="1743430928804" duration="1514000" />
     </task>
     <task id="LOCAL-00001" summary="V2.0.1&#10;-重大更新&#10;修改了项目名、package.json 中的相关信息&#10;-迁移架构到ts">
       <option name="closed" value="true" />
@@ -380,7 +360,23 @@
       <option name="project" value="LOCAL" />
       <updated>1742218999281</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="V2.4.2&#10;-代码质量优化,新建reveal database in fs">
+      <option name="closed" value="true" />
+      <created>1743431881242</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1743431881242</updated>
+    </task>
+    <task id="LOCAL-00013" summary="V2.4.2&#10;-代码质量优化,新建reveal database in fs">
+      <option name="closed" value="true" />
+      <created>1743432338872</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1743432338872</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -412,7 +408,8 @@
     <MESSAGE value="V2.3.1&#10;-代码质量优化" />
     <MESSAGE value="V2.4.0&#10;-添加歌词支持" />
     <MESSAGE value="V2.4.1&#10;-代码质量优化,拆分context" />
-    <option name="LAST_COMMIT_MESSAGE" value="V2.4.1&#10;-代码质量优化,拆分context" />
+    <MESSAGE value="V2.4.2&#10;-代码质量优化,新建reveal database in fs" />
+    <option name="LAST_COMMIT_MESSAGE" value="V2.4.2&#10;-代码质量优化,新建reveal database in fs" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
