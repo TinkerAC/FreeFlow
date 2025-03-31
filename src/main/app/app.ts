@@ -45,15 +45,20 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   }
 
   const localLibraryServiceInstance = container.get<LocalLibraryService>('LocalLibraryService');
-  const store:Store = container.get('Store');
+  const store: Store = container.get('Store');
   const proxyServerManager = container.get<ProxyServerManager>('ProxyServerManager');
 
   // 在 app 准备好时执行初始化工作
   app.whenReady().then(async () => {
 
 
+
     await sequelize.sync(); // 同步数据库
+
     await initConfig(store); // 初始化配置
+
+
+
     await localLibraryServiceInstance.updateLocalLibrary(); // 更新本地音乐库
 
     await proxyServerManager.start(); // 启动代理服务器
@@ -64,7 +69,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    const cookies:{ [key: string]: string } = store.get('hifini_cookie');
+    const cookies: { [key: string]: string } = store.get('hifini_cookie');
     console.log('cookies:', cookies);
     const is_hifini_cookies_expired_result = await is_hifini_cookies_expired(cookies);
 
@@ -120,9 +125,9 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
       event.preventDefault(); // 阻止默认退出行为
       isQuitting = true;
       if (tray) tray.destroy(); // 销毁系统托盘图标
-      // 发送请求给渲染进程获取播放器状态
 
-      mainWindow.webContents.send('request-playerContext-state');
+      // 发送请求给渲染进程获取播放器状态
+      mainWindow.webContents.send('request-player-state');
       console.log('主进程已发送请求获取播放器状态');
 
 

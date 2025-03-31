@@ -2,7 +2,7 @@
 import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import PlaylistService from '@main/services/playlistService';
 import { loadPlayer, savePlayer } from '@main/services/playerService';
-import { dataPath, playerStateDumpFile } from './pathConfig';
+import { dataPath, playerStateDumpFile,dbPath } from './pathConfig';
 import { ModelFactory, PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
 import { container } from '@main/di/di-container';
 import HifiniMusicService from '@main/services/HifiniMusicService';
@@ -60,7 +60,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   });
 
   // 获取播放器状态事件
-  ipcMain.handle('playerContext-state', () => {
+  ipcMain.handle('load-player-state', async () => {
     return loadPlayer(playerStateDumpFile);
   });
 
@@ -120,8 +120,8 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     return dataPath;
   });
 
-  // 监听播放器状态请求
-  ipcMain.once('reply-playerContext-state', (event: IpcMainEvent, state: PlayerState) => {
+  // 监听渲染端发送的回复播放器状态事件
+  ipcMain.once('reply-player-state', (_event: IpcMainEvent, state: PlayerState) => {
     console.log('主进程已收到播放器状态:', state);
     savePlayer(playerStateDumpFile, state);
     app.quit();
@@ -175,4 +175,11 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     return await getLyrics(track_model);
 
   });
+
+
+  ipcMain.on('reveal-database-in-file-system', async () => {
+    const { shell } = require('electron');
+    shell.showItemInFolder(dbPath);
+  });
+
 }

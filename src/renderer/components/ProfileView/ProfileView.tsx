@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { configContext } from '@main/app/electronContextApi';
+import { configContext, platformContext } from '@main/app/electronContextApi';
 
 function ProfileView() {
   // 状态变量
@@ -144,6 +144,18 @@ function ProfileView() {
         保存
       </button>
       {message && <div className="mt-4 text-green-500">{message}</div>}
+
+
+      <button
+        onClick={() => {
+          // 注意：在渲染进程中直接使用 require 需要确保你允许 Node 集成或通过 preload 暴露相应的 API
+          // 显示数据库文件所在目录，并高亮该文件
+          platformContext.revealDataBaseInFileSystem();
+        }}
+        className="bg-gray-700 text-white px-4 py-2 rounded-full"
+      >
+        显示数据库文件
+      </button>
     </div>
   );
 }
@@ -225,6 +237,8 @@ function ScanPathList({ items, onItemsChange }: ScanPathListProps) {
                 删除
               </button>
             </>
+
+
           )}
         </li>
       ))}

@@ -82,11 +82,11 @@ const Application: React.FC = () => {
       }
     };
 
-    const removeRequestPlayerStateListener = playerContext.onRequestPlayerState(handleRequestPlayerState);
+    playerContext.onRequestPlayerState(handleRequestPlayerState);
     shortcutContext.onShortcut(handleShortcut);
     playerContext.onNotification(handleNotification);
     return () => {
-      removeRequestPlayerStateListener();
+      playerContext.removeRequestPlayerStateListener();
       shortcutContext.removeShortcutListener();
       console.log('已移除所有 IPC 监听器');
     };

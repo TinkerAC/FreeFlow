@@ -12,23 +12,23 @@ import { shortcutApi } from '@main/app/ipc/shortcutApi';
 import { libraryApi } from '@main/app/ipc/libraryApi';
 import { lyricsApi } from '@main/app/ipc/lyricsApi';
 
-contextBridge.exposeInMainWorld('windowControlApi', windowControlApi);
 
-contextBridge.exposeInMainWorld('configApi', configApi);
+const mainApi = {
+  windowControlApi,
+  configApi,
+  platformApi,
+  playerApi,
+  playlistApi,
+  searchApi,
+  shortcutApi,
+  libraryApi,
+  lyricsApi,
+};
 
-contextBridge.exposeInMainWorld('libraryApi', libraryApi);
 
-contextBridge.exposeInMainWorld('platformApi', platformApi);
+contextBridge.exposeInMainWorld('mainApi', mainApi);
 
-contextBridge.exposeInMainWorld('playerApi', playerApi);
 
-contextBridge.exposeInMainWorld('playlistApi', playlistApi);
-
-contextBridge.exposeInMainWorld('searchApi', searchApi);
-
-contextBridge.exposeInMainWorld('shortcutApi', shortcutApi);
-
-contextBridge.exposeInMainWorld('lyricsApi', lyricsApi);
 
 
 

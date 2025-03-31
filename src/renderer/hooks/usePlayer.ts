@@ -306,7 +306,7 @@ function usePlayer(audioRef: React.RefObject<HTMLAudioElement>) {
   useEffect(() => {
     const loadPlayerState = async () => {
       try {
-        const savedState = await playerContext.getPlayerState();
+        const savedState = await playerContext.getPlayerStateFromMain();
         console.log('加载播放器状态:', savedState);
         if (savedState) {
           const currentTrack = savedState.queue[savedState.indexList[savedState.currentIndex]];

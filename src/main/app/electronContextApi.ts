@@ -8,15 +8,15 @@ import { SearchApi } from '@main/app/ipc/searchApi';
 import { ShortcutApi } from '@main/app/ipc/shortcutApi';
 import { WindowControlApi } from '@main/app/ipc/windowControlApi';
 
-const configContext: ConfigApi = window.configApi;
-const playerContext: PlayerApi = window.playerApi;
-const playlistContext: PlaylistApi = window.playlistApi;
-const searchContext: SearchApi = window.searchApi;
-const shortcutContext: ShortcutApi = window.shortcutApi;
-const windowControlContext: WindowControlApi = window.windowControlApi;
-const libraryContext: LibraryApi = window.libraryApi;
-const lyricsContext: LyricsApi = window.lyricsApi;
-const platformContext: PlatformApi = window.platformApi;
+const configContext: ConfigApi = window.mainApi.configApi;
+const playerContext: PlayerApi = window.mainApi.playerApi;
+const playlistContext: PlaylistApi = window.mainApi.playlistApi;
+const searchContext: SearchApi = window.mainApi.searchApi;
+const shortcutContext: ShortcutApi = window.mainApi.shortcutApi;
+const windowControlContext: WindowControlApi = window.mainApi.windowControlApi;
+const libraryContext: LibraryApi = window.mainApi.libraryApi;
+const lyricsContext: LyricsApi = window.mainApi.lyricsApi;
+const platformContext: PlatformApi = window.mainApi.platformApi;
 
 export {
   configContext,
