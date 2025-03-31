@@ -1,5 +1,5 @@
-import { Platform } from '@/enum/Platform';
-import type { TrackModel } from '@/models/TrackModel';
+import { Platform } from '@main/enum/Platform';
+import type { TrackModel } from '@src/shared/types';
 
 /**
  * FusionSearchResult 接口：表示搜索结果，包含歌曲和歌单
@@ -58,4 +58,4 @@ export interface PlaylistModel {
   creator: string;
   modified_at: Date;
   cover_src: string;
-}w
+}

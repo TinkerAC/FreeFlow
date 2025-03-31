@@ -1,4 +1,4 @@
-import { Platform } from '@/enum/Platform';
+import { Platform } from '@main/enum/Platform';
 
 /**
  * TrackIdentifier 接口：用于唯一标识一首歌曲
