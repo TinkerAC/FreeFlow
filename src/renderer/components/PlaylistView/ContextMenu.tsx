@@ -113,7 +113,7 @@ function ContextMenu({
               await libraryContext.removeTrackFromLibrary(track).then(refreshPlaylists);
               break;
             default:
-              await libraryContext.removeTrackFromLibrary(currentPlaylist.playlist_id, track).then(refreshPlaylists);
+              await libraryContext.removeTrackFromLibrary(track).then(refreshPlaylists);
               break;
           }
         }}>

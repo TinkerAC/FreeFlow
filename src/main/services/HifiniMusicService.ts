@@ -267,7 +267,8 @@ export default class HifiniMusicService {
       }
 
       // 解析脚本内容中包含音乐信息的部分
-      const musicMatch: RegExpMatchArray | null = scriptContent.match(/music:\s*\[(.*?)]/s);
+      const musicMatch: RegExpMatchArray | null = scriptContent.match(/music:\s*\[([\s\S]*?)]/);
+
       if (!musicMatch) throw new Error('Music array not found in script.');
 
       const musicItems: RegExpMatchArray | null = musicMatch[1].match(/{[^}]+}/g);

@@ -107,7 +107,7 @@ export class NetEaseCloudMusicTrackModel extends TrackModel {
    * 根据 JSON 数据构建网易云音乐歌曲实例
    * @param json JSON 数据
    */
-  public static build(json): TrackModel {
+  public static build(json:any): TrackModel {
     return new NetEaseCloudMusicTrackModel(
       json.id,
       json.album,
@@ -174,7 +174,7 @@ export class LocalPlayTrackModel extends TrackModel {
    * 根据 JSON 数据构建本地歌曲实例
    * @param json JSON 数据
    */
-  public static build(json): TrackModel {
+  public static build(json: any): TrackModel {
     return new LocalPlayTrackModel(
       json.album,
       json.artist,
