@@ -15,11 +15,12 @@ import Store from 'electron-store';
 import LocalLibraryService from '@main/services/localLibraryService';
 import ProxyServerManager from '@main/app/proxyServer';
 import TrackService from '@main/services/TrackService';
-import HifiniMusicService from '@main/services/HifiniMusicService';
+import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import { Track } from '@main/models/Track';
 import PlaylistService from '@main/services/playlistService';
 import { HifiniThreadCache } from '@main/models/HifiniThreadCache';
-import NetEaseCloudMusicService from '@main/services/NetEaseCloudMusicService';
+import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
+import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 
 const container = new Container();
 export { container };
@@ -48,13 +49,19 @@ container.bind<PlaylistDetailRepository>('PlaylistDetailRepository').to(Playlist
 
 container.bind<LocalLibraryService>('LocalLibraryService').to(LocalLibraryService);
 container.bind<TrackService>('TrackService').to(TrackService);
-container.bind<NetEaseCloudMusicService>('NetEaseCloudMusicService').to(NetEaseCloudMusicService);
 container.bind<ProxyServerManager>('ProxyServerManager').to(ProxyServerManager);
 
-container.bind<HifiniMusicService>('HifiniMusicService').to(HifiniMusicService);
+
+//bind musicContentProvider
+container.bind<HifiniMusic>('HifiniMusic').to(HifiniMusic);
+container.bind<NetEaseCloudMusic>('NetEaseCloudMusic').to(NetEaseCloudMusic);
+container.bind<QQMusic>('QQMusic').to(QQMusic);
 
 container.bind<PlaylistService>('PlaylistService').to(PlaylistService);
 
 container.bind<PlaylistDetail>('PlaylistDetail').to(PlaylistDetail);
+
+
+
 
 

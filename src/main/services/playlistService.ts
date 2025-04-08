@@ -5,7 +5,6 @@ import TrackRepository from '@main/repository/TrackRepository';
 import PlaylistDetailRepository from '@main/repository/PlaylistDetailRepository';
 import { fileExists } from '@src/utils/helpers';
 import TrackService from '@main/services/TrackService';
-import HifiniMusicService from '@main/services/HifiniMusicService';
 import ElectronStore from 'electron-store';
 import { Platform } from '@main/enum/Platform';
 
@@ -17,13 +16,11 @@ export default class PlaylistService {
     @inject('TrackRepository') private trackRepository: TrackRepository,
     @inject('PlaylistDetailRepository') private playlistDetailRepository: PlaylistDetailRepository,
     @inject('TrackService') private trackService: TrackService,
-    @inject('HifiniMusicService') private hifiniMusicService: HifiniMusicService,
   ) {
   }
 
 
   public async getPlaylists(): Promise<PlaylistModel[]> {
-
     try {
       // Step 1: 获取库中的所有 TrackModel，并检查文件是否存在
       const libraryTracks: TrackModel[] = await this.trackRepository.findAll();
@@ -69,7 +66,6 @@ export default class PlaylistService {
           description: '所有库中的音乐文件',
           modified_at: new Date(),
           cover_src: '',
-
         },
       );
 
@@ -132,10 +128,14 @@ export default class PlaylistService {
   }
 
   public async addTrackToPlaylist(playlistId: number, trackModel: TrackModel) {
-    console.log(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(trackModel));
 
+
+    console.log(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(trackModel));
     try {
+      //如果不在库中,则添加到库中
       const track = await this.trackRepository.findOrCreate(trackModel);
+
+
       await this.playlistDetailRepository.create({
         playlist_id: playlistId,
         track_id: track.id,
@@ -177,7 +177,7 @@ export default class PlaylistService {
   //   // 从 hifini 网站获取歌曲信息
   //   for (const [index, track] of unbind_tracks.entries()) {
   //     try {
-  //       const searchResults = await this.hifiniMusicService.getSearchResults(`${track.title} ${track.artist}`, db, store);
+  //       const searchResults = await this.hifiniMusicService.searchTracks(`${track.title} ${track.artist}`, db, store);
   //       console.log(`正在处理第${index + 1}/${length}首歌曲: ${track.title} - ${track.artist}`);
   //
   //       if (searchResults.length > 0) {

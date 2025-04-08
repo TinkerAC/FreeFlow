@@ -2,22 +2,24 @@
 import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import PlaylistService from '@main/services/playlistService';
 import { loadPlayer, savePlayer } from '@main/services/playerService';
-import { dataPath, playerStateDumpFile,dbPath } from './pathConfig';
+import { dataPath, dbPath, playerStateDumpFile } from './pathConfig';
 import { ModelFactory, PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
 import { container } from '@main/di/di-container';
-import HifiniMusicService from '@main/services/HifiniMusicService';
+import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import TrackService from '@main/services/TrackService';
-import NetEaseCloudMusicService from '@main/services/NetEaseCloudMusicService';
+import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { Platform } from '@main/enum/Platform';
 import Store from 'electron-store';
 import { getLyrics } from '@main/services/LyricService';
+import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 
 
-const hifiniMusicService: HifiniMusicService = container.get('HifiniMusicService');
+const hifiniMusic: HifiniMusic = container.get('HifiniMusic');
 const playlistService: PlaylistService = container.get('PlaylistService');
 const store: Store = container.get('Store');
 const trackService: TrackService = container.get('TrackService');
-const netEaseMusicService: NetEaseCloudMusicService = container.get('NetEaseCloudMusicService');
+const netEaseCloudMusic: NetEaseCloudMusic = container.get('NetEaseCloudMusic');
+const qqMusic: QQMusic = container.get('QQMusic');
 
 
 export function setupIpcHandlers(mainWindow: BrowserWindow): void {
@@ -72,16 +74,17 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     },
   );
 
-  ipcMain.handle('get-searchContext-results', async (event, keywords) => {
+  ipcMain.handle('get-search-result', async (event, keywords) => {
     console.log('后端收到搜索请求:', keywords);
-    const [hifini_results, netease_results, netease_playlist_results] = await Promise.all([
-      hifiniMusicService.getSearchResults(keywords),
-      netEaseMusicService.cloudSearch(keywords),
-      netEaseMusicService.cloudSearchPlaylist(keywords),
+    const [hifini_results, netease_results, netease_playlist_results, qq_music_result] = await Promise.all([
+      hifiniMusic.searchTracks(keywords),
+      netEaseCloudMusic.searchTracks(keywords),
+      netEaseCloudMusic.cloudSearchPlaylist(keywords),
+      qqMusic.searchTracks(keywords),
     ]);
 
     return {
-      tracks: hifini_results.concat(netease_results),
+      tracks: hifini_results.concat(netease_results, qq_music_result),
       playlists: netease_playlist_results,
     };
   });
@@ -89,7 +92,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   // 解析音乐链接事件
   ipcMain.handle('get-music-link', async (event: IpcMainInvokeEvent, dataHref: string) => {
     try {
-      return await hifiniMusicService.getMusicLink(dataHref);
+      return await hifiniMusic.getTrackLink(dataHref);
     } catch (error) {
       console.error('Error in get-music-link:', error);
       throw error;
@@ -103,7 +106,8 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
   // 添加音乐到歌单事件
   ipcMain.handle(
-    'add-track-to-playlistContext', async (_event: IpcMainInvokeEvent, track: TrackModel, playlistId: number) => {
+    'add-track-to-playlist', async (_event: IpcMainInvokeEvent, track: TrackModel, playlistId: number) => {
+      console.dir(track, { depth: null });
       return await playlistService.addTrackToPlaylist(playlistId, track);
     },
   );
@@ -158,7 +162,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
 
   ipcMain.handle('get-netease-cloud-music-playlistContext-detail', async (_event: IpcMainInvokeEvent, playlist_id: string) => {
-    return await netEaseMusicService.getPlaylistDetail(playlist_id);
+    return await netEaseCloudMusic.getPlaylistDetail(playlist_id);
   });
 
   ipcMain.handle('add-playlistContext', async (_event: IpcMainInvokeEvent, playlist: PlaylistModel) => {

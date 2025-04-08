@@ -3,6 +3,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './index';
 
+
 export interface TrackAttributes {
   id: number;
   platform: string;
@@ -17,7 +18,7 @@ export interface TrackAttributes {
   modified_at?: Date;
 }
 
-export interface TrackCreationAttributes extends Optional<TrackAttributes, 'id' | 'title' | 'artist' | 'duration' | 'cover_src' | 'lyrics' | 'created_at' | 'modified_at'> {
+export interface TrackCreationAttributes extends Optional<TrackAttributes, 'title' | 'artist' | 'duration' | 'cover_src' | 'lyrics' | 'created_at' | 'modified_at'> {
 }
 
 export class Track extends Model<TrackAttributes, TrackCreationAttributes> implements TrackAttributes {

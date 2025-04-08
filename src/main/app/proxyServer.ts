@@ -3,11 +3,12 @@
 import express, { Application, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { isPortOccupied } from '@src/utils/netUtils';
-import HifiniMusicService from '@main/services/HifiniMusicService';
-import NetEaseCloudMusicService from '@main/services/NetEaseCloudMusicService';
+import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
+import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import axios from 'axios';
 import { PassThrough } from 'stream';
 import Store from 'electron-store';
+import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 
 @injectable()
 class ProxyServerManager {
@@ -15,8 +16,9 @@ class ProxyServerManager {
   private port: number;
 
   constructor(
-    @inject('HifiniMusicService') private hifiniMusicService: HifiniMusicService,
-    @inject('NetEaseCloudMusicService') private netEaseCloudMusicService: NetEaseCloudMusicService,
+    @inject('HifiniMusic') private hifiniMusic: HifiniMusic,
+    @inject('NetEaseCloudMusic') private netEaseCloudMusic: NetEaseCloudMusic,
+    @inject('QQMusic') private qqMusic: QQMusic,
     @inject('Store') private store: Store,
   ) {
     this.app = express();
@@ -51,12 +53,16 @@ class ProxyServerManager {
           let musicLink: string | undefined;
           switch (platform) {
             case 'Hifini':
-              musicLink = await this.hifiniMusicService.getMusicLink(platformUniqueId, forceReload);
+              musicLink = await this.hifiniMusic.getTrackLink(platformUniqueId, forceReload);
               console.log(`Hifini music link${forceReload ? ' (forceReload)' : ''}:`, musicLink);
               break;
             case 'NetEaseCloudMusic':
-              musicLink = await this.netEaseCloudMusicService.getNetEaseMusicLink(platformUniqueId);
+              musicLink = await this.netEaseCloudMusic.getTrackLink(platformUniqueId);
               console.log(`NetEaseCloudMusic music link${forceReload ? ' (forceReload)' : ''}:`, musicLink);
+              break;
+
+            case 'QQMusic':
+              musicLink = await this.qqMusic.getTrackLink(platformUniqueId);
               break;
             default:
               res.status(400).send('Error: Unsupported platformContext.');

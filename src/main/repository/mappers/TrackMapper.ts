@@ -1,4 +1,10 @@
-import { HifiniTrackModel, LocalPlayTrackModel, NetEaseCloudMusicTrackModel, TrackModel } from '@src/shared/types';
+import {
+  HifiniTrackModel,
+  LocalPlayTrackModel,
+  NetEaseCloudMusicTrackModel,
+  QQMusicTrackModel,
+  TrackModel,
+} from '@src/shared/types';
 import { Track } from '@main/models/Track';
 import { Platform } from '@main/enum/Platform';
 
@@ -8,7 +14,6 @@ export default class TrackMapper {
   ): TrackModel {
 
     // console.log('raw.platformContext', raw.platformContext, Platform.NET_EASE_CLOUD_MUSIC, Platform.LOCAL, Platform.HIFINI);
-
     switch (raw.platform) {
       case Platform.NET_EASE_CLOUD_MUSIC:
         return NetEaseCloudMusicTrackModel.build({
@@ -39,6 +44,18 @@ export default class TrackMapper {
         return HifiniTrackModel.build({
           id: raw.id,
           platform: Platform.HIFINI,
+          platform_unique_id: raw.platform_unique_id,
+          title: raw.title,
+          artist: raw.artist,
+          album: raw.album,
+          duration: raw.duration,
+          cover_src: raw.cover_src,
+          created_at: raw.created_at,
+        });
+      case Platform.QQ_MUSIC:
+        return QQMusicTrackModel.build({
+          id: raw.id,
+          platform: Platform.QQ_MUSIC,
           platform_unique_id: raw.platform_unique_id,
           title: raw.title,
           artist: raw.artist,

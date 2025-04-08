@@ -39,6 +39,9 @@ export default class TrackRepositoryImpl implements TrackRepository {
 
 
   async create(creationAttributes: TrackCreationAttributes): Promise<TrackModel> {
+
+    //确保id 不被传入
+    delete creationAttributes.id;
     const raw: Track = await Track.create(creationAttributes);
     return TrackMapper.toDomain(raw);
   }
@@ -61,6 +64,7 @@ export default class TrackRepositoryImpl implements TrackRepository {
   }
 
   async findOrCreate(creationAttributes: TrackCreationAttributes): Promise<TrackModel> {
+
     const track = await Track.findOne({
       where: {
         platform: creationAttributes.platform,

@@ -2,7 +2,7 @@ import { inject } from 'inversify';
 import TrackRepository from '@main/repository/TrackRepository';
 
 import { IAudioMetadata, parseFile } from 'music-metadata';
-import HifiniMusicService from '@main/services/HifiniMusicService';
+import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import { TrackModel } from '@src/shared/types';
 import PlaylistDetailRepository from '@main/repository/PlaylistDetailRepository';
 import { Platform } from '@main/enum/Platform';
@@ -11,7 +11,7 @@ export default class TrackService {
 
   constructor(
     @inject('TrackRepository') private trackRepository: TrackRepository,
-    @inject('HifiniMusicService') private hifiniMusicService: HifiniMusicService,
+    @inject('HifiniMusic') private hifiniMusic: HifiniMusic,
     @inject('PlaylistDetailRepository') private playlistDetailRepository: PlaylistDetailRepository,
   ) {
   }
@@ -67,9 +67,12 @@ export default class TrackService {
         break;
       }
       case Platform.HIFINI: {
-        const metaData = await this.hifiniMusicService.getMusicInfo(trackModel.platform_unique_id);
+        const metaData = await this.hifiniMusic.getMusicInfo(trackModel.platform_unique_id);
         return Object.assign(trackModel, metaData);
+      }
 
+      case Platform.QQ_MUSIC: {
+        break;
       }
 
     }
@@ -95,7 +98,6 @@ export default class TrackService {
   }
 
 
-
   public async findTracksByPlaylistId(playlistId: number): Promise<TrackModel[]> {
 
     const trackIds = await this.playlistDetailRepository.findTrackIdsByPlaylistId(playlistId);
@@ -105,7 +107,6 @@ export default class TrackService {
         return await this.trackRepository.findById(trackId);
       }),
     );
-
 
   }
 

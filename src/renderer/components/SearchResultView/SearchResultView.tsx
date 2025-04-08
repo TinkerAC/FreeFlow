@@ -3,7 +3,7 @@ import React from 'react';
 import useStateRef from 'react-usestateref';
 import ContextMenu from '@components/SearchResultView/ContextMenu';
 import { FusionSearchResult, HifiniTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
-import { DefaultCover, Hifini, NetEaseCloudMusic } from '@components/static';
+import { DefaultCover, Hifini,QQMusic, NetEaseCloudMusic } from '@components/static';
 import { libraryContext, playlistContext, searchContext } from '@main/app/electronContextApi';
 
 interface NetSearchResultViewProps {
@@ -125,6 +125,14 @@ function NetSearchResultView({
                       {track.platform === 'Hifini' && (
                         <img
                           src={Hifini}
+                          alt={track.platform}
+                          width={20}
+                          height={20}
+                        />
+                      )}
+                      {track.platform === 'QQMusic' && (
+                        <img
+                          src={QQMusic}
                           alt={track.platform}
                           width={20}
                           height={20}

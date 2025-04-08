@@ -1,4 +1,4 @@
-import type  { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import * as cheerio from 'cheerio';
@@ -11,11 +11,13 @@ import HifiniThreadCacheRepository from '@main/repository/HifiniThreadCacheRepos
 import { HifiniThreadCacheModel, TrackModel } from '@src/shared/types';
 import { isSameUTCDay } from '@src/utils/timeUtils';
 import ElectronStore from 'electron-store';
+import { ContentProvider } from '@main/contentProvider/ContentProvider';
 
 // 定义 hifini_cookie 的类型，假定所有配置项均为字符串
 interface HifiniCookie {
   bbs_sid: string;
   bbs_token: string;
+
   [key: string]: string;
 }
 
@@ -29,7 +31,7 @@ interface HifiniSearchResult {
 }
 
 @injectable()
-export default class HifiniMusicService {
+export default class HifiniMusic implements ContentProvider {
   private readonly __filename: string;
   private readonly __dirname: string;
 
@@ -42,15 +44,29 @@ export default class HifiniMusicService {
   }
 
   /**
+   * 私有方法：获取 hifini 请求所需的 cookie 字符串
+   * 从 store 中获取 hifini_cookie 配置，并构造标准的 cookie 字符串
+   */
+  private getCookieString(): string {
+    const cookies: HifiniCookie = getConfig<HifiniCookie>(this.store, 'hifini_cookie');
+    if (!cookies || !cookies.bbs_sid || !cookies.bbs_token) {
+      throw new Error('未找到 hifini_cookie');
+    }
+    return Object.entries(cookies)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('; ');
+  }
+
+  /**
    * 搜索函数：根据关键词返回搜索结果数组
    */
   public async search(keyword: string): Promise<HifiniSearchResult[]> {
+    const cookieString: string = this.getCookieString();
     // 从 HTML 中提取包含搜索结果的 li 元素
     const extractLiElements = (html: string): cheerio.Element[] => {
       const $ = cheerio.load(html);
-      return $('div.card.searchContext div.card-body ul li').toArray();
+      return $('div.card.search div.card-body ul li').toArray();
     };
-
     // 解析单个 li 元素为 HifiniSearchResult 对象
     const parseLiElement = (liElement: cheerio.Element): HifiniSearchResult => {
       const commonFormats: string[] = ['FLAC', 'MP3', 'WAV', 'AAC', 'ALAC', 'AIFF', 'DSD', 'APE', 'OGG', 'M4A', 'WMA'];
@@ -77,6 +93,7 @@ export default class HifiniMusicService {
           'Connection': 'keep-alive',
           'DNT': '1',
           'Upgrade-Insecure-Requests': '1',
+          cookie: cookieString,
         },
         timeout: 10000,
       });
@@ -147,21 +164,17 @@ export default class HifiniMusicService {
     return this.base32Encode(outText);
   }
 
-  private isRedirectedUrlValid(redirected_url: string): boolean {
-    return !redirected_url.includes('https://music.163.com/m/download');
-  }
-
   /**
    * 获取音乐链接
    * 优化流程：先检查缓存，如果存在当天缓存则直接使用，否则调用 fetchAndSaveMusicInfo 获取新数据，
    * 然后尝试获取重定向后的链接，出错时直接返回未重定向链接。
    */
-  public async getMusicLink(dataHref: string, forceReload: boolean = false): Promise<string> {
+  public async getTrackLink(dataHref: string, forceReload: boolean = false): Promise<string> {
     try {
       const threadCache: HifiniThreadCacheModel | null = await this.hifiniThreadCacheRepository.findByDataHref(dataHref);
       let un_redirected_url: string;
-
       const currentDate: Date = new Date();
+
       console.log('threadCache:', threadCache);
 
       if (
@@ -224,25 +237,16 @@ export default class HifiniMusicService {
 
   /**
    * 从网页获取并保存音乐信息
-   * 优化流程：提取 cookies 后直接构造请求的 cookie 字符串，
-   * 利用 JSDOM 与 cheerio 提取包含音乐信息的脚本内容，
+   * 优化流程：利用 getCookieString() 获取 cookie 字符串，
+   * 并使用 JSDOM 与 cheerio 提取包含音乐信息的脚本内容，
    * 通过正则匹配解析出音乐信息，并保存到缓存库中。
    */
   private async fetchAndSaveMusicInfo(dataHref: string): Promise<HifiniThreadCacheModel | null> {
-    // 获取 hifini_cookie 配置，所有配置项均为字符串
-    const cookies: HifiniCookie = getConfig<HifiniCookie>(this.store, 'hifini_cookie');
-    console.log('获取到的 hifini_cookie:', cookies);
-
-    if (!cookies || !cookies.bbs_sid || !cookies.bbs_token) {
-      throw new Error('未找到 hifini_cookie');
-    }
+    // 利用私有方法获取 cookie 字符串
+    const cookieString: string = this.getCookieString();
+    console.log('使用 cookie:', cookieString);
 
     try {
-      // 构造 cookie 字符串
-      const cookieString: string = Object.entries(cookies)
-        .map(([key, value]) => `${key}=${value}`)
-        .join('; ');
-
       const html: string = await axios.get('https://hifini.com/' + dataHref, {
         headers: {
           referer: 'https://www.hifini.com',
@@ -320,7 +324,7 @@ export default class HifiniMusicService {
   /**
    * 获取搜索结果，并转换为 TrackModel 数组
    */
-  public async getSearchResults(keyword: string): Promise<TrackModel[]> {
+  public async searchTracks(keyword: string): Promise<TrackModel[]> {
     try {
       const searchResults: HifiniSearchResult[] = await this.search(keyword);
       console.info(`搜索操作完成，结果数量: ${searchResults?.length || 0}`);
@@ -379,8 +383,12 @@ export default class HifiniMusicService {
         } as TrackModel;
       });
     } catch (error: unknown) {
-      console.error('getSearchResults 函数执行出错:', error);
+      console.error('searchTracks 函数执行出错:', error);
       return [];
     }
+  }
+
+  isFree(): boolean {
+    return true;
   }
 }

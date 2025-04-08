@@ -10,7 +10,7 @@ export const playlistApi = {
     title: string
   }) => ipcRenderer.invoke('modify-playlistContext', playlist),
   removePlaylist: async (playlistId: number) => ipcRenderer.invoke('remove-playlistContext', playlistId),
-  addTrackToPlaylist: async (track: TrackModel, playlistId: number) => ipcRenderer.invoke('add-track-to-playlistContext', track, playlistId),
+  addTrackToPlaylist: async (track: TrackModel, playlistId: number) => ipcRenderer.invoke('add-track-to-playlist', track, playlistId),
   removeTrackFromPlaylist: async (playlistId: number, track: TrackModel) => ipcRenderer.invoke('remove-track-from-playlistContext', playlistId, track),
   createPlaylist: async () => {
     try {
