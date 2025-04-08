@@ -135,7 +135,6 @@ export default class PlaylistService {
       //如果不在库中,则添加到库中
       const track = await this.trackRepository.findOrCreate(trackModel);
 
-
       await this.playlistDetailRepository.create({
         playlist_id: playlistId,
         track_id: track.id,

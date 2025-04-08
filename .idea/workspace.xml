@@ -7,36 +7,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.4.2&#10;-代码质量优化,新建reveal database in fs">
-      <change afterPath="$PROJECT_DIR$/assets/icons/NetEaseCloudMusic.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/icons/QQMusic.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/contentProvider/ContentProvider.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/contentProvider/NetEaseCloudMusic/Interfaces.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/contentProvider/QQMusic/Interfaces.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/contentProvider/QQMusic/QQMusic.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/typings/svg.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.5&#10;-引入QQ音乐支持&#10;-代码质量跟新">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/icons/NetEaseCloudMusic.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/database.sqlite" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/data/playerState.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/playerState.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipc/playlistApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipc/playlistApi.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipc/searchApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipc/searchApi.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/app/proxyServer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/proxyServer.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/di/di-container.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/di/di-container.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/enum/Platform.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/enum/Platform.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/models/Track.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/models/Track.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/repository/mappers/TrackMapper.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/mappers/TrackMapper.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/HifiniMusicService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/contentProvider/Hifini/HifiniMusic.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/NetEaseCloudMusicService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/TrackService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/TrackService.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/services/playlistService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/playlistService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/components/static.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/static.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/shared/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,7 +80,7 @@
     "npm.lint.executor": "Run",
     "npm.make.executor": "Run",
     "npm.package.executor": "Run",
-    "npm.start.executor": "Run",
+    "npm.start.executor": "Debug",
     "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "settings.javascript.linters.eslint",
     "ts.external.directory.path": "/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib",
@@ -172,10 +147,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="npm.start" />
+        <item itemvalue="npm.make" />
         <item itemvalue="Node.js.HifiniMusic.ts" />
         <item itemvalue="Node.js.QQMusic.ts" />
         <item itemvalue="npm.lint" />
-        <item itemvalue="npm.make" />
       </list>
     </recent_temporary>
   </component>
@@ -312,7 +287,7 @@
       <workItem from="1744015509186" duration="2103000" />
       <workItem from="1744024488871" duration="10172000" />
       <workItem from="1744072867854" duration="1905000" />
-      <workItem from="1744074865417" duration="2606000" />
+      <workItem from="1744074865417" duration="3664000" />
     </task>
     <task id="LOCAL-00001" summary="V2.0.1&#10;-重大更新&#10;修改了项目名、package.json 中的相关信息&#10;-迁移架构到ts">
       <option name="closed" value="true" />
@@ -434,7 +409,23 @@
       <option name="project" value="LOCAL" />
       <updated>1743432971582</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="V2.5&#10;-引入QQ音乐支持&#10;-代码质量跟新">
+      <option name="closed" value="true" />
+      <created>1744077628588</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1744077628588</updated>
+    </task>
+    <task id="LOCAL-00017" summary="V2.5&#10;-引入QQ音乐支持&#10;-代码质量跟新">
+      <option name="closed" value="true" />
+      <created>1744077660735</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1744077660735</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -467,7 +458,8 @@
     <MESSAGE value="V2.4.0&#10;-添加歌词支持" />
     <MESSAGE value="V2.4.1&#10;-代码质量优化,拆分context" />
     <MESSAGE value="V2.4.2&#10;-代码质量优化,新建reveal database in fs" />
-    <option name="LAST_COMMIT_MESSAGE" value="V2.4.2&#10;-代码质量优化,新建reveal database in fs" />
+    <MESSAGE value="V2.5&#10;-引入QQ音乐支持&#10;-代码质量跟新" />
+    <option name="LAST_COMMIT_MESSAGE" value="V2.5&#10;-引入QQ音乐支持&#10;-代码质量跟新" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -478,19 +470,9 @@
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/main/repository/impl/PlaylistDetailRepositoryImpl.ts</url>
-          <line>35</line>
-          <option name="timeStamp" value="31" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/app/ipcHandlers.ts</url>
           <line>145</line>
           <option name="timeStamp" value="33" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts</url>
-          <line>67</line>
-          <option name="timeStamp" value="35" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx</url>
@@ -503,16 +485,16 @@
           <option name="timeStamp" value="37" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/main/contentProvider/Hifini/HifiniMusic.ts</url>
-          <line>84</line>
+          <url>file://$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts</url>
+          <line>78</line>
           <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="46" />
+          <option name="timeStamp" value="50" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/main/contentProvider/Hifini/HifiniMusic.ts</url>
-          <line>99</line>
+          <url>file://$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts</url>
+          <line>43</line>
           <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="49" />
+          <option name="timeStamp" value="51" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

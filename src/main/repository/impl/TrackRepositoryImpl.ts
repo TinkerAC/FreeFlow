@@ -43,6 +43,7 @@ export default class TrackRepositoryImpl implements TrackRepository {
     //确保id 不被传入
     delete creationAttributes.id;
     const raw: Track = await Track.create(creationAttributes);
+
     return TrackMapper.toDomain(raw);
   }
 
@@ -75,8 +76,7 @@ export default class TrackRepositoryImpl implements TrackRepository {
     if (track) {
       return TrackMapper.toDomain(track);
     }
-    const track_1 = await Track.create(creationAttributes);
-    return TrackMapper.toDomain(track_1);
+    return await this.create(creationAttributes);
 
   }
 }
