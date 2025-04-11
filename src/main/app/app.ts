@@ -51,13 +51,9 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   // 在 app 准备好时执行初始化工作
   app.whenReady().then(async () => {
 
-
-
     await sequelize.sync(); // 同步数据库
 
     await initConfig(store); // 初始化配置
-
-
 
     await localLibraryServiceInstance.updateLocalLibrary(); // 更新本地音乐库
 
@@ -66,7 +62,6 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
     mainWindow = createAppWindow(); // 创建主窗口
 
     //检查hifini 登陆是否过期, 如果过期则提醒用户重新登陆
-
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     const cookies: { [key: string]: string } = store.get('hifini_cookie');
@@ -81,8 +76,6 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
     if (process.platform === 'win32') {
       tray = createTray(mainWindow);
     }
-
-
     registerGlobalShortcuts(mainWindow); // 注册全局快捷键
   });
 
@@ -129,8 +122,6 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
       // 发送请求给渲染进程获取播放器状态
       mainWindow.webContents.send('request-player-state');
       console.log('主进程已发送请求获取播放器状态');
-
-
     }
 
   });

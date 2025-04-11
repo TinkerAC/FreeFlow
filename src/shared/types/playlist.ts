@@ -2,14 +2,6 @@ import { Platform } from '@main/enum/Platform';
 import type { TrackModel } from '@src/shared/types';
 
 /**
- * FusionSearchResult 接口：表示搜索结果，包含歌曲和歌单
- */
-export interface FusionSearchResult {
-  tracks: TrackModel[];
-  playlists: PlaylistModel[];
-}
-
-/**
  * MusicLibraryItemType 枚举：表示音乐库中项目的类型
  */
 export enum MusicLibraryItemType {
@@ -17,6 +9,7 @@ export enum MusicLibraryItemType {
   ALBUM = 'Album',
   LIBRARY = 'Library',
 }
+
 
 /**
  * BaseMusicLibraryItem 接口：音乐库中基础项

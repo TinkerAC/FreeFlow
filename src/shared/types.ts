@@ -551,6 +551,8 @@ export class ModelFactory {
         return LocalPlayTrackModel.build(json);
       case Platform.HIFINI:
         return HifiniTrackModel.build(json);
+      case Platform.QQ_MUSIC:
+        return QQMusicTrackModel.build(json);
       default:
         throw new Error('未知的平台：' + json.platform);
     }

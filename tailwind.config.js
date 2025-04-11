@@ -8,7 +8,15 @@ export default {
         'item-bg-hover': '#1f1f1f',
         'item-bg-selected': '#2a2a2a',
         'item-bg-hover-selected': '#484848',
-
+      },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+      },
+      animation: {
+        marquee: 'marquee 10s linear infinite',
       },
 
     },

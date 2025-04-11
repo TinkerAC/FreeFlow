@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { NetEaseCloudMusicTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
+import { Lyric, LyricLine, NetEaseCloudMusicTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
 import { injectable } from 'inversify';
 import { Platform } from '@main/enum/Platform';
 import { ContentProvider } from '../ContentProvider';
@@ -19,9 +19,11 @@ import {
 @injectable()
 export default class NetEaseCloudMusic implements ContentProvider {
   private readonly base_url: string;
+  public readonly platformName: string;
 
   constructor() {
     this.base_url = 'https://neteasecloudmusicapi-pi-flax.vercel.app/';
+    this.platformName = 'NetEaseCloudMusic';
   }
 
   /**
@@ -158,4 +160,44 @@ ${freeSongs.map((song) => `  - ${song.name} (fee: ${song.fee})`).join('\n')}
     // fee 为 0 或 8 时，表示歌曲可以免费播放
     return song.fee === 0 || song.fee === 8;
   }
+
+  /**
+   * 将原始歌词字符串解析为[Lyric]对象
+   * @param rawLyric 原始歌词字符串
+   * @returns 解析后的Lyric对象
+   */
+  private parseLyrics(rawLyric: string): Lyric {
+    const lines: LyricLine[] = [];
+    // 匹配形如 [mm:ss.mmm] 的时间标签和后面的文本
+    const regex = /^\[(\d{2}):(\d{2})\.(\d{2,3})](.*)$/;
+    for (const line of rawLyric.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const match = trimmed.match(regex);
+      if (match) {
+        const minutes = parseInt(match[1], 10);
+        const seconds = parseInt(match[2], 10);
+        const milliseconds = parseInt(match[3], 10);
+        // 计算总时间（单位：毫秒）
+        const time = minutes * 60 * 1000 + seconds * 1000 + milliseconds;
+        const text = match[4].trim();
+        lines.push({ time, text });
+      }
+    }
+    return { lines };
+  }
+
+
+  async getLyrics(uniqueId: string): Promise<Lyric | void> {
+    const url = `${this.base_url}lyric?id=${uniqueId}`;
+    const response = await axios.get(url, { timeout: 10000 });
+    const data = response.data;
+    if (!data.lrc || typeof data.lrc.lyric !== 'string') {
+      throw new Error('无效的歌词数据: 缺少 lrc.lyric 字段');
+    }
+    console.log('获取歌词数据:', data);
+    return this.parseLyrics(data.lrc.lyric);
+  }
+
+
 }

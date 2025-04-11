@@ -99,7 +99,7 @@ export default function MusicLibrary({
   } else {
     // 展开状态下：头部固定，列表区域滚动
     return (
-      <ContentPanel className="w-full flex flex-col h-full">
+      <ContentPanel className="w-full flex flex-col h-full no-scrollbar">
         {/* 固定头部区域 */}
         <div className="p-6">
           <div className="flex items-center">

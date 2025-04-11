@@ -78,8 +78,3 @@ PlaylistDetail.init(
   }
 );
 
-
-PlaylistDetail.belongsTo(Playlist, {
-  foreignKey: 'playlist_id',
-  as: 'Playlist',
-});

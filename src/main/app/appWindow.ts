@@ -54,7 +54,8 @@ export function createAppWindow(): BrowserWindow {
 
   // 窗口事件处理
   appWindow.on('close', () => {
-    // 在这里处理窗口关闭事件
+    //hide 主窗口
+    appWindow.hide();
   });
 
   appWindow.on('hide', () => {

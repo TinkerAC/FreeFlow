@@ -8,20 +8,7 @@ export interface TrackIdentifier {
   platform_unique_id: string;
 }
 
-/**
- * LyricLine 接口：表示歌词中的一行，包含时间（毫秒）和文本
- */
-export interface LyricLine {
-  time: number;    // 时间，单位毫秒
-  text: string;    // 歌词文本
-}
 
-/**
- * Lyric 接口：表示完整歌词，包含多行歌词
- */
-export interface Lyric {
-  lines: LyricLine[];
-}
 
 /**
  * HifiniThreadCacheModel 接口：用于缓存 Hifini 相关数据

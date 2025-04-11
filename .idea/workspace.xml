@@ -7,11 +7,34 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.5&#10;-引入QQ音乐支持&#10;-代码质量跟新">
+    <list default="true" id="d5b918af-fa53-4030-83dd-c67f1f62492f" name="更改" comment="V2.5-hotfix&#10;-修复sql约束错误">
+      <change afterPath="$PROJECT_DIR$/src/main/contentProvider/Hifini/Interfaces.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/renderer/components/ProgressBar.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/icons/NetEaseCloudMusic.svg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/icons/NetEaseCloudMusic.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/icons/QQMusic.svg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/icons/QQMusic.svg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/playerState.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/playerState.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/services/playlistService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/playlistService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/index.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.d.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/app.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/appWindow.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/appWindow.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/ipc/lyricsApi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipc/lyricsApi.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/app/ipcHandlers.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/contentProvider/ContentProvider.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/contentProvider/ContentProvider.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/contentProvider/Hifini/HifiniMusic.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/contentProvider/Hifini/HifiniMusic.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/contentProvider/QQMusic/QQMusic.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/contentProvider/QQMusic/QQMusic.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/di/di-container.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/di/di-container.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/models/PlaylistDetail.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/models/PlaylistDetail.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/models/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/models/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/services/LyricService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/services/LyricService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Musiclibrary/Musiclibrary.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/Playerbar/PlayerBar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/components/SearchResultView/SearchResultView.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/shared/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/shared/types/playlist.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types/playlist.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/shared/types/track.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/types/track.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/typings/svg.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tailwind.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/tailwind.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,44 +77,44 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Jest.getLyrics.executor": "Run",
-    "Jest.getLyrics.当 track_identifier 为 null 时应返回 undefined.executor": "Run",
-    "Node.js.AuthService.ts.executor": "Run",
-    "Node.js.HifiniMusic.ts.executor": "Debug",
-    "Node.js.LyricService.ts.executor": "Run",
-    "Node.js.QQMusic.ts.executor": "Run",
-    "Node.js.QQMusicService.ts.executor": "Run",
-    "Node.js.app.ts.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "ts",
-    "js.last.introduce.type": "VAR",
-    "last_opened_file_path": "/Users/tinker/WebstormProjects/FreeFlow/assets/icons",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.standard": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.standard": "",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs.jest.jest_package": "/Users/tinker/WebstormProjects/FreeFlow/node_modules/jest",
-    "nodejs_package_manager_path": "pnpm",
-    "npm.lint.executor": "Run",
-    "npm.make.executor": "Run",
-    "npm.package.executor": "Run",
-    "npm.start.executor": "Debug",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "settings.javascript.linters.eslint",
-    "ts.external.directory.path": "/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Jest.getLyrics.executor&quot;: &quot;Run&quot;,
+    &quot;Jest.getLyrics.当 track_identifier 为 null 时应返回 undefined.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.AuthService.ts.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.HifiniMusic.ts.executor&quot;: &quot;Debug&quot;,
+    &quot;Node.js.LyricService.ts.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.QQMusic.ts.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.QQMusicService.ts.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.app.ts.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ts&quot;,
+    &quot;js.last.introduce.type&quot;: &quot;VAR&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/assets/icons&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.standard&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.standard&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs.jest.jest_package&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/node_modules/jest&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
+    &quot;npm.lint.executor&quot;: &quot;Run&quot;,
+    &quot;npm.make.executor&quot;: &quot;Run&quot;,
+    &quot;npm.package.executor&quot;: &quot;Run&quot;,
+    &quot;npm.start.executor&quot;: &quot;Run&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;settings.javascript.linters.eslint&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/tinker/WebstormProjects/FreeFlow/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "com.intellij.ide.scratch.ScratchImplUtil$2/新建临时文件": [
-      "HTML"
+  &quot;keyToStringList&quot;: {
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/新建临时文件&quot;: [
+      &quot;HTML&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/assets/icons" />
@@ -288,6 +311,11 @@
       <workItem from="1744024488871" duration="10172000" />
       <workItem from="1744072867854" duration="1905000" />
       <workItem from="1744074865417" duration="3664000" />
+      <workItem from="1744078648785" duration="278000" />
+      <workItem from="1744177220186" duration="113000" />
+      <workItem from="1744372072406" duration="1523000" />
+      <workItem from="1744373691572" duration="453000" />
+      <workItem from="1744374432857" duration="5561000" />
     </task>
     <task id="LOCAL-00001" summary="V2.0.1&#10;-重大更新&#10;修改了项目名、package.json 中的相关信息&#10;-迁移架构到ts">
       <option name="closed" value="true" />
@@ -425,7 +453,15 @@
       <option name="project" value="LOCAL" />
       <updated>1744077660735</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="V2.5-hotfix&#10;-修复sql约束错误">
+      <option name="closed" value="true" />
+      <created>1744078670064</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1744078670064</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -459,7 +495,8 @@
     <MESSAGE value="V2.4.1&#10;-代码质量优化,拆分context" />
     <MESSAGE value="V2.4.2&#10;-代码质量优化,新建reveal database in fs" />
     <MESSAGE value="V2.5&#10;-引入QQ音乐支持&#10;-代码质量跟新" />
-    <option name="LAST_COMMIT_MESSAGE" value="V2.5&#10;-引入QQ音乐支持&#10;-代码质量跟新" />
+    <MESSAGE value="V2.5-hotfix&#10;-修复sql约束错误" />
+    <option name="LAST_COMMIT_MESSAGE" value="V2.5-hotfix&#10;-修复sql约束错误" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -471,7 +508,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/app/ipcHandlers.ts</url>
-          <line>145</line>
+          <line>146</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
@@ -481,19 +518,17 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/contentProvider/Hifini/HifiniMusic.ts</url>
-          <line>119</line>
+          <line>107</line>
           <option name="timeStamp" value="37" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts</url>
           <line>78</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="50" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/main/repository/impl/TrackRepositoryImpl.ts</url>
           <line>43</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="51" />
         </line-breakpoint>
       </breakpoints>

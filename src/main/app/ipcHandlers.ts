@@ -10,8 +10,8 @@ import TrackService from '@main/services/TrackService';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { Platform } from '@main/enum/Platform';
 import Store from 'electron-store';
-import { getLyrics } from '@main/services/LyricService';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
+import { LyricService } from '@main/services/LyricService';
 
 
 const hifiniMusic: HifiniMusic = container.get('HifiniMusic');
@@ -20,6 +20,7 @@ const store: Store = container.get('Store');
 const trackService: TrackService = container.get('TrackService');
 const netEaseCloudMusic: NetEaseCloudMusic = container.get('NetEaseCloudMusic');
 const qqMusic: QQMusic = container.get('QQMusic');
+const lyricService: LyricService = container.get('LyricService');
 
 
 export function setupIpcHandlers(mainWindow: BrowserWindow): void {
@@ -169,14 +170,13 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     return await playlistService.addPlaylist(playlist);
   });
 
-  ipcMain.handle('get-lyricsContext', async (_event: IpcMainInvokeEvent, track_model: TrackModel) => {
+  ipcMain.handle('get-lyrics', async (_event: IpcMainInvokeEvent, track_model: TrackModel) => {
     //如果 track_model 不是TrackModel 的实例,调用工厂方法创建一个
-
     if (!(track_model instanceof TrackModel)) {
       track_model = ModelFactory.buildTrackModel(track_model);
     }
 
-    return await getLyrics(track_model);
+    return await lyricService.getLyrics(track_model);
 
   });
 

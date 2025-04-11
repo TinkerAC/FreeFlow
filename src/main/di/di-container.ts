@@ -21,6 +21,7 @@ import PlaylistService from '@main/services/playlistService';
 import { HifiniThreadCache } from '@main/models/HifiniThreadCache';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
+import { LyricService } from '@main/services/LyricService';
 
 const container = new Container();
 export { container };
@@ -60,7 +61,7 @@ container.bind<QQMusic>('QQMusic').to(QQMusic);
 container.bind<PlaylistService>('PlaylistService').to(PlaylistService);
 
 container.bind<PlaylistDetail>('PlaylistDetail').to(PlaylistDetail);
-
+container.bind<LyricService>('LyricService').to(LyricService);
 
 
 

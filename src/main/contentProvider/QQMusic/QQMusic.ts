@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { QQMusicTrackModel, TrackModel } from '@src/shared/types';
+import { Lyric, LyricLine, QQMusicTrackModel, TrackModel } from '@src/shared/types';
 import { ContentProvider } from '../ContentProvider';
 import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvider/QQMusic/Interfaces';
 import { injectable } from 'inversify';
@@ -8,6 +8,14 @@ const base_url = 'http://47.97.185.179/qqmusicapi/';
 
 @injectable()
 export class QQMusic implements ContentProvider {
+
+  public readonly platformName: string;
+
+  constructor() {
+    this.platformName = 'QQMusic';
+  }
+
+
   /**
    * 根据关键词搜索 QQ 音乐免费歌曲，并返回统一的 TrackModel 数组
    * （原 cloudSearchQQ 方法逻辑重构而来）
@@ -51,6 +59,48 @@ ${freeSongs.map((song) => `  - ${song.songname}（${song.albumname}）`).join('\
    */
   isFree(song: any): boolean {
     return song.pay.payplay === 0;
+  }
+
+  /**
+   * 根据传入的歌词字符串解析出歌词对象。
+   * 这里每行歌词格式为: [mm:ss.xx]歌词文本
+   * 例如: [00:13.91]忘掉种过的花 重新的出发 放弃理想吧
+   */
+  private parseLyrics(lyricString: string): Lyric {
+    const lines: LyricLine[] = [];
+    // 匹配时间标签和后面的歌词文本，格式：[mm:ss.xx]文本
+    const regex = /^\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)$/;
+
+    // 将传入的歌词字符串按行分割
+    const lyricLines = lyricString.split('\n');
+    for (const line of lyricLines) {
+      const match = regex.exec(line);
+      if (match) {
+        // 提取分钟、秒钟和文本内容
+        const minutes = parseInt(match[1], 10);
+        const seconds = parseFloat(match[2]);
+        const text = match[3].trim();
+        // 将分钟和秒钟转换为毫秒时间
+        const time = minutes * 60 * 1000 + seconds * 1000;
+        lines.push({ time, text });
+      }
+    }
+    return { lines };
+  }
+
+  public async getLyrics(uniqueId: string): Promise<Lyric | void> {
+    const url = `${base_url}getLyric?songmid=${uniqueId}`;
+    try {
+      const response = await axios.get(url);
+      const data = response.data;
+      if (data.code !== 0) {
+        console.error('无效的歌词数据');
+      }
+      return this.parseLyrics(data.response.lyric);
+    } catch (error) {
+      console.error('获取歌词失败:', error);
+      throw error;
+    }
   }
 }
 

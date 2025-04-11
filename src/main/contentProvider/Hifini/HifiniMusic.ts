@@ -8,32 +8,18 @@ import { fileURLToPath } from 'url';
 import { inject, injectable } from 'inversify';
 import { getConfig } from '@main/services/ConfigService';
 import HifiniThreadCacheRepository from '@main/repository/HifiniThreadCacheRepository';
-import { HifiniThreadCacheModel, TrackModel } from '@src/shared/types';
+import { HifiniThreadCacheModel, Lyric, TrackModel } from '@src/shared/types';
 import { isSameUTCDay } from '@src/utils/timeUtils';
 import ElectronStore from 'electron-store';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
+import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/Interfaces';
 
-// 定义 hifini_cookie 的类型，假定所有配置项均为字符串
-interface HifiniCookie {
-  bbs_sid: string;
-  bbs_token: string;
-
-  [key: string]: string;
-}
-
-interface HifiniSearchResult {
-  dataHref: string;
-  heat: number;
-  title: string;
-  isAlbum: number;
-  formats: string[];
-  isExpired: number;
-}
 
 @injectable()
 export default class HifiniMusic implements ContentProvider {
   private readonly __filename: string;
   private readonly __dirname: string;
+  public readonly platformName: string;
 
   constructor(
     @inject('Store') private store: ElectronStore,
@@ -41,7 +27,9 @@ export default class HifiniMusic implements ContentProvider {
   ) {
     this.__filename = fileURLToPath(import.meta.url);
     this.__dirname = path.dirname(this.__filename);
+    this.platformName = 'Hifini';
   }
+
 
   /**
    * 私有方法：获取 hifini 请求所需的 cookie 字符串
@@ -391,4 +379,9 @@ export default class HifiniMusic implements ContentProvider {
   isFree(): boolean {
     return true;
   }
+
+  async getLyrics(uniqueId: string): Promise<Lyric | void> {
+    return Promise.resolve(undefined);
+  }
+
 }
