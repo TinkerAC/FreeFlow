@@ -3,7 +3,7 @@ import React from 'react';
 import useStateRef from 'react-usestateref';
 import ContextMenu from '@components/SearchResultView/ContextMenu';
 import { FusionSearchResult, HifiniTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
-import { DefaultCover, Hifini, QQMusic, NetEaseCloudMusic } from '@components/static';
+import { DefaultCover, Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
 import { libraryContext, playlistContext, searchContext } from '@main/app/electronContextApi';
 
 interface NetSearchResultViewProps {
@@ -90,7 +90,7 @@ function NetSearchResultView({
                 alt={popularResult.title}
                 className="w-24 h-24 rounded-lg mr-4"
               />
-              <div className="flex flex-col justify-center whitespace-nowrap overflow-x-auto">
+              <div className="flex flex-col justify-center whitespace-nowrap overflow-x-auto no-scrollbar">
                 <div className="text-3xl mb-2">{popularResult.title}</div>
                 <div className="text-lg text-gray-400">
                   歌曲 · {popularResult.artist}
@@ -195,7 +195,7 @@ function NetSearchResultView({
                 />
                 <div className="flex-grow whitespace-nowrap overflow-x-clip no-scrollbar">
                   <div>{playlist.title}</div>
-                  <div className="text-gray-400">{"mocked"} 首歌曲</div>
+                  <div className="text-gray-400">{'mocked'} 首歌曲</div>
                 </div>
               </div>
             ))}

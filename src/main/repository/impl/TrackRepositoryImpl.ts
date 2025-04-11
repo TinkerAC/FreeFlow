@@ -42,6 +42,8 @@ export default class TrackRepositoryImpl implements TrackRepository {
 
     //确保id 不被传入
     delete creationAttributes.id;
+    delete creationAttributes.created_at;
+    delete creationAttributes.modified_at;
     const raw: Track = await Track.create(creationAttributes);
 
     return TrackMapper.toDomain(raw);

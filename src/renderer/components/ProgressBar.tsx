@@ -19,7 +19,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ value, min, max, onChange }) 
   };
 
   return (
-    <div className="flex items-center w-full">
+    <div className="flex items-center w-full max-w-md mx-auto">
       {/* 当前进度时间 */}
       <span className="text-sm mx-2">{formatTime(value)}</span>
       {/* 自定义进度条容器 */}
