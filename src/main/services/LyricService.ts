@@ -28,17 +28,17 @@ export class LyricService {
       throw new Error('无效的歌曲标识符: 缺少 platform_unique_id 字段');
     }
 
-    switch (track_identifier.platform){
+    switch (track_identifier.platform) {
       case Platform.NET_EASE_CLOUD_MUSIC: {
-        console.log("正在获取网易云歌词");
+        console.log('正在获取网易云歌词');
         return await this.netEaseMusic.getLyrics(track_identifier.platform_unique_id);
       }
       case Platform.QQ_MUSIC: {
-        console.log("正在获取QQ音乐歌词");
+        console.log('正在获取QQ音乐歌词');
         return await this.qqMusic.getLyrics(track_identifier.platform_unique_id);
       }
       default: {
-        console.log("正在获取其他平台歌词");
+        console.log('正在获取其他平台歌词');
         // 其他情况：先同时搜索各平台，再获取歌词
         const searchKeyword = `${track_model.title} ${track_model.artist}`;
         // 使用 Promise.all 并发请求 NetEase 和 QQ 的搜索接口
@@ -48,8 +48,8 @@ export class LyricService {
         ]);
 
         // 分别获取搜索结果中的第一首歌曲（如果存在）
-        const qq_first_song = qq_response && qq_response[0];
-        const netease_first_song = netease_response && netease_response[0];
+        const qq_first_song: TrackModel = qq_response && qq_response[0];
+        const netease_first_song: TrackModel = netease_response && netease_response[0];
 
         // 优先使用 QQ 音乐的歌词
         if (qq_first_song) {

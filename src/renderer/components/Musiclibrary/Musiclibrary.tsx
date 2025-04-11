@@ -1,4 +1,4 @@
-// file: src/renderer/components/Musiclibrary/Musiclibrary.tsx
+// file: src/renderer/components/MusicLibrary/MusicLibrary.tsx
 import React, { useEffect, useState } from 'react';
 import Item from './Item';
 import ContextMenu from './ContextMenu';
