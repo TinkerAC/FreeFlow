@@ -71,6 +71,9 @@ importers:
       pg-hstore:
         specifier: ^2.3.4
         version: 2.3.4
+      ping:
+        specifier: ^0.4.4
+        version: 0.4.4
       pinyin:
         specifier: 4.0.0-alpha.2
         version: 4.0.0-alpha.2
@@ -153,6 +156,9 @@ importers:
       '@types/node':
         specifier: ^20.14.11
         version: 20.17.23
+      '@types/ping':
+        specifier: ^0.4.4
+        version: 0.4.4
       '@types/prop-types':
         specifier: ^15.7.14
         version: 15.7.14
@@ -1079,6 +1085,9 @@ packages:
 
   '@types/node@20.17.23':
     resolution: {integrity: sha512-8PCGZ1ZJbEZuYNTMqywO+Sj4vSKjSjT6Ua+6RFOYlEvIvKQABPtrNkoVSLSKDb4obYcMhspVKmsw8Cm10NFRUg==}
+
+  '@types/ping@0.4.4':
+    resolution: {integrity: sha512-ifvo6w2f5eJYlXm+HiVx67iJe8WZp87sfa683nlqED5Vnt9Z93onkokNoWqOG21EaE8fMxyKPobE+mkPEyxsdw==}
 
   '@types/prop-types@15.7.14':
     resolution: {integrity: sha512-gNMvNH49DJ7OJYv+KAKn0Xp45p8PLl6zo2YnvDIbTd4J6MER2BmWN49TG7n9LvkyihINxeKW8+3bfS2yDC9dzQ==}
@@ -4155,6 +4164,10 @@ packages:
     resolution: {integrity: sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==}
     engines: {node: '>=0.10.0'}
 
+  ping@0.4.4:
+    resolution: {integrity: sha512-56ZMC0j7SCsMMLdOoUg12VZCfj/+ZO+yfOSjaNCRrmZZr6GLbN2X/Ui56T15dI8NhiHckaw5X2pvyfAomanwqQ==}
+    engines: {node: '>=4.0.0'}
+
   pinyin-pro@3.26.0:
     resolution: {integrity: sha512-HcBZZb0pvm0/JkPhZHWA5Hqp2cWHXrrW/WrV+OtaYYM+kf35ffvZppIUuGmyuQ7gDr1JDJKMkbEE+GN0wfMoGg==}
 
@@ -6748,6 +6761,8 @@ snapshots:
   '@types/node@20.17.23':
     dependencies:
       undici-types: 6.19.8
+
+  '@types/ping@0.4.4': {}
 
   '@types/prop-types@15.7.14': {}
 
@@ -10536,6 +10551,8 @@ snapshots:
   picomatch@2.3.1: {}
 
   pify@2.3.0: {}
+
+  ping@0.4.4: {}
 
   pinyin-pro@3.26.0: {}
 

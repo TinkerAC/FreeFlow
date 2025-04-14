@@ -51,11 +51,11 @@ export class LyricService {
         const qq_first_song: TrackModel = qq_response && qq_response[0];
         const netease_first_song: TrackModel = netease_response && netease_response[0];
 
-        // 优先使用 QQ 音乐的歌词
-        if (qq_first_song) {
-          return await this.qqMusic.getLyrics(qq_first_song.platform_unique_id);
-        } else if (netease_first_song) {
+        // 优先使用网易云的歌曲
+        if (netease_first_song) {
           return await this.netEaseMusic.getLyrics(netease_first_song.platform_unique_id);
+        } else if (qq_first_song) {
+          return await this.qqMusic.getLyrics(qq_first_song.platform_unique_id);
         } else {
           throw new Error('未找到相关歌曲的信息');
         }

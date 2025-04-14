@@ -20,6 +20,7 @@ export default class HifiniMusic implements ContentProvider {
   private readonly __filename: string;
   private readonly __dirname: string;
   public readonly platformName: string;
+  public readonly serverNodes: string[] = [];
 
   constructor(
     @inject('Store') private store: ElectronStore,
@@ -384,4 +385,8 @@ export default class HifiniMusic implements ContentProvider {
     return Promise.resolve(undefined);
   }
 
+  async chooseBestServerNode(): Promise<string> {
+    throw Error('NotSupportedError: HifiniMusic chooseBestServerNode not supported');
+
+  }
 }

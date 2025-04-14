@@ -11,6 +11,7 @@ import {
   Song,
 } from '@main/contentProvider/NetEaseCloudMusic/Interfaces';
 
+
 /**
  * NetEaseCloudMusic 实现 ContentProvider 接口，
  * 重构后将原有的 cloudSearch 与 getNetEaseMusicLink 分别改名并合并到 searchTracks 与 getTrackLink 方法中，
@@ -20,11 +21,18 @@ import {
 export default class NetEaseCloudMusic implements ContentProvider {
   private readonly base_url: string;
   public readonly platformName: string;
+  public readonly serverNodes: string[];
+
 
   constructor() {
-    this.base_url = 'https://neteasecloudmusicapi-pi-flax.vercel.app/';
+    this.serverNodes = ['http://47.97.185.179/neteasecloudmusicapi/', 'https://neteasecloudmusicapi-pi-flax.vercel.app/',
+    ];
+    this.base_url = this.serverNodes[0];
     this.platformName = 'NetEaseCloudMusic';
   }
+
+
+
 
   /**
    * 根据关键词搜索网易云音乐免费歌曲，并返回统一的 TrackModel 数组
@@ -198,6 +206,5 @@ ${freeSongs.map((song) => `  - ${song.name} (fee: ${song.fee})`).join('\n')}
     console.log('获取歌词数据:', data);
     return this.parseLyrics(data.lrc.lyric);
   }
-
 
 }

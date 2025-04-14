@@ -4,15 +4,18 @@ import { ContentProvider } from '../ContentProvider';
 import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvider/QQMusic/Interfaces';
 import { injectable } from 'inversify';
 
-const base_url = 'http://47.97.185.179/qqmusicapi/';
 
 @injectable()
 export class QQMusic implements ContentProvider {
 
   public readonly platformName: string;
+  public readonly serverNodes: string[];
+  private readonly base_url: string;
 
   constructor() {
     this.platformName = 'QQMusic';
+    this.serverNodes = ['http://47.97.185.179/qqmusicapi/'];
+    this.base_url = this.serverNodes[0];
   }
 
 
@@ -22,7 +25,7 @@ export class QQMusic implements ContentProvider {
    * @param keyword 搜索关键词
    */
   public async searchTracks(keyword: string): Promise<TrackModel[]> {
-    const url = `${base_url}getSearchByKey?key=${encodeURIComponent(keyword)}`;
+    const url = `${this.base_url}getSearchByKey?key=${encodeURIComponent(keyword)}`;
     const response = await axios.get(url);
     const data: QQCloudSearchResponse = response.data;
     const songs = data.response.data.song.list;
@@ -46,7 +49,7 @@ ${freeSongs.map((song) => `  - ${song.songname}（${song.albumname}）`).join('\
    * @param uniqueId QQ 音乐歌曲的唯一标识，即 songmid
    */
   public async getTrackLink(uniqueId: string): Promise<string> {
-    const url = `${base_url}getMusicPlay?songmid=${uniqueId}`;
+    const url = `${this.base_url}getMusicPlay?songmid=${uniqueId}`;
     const response = await axios.get(url);
     const data: QQMusicTrackResponse = response.data;
     console.dir(data, { depth: null });
@@ -89,7 +92,7 @@ ${freeSongs.map((song) => `  - ${song.songname}（${song.albumname}）`).join('\
   }
 
   public async getLyrics(uniqueId: string): Promise<Lyric | void> {
-    const url = `${base_url}getLyric?songmid=${uniqueId}`;
+    const url = `${this.base_url}getLyric?songmid=${uniqueId}`;
     try {
       const response = await axios.get(url);
       const data = response.data;
