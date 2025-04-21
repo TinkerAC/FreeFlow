@@ -4,7 +4,6 @@ import { app } from 'electron';
 import fs from 'fs';
 
 
-
 const environment = process.env.NODE_ENV || 'production';
 
 const dataPath =
@@ -20,8 +19,11 @@ if (!fs.existsSync(dataPath)) {
   console.log(`数据目录已存在: ${dataPath}`);
 }
 
+
+const fileCacheDir = path.join(dataPath, 'fileCache');
+
 const playlistsDir = path.join(dataPath, 'playlists');
 const playerStateDumpFile = path.join(dataPath, 'playerState.json');
 const dbPath = path.join(dataPath, 'database.sqlite');
 
-export { environment, dataPath, playlistsDir, playerStateDumpFile, dbPath };
+export { environment, dataPath, playlistsDir, playerStateDumpFile, dbPath, fileCacheDir };

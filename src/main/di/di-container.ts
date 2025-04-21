@@ -22,6 +22,8 @@ import { HifiniThreadCache } from '@main/models/HifiniThreadCache';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import { LyricService } from '@main/services/LyricService';
+import { FileCacheManager } from '@main/FileCacheManager';
+import { fileCacheDir } from '@main/app/pathConfig';
 
 const container = new Container();
 export { container };
@@ -29,8 +31,15 @@ export { container };
 container.bind<Store>('Store').toConstantValue(new Store({
     watch: true,
   },
-))
-;
+));
+
+//FileCacheManager
+container.bind<FileCacheManager>('FileCacheManager').toConstantValue(
+  new FileCacheManager(
+    {
+      diskCacheDir: fileCacheDir,
+    }),
+);
 
 container.bind<Sequelize>('Sequelize').toConstantValue(sequelize);
 
@@ -62,6 +71,7 @@ container.bind<PlaylistService>('PlaylistService').to(PlaylistService);
 
 container.bind<PlaylistDetail>('PlaylistDetail').to(PlaylistDetail);
 container.bind<LyricService>('LyricService').to(LyricService);
+
 
 
 

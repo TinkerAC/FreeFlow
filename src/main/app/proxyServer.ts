@@ -1,5 +1,3 @@
-// file: src/main/proxyServer.ts
-
 import express, { Application, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { isPortOccupied } from '@src/utils/netUtils';
@@ -9,6 +7,7 @@ import axios from 'axios';
 import { PassThrough } from 'stream';
 import Store from 'electron-store';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
+import { FileCacheManager } from '@main/FileCacheManager';
 
 @injectable()
 class ProxyServerManager {
@@ -20,6 +19,7 @@ class ProxyServerManager {
     @inject('NetEaseCloudMusic') private netEaseCloudMusic: NetEaseCloudMusic,
     @inject('QQMusic') private qqMusic: QQMusic,
     @inject('Store') private store: Store,
+    @inject('FileCacheManager') private cacheManager: FileCacheManager, // 注入 FileCacheManager
   ) {
     this.app = express();
     this.port = 4399; // 默认端口
@@ -34,7 +34,6 @@ class ProxyServerManager {
   }
 
   public async start(): Promise<void> {
-    const cacheTime = this.store.get('cacheTime') || 86400; // 默认为1天
     console.log('代理服务器数据库已连接');
 
     this.app.get('/proxy', async (req: Request, res: Response) => {
@@ -47,6 +46,21 @@ class ProxyServerManager {
         res.status(400).send('Error: Missing platformContext or platformUniqueId.');
         return;
       }
+
+      // 使用平台名和唯一 ID 来生成缓存文件的 key
+      const cacheKey = this.cacheManager.generateCacheKey(platform, platformUniqueId);
+
+      // 使用 FileCacheManager 来查找缓存文件
+      const cachedData = await this.cacheManager.getCachedFile(cacheKey);
+
+      if (cachedData) {
+        console.log(`${platform}-${platformUniqueId} 缓存命中，直接返回缓存数据`);
+        res.setHeader('Content-Type', 'audio/mpeg'); // 根据实际情况设置 MIME 类型
+        res.end(cachedData);
+        return;
+      }
+
+      console.log(`${platform}-${platformUniqueId} 缓存未命中，开始请求数据`);
 
       try {
         const performRequest = async (forceReload = false): Promise<void> => {
@@ -85,12 +99,6 @@ class ProxyServerManager {
             headers: headers,
           });
 
-          const contentType = response.headers['content-type'];
-          if (contentType && contentType.startsWith('audio/')) {
-            res.setHeader('Cache-Control', `public, max-age=${cacheTime}`);
-            console.log(`请求返回的内容类型是音频文件，已为响应添加缓存头 ${cacheTime} 秒`);
-          }
-
           const nodeHeaders: Record<string, string> = {};
           for (const [key, value] of Object.entries(response.headers)) {
             nodeHeaders[key] = String(value);
@@ -99,39 +107,26 @@ class ProxyServerManager {
           const passThrough = new PassThrough();
           response.data.pipe(passThrough);
 
-          let isFirstChunk = true;
-          let headersSent = false;
+          const audioData: Buffer[] = []; // 用于存储音频流的缓存
 
-          return new Promise<void>((resolve, reject) => {
-            passThrough.on('data', (chunk: Buffer) => {
-              if (isFirstChunk) {
-                isFirstChunk = false;
-                const chunkString = chunk.toString().trim();
-                if (chunkString === '-1') {
-                  console.log('返回内容为 "-1"，请求中止');
-                  // 触发错误，让外层捕获并决定是否重试
-                  passThrough.destroy(new Error('Received -1 from music link.'));
-                  return;
-                } else {
-                  if (!headersSent) {
-                    res.writeHead(response.status, nodeHeaders);
-                    headersSent = true;
-                  }
-                }
-              }
-              res.write(chunk);
-            });
+          passThrough.on('data', (chunk: Buffer) => {
+            audioData.push(chunk); // 累加音频数据
+          });
 
-            passThrough.on('end', () => {
-              if (headersSent) {
-                res.end();
-              }
-              resolve();
-            });
+          passThrough.on('end', async () => {
+            if (audioData.length > 0) {
+              const completeAudioData = Buffer.concat(audioData); // 合并所有音频数据
 
-            passThrough.on('error', (err: Error) => {
-              reject(err);
-            });
+              // 缓存音频流到磁盘
+              await this.cacheManager.cacheFile(cacheKey, completeAudioData); // 缓存当前音频文件
+              res.setHeader('Content-Type', 'audio/mpeg'); // 设置 MIME 类型
+              res.end(completeAudioData);
+            }
+          });
+
+          passThrough.on('error', (err: Error) => {
+            console.error('音频流错误:', err.message);
+            res.status(500).send('Error processing music stream.');
           });
         };
 
