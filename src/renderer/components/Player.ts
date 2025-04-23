@@ -75,6 +75,16 @@ export default class Player {
   }
 
   /* --------------------- 事件监听封装 --------------------- */
+
+
+  // 监听音频加载完成事件
+  private onAudioCanPlay = () => {
+    this.setCurrentTime(0);
+    this.currentTrackInfo.duration = this.audio.duration;
+    this.setupEndedListener();
+    this.play();
+  };
+
   private setupEndedListener() {
     this.audio.removeEventListener('ended', this.onAudioEnded);
     this.audio.addEventListener('ended', this.onAudioEnded, { once: true });
@@ -170,10 +180,7 @@ export default class Player {
         this.audio.addEventListener(
           'canplaythrough',
           () => {
-            this.setCurrentTime(0);
-            this.currentTrackInfo.duration = this.audio.duration;
-            this.setupEndedListener();
-            this.play();
+            this.onAudioCanPlay();
           },
           { once: true },
         );
@@ -214,16 +221,12 @@ export default class Player {
         this.currentTrackInfo = track;
         this.audioSrc = src;
         this.isLoading = false;
-
         this.audio.src = src;
         this.audio.load();
-
         this.audio.addEventListener(
           'canplaythrough',
           () => {
-            this.setCurrentTime(0);
-            this.setupEndedListener();
-            this.play();
+            this.onAudioCanPlay();
           },
           { once: true },
         );
@@ -318,9 +321,7 @@ export default class Player {
       this.audio.addEventListener(
         'canplaythrough',
         () => {
-          this.setCurrentTime(0);
-          this.setupEndedListener();
-          this.play();
+          this.onAudioCanPlay();
         },
         { once: true },
       );
