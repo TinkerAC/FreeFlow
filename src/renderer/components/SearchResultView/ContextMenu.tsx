@@ -1,27 +1,28 @@
 // src/renderer/components/SearchResultView/ContextMenu.tsx
 import React, { useState } from 'react';
 import { PlaylistModel, TrackModel } from '@src/shared/types';
+import Player from '@components/Player';
 
 interface ContextMenuProps {
   x: number;
   y: number;
   track: TrackModel;
-  addToNext: (track: TrackModel) => void;
   addToLibrary: (track: TrackModel) => void;
   handleCloseMenu: () => void;
   addTrackToPlaylist: (track: TrackModel, playlistId: number) => void;
   playlists: PlaylistModel[];
+  player: Player;
 }
 
 function ContextMenu({
                        x,
                        y,
                        track,
-                       addToNext,
                        addToLibrary,
                        handleCloseMenu,
                        addTrackToPlaylist,
                        playlists,
+                       player,
                      }: ContextMenuProps) {
 
   const [showSubMenu, setShowSubMenu] = useState(false); // 控制是否显示子菜单
@@ -47,7 +48,7 @@ function ContextMenu({
       <div
         className="p-2 hover:bg-gray-700 cursor-pointer"
         onClick={() => {
-          addToNext(track);
+          player.addTrackToNext(track);
           handleCloseMenu();
         }}
       >

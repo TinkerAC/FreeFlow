@@ -1,98 +1,90 @@
 import React from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { PlayerState } from '@src/shared/types';
 import { DefaultCover } from '@components/static';
 import ProgressBar from '@components/ProgressBar';
+import Player from '@components/Player';
 
 interface PlayerBarProps {
-  className?: string;
-  setCurrentTime?: (time: number) => void;
-  onPlayNext?: () => void;
-  onPlayPrevious?: () => void;
-  onTogglePlayPause?: () => void;
-  onCyclePlaybackMode?: () => void;
-  onVolumeChange?: (volume: number) => void;
-  onToggleRightContent?: () => void;
-  playerState: PlayerState;
+  player: Player;
   setMainContentView: (view: string) => void;
+  onToggleRightContent: () => void;
 }
 
 export default function PlayerBar({
-                                    setCurrentTime = () => {
-                                    },
-                                    onPlayNext = () => {
-                                    },
-                                    onPlayPrevious = () => {
-                                    },
-                                    onTogglePlayPause = () => {
-                                    },
-                                    onCyclePlaybackMode = () => {
-                                    },
-                                    onVolumeChange,
-                                    onToggleRightContent = () => {
-                                    },
-                                    playerState,
+                                    player,
                                     setMainContentView,
+                                    onToggleRightContent,
                                   }: PlayerBarProps) {
-  const { playbackMode, isPlaying, currentTime, currentTrackInfo, volume } = playerState;
+  /* player 还没初始化时直接隐藏 ,后续可以考虑使用 loading 动画 */
+
+  if (!player) return null;
+
+  const track = player.currentTrackInfo;
 
   return (
     <div className="w-full flex items-center justify-between p-4 bg-black text-white">
-      {/* 左侧：封面 + 曲目信息 */}
+      {/* ---------- 左侧：封面 + 曲目信息 ---------- */}
       <div className="flex items-center w-1/4">
         <img
-          src={currentTrackInfo?.cover_src || DefaultCover}
+          src={track?.cover_src || DefaultCover}
           alt="album cover"
           className="w-12 h-12 rounded-md"
         />
         <div className="ml-4 overflow-x-hidden">
           <div className="text-sm font-semibold whitespace-nowrap">
-            {currentTrackInfo?.title || '未知标题'}
+            {track?.title || '未知标题'}
           </div>
           <div className="text-sm text-gray-400 whitespace-nowrap">
-            {currentTrackInfo?.artist || '未知艺术家'}
+            {track?.artist || '未知艺术家'}
           </div>
         </div>
-        {playerState.isLoading && (
+        {player.isLoading && (
           <div className="ml-4">
-            <i className="fas fa-spinner fa-spin"></i>
+            <i className="fas fa-spinner fa-spin" />
           </div>
         )}
       </div>
 
-      {/* 中间：播放控制 + 自定义进度条 */}
+      {/* ---------- 中间：播放控制 + 进度条 ---------- */}
       <div className="flex items-center justify-center flex-grow">
         <div className="w-full mx-4">
+          {/* 播放控制按钮 */}
           <div className="flex items-center justify-center mb-2">
             <i
               className={`fas ${
-                playbackMode === 'loop'
+                player.playbackMode === 'loop'
                   ? 'fa-redo'
-                  : playbackMode === 'shuffle'
+                  : player.playbackMode === 'shuffle'
                     ? 'fa-random'
                     : 'fa-sync'
               } mx-3 cursor-pointer`}
-              onClick={onCyclePlaybackMode}
+              onClick={() => player.cyclePlaybackMode()}
             />
-            <i className="fas fa-step-backward mx-3 cursor-pointer" onClick={onPlayPrevious} />
             <i
-              className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'} mx-3 cursor-pointer`}
-              onClick={onTogglePlayPause}
+              className="fas fa-step-backward mx-3 cursor-pointer"
+              onClick={() => player.playPrevious()}
             />
-            <i className="fas fa-step-forward mx-3 cursor-pointer" onClick={onPlayNext} />
+            <i
+              className={`fas ${player.isPlaying ? 'fa-pause' : 'fa-play'} mx-3 cursor-pointer`}
+              onClick={() => player.togglePlayPause()}
+            />
+            <i
+              className="fas fa-step-forward mx-3 cursor-pointer"
+              onClick={() => player.playNext()}
+            />
           </div>
-          {/* 使用 ProgressBar 组件替换原始进度条 */}
+
+          {/* 进度条 */}
           <ProgressBar
-            value={currentTime}
+            value={player.currentTime}
             min={0}
-            max={currentTrackInfo?.duration || 0}
-            onChange={setCurrentTime || (() => {
-            })}
+            max={track?.duration || 0}
+            onChange={(val) => player.setCurrentTime(val)}
           />
         </div>
       </div>
 
-      {/* 右侧：播放列表、音量及其他功能 */}
+      {/* ---------- 右侧：列表 / 音量 / 其他 ---------- */}
       <div className="flex items-center">
         <i
           className="fas fa-list mx-3 cursor-pointer"
@@ -103,37 +95,29 @@ export default function PlayerBar({
         <i className="fas fa-filter mx-3 cursor-pointer" title="播放所有歌曲" />
         <i
           className="fas fa-align-center mx-3 cursor-pointer"
-          onClick={() => {
-            setMainContentView('lyric');
-          }}
+          onClick={() => setMainContentView('lyric')}
         />
         <input
-          value={volume}
           type="range"
           className="mx-2 w-24 cursor-pointer"
+          min={0}
+          max={1}
+          step={0.01}
+          value={player.volume}
           onChange={(e) => {
-            const vol = parseFloat(e.target.value);
-            if (!isNaN(vol) && vol >= 0 && vol <= 1) {
-              onVolumeChange?.(vol);
-            }
+            const v = parseFloat(e.target.value);
+            if (!isNaN(v)) player.setVolume(v);
           }}
-          min="0"
-          max="1"
-          step="0.01"
         />
         {document.fullscreenElement ? (
           <i
             className="fas fa-compress mx-3 cursor-pointer"
-            onClick={() => {
-              document.exitFullscreen().then((r) => console.log(r));
-            }}
+            onClick={() => document.exitFullscreen()}
           />
         ) : (
           <i
             className="fas fa-expand mx-3 cursor-pointer"
-            onClick={() => {
-              document.documentElement.requestFullscreen().then((r) => console.log(r));
-            }}
+            onClick={() => document.documentElement.requestFullscreen()}
           />
         )}
       </div>

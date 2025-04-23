@@ -1,24 +1,24 @@
 // file: src/renderer/components/RightContent/RightContent.tsx
 import React from 'react';
 import PlayQueue from '../PlayQueue/PlayQueue';
-import { PlayerState, TrackModel } from '@src/shared/types';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
+import Player from '@components/Player';
 
 interface RightContentProps {
   className?: string;
-  clearQueue: () => void;
-  playerState: PlayerState;
-  addToNextAndPlay: (track: TrackModel) => void;
+  player: Player;
 }
 
 export default function RightContent({
-                                       clearQueue,
-                                       playerState = PlayerState.empty(),
-                                       addToNextAndPlay,
+                                       player,
                                      }: RightContentProps) {
-  const { currentTrackInfo, nextTracks } = playerState;
 
-  if (!currentTrackInfo && nextTracks.length === 0) {
+  if (!player) {
+    return null;
+  }
+
+
+  if (player.currentTrackInfo && player.nextTracks.length === 0) {
     return (
       <ContentPanel className="h-full">
         <div className="empty-play-queue flex flex-col items-center justify-center h-full">
@@ -32,10 +32,10 @@ export default function RightContent({
   return (
     <ContentPanel className="h-full">
       <PlayQueue
-        currentTrack={currentTrackInfo}
-        nextTracks={nextTracks}
-        clearQueue={clearQueue}
-        addToNextAndPlay={addToNextAndPlay}
+        currentTrack={player.currentTrackInfo}
+        nextTracks={player.nextTracks}
+        clearQueue={() => player.clearQueue()}
+        addToNextAndPlay={(track) => player.addTrackToNextAndPlay(track)}
       />
     </ContentPanel>
   );

@@ -2,27 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { PlaylistModel, TrackModel } from '@src/shared/types';
 import ContextMenu from './ContextMenu';
 import Track from '@components/PlaylistView/Track';
+import Player from '@components/Player';
 
 interface PlaylistProps {
   filteredTracks: TrackModel[];
-  addToNext: (track: TrackModel) => void;
-  addToNextAndPlay: (track: TrackModel) => void;
   playlists: PlaylistModel[];
   currentPlaylist: PlaylistModel;
   refreshPlaylists: () => void;
+  player: Player;
 }
 
 
 export function Playlist({
                            filteredTracks,
-                           addToNext = () => {
-                           },
-                           addToNextAndPlay = () => {
-                           },
                            playlists,
                            currentPlaylist,
                            refreshPlaylists = () => {
                            },
+                           player,
                          }: PlaylistProps) {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
@@ -110,8 +107,7 @@ export function Playlist({
               key={track.id}
               track={track}
               index={index}
-              addToNext={addToNext}
-              addToNextAndPlay={addToNextAndPlay}
+              player={player}
               onRightClick={(e) => handleRightClick(e, track)}
             />
           ))
@@ -142,9 +138,9 @@ export function Playlist({
           x={contextMenuPosition.x}
           y={contextMenuPosition.y}
           track={selectedTrack} // 使用选中的 track
-          addToNext={addToNext}
           handleCloseMenu={handleCloseMenu}
           playlists={playlists}
+          player={player}
           currentPlaylist={currentPlaylist}
           refreshPlaylists={refreshPlaylists}
         />)}

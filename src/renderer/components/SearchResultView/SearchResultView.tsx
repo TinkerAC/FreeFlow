@@ -5,25 +5,25 @@ import ContextMenu from '@components/SearchResultView/ContextMenu';
 import { FusionSearchResult, HifiniTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
 import { DefaultCover, Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
 import { libraryContext, playlistContext, searchContext } from '@main/app/electronContextApi';
+import Player from '@components/Player';
 
 interface NetSearchResultViewProps {
-  addToNext: (track: TrackModel) => void;
-  addToNextAndPlay: (track: TrackModel) => void;
+
   refreshPlaylists: () => void;
   fusionSearchResult: FusionSearchResult | null; // 允许为空，表示未进行搜索或搜索中
   onSelectOnlinePlaylist: (playlistModel: PlaylistModel) => void;
   setMainContentView: (view: string) => void;
   savedPlaylists: PlaylistModel[];
+  player: Player;
 }
 
 function NetSearchResultView({
-                               addToNext,
-                               addToNextAndPlay,
                                refreshPlaylists,
                                fusionSearchResult,
                                onSelectOnlinePlaylist,
                                setMainContentView,
                                savedPlaylists,
+                               player,
                              }: NetSearchResultViewProps) {
   const [contextMenu, setContextMenu] = useStateRef<{ x: number; y: number } | null>(null);
   const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackModel | null>(null);
@@ -82,7 +82,7 @@ function NetSearchResultView({
               onContextMenu={(e) => handleContextMenu(e, popularResult)}
               onDoubleClick={() => {
                 console.log('添加到下一首并播放');
-                addToNextAndPlay(popularResult);
+                player.addTrackToNextAndPlay(popularResult);
               }}
             >
               <img
@@ -113,7 +113,7 @@ function NetSearchResultView({
                   className="flex items-center space-x-4 p-2 border-b hover:bg-item-bg-hover cursor-pointer"
                   onDoubleClick={() => {
                     console.log('添加到下一首并播放');
-                    addToNextAndPlay(track);
+                    player.addTrackToNextAndPlay(track);
                   }}
                   onContextMenu={(e) => handleContextMenu(e, track)}
                 >
@@ -211,7 +211,7 @@ function NetSearchResultView({
           x={contextMenu.x}
           y={contextMenu.y}
           track={selectedTrackRef.current}
-          addToNext={addToNext}
+          player={player}
           addToLibrary={(track) => libraryContext.addTrackToLibrary(track).then(refreshPlaylists)}
           addTrackToPlaylist={(track, playlist_id) =>
             playlistContext.addTrackToPlaylist(track, playlist_id).then(refreshPlaylists)

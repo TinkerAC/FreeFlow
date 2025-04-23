@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
 import { TrackModel } from '@src/shared/types';
 import { DefaultCover } from '@components/static';
+import Player from '@components/Player';
 
 interface TrackProps {
   track: TrackModel;
   index: number;
-  addToNext: (track: TrackModel) => void;
-  addToNextAndPlay: (track: TrackModel) => void;
   onRightClick: (e: React.MouseEvent<HTMLTableRowElement>, track: TrackModel) => void;
-
+  player: Player;
 }
 
 
@@ -17,14 +16,14 @@ const Track: React.FC<TrackProps>
   = ({
        track,
        index,
-       addToNextAndPlay,
        onRightClick,
+       player,
      }: TrackProps) => {
   const [hovered, setHovered] = useState(false);
 
   const handlePlayClick = (e: { stopPropagation: () => void; }) => {
     e.stopPropagation();
-    addToNextAndPlay(track);
+    player.addTrackToNextAndPlay(track);
   };
 
   return (
@@ -33,7 +32,7 @@ const Track: React.FC<TrackProps>
         index === 0 ? 'border-t border-gray-700' : ''
       } hover:bg-[#2A2A2A]`}
       onContextMenu={(e) => onRightClick(e, track)}
-      onDoubleClick={() => addToNextAndPlay(track)}
+      onDoubleClick={() => player.addTrackToNextAndPlay(track)}
 
     >
       <td

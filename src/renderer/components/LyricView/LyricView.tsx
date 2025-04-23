@@ -1,175 +1,165 @@
+// file: src/components/LyricView.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Lyric, PlayerState } from '@src/shared/types';
+import { Lyric } from '@src/shared/types';
 import { lyricsContext } from '@main/app/electronContextApi';
+import Player from '@components/Player';
 
 interface LyricViewProps {
-  playerState: PlayerState;
-  /**
-   * 设置当前播放进度（单位：秒）
-   */
-  setCurrentTime: (time: number) => void;
+  player: Player;
 }
 
-const LyricView: React.FC<LyricViewProps> = ({ playerState, setCurrentTime }) => {
-  // 保存歌词数据与错误信息的状态
+const LyricView: React.FC<LyricViewProps> = ({ player }) => {
+  /* --------------------------- 状态 --------------------------- */
   const [lyric, setLyric] = useState<Lyric | null>(null);
-  const [error, setError] = useState<string>('');
-  // 记录用户最后一次手动交互的时间（毫秒）
-  const lastUserInteractionRef = useRef<number>(0);
-  // 记录上一次自动滚动时选中的歌词行索引
-  const lastActiveIndexRef = useRef<number | null>(null);
-  // 标记是否正在自动滚动（避免自动滚动期间更新用户交互时间）
-  const isAutoScrollingRef = useRef<boolean>(false);
-  // 歌词滚动容器引用
-  const lyricsContainerRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState('');
+  const [showTimestamp, setShowTimestamp] = useState(false);
 
-  // 获取歌词数据
+  /* --------------------------- 引用 --------------------------- */
+  const lastUserInteractionRef = useRef(0);
+  const lastActiveIndexRef = useRef<number | null>(null);
+  const isAutoScrollingRef = useRef(false);
+  const lyricsContainerRef = useRef<HTMLDivElement>(null);
+  const hideTimerRef = useRef<number | null>(null);
+
+  /* --------------------------- 拉取歌词 --------------------------- */
   useEffect(() => {
-    async function fetchLyric() {
-      if (!playerState.currentTrackInfo) {
+    (async () => {
+      if (!player.currentTrackInfo) {
         setError('当前没有播放的歌曲');
         return;
       }
       try {
-        const lyricData = await lyricsContext.getLyrics(playerState.currentTrackInfo);
-        console.log('[fetchLyric] 获取歌词成功：', lyricData);
+        const lyricData = await lyricsContext.getLyrics(player.currentTrackInfo);
         setLyric(lyricData);
-      } catch (err) {
-        console.error('[fetchLyric] 获取歌词出错:', err);
+      } catch (e) {
+        console.error('[fetchLyric] ', e);
         setError('加载歌词失败');
       }
-    }
+    })();
+  }, [player.currentTrackInfo]);
 
-    fetchLyric().then();
-  }, [playerState.currentTrackInfo]);
-
-  // 添加用户交互事件监听（监听 wheel、mousedown、touchstart）
+  /* --------------------------- 监听用户交互 --------------------------- */
   useEffect(() => {
     const container = lyricsContainerRef.current;
     if (!container) return;
 
-    const updateUserInteraction = (event: Event) => {
-      if (!isAutoScrollingRef.current) {
-        lastUserInteractionRef.current = Date.now();
-        console.log('[UserInteraction] 事件类型：', event.type, '更新 lastUserInteractionRef：', lastUserInteractionRef.current);
-      } else {
-        console.log('[UserInteraction] 自动滚动期间忽略事件：', event.type);
-      }
+    const markUserInteraction = (e: Event) => {
+      if (isAutoScrollingRef.current) return;
+      lastUserInteractionRef.current = Date.now();
+
+      // 显示时间刻度
+      setShowTimestamp(true);
+      // 若已有隐藏计时器，清掉
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = window.setTimeout(() => setShowTimestamp(false), 2000);
     };
 
-    container.addEventListener('wheel', updateUserInteraction);
-    container.addEventListener('mousedown', updateUserInteraction);
-    container.addEventListener('touchstart', updateUserInteraction);
-
+    ['wheel', 'mousedown', 'touchstart'].forEach((ev) =>
+      container.addEventListener(ev, markUserInteraction),
+    );
     return () => {
-      container.removeEventListener('wheel', updateUserInteraction);
-      container.removeEventListener('mousedown', updateUserInteraction);
-      container.removeEventListener('touchstart', updateUserInteraction);
+      ['wheel', 'mousedown', 'touchstart'].forEach((ev) =>
+        container.removeEventListener(ev, markUserInteraction),
+      );
     };
   }, []);
 
-  // 使用 useMemo 根据 currentTime 与歌词数据计算当前活跃的歌词行索引
+  /* --------------------------- 计算当前行 --------------------------- */
   const activeIndex = useMemo(() => {
     if (!lyric) return null;
-    const currentTimeMs = playerState.currentTime * 1000;
-    let idx = lyric.lines.findIndex((line, index) => {
-      const nextLine = lyric.lines[index + 1];
-      if (!nextLine) return currentTimeMs >= line.time;
-      return currentTimeMs >= line.time && currentTimeMs < nextLine.time;
-    });
-    if (idx === -1) idx = lyric.lines.length - 1;
-    return idx;
-  }, [playerState.currentTime, lyric]);
+    const nowMs = player.currentTime * 1000;
+    const idx =
+      lyric.lines.findIndex((line, i) => {
+        const next = lyric.lines[i + 1];
+        return nowMs >= line.time && (!next || nowMs < next.time);
+      }) ?? -1;
+    return idx === -1 ? lyric.lines.length - 1 : idx;
+  }, [lyric, player.currentTime]);
 
-  // 自动滚动：当 activeIndex 变化且用户在过去5秒内无手动操作时，触发滚动
+  /* --------------------------- 自动滚动 --------------------------- */
   useEffect(() => {
     if (activeIndex === null || !lyricsContainerRef.current || !lyric) return;
+    if (lastActiveIndexRef.current === activeIndex) return; // 与上次相同
+    if (Date.now() - lastUserInteractionRef.current < 3500) return; // 最近有手动滚
 
-    // 如果 activeIndex 与上次相同，则不触发滚动
-    if (lastActiveIndexRef.current === activeIndex) {
-      return;
-    }
-
-    const now = Date.now();
-    if (now - lastUserInteractionRef.current < 3500) {
-      return;
-    }
-
-    // 更新 lastActiveIndexRef 为当前 activeIndex
     lastActiveIndexRef.current = activeIndex;
 
-    const activeElem = lyricsContainerRef.current.querySelector(`[data-index="${activeIndex}"]`);
-    if (activeElem) {
-      const containerHeight = lyricsContainerRef.current.clientHeight;
-      const elemOffsetTop = (activeElem as HTMLElement).offsetTop;
-      const elemHeight = (activeElem as HTMLElement).clientHeight;
-      const scrollTop = elemOffsetTop - containerHeight / 2 + elemHeight / 2;
-      isAutoScrollingRef.current = true;
-      lyricsContainerRef.current.scrollTo({ top: scrollTop, behavior: 'smooth' });
-      // 延时重置自动滚动标记
-      setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 1500);
-    }
-  }, [activeIndex, playerState.currentTime, lyric]);
+    const activeElem = lyricsContainerRef.current.querySelector<HTMLElement>(
+      `[data-index="${activeIndex}"]`,
+    );
+    if (!activeElem) return;
 
-  // 渲染每行歌词，点击后调用 setCurrentTime 设置播放进度
-  const renderLyricLine = (line: { time: number; text: string }, index: number) => {
-    const currentTimeMs = playerState.currentTime * 1000;
-    const nextLine = lyric?.lines[index + 1];
-    const isActive = currentTimeMs >= line.time && (!nextLine || currentTimeMs < nextLine.time);
+    const offset =
+      activeElem.offsetTop -
+      lyricsContainerRef.current.clientHeight / 2 +
+      activeElem.clientHeight / 2;
+    isAutoScrollingRef.current = true;
+    lyricsContainerRef.current.scrollTo({ top: offset, behavior: 'smooth' });
+    setTimeout(() => (isAutoScrollingRef.current = false), 1500);
+  }, [activeIndex, lyric]);
+
+  /* --------------------------- 渲染行 --------------------------- */
+  const renderLine = (line: { time: number; text: string }, i: number) => {
+    const nowMs = player.currentTime * 1000;
+    const next = lyric?.lines[i + 1];
+    const isActive = nowMs >= line.time && (!next || nowMs < next.time);
+
+    const timeText = new Date(line.time).toISOString().slice(14, -5); // mm:ss
+
     return (
       <p
-        key={index}
-        data-index={index}
-        onClick={() => {
-          console.log('[Click] 歌词行点击，时间(ms):', line.time);
-          setCurrentTime(line.time / 1000);
-        }}
-        className={`cursor-pointer text-base leading-6 my-2 ${
+        key={i}
+        data-index={i}
+        onClick={() => player.setCurrentTime(line.time / 1000)}
+        className={`cursor-pointer my-2 leading-6 transition-colors text-center ${
           isActive ? 'text-white text-lg font-bold' : 'text-gray-400'
         }`}
       >
-        <span className="text-sm text-gray-500 mr-2">
-          {new Date(line.time).toISOString().slice(14, -5)}
+        {/* 时间刻度：平滑透明度切换 */}
+        <span
+          className={`inline-block w-[50px] text-right mr-2 text-sm transition-opacity duration-300 ${
+            showTimestamp ? 'opacity-70' : 'opacity-0'
+          }`}
+        >
+          {timeText}
         </span>
         {line.text}
       </p>
     );
   };
 
-  if (error) {
-    return <div className="text-white p-4">{error}</div>;
-  }
-  if (!lyric) {
-    return <div className="text-white p-4">正在加载歌词...</div>;
-  }
+  /* --------------------------- UI --------------------------- */
+  if (error) return <div className="text-white p-4">{error}</div>;
+  if (!lyric) return <div className="text-white p-4">正在加载歌词...</div>;
 
   return (
     <div className="flex h-full w-full bg-gray-900">
-      {/* 左侧封面区域，略微调大封面显示 */}
+      {/* 封面 */}
       <div className="w-2/5 flex justify-center items-center bg-gray-800">
-        {playerState.currentTrackInfo && (
+        {player.currentTrackInfo && (
           <img
-            src={playerState.currentTrackInfo.cover_src}
+            src={player.currentTrackInfo.cover_src}
             alt="封面"
             className="max-w-[95%] max-h-[95%] rounded-lg shadow-lg"
           />
         )}
       </div>
-      {/* 右侧歌词区域，添加毛玻璃效果、no-scrollbar 插件以及右侧指示线 */}
+
+      {/* 歌词区 */}
       <div
-        className="relative w-3/5 p-5 overflow-y-auto bg-black/30 backdrop-blur-lg no-scrollbar"
         ref={lyricsContainerRef}
+        className="relative w-3/5 p-5 overflow-y-auto bg-black/30 backdrop-blur-lg no-scrollbar flex flex-col items-center"
         onScroll={() => {
           if (!isAutoScrollingRef.current) {
             lastUserInteractionRef.current = Date.now();
+            // 同时触发时间刻度显示
+            setShowTimestamp(true);
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = window.setTimeout(() => setShowTimestamp(false), 2000);
           }
         }}
       >
-        {lyric.lines.map((line, index) => renderLyricLine(line, index))}
-        {/* 可选：右侧指示线 */}
-        {/* <div className="absolute right-0 top-0 h-full w-1 bg-white opacity-50 pointer-events-none" /> */}
+        {lyric.lines.map(renderLine)}
       </div>
     </div>
   );

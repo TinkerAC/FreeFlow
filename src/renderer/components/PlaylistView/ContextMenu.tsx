@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { PlaylistModel, TrackModel } from '@src/shared/types';
 import { libraryContext, playlistContext } from '@main/app/electronContextApi';
+import Player from '@components/Player';
 
 interface ContextMenuProps {
   x: number,
   y: number,
   track: TrackModel,
-  addToNext: (track: TrackModel) => void,
+  player: Player;
   handleCloseMenu: () => void,
   playlists: PlaylistModel[],
   currentPlaylist: PlaylistModel,
@@ -18,11 +19,11 @@ function ContextMenu({
                        x,
                        y,
                        track,
-                       addToNext,
                        handleCloseMenu,
                        playlists,
                        currentPlaylist,
                        refreshPlaylists,
+                       player,
                      }: ContextMenuProps) {
 
   const [showSubMenu, setShowSubMenu] = useState(false); // 控制是否显示子菜单
@@ -49,7 +50,7 @@ function ContextMenu({
       <div
         className="p-2 hover:bg-gray-700 cursor-pointer"
         onClick={() => {
-          addToNext(track);
+          player.addTrackToNext(track);
           handleCloseMenu();
         }}
       >

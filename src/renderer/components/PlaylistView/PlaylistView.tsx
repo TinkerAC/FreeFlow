@@ -5,30 +5,24 @@ import React, { useEffect, useState } from 'react';
 //@ts-expect-error
 import ColorThief from 'colorthief';
 import './PlaylistView.css';
-import { PlaylistModel, TrackModel } from '@src/shared/types';
+import { PlaylistModel } from '@src/shared/types';
 
 import { Playlist } from '@components/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/PlaylistView/ModalModifyPlaylist';
 import { DefaultCover } from '@components/static';
 import { playlistContext } from '@main/app/electronContextApi';
+import Player from '@components/Player';
 
 interface PlaylistViewProps {
   playListInfo: PlaylistModel;
-  onReplacePlayQueue: (tracks: TrackModel[]) => void;
-  addToNext: (track: TrackModel) => void;
-  addToNextAndPlay: (track: TrackModel) => void;
   refreshPlaylist: () => void;
   playlists: PlaylistModel[];
+  player: Player;
 }
 
 export function PlaylistView({
                                playListInfo,
-                               onReplacePlayQueue = () => {
-                               },
-                               addToNext = () => {
-                               },
-                               addToNextAndPlay = () => {
-                               },
+                               player,
                                refreshPlaylist = () => {
                                },
                                playlists,
@@ -138,7 +132,7 @@ export function PlaylistView({
       <div className="flex items-center relative z-10 mb-4">
         <button
           className="bg-green-500 p-4 rounded-full text-2xl mr-4 hover:bg-green-600 focus:outline-none"
-          onClick={() => onReplacePlayQueue(playListInfo?.tracks || [])}
+          onClick={() => player.replacePlayQueue(playListInfo?.tracks || [])}
           aria-label="播放全部"
         >
           <i className="fas fa-play"></i>
@@ -175,7 +169,6 @@ export function PlaylistView({
         </button>
 
 
-
         {/* 歌曲搜索框 */}
         <input
           type="text"
@@ -193,8 +186,7 @@ export function PlaylistView({
       <Playlist
         playlists={playlists}
         filteredTracks={filteredTracks}
-        addToNext={addToNext}
-        addToNextAndPlay={addToNextAndPlay}
+        player={player}
         currentPlaylist={playListInfo}
         refreshPlaylists={refreshPlaylist}
       />

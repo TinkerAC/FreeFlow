@@ -1,8 +1,7 @@
+// file: src/App.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import './tailwind.css';
-import usePlayer from '@renderer/hooks/usePlayer';
-import useMainWindow from '@renderer/hooks/useMainWindow';
 import TopBar from '@components/TopBar/TopBar';
 import MusicLibrary from '@components/Musiclibrary/Musiclibrary';
 import MainContent from '@components/Maincontent/MainContent';
@@ -11,29 +10,33 @@ import useMusicLibrary from '@renderer/hooks/useMusiclibrary';
 import PlayerBar from '@components/Playerbar/PlayerBar';
 import { FusionSearchResult, PlayerState } from '@src/shared/types';
 import { playerContext, shortcutContext } from '@main/app/electronContextApi';
+import Player from '@components/Player';
+import useMainWindow from '@renderer/hooks/useMainWindow';
+// 引入新设计的 Player 对象
+
+// 你可能需要在 types 中定义 PlayerState 与 Player 对象状态类型
+// 这里假定 PlayerState 与原有状态结构保持一致
 
 const Application: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  // 用于保存 Player 对象实例
+  const playerInstanceRef = useRef<Player | null>(null);
+  // 使用 React 状态同步播放器状态，以驱动 UI 更新
+  const [playerState, setPlayerState] = useState<PlayerState>({
+    queue: [],
+    volume: 0.5,
+    indexList: [],
+    currentIndex: 0,
+    playbackMode: 'loop',
+    audioSrc: '',
+    isPlaying: false,
+    isLoading: false,
+    currentTime: 0,
+    currentTrackInfo: null,
+    nextTracks: [],
+  });
 
-  // 使用 usePlayer Hook 管理播放器状态和逻辑
-  const {
-    playerStateRef,
-    dumpPlayerState,
-    replacePlayQueue,
-    addToNext,
-    addToNextAndPlay,
-    clearQueue,
-    playPrevious,
-    playNext,
-    togglePlayPause,
-    setVolume,
-    setCurrentTime,
-    cyclePlaybackMode,
-    setCurrentTrackInfoDuration,
-    changeVolume,
-  } = usePlayer(audioRef);
-
-  // 使用 useMusicLibrary Hook 管理歌单
+  // 歌单、选中项、刷新等逻辑保持不变
   const {
     playlists,
     selectedItem,
@@ -43,7 +46,7 @@ const Application: React.FC = () => {
     setSelectedPlaylistInfo,
   } = useMusicLibrary();
 
-  // 使用 useMainWindow Hook 管理窗口状态和逻辑
+  // 主窗口相关逻辑
   const {
     isMusicLibraryCollapsed,
     setIsMusicLibraryCollapsed,
@@ -51,31 +54,54 @@ const Application: React.FC = () => {
     toggleRightContent,
   } = useMainWindow();
 
+  // 同步搜索结果与主内容视图（这里与原来保持一致）
+  const [searchResults, setSearchResults] = useState<FusionSearchResult>({
+    tracks: [],
+    playlists: [],
+  });
+  const [mainContentView, setMainContentView] = useState('playlist');
+
+  // 在组件挂载后，初始化 Player 对象
   useEffect(() => {
-    // 注册播放器状态和快捷键事件
+    if (audioRef.current && !playerInstanceRef.current) {
+      const player = new Player(audioRef.current);
+      // 注册播放器状态更新回调
+      player.onStateChange = (state: PlayerState) => {
+        setPlayerState(state);
+      };
+      playerInstanceRef.current = player;
+    }
+  }, [audioRef.current]);
+
+  // 注册播放器与快捷键、通知等的 IPC 监听
+  useEffect(() => {
+    // 注册回调函数——这里 dumpPlayerState 可调用 playerInstance 的方法
     const handleRequestPlayerState = () => {
-      const state: PlayerState = dumpPlayerState();
-      playerContext.sendPlayerState(state);
+      if (playerInstanceRef.current) {
+        const state = playerInstanceRef.current.dumpPlayerState();
+        playerContext.sendPlayerState(state);
+      }
     };
     const handleNotification = (message: string) => {
       alert(message);
     };
     const handleShortcut = (data: string) => {
+      if (!playerInstanceRef.current) return;
       switch (data) {
         case 'prev':
-          playPrevious().then();
+          playerInstanceRef.current.playPrevious().then();
           break;
         case 'next':
-          playNext().then();
+          playerInstanceRef.current.playNext().then();
           break;
         case 'play-pause':
-          togglePlayPause();
+          playerInstanceRef.current.togglePlayPause();
           break;
         case 'volume-up':
-          changeVolume(0.1);
+          playerInstanceRef.current.changeVolume(0.1);
           break;
         case 'volume-down':
-          changeVolume(-0.1);
+          playerInstanceRef.current.changeVolume(-0.1);
           break;
         default:
           console.log('未知快捷键操作');
@@ -92,38 +118,37 @@ const Application: React.FC = () => {
     };
   }, []);
 
+  // 同步音频元数据
   useEffect(() => {
     const audioElement = audioRef.current;
     if (audioElement) {
       const handleLoadedMetadata = () => {
-        setCurrentTrackInfoDuration(audioElement.duration);
+        if (playerInstanceRef.current) {
+          // 这里直接调用 Player 的方法设置时长
+          // 假设 setCurrentTrackInfoDuration 方法已经内置在 Player 对象中
+          playerInstanceRef.current.setCurrentTime(audioElement.duration);
+        }
       };
       audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
       return () => {
         audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
       };
     }
-  }, [playerStateRef.current.audioSrc]);
-
-  const [searchResults, setSearchResults] = useState<FusionSearchResult>({
-    tracks: [],
-    playlists: [],
-  });
-  const [mainContentView, setMainContentView] = useState('playlist');
+  }, [playerState.audioSrc]);
 
   return (
     <div className="App h-full w-full flex flex-col bg-black flex-direction: column">
-      {/* 音频元素 */}
-      <audio ref={audioRef} src={playerStateRef.current.audioSrc} hidden />
+      {/* 隐藏的音频元素 */}
+      <audio ref={audioRef} hidden />
 
-      {/* 顶部导航栏 */}
+      {/* 顶部导航 */}
       <TopBar
         onSwitchView={setMainContentView}
         currentView={mainContentView}
         setSearchResults={setSearchResults}
       />
 
-      {/* 主内容区域：采用 flex-1 占据中间剩余空间 */}
+      {/* 主内容区域 */}
       <div
         className="flex-1 overflow-hidden grid"
         style={{
@@ -147,38 +172,29 @@ const Application: React.FC = () => {
         />
         <MainContent
           view={mainContentView}
+          player={playerInstanceRef.current}
           selectedPlaylistInfo={selectedPlaylistInfo}
-          onReplacePlayQueue={replacePlayQueue}
-          onAddToNext={addToNext}
-          onAddToNextAndPlay={addToNextAndPlay}
           searchResults={searchResults}
           refreshPlaylists={refreshPlaylists}
           playlists={playlists}
           setSelectedPlaylistInfo={setSelectedPlaylistInfo}
           setMainContentView={setMainContentView}
-          playerState={playerStateRef.current}
-          setCurrentTime={setCurrentTime}
+
         />
         {isRightContentVisible && (
           <RightContent
             className="h-full overflow-y-auto"
-            playerState={playerStateRef.current}
-            clearQueue={clearQueue}
-            addToNextAndPlay={addToNextAndPlay}
+            player = {playerInstanceRef.current}
           />
         )}
       </div>
 
-      {/* 底部播放条 —— 请确保 PlayerBar 组件中没有使用绝对定位或 z-index 强行置顶 */}
+      {/* 底部播放条 */}
       <PlayerBar
-        playerState={playerStateRef.current}
-        setCurrentTime={setCurrentTime}
-        onPlayNext={playNext}
-        onPlayPrevious={playPrevious}
-        onTogglePlayPause={togglePlayPause}
-        onCyclePlaybackMode={cyclePlaybackMode}
-        onVolumeChange={setVolume}
-        onToggleRightContent={toggleRightContent}
+        player={playerInstanceRef.current}
+        onToggleRightContent={
+          toggleRightContent
+        }
         setMainContentView={setMainContentView}
       />
     </div>
