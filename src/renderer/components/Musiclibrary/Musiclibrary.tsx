@@ -99,7 +99,7 @@ export default function MusicLibrary({
   } else {
     // 展开状态下：头部固定，列表区域滚动
     return (
-      <ContentPanel className="w-full flex flex-col h-full no-scrollbar">
+      <ContentPanel className="w-full flex flex-col h-full">
         {/* 固定头部区域 */}
         <div className="p-6">
           <div className="flex items-center">
@@ -133,7 +133,7 @@ export default function MusicLibrary({
           </div>
         </div>
         {/* 歌单列表滚动区域 */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <div className="flex-1 overflow-y-auto px-4 pb-4 no-scrollbar">
           <div className="flex flex-col gap-2">
             {libraryItems && libraryItems.length !== 0 ? (
               libraryItems.map((item, index) => (

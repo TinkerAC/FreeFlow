@@ -24,26 +24,27 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
   /* --------------------------- 拉取歌词 --------------------------- */
   useEffect(() => {
     (async () => {
-      if (!player.currentTrackInfo) {
+      if (!player.playQueue.currentTrack) {
         setError('当前没有播放的歌曲');
         return;
       }
       try {
-        const lyricData = await lyricsContext.getLyrics(player.currentTrackInfo);
+        const lyricData = await lyricsContext.getLyrics(player.playQueue.currentTrack);
         setLyric(lyricData);
       } catch (e) {
         console.error('[fetchLyric] ', e);
         setError('加载歌词失败');
       }
     })();
-  }, [player.currentTrackInfo]);
+  }, [player.playQueue.currentTrack]);
 
   /* --------------------------- 监听用户交互 --------------------------- */
   useEffect(() => {
     const container = lyricsContainerRef.current;
     if (!container) return;
 
-    const markUserInteraction = (e: Event) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const markUserInteraction = (_e: Event) => {
       if (isAutoScrollingRef.current) return;
       lastUserInteractionRef.current = Date.now();
 
@@ -136,9 +137,9 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     <div className="flex h-full w-full bg-gray-900">
       {/* 封面 */}
       <div className="w-2/5 flex justify-center items-center bg-gray-800">
-        {player.currentTrackInfo && (
+        {player.playQueue.currentTrack && (
           <img
-            src={player.currentTrackInfo.cover_src}
+            src={player.playQueue.currentTrack.cover_src}
             alt="封面"
             className="max-w-[95%] max-h-[95%] rounded-lg shadow-lg"
           />

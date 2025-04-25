@@ -10,6 +10,7 @@
  */
 
 import { Platform } from '@main/enum/Platform';
+import { QueueDump } from '@renderer/core/PlayQueue';
 
 /* --------------------- 接口定义 --------------------- */
 
@@ -107,7 +108,7 @@ export class NetEaseCloudMusicTrackModel extends TrackModel {
    * 根据 JSON 数据构建网易云音乐歌曲实例
    * @param json JSON 数据
    */
-  public static build(json:any): TrackModel {
+  public static build(json: any): TrackModel {
     return new NetEaseCloudMusicTrackModel(
       json.id,
       json.album,
@@ -198,7 +199,7 @@ export class QQMusicTrackModel extends TrackModel {
     // pubtime 是秒级时间戳，转换为毫秒
     const created_at = json.pubtime ? new Date(json.pubtime * 1000) : new Date();
     const duration = json.interval || 0;
-    const platform_unique_id = json.songmid ;
+    const platform_unique_id = json.songmid;
 
     return new QQMusicTrackModel(
       0,
@@ -230,8 +231,6 @@ export class QQMusicTrackModel extends TrackModel {
   }
 
 
-
-
   /**
    * 返回一个空实例
    */
@@ -246,8 +245,6 @@ export class QQMusicTrackModel extends TrackModel {
     return this.fee === 0;
   }
 }
-
-
 
 
 /**
@@ -391,34 +388,26 @@ export interface HifiniThreadCacheModel {
  * PlayerState 类：表示播放器的当前状态
  */
 export class PlayerState {
-  queue: TrackModel[];
+  queue: QueueDump;
   volume: number;
-  indexList: number[];
-  currentIndex: number;
   playbackMode: 'loop' | 'shuffle' | 'repeat';
   audioSrc: string;
   isPlaying: boolean;
   isLoading: boolean;
   currentTime: number;
-  currentTrackInfo: TrackModel | null;
-  nextTracks: TrackModel[];
 
   /**
    * 返回一个空的播放器状态
    */
   static empty(): PlayerState {
     return {
-      queue: [],
+      queue: null,
       volume: 1,
-      indexList: [],
-      currentIndex: 0,
       playbackMode: 'loop',
       audioSrc: '',
       isPlaying: false,
       isLoading: false,
       currentTime: 0,
-      currentTrackInfo: null,
-      nextTracks: [],
     };
   }
 }

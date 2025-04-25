@@ -16,10 +16,9 @@ export default function PlayerBar({
                                     onToggleRightContent,
                                   }: PlayerBarProps) {
   /* player 还没初始化时直接隐藏 ,后续可以考虑使用 loading 动画 */
-
   if (!player) return null;
 
-  const track = player.currentTrackInfo;
+  const track = player.playQueue.currentTrack;
 
   return (
     <div className="w-full flex items-center justify-between p-4 bg-black text-white">

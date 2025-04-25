@@ -22,19 +22,21 @@ const Application: React.FC = () => {
   // 用于保存 Player 对象实例
   const playerInstanceRef = useRef<Player | null>(null);
   // 使用 React 状态同步播放器状态，以驱动 UI 更新
-  const [playerState, setPlayerState] = useState<PlayerState>({
-    queue: [],
+  const [
+    playerState, setPlayerState] = useState<PlayerState>({
+    queue: {
+      queue: [],
+      indexList: [],
+      currentIndex: 0,
+    },
     volume: 0.5,
-    indexList: [],
-    currentIndex: 0,
     playbackMode: 'loop',
     audioSrc: '',
     isPlaying: false,
     isLoading: false,
     currentTime: 0,
-    currentTrackInfo: null,
-    nextTracks: [],
   });
+
 
   // 歌单、选中项、刷新等逻辑保持不变
   const {
@@ -63,14 +65,33 @@ const Application: React.FC = () => {
 
   // 在组件挂载后，初始化 Player 对象
   useEffect(() => {
-    if (audioRef.current && !playerInstanceRef.current) {
-      const player = new Player(audioRef.current);
-      // 注册播放器状态更新回调
-      player.onStateChange = (state: PlayerState) => {
-        setPlayerState(state);
-      };
-      playerInstanceRef.current = player;
-    }
+
+    const initPlayer = async () => {
+
+      const playerStateDump: PlayerState = await playerContext.getPlayerStateFromMain();
+      if (audioRef.current && !playerInstanceRef.current) {
+        const player = new Player(audioRef.current);
+
+        // 注册播放器状态更新回调
+        player.onStateChange = (state: PlayerState) => {
+          setPlayerState(state);
+        };
+        playerInstanceRef.current = player;
+
+        if (playerStateDump) {
+
+          try {
+            await player.loadFromDump(playerStateDump);
+          } catch (e) {
+            console.log('从dump初始化播放器时候出错');
+          }
+        }
+      }
+
+
+    };
+
+    initPlayer().then();
   }, [audioRef.current]);
 
   // 注册播放器与快捷键、通知等的 IPC 监听
@@ -136,6 +157,15 @@ const Application: React.FC = () => {
     }
   }, [playerState.audioSrc]);
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //@ts-expect-error
+  //used for front-end debug
+  window.playerState = playerState;
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
+  window.player = playerInstanceRef.current;
+
   return (
     <div className="App h-full w-full flex flex-col bg-black flex-direction: column">
       {/* 隐藏的音频元素 */}
@@ -184,7 +214,7 @@ const Application: React.FC = () => {
         {isRightContentVisible && (
           <RightContent
             className="h-full overflow-y-auto"
-            player = {playerInstanceRef.current}
+            player={playerInstanceRef.current}
           />
         )}
       </div>

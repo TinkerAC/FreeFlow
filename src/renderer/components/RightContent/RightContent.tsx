@@ -9,16 +9,21 @@ interface RightContentProps {
   player: Player;
 }
 
+
 export default function RightContent({
                                        player,
                                      }: RightContentProps) {
+
 
   if (!player) {
     return null;
   }
 
+  const currentTrack = player.playQueue.currentTrack;
+  const remainingTracks = player.playQueue.remainingTracks;
 
-  if (player.currentTrackInfo && player.nextTracks.length === 0) {
+
+  if (! currentTrack && !remainingTracks.length) {
     return (
       <ContentPanel className="h-full">
         <div className="empty-play-queue flex flex-col items-center justify-center h-full">
@@ -32,8 +37,8 @@ export default function RightContent({
   return (
     <ContentPanel className="h-full">
       <PlayQueue
-        currentTrack={player.currentTrackInfo}
-        nextTracks={player.nextTracks}
+        currentTrack={currentTrack}
+        nextTracks={remainingTracks}
         clearQueue={() => player.clearQueue()}
         addToNextAndPlay={(track) => player.addTrackToNextAndPlay(track)}
       />

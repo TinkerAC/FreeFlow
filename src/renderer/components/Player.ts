@@ -1,41 +1,22 @@
 // file: src/player/Player.ts
-import { PlayerState, TrackIdentifier, TrackModel } from '@src/shared/types';
+import { PlayerState, TrackModel } from '@src/shared/types';
 import getAudioSrc from '@main/services/loadAudio';
-import { Platform } from '@main/enum/Platform';
+import { PlayQueue } from '@renderer/core/PlayQueue';
 
 type PlaybackMode = 'loop' | 'repeat' | 'shuffle';
 
 export default class Player {
   /* --------------------- 基础状态 --------------------- */
-  public queue: TrackModel[] = [];
-  public indexList: number[] = [];
-  public currentIndex = 0;
+  public playQueue: PlayQueue = new PlayQueue();
 
   public playbackMode: PlaybackMode = 'loop';
-  public audioSrc = '';
 
-  public isPlaying = false;
-  public isLoading = false;
+  public isPlaying: boolean = false;
+  public isLoading: boolean = false;
 
-  public volume = 0.5;
-  public currentTime = 0;
+  public volume: number = 0.5;
+  public currentTime: number = 0;
 
-  public currentTrackInfo: TrackModel = {
-    id: -1,
-    platform: Platform.HIFINI,
-    platform_unique_id: '',
-    title: '无播放曲',
-    artist: '',
-    album: '',
-    duration: 0,
-    cover_src: '',
-    created_at: undefined,
-    getIdentifier(): TrackIdentifier {
-      throw new Error('Function not implemented.');
-    },
-  };
-
-  public nextTracks: TrackModel[] = [];
 
   public audio: HTMLAudioElement;
   public onStateChange: ((state: PlayerState) => void) | null = null;
@@ -49,6 +30,49 @@ export default class Player {
   private startProgressTimer() {
     if (this.progressTimer !== null) return; // 已经在跑
     this.progressTimer = window.setInterval(() => this.updateCurrentTime(), 500);
+  }
+
+  public async loadFromDump(dump: PlayerState) {
+    this.playQueue.loadFromDump(dump.queue);
+    this.isPlaying = false;
+    this.isLoading = false;
+    this.volume = dump.volume;
+    this.playbackMode = dump.playbackMode;
+
+    //如果之前有播放中的音乐,要尝试加载
+    const currentTrack: TrackModel | null = this.playQueue.currentTrack;
+
+    if (currentTrack) {
+      console.info('存在播放中音乐，尝试重新加载');
+      // 1. 先把音源给 audio 元素并 load
+      this.audio.src = await getAudioSrc(currentTrack);
+      this.audio.load();
+
+      // 2. metadata 加载完就可以安全设置 currentTime
+      this.audio.addEventListener(
+        'loadedmetadata',
+        () => {
+          // 恢复进度
+          console.log(`dump 进度:${dump.currentTime},实际最大进度:${this.audio.duration}`);
+          this.audio.currentTime = dump.currentTime;
+          console.info('进度已恢复到', dump.currentTime, '秒');
+          this.currentTime = dump.currentTime;
+          this.notifyStateChange();
+        },
+        { once: true },
+      );
+
+
+    }
+  }
+
+
+  private loadAudio(audioSrc: string) {
+    this.isLoading = true;
+    this.notifyStateChange();
+    this.audio.src = audioSrc;
+    this.audio.load();
+
   }
 
   /**
@@ -80,7 +104,9 @@ export default class Player {
   // 监听音频加载完成事件
   private onAudioCanPlay = () => {
     this.setCurrentTime(0);
-    this.currentTrackInfo.duration = this.audio.duration;
+
+    // this.currentTrackInfo.duration = this.audio.duration;
+    this.playQueue.currentTrack.duration = this.audio.duration;
     this.setupEndedListener();
     this.play();
   };
@@ -136,110 +162,60 @@ export default class Player {
     this.isPlaying ? this.pause() : this.play();
   }
 
-  /* --------------------- 计算索引 --------------------- */
-  private getNextIndex(step = 1) {
-    return this.indexList.length
-      ? (this.currentIndex + step) % this.indexList.length
-      : 0;
-  }
-
-  private getPrevIndex(step = 1) {
-    return this.indexList.length
-      ? (this.currentIndex - step + this.indexList.length) % this.indexList.length
-      : 0;
-  }
 
   /* --------------------- 核心切歌逻辑 --------------------- */
   public async playNext() {
     this.pause();
-    if (!this.indexList.length) return;
-
+    if (this.playQueue.isEmpty) {
+      return;
+    }
     this.isLoading = true;
     this.notifyStateChange();
 
-    let attempts = 0;
-    const max = this.indexList.length;
+    const track = this.playQueue.getNextTrack();
+    console.debug('从 队列中获取的下一首歌的 信息 :  track:', track);
 
-    while (attempts < max) {
-      const nextIdx = this.getNextIndex(attempts + 1);
-      const trackIdx = this.indexList[nextIdx];
-      const track = this.queue[trackIdx];
+    const src = await getAudioSrc(track);
 
-      try {
-        const src = await getAudioSrc(track);
+    /* --- 成功获取音源 --- */
+    this.playQueue.moveNext();
 
-        /* --- 成功获取音源 --- */
-        this.currentIndex = nextIdx;
-        this.currentTrackInfo = track;
-        this.audioSrc = src;
-        this.isLoading = false;
+    this.loadAudio(src);
 
-        this.audio.src = src;
-        this.audio.load();
-
-        this.audio.addEventListener(
-          'canplaythrough',
-          () => {
-            this.onAudioCanPlay();
-          },
-          { once: true },
-        );
-
-        this.updateNextTracks();
-        this.notifyStateChange();
-        return;
-      } catch {
-        attempts++;
-      }
-    }
-
-    console.warn('所有曲目均无法播放');
+    this.audio.addEventListener(
+      'canplaythrough',
+      () => {
+        this.onAudioCanPlay();
+      },
+      { once: true },
+    );
+    this.notifyStateChange();
     this.isLoading = false;
     this.notifyStateChange();
   }
 
   public async playPrevious() {
     this.pause();
-    if (!this.indexList.length) return;
+    if (this.playQueue.isEmpty) return;
 
     this.isLoading = true;
     this.notifyStateChange();
+    const track = this.playQueue.getPrevTrack();
+    const src = await getAudioSrc(track);
+    /* --- 成功获取音源 --- */
+    this.loadAudio(src);
+    this.audio.addEventListener(
+      'canplaythrough',
+      () => {
+        this.onAudioCanPlay();
+      },
+      { once: true },
+    );
 
-    let attempts = 0;
-    const max = this.indexList.length;
+    // this.updateNextTracks();
+    this.notifyStateChange();
 
-    while (attempts < max) {
-      const prevIdx = this.getPrevIndex(attempts + 1);
-      const trackIdx = this.indexList[prevIdx];
-      const track = this.queue[trackIdx];
 
-      try {
-        const src = await getAudioSrc(track);
-
-        /* --- 成功获取音源 --- */
-        this.currentIndex = prevIdx;
-        this.currentTrackInfo = track;
-        this.audioSrc = src;
-        this.isLoading = false;
-        this.audio.src = src;
-        this.audio.load();
-        this.audio.addEventListener(
-          'canplaythrough',
-          () => {
-            this.onAudioCanPlay();
-          },
-          { once: true },
-        );
-
-        this.updateNextTracks();
-        this.notifyStateChange();
-        return;
-      } catch {
-        attempts++;
-      }
-    }
-
-    console.warn('所有曲目均无法播放');
     this.isLoading = false;
     this.notifyStateChange();
   }
@@ -263,20 +239,8 @@ export default class Player {
 
 
   public addTrackToNext(track: TrackModel) {
-    const exists = this.queue.findIndex(
-      (t) => t.platform === track.platform && t.platform_unique_id === track.platform_unique_id,
-    );
-
-    if (exists !== -1) {
-      const pos = this.indexList.indexOf(exists);
-      if (pos !== -1) this.indexList.splice(pos, 1);
-      this.indexList.splice(this.currentIndex + 1, 0, exists);
-    } else {
-      this.queue.push(track);
-      this.indexList.splice(this.currentIndex + 1, 0, this.queue.length - 1);
-    }
-
-    this.updateNextTracks();
+    this.playQueue._addTrackToNextInQueue(track, this.playbackMode);
+    // this.updateNextTracks();
     this.notifyStateChange();
   }
 
@@ -287,32 +251,20 @@ export default class Player {
   }
 
   public async replacePlayQueue(tracks: TrackModel[], mode?: PlaybackMode) {
+
     this.pause();
     this.playbackMode = mode ?? this.playbackMode;
 
-    switch (this.playbackMode) {
-      case 'loop':
-        this.indexList = tracks.map((_, i) => i);
-        break;
-      case 'shuffle':
-        this.indexList = tracks.map((_, i) => i).sort(() => Math.random() - 0.5);
-        break;
-      case 'repeat':
-        this.indexList = [0];
-        break;
-    }
+    this.playQueue.replaceQueueLibraryAndIndexList(tracks, this.playbackMode);
 
-    this.queue = [...tracks];
-    this.currentIndex = 0;
     this.isLoading = true;
     this.notifyStateChange();
 
-    const first = this.queue[this.indexList[0]];
+    const first: TrackModel = this.playQueue.getHeadTrack();
 
     try {
       const src = await getAudioSrc(first);
-      this.audioSrc = src;
-      this.currentTrackInfo = first;
+      // this.currentTrackInfo = first;
       this.isLoading = false;
 
       this.audio.src = src;
@@ -326,7 +278,7 @@ export default class Player {
         { once: true },
       );
 
-      this.updateNextTracks();
+      // this.updateNextTracks();
       this.notifyStateChange();
     } catch {
       console.warn('首曲获取失败，尝试下一首');
@@ -336,44 +288,32 @@ export default class Player {
 
   public cyclePlaybackMode() {
     const modes: PlaybackMode[] = ['loop', 'repeat', 'shuffle'];
-    this.playbackMode = modes[(modes.indexOf(this.playbackMode) + 1) % modes.length];
-    this.rebuildIndexList();
+    const nextMode =
+      modes[(modes.indexOf(this.playbackMode) + 1) % modes.length];
+
+    this.setPlayBackMode(nextMode);
+  }
+
+
+  public setPlayBackMode(mode: PlaybackMode) {
+    this.playbackMode = mode;
+    this.playQueue.rebuildIndexList(mode);
     this.notifyStateChange();
   }
 
-  private updateNextTracks() {
-    this.nextTracks = this.indexList.slice(this.currentIndex + 1).map((i) => this.queue[i]);
-  }
+  // private updateNextTracks() {
+  //   this.nextTracks = this.indexList.slice(this.currentIndex + 1).map((i) => this.playQueue[i]);
+  // }
 
-  private rebuildIndexList() {
-    const cur = this.indexList[this.currentIndex];
-    switch (this.playbackMode) {
-      case 'loop':
-        this.indexList = this.queue.map((_, i) => i);
-        break;
-      case 'shuffle':
-        this.indexList = this.queue.map((_, i) => i).sort(() => Math.random() - 0.5);
-        break;
-      case 'repeat':
-        this.indexList = [cur];
-        break;
-    }
-    this.currentIndex = this.indexList.indexOf(cur);
-    this.updateNextTracks();
-  }
 
   public dumpPlayerState(): PlayerState {
     return {
-      queue: [...this.queue],
-      indexList: [...this.indexList],
-      currentIndex: this.currentIndex,
+      queue: this.playQueue.dump(),
       playbackMode: this.playbackMode,
-      audioSrc: this.audioSrc,
+      audioSrc: '',
       isPlaying: this.isPlaying,
       isLoading: this.isLoading,
       currentTime: this.audio.currentTime,
-      currentTrackInfo: this.currentTrackInfo,
-      nextTracks: [...this.nextTracks],
       volume: this.audio.volume,
     };
   }
@@ -382,15 +322,15 @@ export default class Player {
     this.pause();
     this.stopProgressTimer();
 
-    this.queue = [];
-    this.indexList = [];
-    this.currentIndex = 0;
-    this.audioSrc = '';
-    this.currentTrackInfo = null;
-    this.nextTracks = [];
+    this.playQueue.clear();
+
+    // this.currentTrackInfo = null;
+    // this.nextTracks = [];
     this.setCurrentTime(0);
 
     this.audio.src = '';
     this.notifyStateChange();
   }
+
+
 }
