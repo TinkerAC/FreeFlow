@@ -1,69 +1,100 @@
 // file: src/renderer/components/MainContent/MainContent.tsx
+
 import React from 'react';
-import NetSearchResultView from '@components/SearchResultView/SearchResultView';
-import PlaylistView from '@components/PlaylistView/PlaylistView';
-import ProfileView from '@components/ProfileView/ProfileView';
-import { FusionSearchResult, PlaylistModel } from '@src/shared/types';
+import NetSearchResultView from '@components/Maincontent/SearchResultView/SearchResultView';
+import PlaylistView from '@components/Maincontent/PlaylistView/PlaylistView';
+import ProfileView from '@components/Maincontent/ProfileView/ProfileView';
+import LyricView from '@components/Maincontent/LyricView/LyricView';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
-import LyricView from '@components/LyricView/LyricView';
+
+import { FusionSearchResult, PlaylistModel } from '@src/shared/types';
 import Player from '@components/Player';
+import { StackItem, ViewName } from '@components/Maincontent/MainContentViewStack';
 
 interface MainContentProps {
-  view: string;
+  /** 来自 App 的完整视图栈 */
+  stack: StackItem[];
+  /** 来自 App 的当前指针 */
+  pointer: number;
+
+  player: Player | null;
+
   selectedPlaylistInfo: PlaylistModel;
   setSelectedPlaylistInfo: (playlist: PlaylistModel) => void;
+
   searchResults: FusionSearchResult;
   refreshPlaylists: () => void;
   playlists: PlaylistModel[];
-  setMainContentView: (view: string) => void;
-  player: Player;
+
+  /** 内部切换也走导航栈 */
+  setMainContentView: (view: ViewName) => void;
 }
 
 export default function MainContent({
-                                      view,
+                                      stack,
+                                      pointer,
+                                      player,
                                       selectedPlaylistInfo,
                                       setSelectedPlaylistInfo,
                                       searchResults,
                                       refreshPlaylists,
                                       playlists,
                                       setMainContentView,
-                                      player,
                                     }: MainContentProps) {
-  let viewComponent;
-  if (view === 'playlist') {
-    viewComponent = (
-      <PlaylistView
-        playListInfo={selectedPlaylistInfo}
-        player={player}
-        refreshPlaylist={refreshPlaylists}
-        playlists={playlists}
-      />
-    );
-  } else if (view === 'searchResults') {
-    viewComponent = (
-      <NetSearchResultView
-        player={player}
-        refreshPlaylists={refreshPlaylists}
-        fusionSearchResult={searchResults}
-        onSelectOnlinePlaylist={setSelectedPlaylistInfo}
-        setMainContentView={setMainContentView}
-        savedPlaylists={playlists}
-      />
-    );
-  } else if (view === 'profile') {
-    viewComponent = <ProfileView />;
-  } else if (
-    view === 'lyric'
-  ) {
-    viewComponent = <LyricView
-      player={player}
-
-    />;
-  }
-
   return (
-    <ContentPanel className="h-full w-full">
-      {viewComponent}
+    <ContentPanel className="relative h-full w-full">
+      {stack.map((item, idx) => {
+        let Comp: React.ReactNode = null;
+        switch (item.view) {
+          case 'playlist':
+            Comp = (
+              <PlaylistView
+                playListInfo={selectedPlaylistInfo}
+                player={player}
+                refreshPlaylist={refreshPlaylists}
+                playlists={playlists}
+              />
+            );
+            break;
+          case 'searchResults':
+            Comp = (
+              <NetSearchResultView
+                player={player}
+                refreshPlaylists={refreshPlaylists}
+                fusionSearchResult={searchResults}
+                onSelectOnlinePlaylist={(pl) => {
+                  setSelectedPlaylistInfo(pl);
+                  setMainContentView(ViewName.PLAY_LIST);
+                }}
+                setMainContentView={setMainContentView}
+                savedPlaylists={playlists}
+              />
+            );
+            break;
+          case 'profile':
+            Comp = <ProfileView />;
+            break;
+          case 'lyric':
+            Comp = <LyricView player={player} />;
+            break;
+          default:
+            Comp = (
+              <div className="text-center text-gray-500 p-4">
+                未知视图：{item.view}
+              </div>
+            );
+        }
+
+        return (
+          <div
+            key={idx}
+            className="absolute inset-0"
+            style={{ display: idx === pointer ? 'block' : 'none' }}
+          >
+            {Comp}
+          </div>
+        );
+      })}
     </ContentPanel>
   );
 }

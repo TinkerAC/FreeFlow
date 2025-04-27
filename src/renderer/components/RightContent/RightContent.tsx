@@ -1,6 +1,6 @@
 // file: src/renderer/components/RightContent/RightContent.tsx
 import React from 'react';
-import PlayQueue from '../PlayQueue/PlayQueue';
+import PlayQueue from '@components/RightContent/PlayQueue/PlayQueue';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
 import Player from '@components/Player';
 
@@ -23,7 +23,7 @@ export default function RightContent({
   const remainingTracks = player.playQueue.remainingTracks;
 
 
-  if (! currentTrack && !remainingTracks.length) {
+  if (!currentTrack && !remainingTracks.length) {
     return (
       <ContentPanel className="h-full">
         <div className="empty-play-queue flex flex-col items-center justify-center h-full">

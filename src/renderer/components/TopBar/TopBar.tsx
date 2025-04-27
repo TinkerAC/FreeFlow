@@ -1,8 +1,9 @@
+// file: src/renderer/components/TopBar/TopBar.tsx
 import React, { useEffect, useState } from 'react';
 import './TopBar.css';
 import { FusionSearchResult } from '@src/shared/types';
-import { configContext, systemContext, searchContext, windowControlContext } from '@main/app/electronContextApi';
-
+import { configContext, searchContext, systemContext, windowControlContext } from '@main/app/electronContextApi';
+import { MainContentViewStack, ViewName } from '@components/Maincontent/MainContentViewStack';
 
 async function getSearchResults(searchTerm: string) {
   const results: FusionSearchResult = await searchContext.getSearchResults(searchTerm);
@@ -10,92 +11,87 @@ async function getSearchResults(searchTerm: string) {
   return results;
 }
 
-
 interface TopBarProps {
   className?: string;
-  onSwitchView: (view: string) => void;
-  currentView: string;
   setSearchResults: (results: FusionSearchResult) => void;
+  mainContentViewStack: MainContentViewStack;
 }
 
-
 export default function TopBar({
-                                 onSwitchView,
-                                 currentView,
                                  setSearchResults,
+                                 mainContentViewStack,
                                }: TopBarProps) {
+  // 本地维护 currentView，从 stack 订阅获取
+  const [currentView, setCurrentView] = useState<ViewName>(
+    mainContentViewStack.getStack()[mainContentViewStack.getPointer()].view,
+  );
 
-  const [platform, setPlatform] = useState<string | null>(null); // 状态来存储平台信息
-  // 状态来存储搜索输入
+  // 平台信息
+  const [platform, setPlatform] = useState<string | null>(null);
+  // 搜索输入
   const [searchTerm, setSearchTerm] = useState('');
-  const [userName, setUserName] = useState(''); // 用户名
+  // 用户名
+  const [userName, setUserName] = useState('');
 
+  // 订阅栈变化，同步 currentView
   useEffect(() => {
-    // 获取平台信息
-    systemContext.getPlatform().then((platform: string) => {
-      setPlatform(platform);
+    return mainContentViewStack.subscribe((stack, pointer) => {
+      setCurrentView(stack[pointer].view);
     });
+  }, [mainContentViewStack]);
+
+  // 获取平台
+  useEffect(() => {
+    systemContext.getPlatform().then((pf) => setPlatform(pf));
   }, []);
 
-
-  // 防抖动搜索方法
+  // 获取用户名
   useEffect(() => {
-    const debounceTimeout = setTimeout(() => {
-      if (searchTerm) {
-        performSearch(searchTerm); // 调用搜索方法
-      }
-    }, 500); // 设置防抖动时间为 300 毫秒
-
-    // 清除超时以避免多余的搜索调用
-    return () => clearTimeout(debounceTimeout);
-  }, [searchTerm]); // 当 searchTerm 变化时触发
-
-  useEffect(() => {
-    // 获取用户名
     configContext.getConfig('user_name').then((name: string) => {
       setUserName(name);
     });
   }, []);
 
+  // 防抖搜索
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      if (searchTerm) {
+        performSearch(searchTerm);
+      }
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [searchTerm]);
 
-  // 占位符搜索方法
+  // 执行搜索：先切到 searchResults，再拉取数据
   const performSearch = (term: string) => {
     if (currentView !== 'searchResults') {
-      onSwitchView('searchResults');
-    }//如果当前视图不是搜索结果，则切换到搜索结果视图
-
-    getSearchResults(term).then((results) => {
-      setSearchResults(results);
-    });
-  };
-
-  // 输入框变化处理函数
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+      mainContentViewStack.navigate('searchResults');
+    }
+    getSearchResults(term).then((res) => setSearchResults(res));
   };
 
   return (
-    <div className={`top-bar sticky top-0  w-full`}>
-
+    <div className={`top-bar sticky top-0 w-full ${''}`}>
+      {/* macOS 红绿灯 */}
       {platform === 'darwin' && (
         <div id="traffic-lights">
-          <button className="traffic-light close"
-                  onClick={() => windowControlContext.close()}
-          ></button>
-          <button className="traffic-light minimize"
-                  onClick={() => windowControlContext.minimize()}
-          ></button>
-          <button className="traffic-light maximize"
-                  onClick={() => windowControlContext.maximize()}
-          ></button>
-        </div>)}
+          <button className="traffic-light close" onClick={() => windowControlContext.close()} />
+          <button className="traffic-light minimize" onClick={() => windowControlContext.minimize()} />
+          <button className="traffic-light maximize" onClick={() => windowControlContext.maximize()} />
+        </div>
+      )}
 
-
-      <div className="left-icons">
-        <div className="icon">...</div>
-        <div className="icon">{'<'}</div>
-        <div className="icon">{'>'}</div>
+      <div className="left-icons flex">
+        <i
+          className="fa-solid fa-arrow-left m-2 cursor-pointer"
+          onClick={() => mainContentViewStack.goBack()}
+        ></i>
+        <i
+          className="fa-solid fa-arrow-right m-2 cursor-pointer"
+          onClick={() => mainContentViewStack.goForward()}
+        ></i>
       </div>
+
       <div className="search-bar">
         <div className="home-icon icon">
           <i className="fa fa-home"></i>
@@ -104,10 +100,11 @@ export default function TopBar({
           type="text"
           placeholder="想播放什么？"
           value={searchTerm}
-          onChange={handleInputChange}
-          onFocus={() => onSwitchView('searchResults')}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onFocus={() => mainContentViewStack.navigate('searchResults')}
         />
       </div>
+
       <div className="right-icons">
         <button className="premium-btn">探索 Premium</button>
         <div className="icon">
@@ -116,31 +113,28 @@ export default function TopBar({
         <div className="icon">
           <i className="fa fa-users"></i>
         </div>
-        <div className="user-icon"
-             onClick={
-               () => {
-                 if (currentView !== 'profile') {
-                   onSwitchView('profile');
-                 }
-               }
-             }
+        <div
+          className="user-icon"
+          onClick={() => {
+            if (currentView !== 'profile') {
+              mainContentViewStack.navigate('profile');
+            }
+          }}
         >
-                    <span className="whitespace-nowrap overflow-hidden"
-                    >{
-                      userName || '无'
-                    }</span>
+          <span className="whitespace-nowrap overflow-hidden">
+            {userName || '无'}
+          </span>
         </div>
-        {/*show if the systemContext is not macOS*/}
+
+        {/* 非 macOS 窗口控制 */}
         {platform !== 'darwin' && (
           <div className="window-controls">
             <span onClick={() => windowControlContext.minimize()}>&#8722;</span>
             <span onClick={() => windowControlContext.maximize()}>&#9633;</span>
             <span onClick={() => windowControlContext.close()}>&times;</span>
-          </div>)}
-
-
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

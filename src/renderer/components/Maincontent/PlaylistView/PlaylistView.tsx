@@ -7,8 +7,8 @@ import ColorThief from 'colorthief';
 import './PlaylistView.css';
 import { PlaylistModel } from '@src/shared/types';
 
-import { Playlist } from '@components/PlaylistView/Playlist';
-import ModalModifyPlaylist from '@components/PlaylistView/ModalModifyPlaylist';
+import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
+import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
 import { DefaultCover } from '@components/static';
 import { playlistContext } from '@main/app/electronContextApi';
 import Player from '@components/Player';

@@ -1,7 +1,7 @@
 // src/renderer/components/SearchResultView/SearchResultView.tsx
 import React from 'react';
 import useStateRef from 'react-usestateref';
-import ContextMenu from '@components/SearchResultView/ContextMenu';
+import ContextMenu from '@components/Maincontent/SearchResultView/ContextMenu';
 import { FusionSearchResult, HifiniTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
 import { DefaultCover, Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
 import { libraryContext, playlistContext, searchContext } from '@main/app/electronContextApi';

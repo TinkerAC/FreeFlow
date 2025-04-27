@@ -3,19 +3,20 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { DefaultCover } from '@components/static';
 import ProgressBar from '@components/ProgressBar';
 import Player from '@components/Player';
+import { MainContentViewStack, ViewName } from '@components/Maincontent/MainContentViewStack';
 
 interface PlayerBarProps {
   player: Player;
-  setMainContentView: (view: string) => void;
+  mainContentStack: MainContentViewStack;
   onToggleRightContent: () => void;
 }
 
 export default function PlayerBar({
                                     player,
-                                    setMainContentView,
+                                    mainContentStack,
                                     onToggleRightContent,
                                   }: PlayerBarProps) {
-  /* player 还没初始化时直接隐藏 ,后续可以考虑使用 loading 动画 */
+
   if (!player) return null;
 
   const track = player.playQueue.currentTrack;
@@ -94,7 +95,7 @@ export default function PlayerBar({
         <i className="fas fa-filter mx-3 cursor-pointer" title="播放所有歌曲" />
         <i
           className="fas fa-align-center mx-3 cursor-pointer"
-          onClick={() => setMainContentView('lyric')}
+          onClick={() => mainContentStack.navigate(ViewName.LYRIC)}
         />
         <input
           type="range"

@@ -1,34 +1,48 @@
 // file: src/App.tsx
+
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import './tailwind.css';
+
 import TopBar from '@components/TopBar/TopBar';
 import MusicLibrary from '@components/Musiclibrary/Musiclibrary';
 import MainContent from '@components/Maincontent/MainContent';
 import RightContent from '@components/RightContent/RightContent';
-import useMusicLibrary from '@renderer/hooks/useMusiclibrary';
 import PlayerBar from '@components/Playerbar/PlayerBar';
+
+import useMusicLibrary from '@renderer/hooks/useMusiclibrary';
+import useMainWindow from '@renderer/hooks/useMainWindow';
+
 import { FusionSearchResult, PlayerState } from '@src/shared/types';
 import { playerContext, shortcutContext } from '@main/app/electronContextApi';
 import Player from '@components/Player';
-import useMainWindow from '@renderer/hooks/useMainWindow';
-// 引入新设计的 Player 对象
 
-// 你可能需要在 types 中定义 PlayerState 与 Player 对象状态类型
-// 这里假定 PlayerState 与原有状态结构保持一致
+import { MainContentViewStack, ViewName } from '@components/Maincontent/MainContentViewStack';
 
 const Application: React.FC = () => {
+  // === 1. 实例化导航栈 ===
+  const viewStackRef = useRef(
+    new MainContentViewStack({ view: 'playlist' as ViewName }),
+  );
+
+  // 本地 state：整个栈和指针，用于触发渲染
+  const [stack, setStack] = useState(viewStackRef.current.getStack());
+  const [pointer, setPointer] = useState(viewStackRef.current.getPointer());
+
+  // === 2. 订阅导航栈变化 ===
+  useEffect(() => {
+    return viewStackRef.current.subscribe((s, p) => {
+      setStack(s);
+      setPointer(p);
+    });
+  }, []);
+
+  // === 3. 播放器逻辑 ===
   const audioRef = useRef<HTMLAudioElement>(null);
-  // 用于保存 Player 对象实例
   const playerInstanceRef = useRef<Player | null>(null);
-  // 使用 React 状态同步播放器状态，以驱动 UI 更新
-  const [
-    playerState, setPlayerState] = useState<PlayerState>({
-    queue: {
-      queue: [],
-      indexList: [],
-      currentIndex: 0,
-    },
+
+  const [playerState, setPlayerState] = useState<PlayerState>({
+    queue: { queue: [], indexList: [], currentIndex: 0 },
     volume: 0.5,
     playbackMode: 'loop',
     audioSrc: '',
@@ -37,8 +51,80 @@ const Application: React.FC = () => {
     currentTime: 0,
   });
 
+  // 初始化播放器并恢复状态
+  useEffect(() => {
+    const initPlayer = async () => {
+      const dump = await playerContext.getPlayerStateFromMain();
+      if (audioRef.current && !playerInstanceRef.current) {
+        const player = new Player(audioRef.current);
+        player.onStateChange = (st) => setPlayerState(st);
+        playerInstanceRef.current = player;
+        if (dump) {
+          try {
+            await player.loadFromDump(dump);
+          } catch (e) {
+            console.error('从 dump 初始化播放器失败', e);
+          }
+        }
+      }
+    };
+    initPlayer();
+  }, [audioRef.current]);
 
-  // 歌单、选中项、刷新等逻辑保持不变
+  // IPC 监听：状态请求、快捷键、通知
+  useEffect(() => {
+    const handleReqState = () => {
+      const player = playerInstanceRef.current;
+      if (player) playerContext.sendPlayerState(player.dumpPlayerState());
+    };
+    const handleShortcut = (data: string) => {
+      const player = playerInstanceRef.current;
+      if (!player) return;
+      switch (data) {
+        case 'prev':
+          player.playPrevious();
+          break;
+        case 'next':
+          player.playNext();
+          break;
+        case 'play-pause':
+          player.togglePlayPause();
+          break;
+        case 'volume-up':
+          player.changeVolume(0.1);
+          break;
+        case 'volume-down':
+          player.changeVolume(-0.1);
+          break;
+      }
+    };
+    const handleNotif = (msg: string) => alert(msg);
+
+    playerContext.onRequestPlayerState(handleReqState);
+    shortcutContext.onShortcut(handleShortcut);
+    playerContext.onNotification(handleNotif);
+
+    return () => {
+      playerContext.removeRequestPlayerStateListener();
+      shortcutContext.removeShortcutListener();
+      playerContext.removeRequestPlayerStateListener();
+    };
+  }, []);
+
+  // 同步元数据加载后的时长
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onLoaded = () => {
+      playerInstanceRef.current?.setCurrentTime(audio.duration);
+    };
+    audio.addEventListener('loadedmetadata', onLoaded);
+    return () => {
+      audio.removeEventListener('loadedmetadata', onLoaded);
+    };
+  }, [playerState.audioSrc]);
+
+  // === 4. 歌单 & 搜索 相关 ===
   const {
     playlists,
     selectedItem,
@@ -48,7 +134,6 @@ const Application: React.FC = () => {
     setSelectedPlaylistInfo,
   } = useMusicLibrary();
 
-  // 主窗口相关逻辑
   const {
     isMusicLibraryCollapsed,
     setIsMusicLibraryCollapsed,
@@ -56,133 +141,28 @@ const Application: React.FC = () => {
     toggleRightContent,
   } = useMainWindow();
 
-  // 同步搜索结果与主内容视图（这里与原来保持一致）
   const [searchResults, setSearchResults] = useState<FusionSearchResult>({
     tracks: [],
     playlists: [],
   });
-  const [mainContentView, setMainContentView] = useState('playlist');
-
-  // 在组件挂载后，初始化 Player 对象
-  useEffect(() => {
-
-    const initPlayer = async () => {
-
-      const playerStateDump: PlayerState = await playerContext.getPlayerStateFromMain();
-      if (audioRef.current && !playerInstanceRef.current) {
-        const player = new Player(audioRef.current);
-
-        // 注册播放器状态更新回调
-        player.onStateChange = (state: PlayerState) => {
-          setPlayerState(state);
-        };
-        playerInstanceRef.current = player;
-
-        if (playerStateDump) {
-
-          try {
-            await player.loadFromDump(playerStateDump);
-          } catch (e) {
-            console.log('从dump初始化播放器时候出错');
-          }
-        }
-      }
-
-
-    };
-
-    initPlayer().then();
-  }, [audioRef.current]);
-
-  // 注册播放器与快捷键、通知等的 IPC 监听
-  useEffect(() => {
-    // 注册回调函数——这里 dumpPlayerState 可调用 playerInstance 的方法
-    const handleRequestPlayerState = () => {
-      if (playerInstanceRef.current) {
-        const state = playerInstanceRef.current.dumpPlayerState();
-        playerContext.sendPlayerState(state);
-      }
-    };
-    const handleNotification = (message: string) => {
-      alert(message);
-    };
-    const handleShortcut = (data: string) => {
-      if (!playerInstanceRef.current) return;
-      switch (data) {
-        case 'prev':
-          playerInstanceRef.current.playPrevious().then();
-          break;
-        case 'next':
-          playerInstanceRef.current.playNext().then();
-          break;
-        case 'play-pause':
-          playerInstanceRef.current.togglePlayPause();
-          break;
-        case 'volume-up':
-          playerInstanceRef.current.changeVolume(0.1);
-          break;
-        case 'volume-down':
-          playerInstanceRef.current.changeVolume(-0.1);
-          break;
-        default:
-          console.log('未知快捷键操作');
-      }
-    };
-
-    playerContext.onRequestPlayerState(handleRequestPlayerState);
-    shortcutContext.onShortcut(handleShortcut);
-    playerContext.onNotification(handleNotification);
-    return () => {
-      playerContext.removeRequestPlayerStateListener();
-      shortcutContext.removeShortcutListener();
-      console.log('已移除所有 IPC 监听器');
-    };
-  }, []);
-
-  // 同步音频元数据
-  useEffect(() => {
-    const audioElement = audioRef.current;
-    if (audioElement) {
-      const handleLoadedMetadata = () => {
-        if (playerInstanceRef.current) {
-          // 这里直接调用 Player 的方法设置时长
-          // 假设 setCurrentTrackInfoDuration 方法已经内置在 Player 对象中
-          playerInstanceRef.current.setCurrentTime(audioElement.duration);
-        }
-      };
-      audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
-      return () => {
-        audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      };
-    }
-  }, [playerState.audioSrc]);
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //@ts-expect-error
-  //used for front-end debug
-  window.playerState = playerState;
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  window.player = playerInstanceRef.current;
 
   return (
-    <div className="App h-full w-full flex flex-col bg-black flex-direction: column">
-      {/* 隐藏的音频元素 */}
+    <div className="App h-full w-full flex flex-col bg-black">
       <audio ref={audioRef} hidden />
 
-      {/* 顶部导航 */}
+      {/* 顶部导航：委托给导航栈 */}
       <TopBar
-        onSwitchView={setMainContentView}
-        currentView={mainContentView}
         setSearchResults={setSearchResults}
+        mainContentViewStack={viewStackRef.current}
       />
 
-      {/* 主内容区域 */}
+      {/* 主体区域 */}
       <div
         className="flex-1 overflow-hidden grid"
         style={{
-          gridTemplateColumns: `${isMusicLibraryCollapsed ? '72px' : '250px'} minmax(416.67px, 1fr) ${
+          gridTemplateColumns: `${
+            isMusicLibraryCollapsed ? '72px' : '250px'
+          } minmax(416.67px, 1fr) ${
             isRightContentVisible ? 'minmax(0, 300px)' : ''
           }`,
           gap: '0.5rem',
@@ -195,39 +175,48 @@ const Application: React.FC = () => {
           selectedItem={selectedItem}
           refreshPlaylist={refreshPlaylists}
           onSelectItem={setSelectedItem}
-          mainContentView={mainContentView}
-          setMainContentView={setMainContentView}
+          mainContentView={stack[pointer].view}
+          setMainContentView={(view: ViewName) =>
+            viewStackRef.current.navigate(view)
+          }
           isMusicLibraryCollapsed={isMusicLibraryCollapsed}
-          onToggleMusicLibraryCollapsed={() => setIsMusicLibraryCollapsed(!isMusicLibraryCollapsed)}
+          onToggleMusicLibraryCollapsed={() =>
+            setIsMusicLibraryCollapsed(!isMusicLibraryCollapsed)
+          }
         />
+
         <MainContent
-          view={mainContentView}
+          stack={stack}
+          pointer={pointer}
           player={playerInstanceRef.current}
           selectedPlaylistInfo={selectedPlaylistInfo}
+          setSelectedPlaylistInfo={setSelectedPlaylistInfo}
           searchResults={searchResults}
           refreshPlaylists={refreshPlaylists}
           playlists={playlists}
-          setSelectedPlaylistInfo={setSelectedPlaylistInfo}
-          setMainContentView={setMainContentView}
-
+          setMainContentView={(view: ViewName) =>
+            viewStackRef.current.navigate(view)
+          }
         />
+
         {isRightContentVisible && (
           <RightContent
             className="h-full overflow-y-auto"
             player={playerInstanceRef.current}
+
           />
         )}
       </div>
 
+
       {/* 底部播放条 */}
       <PlayerBar
         player={playerInstanceRef.current}
-        onToggleRightContent={
-          toggleRightContent
-        }
-        setMainContentView={setMainContentView}
+        onToggleRightContent={toggleRightContent}
+        mainContentStack={viewStackRef.current}
       />
     </div>
+
   );
 };
 

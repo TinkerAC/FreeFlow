@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { PlaylistModel, TrackModel } from '@src/shared/types';
 import ContextMenu from './ContextMenu';
-import Track from '@components/PlaylistView/Track';
+import Track from '@components/Maincontent/PlaylistView/Track';
 import Player from '@components/Player';
 
 interface PlaylistProps {
@@ -89,13 +89,20 @@ export function Playlist({
   return (
     <div className="mt-6 Playlist">
       <table className="w-full text-left table-fixed">
+        <colgroup>
+          <col className="w-8" />
+          <col className="w-1/2" />
+          <col className="hidden md:table-cell w-1/4" />
+          <col className="hidden lg:table-cell w-1/6" />
+          <col className="w-12" />
+        </colgroup>
         <thead>
         <tr className="border-b border-gray-700">
           <th className="py-2 w-8 text-center">#</th>
           <th className="py-2 w-1/2">标题</th>
           <th className="py-2 w-1/4 hidden md:table-cell">专辑</th>
           <th className="py-2 w-1/6 hidden lg:table-cell">添加日期</th>
-          <th className="py-2 w-12">
+          <th className="py-2 w-12 content-center">
             <i className="fas fa-clock" aria-label="时长"></i>
           </th>
         </tr>
