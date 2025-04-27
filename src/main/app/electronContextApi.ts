@@ -1,7 +1,7 @@
 import { ConfigApi } from '@main/app/ipc/configApi';
 import { LibraryApi } from '@main/app/ipc/libraryApi';
 import { LyricsApi } from '@main/app/ipc/lyricsApi';
-import { PlatformApi } from '@main/app/ipc/platformApi';
+import { SystemApi } from '@main/app/ipc/systemApi';
 import { PlayerApi } from '@main/app/ipc/playerApi';
 import { PlaylistApi } from '@main/app/ipc/playlistApi';
 import { SearchApi } from '@main/app/ipc/searchApi';
@@ -16,7 +16,7 @@ const shortcutContext: ShortcutApi = window.mainApi.shortcutApi;
 const windowControlContext: WindowControlApi = window.mainApi.windowControlApi;
 const libraryContext: LibraryApi = window.mainApi.libraryApi;
 const lyricsContext: LyricsApi = window.mainApi.lyricsApi;
-const platformContext: PlatformApi = window.mainApi.platformApi;
+const systemContext: SystemApi = window.mainApi.systemApi;
 
 export {
   configContext,
@@ -27,5 +27,5 @@ export {
   windowControlContext,
   libraryContext,
   lyricsContext,
-  platformContext,
+  systemContext,
 };

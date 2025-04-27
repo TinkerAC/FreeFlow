@@ -13,7 +13,7 @@ export default class TrackMapper {
     raw: Track,
   ): TrackModel {
 
-    // console.log('raw.platformContext', raw.platformContext, Platform.NET_EASE_CLOUD_MUSIC, Platform.LOCAL, Platform.HIFINI);
+    // console.log('raw.systemContext', raw.systemContext, Platform.NET_EASE_CLOUD_MUSIC, Platform.LOCAL, Platform.HIFINI);
     switch (raw.platform) {
       case Platform.NET_EASE_CLOUD_MUSIC:
         return NetEaseCloudMusicTrackModel.build({

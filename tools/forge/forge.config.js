@@ -9,13 +9,12 @@ module.exports = {
     asar: {
       'unpack': '**/node_modules/**/*',
     },
-
     // Set executable name
     executableName: 'FreeFlow',
     // Set application copyright
     appCopyright: 'Copyright (C) 2024 Tinker',
     // Set application icon
-    icon: path.resolve('assets/images/appIcon'),
+    icon: path.resolve('assets/images/appIcon_jetbrains'),
 
   },
   // Forge Makers

@@ -1,7 +1,7 @@
 import { contextBridge } from 'electron';
 import { windowControlApi } from '@main/app/ipc/windowControlApi';
 import { configApi } from '@main/app/ipc/configApi';
-import { platformApi } from '@main/app/ipc/platformApi';
+import { systemApi } from '@main/app/ipc/systemApi';
 import { playerApi } from '@main/app/ipc/playerApi';
 
 import { playlistApi } from '@main/app/ipc/playlistApi';
@@ -16,7 +16,7 @@ import { lyricsApi } from '@main/app/ipc/lyricsApi';
 const mainApi = {
   windowControlApi,
   configApi,
-  platformApi,
+  systemApi,
   playerApi,
   playlistApi,
   searchApi,

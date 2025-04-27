@@ -115,10 +115,7 @@ export class PlayQueue {
   public rebuildIndexList(playbackMode: 'loop' | 'repeat' | 'shuffle') {
 
     const currentTrack = this.currentTrack;
-    let curLibIdx:number|null = null;
-
-    // 1. 先拿到当前曲目的 library 索引
-    // const curLibIdx = this.findTrackIndex(this.currentTrack!);
+    let curLibIdx: number | null = null;
 
     currentTrack && (curLibIdx = this.findTrackIndexInQueueLibrary(currentTrack));
 
@@ -129,7 +126,7 @@ export class PlayQueue {
     this.generateNewIndexList(
       playbackMode,
       this.queueLibrary.length,
-      curLibIdx,
+      curLibIdx || 0,
     );
     if (
       curLibIdx != null) {
@@ -140,6 +137,7 @@ export class PlayQueue {
 
 
   private generateNewIndexList(playbackMode: 'loop' | 'repeat' | 'shuffle', queueLibraryLength: number, repeatLibIdx: number = null) {
+
     switch (playbackMode) {
       case 'loop':
         this.indexList = this.queueLibrary.map((_, i) => i);

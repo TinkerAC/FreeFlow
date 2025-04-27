@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './TopBar.css';
 import { FusionSearchResult } from '@src/shared/types';
-import { configContext, platformContext, searchContext, windowControlContext } from '@main/app/electronContextApi';
+import { configContext, systemContext, searchContext, windowControlContext } from '@main/app/electronContextApi';
 
 
 async function getSearchResults(searchTerm: string) {
@@ -32,7 +32,7 @@ export default function TopBar({
 
   useEffect(() => {
     // 获取平台信息
-    platformContext.getPlatform().then((platform: string) => {
+    systemContext.getPlatform().then((platform: string) => {
       setPlatform(platform);
     });
   }, []);
@@ -130,7 +130,7 @@ export default function TopBar({
                       userName || '无'
                     }</span>
         </div>
-        {/*show if the platformContext is not macOS*/}
+        {/*show if the systemContext is not macOS*/}
         {platform !== 'darwin' && (
           <div className="window-controls">
             <span onClick={() => windowControlContext.minimize()}>&#8722;</span>

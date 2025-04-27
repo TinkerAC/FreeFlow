@@ -12,6 +12,7 @@ import { Platform } from '@main/enum/Platform';
 import Store from 'electron-store';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import { LyricService } from '@main/services/LyricService';
+import { FileCacheManager } from '@main/FileCacheManager';
 
 
 const hifiniMusic: HifiniMusic = container.get('HifiniMusic');
@@ -21,12 +22,12 @@ const trackService: TrackService = container.get('TrackService');
 const netEaseCloudMusic: NetEaseCloudMusic = container.get('NetEaseCloudMusic');
 const qqMusic: QQMusic = container.get('QQMusic');
 const lyricService: LyricService = container.get('LyricService');
-
+const fileCacheManager: FileCacheManager = container.get<FileCacheManager>('FileCacheManager');
 
 export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
 
-  ipcMain.handle('get-platformContext', async () => {
+  ipcMain.handle('get-systemContext', async () => {
     return process.platform;
   });
 
@@ -184,6 +185,10 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   ipcMain.on('reveal-database-in-file-system', async () => {
     const { shell } = require('electron');
     shell.showItemInFolder(dbPath);
+  });
+
+  ipcMain.handle('calculate-file-cache-disk-usage', async () => {
+    return await fileCacheManager.getDiskUsage();
   });
 
 }

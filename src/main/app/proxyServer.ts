@@ -43,7 +43,7 @@ class ProxyServerManager {
       console.log('代理服务器收到请求:', platform, platformUniqueId);
 
       if (!platform || !platformUniqueId) {
-        res.status(400).send('Error: Missing platformContext or platformUniqueId.');
+        res.status(400).send('Error: Missing systemContext or platformUniqueId.');
         return;
       }
 
@@ -79,7 +79,7 @@ class ProxyServerManager {
               musicLink = await this.qqMusic.getTrackLink(platformUniqueId);
               break;
             default:
-              res.status(400).send('Error: Unsupported platformContext.');
+              res.status(400).send('Error: Unsupported systemContext.');
               return;
           }
 

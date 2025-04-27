@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { configContext, platformContext } from '@main/app/electronContextApi';
+import { configContext, systemContext } from '@main/app/electronContextApi';
+import { formatStorageUnit } from '@src/utils/fsUtils';
 
 function ProfileView() {
   // 状态变量
@@ -10,7 +11,7 @@ function ProfileView() {
   const [message, setMessage] = useState<string>('');
   const [scanPaths, setScanPaths] = useState<string[]>([]);
   const [newScanPath, setNewScanPath] = useState<string>('');
-
+  const [diskByteUsage, setDiskByteUsage] = useState<number>(0);
   // 获取配置
   useEffect(() => {
     async function fetchConfig() {
@@ -28,6 +29,9 @@ function ProfileView() {
 
       const paths = await configContext.getConfig<string[]>('scan_paths');
       setScanPaths(paths || []);
+
+      const byteUsage = await systemContext.calculateFileCacheDiskUsage();
+      setDiskByteUsage(byteUsage || 0);
     }
 
     fetchConfig().then();
@@ -148,14 +152,16 @@ function ProfileView() {
 
       <button
         onClick={() => {
-          // 注意：在渲染进程中直接使用 require 需要确保你允许 Node 集成或通过 preload 暴露相应的 API
-          // 显示数据库文件所在目录，并高亮该文件
-          platformContext.revealDataBaseInFileSystem();
+          systemContext.revealDataBaseInFileSystem();
         }}
         className="bg-gray-700 text-white px-4 py-2 rounded-full"
       >
         显示数据库文件
       </button>
+
+
+      <label>已使用磁盘上的 :{formatStorageUnit(diskByteUsage)}</label>
+
     </div>
   );
 }

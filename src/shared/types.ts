@@ -527,7 +527,7 @@ export class PlaylistModel {
 export class ModelFactory {
   /**
    * 根据 JSON 数据构建 TrackModel 子类实例
-   * @param json JSON 数据，必须包含 platformContext 字段
+   * @param json JSON 数据，必须包含 systemContext 字段
    */
   public static buildTrackModel(json: any): TrackModel {
     if (!json || !json.platform) {
