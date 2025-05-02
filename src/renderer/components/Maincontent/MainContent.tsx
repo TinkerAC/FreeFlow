@@ -15,7 +15,7 @@ import DebugView from '@components/Maincontent/DebugView/DebugView';
 interface MainContentProps {
   player: Player | null;
 
-  viewStack: MainContentViewStack;                  // 假设提供 items + pointer
+  viewStack: MainContentViewStack;
   selectedPlaylistInfo: PlaylistModel;
   setSelectedPlaylistInfo: (playlist: PlaylistModel) => void;
 

@@ -1,4 +1,3 @@
-// file: src/components/LyricView.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Lyric } from '@src/shared/types';
 import { lyricsContext } from '@main/app/electronContextApi';
@@ -6,14 +5,15 @@ import Player from '@components/Player';
 import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
 
 interface LyricViewProps {
-  player: Player,
-  viewStack?: MainContentViewStack
+  player: Player;
+  viewStack?: MainContentViewStack;
 }
 
 const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
   /* --------------------------- 状态 --------------------------- */
   const [lyric, setLyric] = useState<Lyric | null>(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   const [showTimestamp, setShowTimestamp] = useState(false);
 
   /* --------------------------- 引用 --------------------------- */
@@ -26,16 +26,23 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
   /* --------------------------- 拉取歌词 --------------------------- */
   useEffect(() => {
     (async () => {
+      setLoading(true);
+      setError('');
       if (!player.playQueue.currentTrack) {
         setError('当前没有播放的歌曲');
+        setLoading(false);
         return;
       }
       try {
-        const lyricData = await lyricsContext.getLyrics(player.playQueue.currentTrack);
+        const lyricData = await lyricsContext.getLyrics(
+          player.playQueue.currentTrack
+        );
         setLyric(lyricData);
       } catch (e) {
         console.error('[fetchLyric] ', e);
         setError('加载歌词失败');
+      } finally {
+        setLoading(false);
       }
     })();
   }, [player.playQueue.currentTrack]);
@@ -45,24 +52,24 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
     const container = lyricsContainerRef.current;
     if (!container) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const markUserInteraction = (_e: Event) => {
       if (isAutoScrollingRef.current) return;
       lastUserInteractionRef.current = Date.now();
 
-      // 显示时间刻度
       setShowTimestamp(true);
-      // 若已有隐藏计时器，清掉
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = window.setTimeout(() => setShowTimestamp(false), 2000);
+      hideTimerRef.current = window.setTimeout(
+        () => setShowTimestamp(false),
+        2000
+      );
     };
 
     ['wheel', 'mousedown', 'touchstart'].forEach((ev) =>
-      container.addEventListener(ev, markUserInteraction),
+      container.addEventListener(ev, markUserInteraction)
     );
     return () => {
       ['wheel', 'mousedown', 'touchstart'].forEach((ev) =>
-        container.removeEventListener(ev, markUserInteraction),
+        container.removeEventListener(ev, markUserInteraction)
       );
     };
   }, []);
@@ -81,14 +88,21 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
 
   /* --------------------------- 自动滚动 --------------------------- */
   useEffect(() => {
-    if (activeIndex === null || !lyricsContainerRef.current || !lyric) return;
-    if (lastActiveIndexRef.current === activeIndex) return; // 与上次相同
-    if (Date.now() - lastUserInteractionRef.current < 3500) return; // 最近有手动滚
+    if (
+      activeIndex === null ||
+      !lyricsContainerRef.current ||
+      !lyric ||
+      loading
+    ) {
+      return;
+    }
+    if (lastActiveIndexRef.current === activeIndex) return;
+    if (Date.now() - lastUserInteractionRef.current < 3500) return;
 
     lastActiveIndexRef.current = activeIndex;
 
     const activeElem = lyricsContainerRef.current.querySelector<HTMLElement>(
-      `[data-index="${activeIndex}"]`,
+      `[data-index=\"${activeIndex}\"]`
     );
     if (!activeElem) return;
 
@@ -99,7 +113,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
     isAutoScrollingRef.current = true;
     lyricsContainerRef.current.scrollTo({ top: offset, behavior: 'smooth' });
     setTimeout(() => (isAutoScrollingRef.current = false), 1500);
-  }, [activeIndex, lyric]);
+  }, [activeIndex, lyric, loading]);
 
   /* --------------------------- 渲染行 --------------------------- */
   const renderLine = (line: { time: number; text: string }, i: number) => {
@@ -107,7 +121,9 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
     const next = lyric?.lines[i + 1];
     const isActive = nowMs >= line.time && (!next || nowMs < next.time);
 
-    const timeText = new Date(line.time).toISOString().slice(14, -5); // mm:ss
+    const timeText = new Date(line.time)
+      .toISOString()
+      .slice(14, -5); // mm:ss
 
     return (
       <p
@@ -118,7 +134,6 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
           isActive ? 'text-white text-lg font-bold' : 'text-gray-400'
         }`}
       >
-        {/* 时间刻度：平滑透明度切换 */}
         <span
           className={`inline-block w-[50px] text-right mr-2 text-sm transition-opacity duration-300 ${
             showTimestamp ? 'opacity-70' : 'opacity-0'
@@ -131,9 +146,38 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
     );
   };
 
+  /* --------------------------- Skeleton Shimmer --------------------------- */
+  const shimmerStyle: React.CSSProperties = {
+    background: 'linear-gradient(90deg, #374151 25%, #4B5563 50%, #374151 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 2s infinite'
+  };
+
+  const renderSkeleton = () => (
+    <>  {/* 注入 keyframes */}
+      <style>{
+        `@keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }`
+      }</style>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            ...shimmerStyle,
+            height: '1rem',
+            width: `${Math.floor(60 + Math.random() * 30)}%`,
+            borderRadius: '0.25rem',
+            margin: '0.5rem 0'
+          }}
+        />
+      ))}
+    </>
+  );
+
   /* --------------------------- UI --------------------------- */
   if (error) return <div className="text-white p-4">{error}</div>;
-  if (!lyric) return <div className="text-white p-4">正在加载歌词...</div>;
 
   return (
     <div className="flex h-full w-full bg-gray-900">
@@ -155,14 +199,18 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
         onScroll={() => {
           if (!isAutoScrollingRef.current) {
             lastUserInteractionRef.current = Date.now();
-            // 同时触发时间刻度显示
             setShowTimestamp(true);
             if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-            hideTimerRef.current = window.setTimeout(() => setShowTimestamp(false), 2000);
+            hideTimerRef.current = window.setTimeout(
+              () => setShowTimestamp(false),
+              2000
+            );
           }
         }}
       >
-        {lyric.lines.map(renderLine)}
+        {loading || !lyric
+          ? renderSkeleton()
+          : lyric.lines.map(renderLine)}
       </div>
     </div>
   );

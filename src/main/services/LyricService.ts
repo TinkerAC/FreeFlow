@@ -9,7 +9,7 @@ import { Platform } from '@main/enum/Platform';
  * @returns Promise<Lyric>
  *
  * 注意：本函数中不在内部捕获异常，而是将异常向上传递，
- * 使得调用者能够统一处理错误，避免局部捕获后再 throw 的冗余。
+ *
  */
 @injectable()
 export class LyricService {
@@ -63,3 +63,10 @@ export class LyricService {
     }
   }
 }
+
+
+
+
+
+
+
