@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import './TopBar.css';
 import { FusionSearchResult } from '@src/shared/types';
 import { configContext, searchContext, systemContext, windowControlContext } from '@main/app/electronContextApi';
-import { MainContentViewStack, ViewName } from '@components/Maincontent/MainContentViewStack';
+import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
+import { debug } from '@components/static';
 
 async function getSearchResults(searchTerm: string) {
   const results: FusionSearchResult = await searchContext.getSearchResults(searchTerm);
@@ -21,11 +22,6 @@ export default function TopBar({
                                  setSearchResults,
                                  mainContentViewStack,
                                }: TopBarProps) {
-  // 本地维护 currentView，从 stack 订阅获取
-  const [currentView, setCurrentView] = useState<ViewName>(
-    mainContentViewStack.getStack()[mainContentViewStack.getPointer()].view,
-  );
-
   // 平台信息
   const [platform, setPlatform] = useState<string | null>(null);
   // 搜索输入
@@ -33,12 +29,6 @@ export default function TopBar({
   // 用户名
   const [userName, setUserName] = useState('');
 
-  // 订阅栈变化，同步 currentView
-  useEffect(() => {
-    return mainContentViewStack.subscribe((stack, pointer) => {
-      setCurrentView(stack[pointer].view);
-    });
-  }, [mainContentViewStack]);
 
   // 获取平台
   useEffect(() => {
@@ -64,8 +54,8 @@ export default function TopBar({
 
   // 执行搜索：先切到 searchResults，再拉取数据
   const performSearch = (term: string) => {
-    if (currentView !== 'searchResults') {
-      mainContentViewStack.navigate('searchResults');
+    if (mainContentViewStack.currentView !== View.SEARCH_RESULTS) {
+      mainContentViewStack.navigate(View.SEARCH_RESULTS);
     }
     getSearchResults(term).then((res) => setSearchResults(res));
   };
@@ -101,7 +91,7 @@ export default function TopBar({
           placeholder="想播放什么？"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          onFocus={() => mainContentViewStack.navigate('searchResults')}
+          onFocus={() => mainContentViewStack.navigate(View.SEARCH_RESULTS)}
         />
       </div>
 
@@ -111,13 +101,17 @@ export default function TopBar({
           <i className="fa fa-bell"></i>
         </div>
         <div className="icon">
-          <i className="fa fa-users"></i>
+          <img src={debug} alt={'Debug'} sizes="24px"
+               onClick={() => {
+                 mainContentViewStack.navigate(View.DEBUG);
+               }}
+          />
         </div>
         <div
           className="user-icon"
           onClick={() => {
-            if (currentView !== 'profile') {
-              mainContentViewStack.navigate('profile');
+            if (mainContentViewStack.currentView !== View.PROFILE) {
+              mainContentViewStack.navigate(View.PROFILE);
             }
           }}
         >

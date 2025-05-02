@@ -12,23 +12,29 @@ export class PlayQueue {
   private indexList: number[] = [];
   private currentIndex = 0;
 
+  /** 或者直接暴露成动态属性 */
+  public get currentTrack(): TrackModel | null {
+    if (!this.indexList.length) return null;
+    const libIdx = this.indexList[this.currentIndex];
+    return this.queueLibrary[libIdx] || null;
+  }
+
+  /** 剩余未播放的曲目列表，按播放顺序 */
+  public get remainingTracks(): TrackModel[] {
+    return this.indexList
+      .slice(this.currentIndex + 1)
+      .map((libIdx) => this.queueLibrary[libIdx]);
+  }
+
+  public get isEmpty() {
+    return this.queueLibrary.length == 0;
+  }
+
   /** 从 dump 恢复整个队列状态 */
   public loadFromDump(dump: QueueDump) {
     this.queueLibrary = dump.queue;
     this.indexList = dump.indexList;
     this.currentIndex = dump.currentIndex;
-  }
-
-  /**
-   * 找到给定曲目在 library 中的索引
-   * @param track
-   */
-  private findTrackIndexInQueueLibrary(track: TrackModel): number {
-    return this.queueLibrary.findIndex(item =>
-      item.platform === track.platform &&
-      item.platform_unique_id === track.platform_unique_id,
-    );
-
   }
 
   /** 在“下一首”位置添加：原方法 */
@@ -135,28 +141,6 @@ export class PlayQueue {
 
   }
 
-
-  private generateNewIndexList(playbackMode: 'loop' | 'repeat' | 'shuffle', queueLibraryLength: number, repeatLibIdx: number = null) {
-
-    switch (playbackMode) {
-      case 'loop':
-        this.indexList = this.queueLibrary.map((_, i) => i);
-        break;
-      case 'shuffle':
-        this.indexList = this.queueLibrary
-          .map((_, i) => i)
-          .sort(() => Math.random() - 0.5);
-        break;
-      case 'repeat':
-        if (repeatLibIdx === null) {
-          console.error('未为repeat曲目提供索引');
-        }
-        this.indexList = [repeatLibIdx];
-        break;
-    }
-
-  }
-
   /**
    * 整体替换 library 并重建索引
    * @param tracks 新的曲目列表
@@ -190,6 +174,8 @@ export class PlayQueue {
       (this.currentIndex + step) % this.indexList.length;
   }
 
+  // ===== 新增的动态属性，无需手动维护 =====
+
   /** 切到上一首 */
   public movePrev(step = 1): void {
     if (!this.indexList.length) return;
@@ -198,24 +184,36 @@ export class PlayQueue {
       this.indexList.length;
   }
 
-  // ===== 新增的动态属性，无需手动维护 =====
+  /**
+   * 找到给定曲目在 library 中的索引
+   * @param track
+   */
+  private findTrackIndexInQueueLibrary(track: TrackModel): number {
+    return this.queueLibrary.findIndex(item =>
+      item.platform === track.platform &&
+      item.platform_unique_id === track.platform_unique_id,
+    );
 
-
-  /** 或者直接暴露成动态属性 */
-  public get currentTrack(): TrackModel | null {
-    if (!this.indexList.length) return null;
-    const libIdx = this.indexList[this.currentIndex];
-    return this.queueLibrary[libIdx] || null;
   }
 
-  /** 剩余未播放的曲目列表，按播放顺序 */
-  public get remainingTracks(): TrackModel[] {
-    return this.indexList
-      .slice(this.currentIndex + 1)
-      .map((libIdx) => this.queueLibrary[libIdx]);
-  }
+  private generateNewIndexList(playbackMode: 'loop' | 'repeat' | 'shuffle', queueLibraryLength: number, repeatLibIdx: number = null) {
 
-  public get isEmpty() {
-    return this.queueLibrary.length == 0;
+    switch (playbackMode) {
+      case 'loop':
+        this.indexList = this.queueLibrary.map((_, i) => i);
+        break;
+      case 'shuffle':
+        this.indexList = this.queueLibrary
+          .map((_, i) => i)
+          .sort(() => Math.random() - 0.5);
+        break;
+      case 'repeat':
+        if (repeatLibIdx === null) {
+          console.error('未为repeat曲目提供索引');
+        }
+        this.indexList = [repeatLibIdx];
+        break;
+    }
+
   }
 }

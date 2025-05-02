@@ -17,10 +17,10 @@ import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/I
 
 @injectable()
 export default class HifiniMusic implements ContentProvider {
-  private readonly __filename: string;
-  private readonly __dirname: string;
   public readonly platformName: string;
   public readonly serverNodes: string[] = [];
+  private readonly __filename: string;
+  private readonly __dirname: string;
 
   constructor(
     @inject('Store') private store: ElectronStore,
@@ -29,21 +29,6 @@ export default class HifiniMusic implements ContentProvider {
     this.__filename = fileURLToPath(import.meta.url);
     this.__dirname = path.dirname(this.__filename);
     this.platformName = 'Hifini';
-  }
-
-
-  /**
-   * 私有方法：获取 hifini 请求所需的 cookie 字符串
-   * 从 store 中获取 hifini_cookie 配置，并构造标准的 cookie 字符串
-   */
-  private getCookieString(): string {
-    const cookies: HifiniCookie = getConfig<HifiniCookie>(this.store, 'hifini_cookie');
-    if (!cookies || !cookies.bbs_sid || !cookies.bbs_token) {
-      throw new Error('未找到 hifini_cookie');
-    }
-    return Object.entries(cookies)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('; ');
   }
 
   /**
@@ -96,61 +81,6 @@ export default class HifiniMusic implements ContentProvider {
       }
       return [];
     }
-  }
-
-  /**
-   * 获取重定向后的真实播放链接
-   */
-  private async getRedirectUrl(url: string): Promise<string> {
-    try {
-      const response: AxiosResponse = await axios.head(url, {
-        headers: { referer: 'https://www.hifini.com' },
-        maxRedirects: 5,
-      });
-      const finalUrl: string = (response.request as any)?.res?.responseUrl;
-      if (!finalUrl || typeof finalUrl !== 'string') {
-        throw new Error('无法获取最终重定向 URL');
-      }
-      return finalUrl;
-    } catch (error: unknown) {
-      console.error('Error in fetching redirect URL:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Base32 编码函数
-   */
-  private base32Encode(str: string): string {
-    const base32chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    let bits: string = '', base32: string = '';
-
-    for (let i = 0; i < str.length; i++) {
-      bits += str.charCodeAt(i).toString(2).padStart(8, '0');
-    }
-
-    bits = bits.padEnd(bits.length + (5 - bits.length % 5) % 5, '0');
-
-    for (let i = 0; i < bits.length; i += 5) {
-      base32 += base32chars[parseInt(bits.substring(i, i + 5), 2)];
-    }
-
-    return base32.padEnd(base32.length + (8 - base32.length % 8) % 8, '=')
-      .replace(/=/g, 'HiFiNiYINYUECICHANG');
-  }
-
-  /**
-   * 生成参数，用于构造播放链接
-   */
-  private generateParam(data: string): string {
-    const key: string = '95wwwHiFiNicom27';
-    let outText: string = '';
-
-    for (let i = 0, j = 0; i < data.length; i++, j++) {
-      if (j === key.length) j = 0;
-      outText += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(j));
-    }
-    return this.base32Encode(outText);
   }
 
   /**
@@ -222,6 +152,155 @@ export default class HifiniMusic implements ContentProvider {
       console.error('Error getting music info:', error);
       throw error;
     }
+  }
+
+  /**
+   * 获取搜索结果，并转换为 TrackModel 数组
+   */
+  public async searchTracks(keyword: string, filterPaid: boolean = true): Promise<TrackModel[]> {
+    try {
+      const searchResults: HifiniSearchResult[] = await this.search(keyword);
+      console.info(`搜索操作完成，结果数量: ${searchResults?.length || 0}`);
+
+      if (!Array.isArray(searchResults) || searchResults.length === 0) {
+        console.warn('搜索结果为空，返回空数组');
+        return [];
+      }
+
+      // 过滤掉专辑
+      const filteredResults: HifiniSearchResult[] = searchResults.filter(
+        (result: HifiniSearchResult) => result.isAlbum === 0,
+      );
+      console.info(`过滤后结果数量: ${filteredResults.length}`);
+
+      if (filteredResults.length === 0) {
+        console.warn('过滤后的结果为空，返回空数组');
+        return [];
+      }
+
+      // 按热度降序排序，并截取前5个
+      const sortedResults: HifiniSearchResult[] = filteredResults.sort((a, b) => b.heat - a.heat).slice(0, 5);
+      console.info(`排序并截取前5个结果，准备获取详细信息`);
+
+      // 获取每个搜索结果对应的音乐信息
+      const musicInfos: (HifiniThreadCacheModel | null)[] = await Promise.all(
+        sortedResults.map(async (result: HifiniSearchResult, index: number): Promise<HifiniThreadCacheModel | null> => {
+          try {
+            console.log(`正在获取第 ${index + 1} 个结果的音乐信息，链接: ${result.dataHref}`);
+            const musicInfo: HifiniThreadCacheModel = await this.getMusicInfo(result.dataHref);
+            console.info(`第 ${index + 1} 个结果的音乐信息获取成功`);
+            return musicInfo;
+          } catch (error: unknown) {
+            console.log(`未在 ${result.dataHref} 中找到可播放的音乐`);
+            return null;
+          }
+        }),
+      );
+
+      const validMusicInfos: HifiniThreadCacheModel[] = musicInfos.filter(
+        (info): info is HifiniThreadCacheModel => !!info && !!info.cover_src,
+      );
+      console.info(`成功获取到 ${validMusicInfos.length} 个有效的音乐信息`);
+
+      // 转换为 TrackModel 数组（仅设置必要字段）
+      return validMusicInfos.map((info: HifiniThreadCacheModel): TrackModel => {
+        return {
+          platform: 'Hifini',
+          platform_unique_id: info.data_href,
+          title: info.title,
+          artist: info.artist,
+          cover_src: info.cover_src,
+          duration: 0,
+          album: '',
+          created_at: new Date(),
+        } as TrackModel;
+      });
+    } catch (error: unknown) {
+      console.error('searchTracks 函数执行出错:', error);
+      return [];
+    }
+  }
+
+  isFree(): boolean {
+    return true;
+  }
+
+  async getLyrics(uniqueId: string): Promise<Lyric | void> {
+    return Promise.resolve(undefined);
+  }
+
+  async chooseBestServerNode(): Promise<string> {
+    throw Error('NotSupportedError: HifiniMusic chooseBestServerNode not supported');
+
+  }
+
+  /**
+   * 私有方法：获取 hifini 请求所需的 cookie 字符串
+   * 从 store 中获取 hifini_cookie 配置，并构造标准的 cookie 字符串
+   */
+  private getCookieString(): string {
+    const cookies: HifiniCookie = getConfig<HifiniCookie>(this.store, 'hifini_cookie');
+    if (!cookies || !cookies.bbs_sid || !cookies.bbs_token) {
+      throw new Error('未找到 hifini_cookie');
+    }
+    return Object.entries(cookies)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('; ');
+  }
+
+  /**
+   * 获取重定向后的真实播放链接
+   */
+  private async getRedirectUrl(url: string): Promise<string> {
+    try {
+      const response: AxiosResponse = await axios.head(url, {
+        headers: { referer: 'https://www.hifini.com' },
+        maxRedirects: 5,
+      });
+      const finalUrl: string = (response.request as any)?.res?.responseUrl;
+      if (!finalUrl || typeof finalUrl !== 'string') {
+        throw new Error('无法获取最终重定向 URL');
+      }
+      return finalUrl;
+    } catch (error: unknown) {
+      console.error('Error in fetching redirect URL:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Base32 编码函数
+   */
+  private base32Encode(str: string): string {
+    const base32chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    let bits: string = '', base32: string = '';
+
+    for (let i = 0; i < str.length; i++) {
+      bits += str.charCodeAt(i).toString(2).padStart(8, '0');
+    }
+
+    bits = bits.padEnd(bits.length + (5 - bits.length % 5) % 5, '0');
+
+    for (let i = 0; i < bits.length; i += 5) {
+      base32 += base32chars[parseInt(bits.substring(i, i + 5), 2)];
+    }
+
+    return base32.padEnd(base32.length + (8 - base32.length % 8) % 8, '=')
+      .replace(/=/g, 'HiFiNiYINYUECICHANG');
+  }
+
+  /**
+   * 生成参数，用于构造播放链接
+   */
+  private generateParam(data: string): string {
+    const key: string = '95wwwHiFiNicom27';
+    let outText: string = '';
+
+    for (let i = 0, j = 0; i < data.length; i++, j++) {
+      if (j === key.length) j = 0;
+      outText += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(j));
+    }
+    return this.base32Encode(outText);
   }
 
   /**
@@ -308,85 +387,5 @@ export default class HifiniMusic implements ContentProvider {
       console.error('Error fetching and saving music info:', error);
       throw error;
     }
-  }
-
-  /**
-   * 获取搜索结果，并转换为 TrackModel 数组
-   */
-  public async searchTracks(keyword: string): Promise<TrackModel[]> {
-    try {
-      const searchResults: HifiniSearchResult[] = await this.search(keyword);
-      console.info(`搜索操作完成，结果数量: ${searchResults?.length || 0}`);
-
-      if (!Array.isArray(searchResults) || searchResults.length === 0) {
-        console.warn('搜索结果为空，返回空数组');
-        return [];
-      }
-
-      // 过滤掉专辑
-      const filteredResults: HifiniSearchResult[] = searchResults.filter(
-        (result: HifiniSearchResult) => result.isAlbum === 0,
-      );
-      console.info(`过滤后结果数量: ${filteredResults.length}`);
-
-      if (filteredResults.length === 0) {
-        console.warn('过滤后的结果为空，返回空数组');
-        return [];
-      }
-
-      // 按热度降序排序，并截取前5个
-      const sortedResults: HifiniSearchResult[] = filteredResults.sort((a, b) => b.heat - a.heat).slice(0, 5);
-      console.info(`排序并截取前5个结果，准备获取详细信息`);
-
-      // 获取每个搜索结果对应的音乐信息
-      const musicInfos: (HifiniThreadCacheModel | null)[] = await Promise.all(
-        sortedResults.map(async (result: HifiniSearchResult, index: number): Promise<HifiniThreadCacheModel | null> => {
-          try {
-            console.log(`正在获取第 ${index + 1} 个结果的音乐信息，链接: ${result.dataHref}`);
-            const musicInfo: HifiniThreadCacheModel = await this.getMusicInfo(result.dataHref);
-            console.info(`第 ${index + 1} 个结果的音乐信息获取成功`);
-            return musicInfo;
-          } catch (error: unknown) {
-            console.log(`未在 ${result.dataHref} 中找到可播放的音乐`);
-            return null;
-          }
-        }),
-      );
-
-      const validMusicInfos: HifiniThreadCacheModel[] = musicInfos.filter(
-        (info): info is HifiniThreadCacheModel => !!info && !!info.cover_src,
-      );
-      console.info(`成功获取到 ${validMusicInfos.length} 个有效的音乐信息`);
-
-      // 转换为 TrackModel 数组（仅设置必要字段）
-      return validMusicInfos.map((info: HifiniThreadCacheModel): TrackModel => {
-        return {
-          platform: 'Hifini',
-          platform_unique_id: info.data_href,
-          title: info.title,
-          artist: info.artist,
-          cover_src: info.cover_src,
-          duration: 0,
-          album: '',
-          created_at: new Date(),
-        } as TrackModel;
-      });
-    } catch (error: unknown) {
-      console.error('searchTracks 函数执行出错:', error);
-      return [];
-    }
-  }
-
-  isFree(): boolean {
-    return true;
-  }
-
-  async getLyrics(uniqueId: string): Promise<Lyric | void> {
-    return Promise.resolve(undefined);
-  }
-
-  async chooseBestServerNode(): Promise<string> {
-    throw Error('NotSupportedError: HifiniMusic chooseBestServerNode not supported');
-
   }
 }

@@ -6,8 +6,8 @@ export default async function getAudioSrc(
   track: TrackModel,
 ): Promise<string> {
 
-  if(track === null || track ===undefined){
-    console.error("传入track 为空,无法获取音源链接!");
+  if (track === null || track === undefined) {
+    console.error('传入track 为空,无法获取音源链接!');
   }
 
   switch (track.platform) {

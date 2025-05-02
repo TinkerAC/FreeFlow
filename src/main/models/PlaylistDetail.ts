@@ -18,7 +18,8 @@ export interface PlaylistDetailAttributes {
 /**
  * 定义创建 PlaylistDetail 实例时可选的属性
  */
-export interface PlaylistDetailCreationAttributes extends Optional<PlaylistDetailAttributes, 'created_at' | 'modified_at'> {}
+export interface PlaylistDetailCreationAttributes extends Optional<PlaylistDetailAttributes, 'created_at' | 'modified_at'> {
+}
 
 /**
  * PlaylistDetail 模型
@@ -75,6 +76,6 @@ PlaylistDetail.init(
         instance.modified_at = new Date();
       },
     },
-  }
+  },
 );
 

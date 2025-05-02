@@ -14,7 +14,7 @@ function loadPlayer(playerStateDumpFile: string) {
 }
 
 function savePlayer(playerStateDumpFile: string
-  , playerState: PlayerState
+  , playerState: PlayerState,
 ) {
 
   try {

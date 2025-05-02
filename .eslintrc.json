@@ -16,18 +16,46 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+        "extensions": [
+          ".js",
+          ".jsx",
+          ".ts",
+          ".tsx"
+        ]
       },
       "alias": {
         "map": [
-          ["@renderer", "./src/renderer"],
-          ["@components", "./src/renderer/components"],
-          ["@common", "./src/common"],
-          ["@main", "./src/main"],
-          ["@src", "./src"],
-          ["@assets", "./assets"]
+          [
+            "@renderer",
+            "./src/renderer"
+          ],
+          [
+            "@components",
+            "./src/renderer/components"
+          ],
+          [
+            "@common",
+            "./src/common"
+          ],
+          [
+            "@main",
+            "./src/main"
+          ],
+          [
+            "@src",
+            "./src"
+          ],
+          [
+            "@assets",
+            "./assets"
+          ]
         ],
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+        "extensions": [
+          ".js",
+          ".jsx",
+          ".ts",
+          ".tsx"
+        ]
       }
     },
     "react": {

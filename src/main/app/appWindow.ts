@@ -1,5 +1,5 @@
 // file: src/main/appWindow.ts
-import {  BrowserWindow } from 'electron';
+import { BrowserWindow } from 'electron';
 import path from 'path';
 import { setupIpcHandlers } from './ipcHandlers';
 
@@ -45,7 +45,7 @@ export function createAppWindow(): BrowserWindow {
   appWindow.on('ready-to-show', () => appWindow.show());
 
   // 初始化 IPC 事件处理
-  setupIpcHandlers(appWindow)
+  setupIpcHandlers(appWindow);
 
   // 开发环境下打开开发者工具
   if (process.env.NODE_ENV === 'development') {

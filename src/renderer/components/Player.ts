@@ -24,14 +24,10 @@ export default class Player {
   /* --------------------- 进度同步定时器 --------------------- */
   private progressTimer: number | null = null;
 
-  /**
-   * 开启 0.5 s 进度同步
-   */
-  private startProgressTimer() {
-    if (this.progressTimer !== null) return; // 已经在跑
-    this.progressTimer = window.setInterval(() => this.updateCurrentTime(), 500);
+  constructor(audio: HTMLAudioElement) {
+    this.audio = audio;
+    this.audio.volume = this.volume;
   }
-
 
   public async loadFromDump(dump: PlayerState) {
     this.playQueue.loadFromDump(dump.queue);
@@ -65,64 +61,6 @@ export default class Player {
     }
   }
 
-
-  private loadAudio(audioSrc: string) {
-    this.isLoading = true;
-    this.notifyStateChange();
-    this.audio.src = audioSrc;
-    this.audio.load();
-
-  }
-
-  /**
-   * 停止进度同步
-   */
-  private stopProgressTimer() {
-    if (this.progressTimer !== null) {
-      clearInterval(this.progressTimer);
-      this.progressTimer = null;
-    }
-  }
-
-  /**
-   * 把 audio.currentTime → Player.currentTime，并通知外部
-   */
-  private updateCurrentTime = () => {
-    this.currentTime = this.audio.currentTime;
-    this.notifyStateChange();
-  };
-
-  constructor(audio: HTMLAudioElement) {
-    this.audio = audio;
-    this.audio.volume = this.volume;
-  }
-
-  /* --------------------- 事件监听封装 --------------------- */
-
-
-  // 监听音频加载完成事件
-  private onAudioCanPlay = () => {
-    this.setCurrentTime(0);
-    this.playQueue.currentTrack.duration = this.audio.duration;
-    this.setupEndedListener();
-    this.play();
-  };
-
-  private setupEndedListener() {
-    this.audio.removeEventListener('ended', this.onAudioEnded);
-    this.audio.addEventListener('ended', this.onAudioEnded, { once: true });
-  }
-
-  private onAudioEnded = () => {
-    this.stopProgressTimer();
-    this.playNext().then((r) => console.log('播放完毕, 尝试下一首', r));
-  };
-
-  /* --------------------- 公共控制接口 --------------------- */
-  private notifyStateChange() {
-    this.onStateChange?.(this.dumpPlayerState());
-  }
-
   public play() {
     if (this.isPlaying) return;
     this.isPlaying = true;
@@ -154,7 +92,6 @@ export default class Player {
     this.isPlaying ? this.pause() : this.play();
   }
 
-
   /* --------------------- 核心切歌逻辑 --------------------- */
   public async playNext() {
     this.pause();
@@ -184,6 +121,8 @@ export default class Player {
     this.isLoading = false;
     this.notifyStateChange();
   }
+
+  /* --------------------- 事件监听封装 --------------------- */
 
   public async playPrevious() {
     this.pause();
@@ -231,12 +170,10 @@ export default class Player {
     this.setVolume(this.volume + delta);
   }
 
-
   public addTrackToNext(track: TrackModel) {
     this.playQueue._addTrackToNextInQueue(track, this.playbackMode);
     this.notifyStateChange();
   }
-
 
   public addTrackToNextAndPlay(track: TrackModel) {
     this.addTrackToNext(track);
@@ -283,13 +220,11 @@ export default class Player {
     this.setPlayBackMode(nextMode);
   }
 
-
   public setPlayBackMode(mode: PlaybackMode) {
     this.playbackMode = mode;
     this.playQueue.rebuildIndexList(mode);
     this.notifyStateChange();
   }
-
 
   public dumpPlayerState(): PlayerState {
     return {
@@ -310,6 +245,63 @@ export default class Player {
     this.setCurrentTime(0);
     this.audio.src = '';
     this.notifyStateChange();
+  }
+
+  /**
+   * 开启 0.5 s 进度同步
+   */
+  private startProgressTimer() {
+    if (this.progressTimer !== null) return; // 已经在跑
+    this.progressTimer = window.setInterval(() => this.updateCurrentTime(), 500);
+  }
+
+  private loadAudio(audioSrc: string) {
+    this.isLoading = true;
+    this.notifyStateChange();
+    this.audio.src = audioSrc;
+    this.audio.load();
+
+  }
+
+  /**
+   * 停止进度同步
+   */
+  private stopProgressTimer() {
+    if (this.progressTimer !== null) {
+      clearInterval(this.progressTimer);
+      this.progressTimer = null;
+    }
+  }
+
+  /**
+   * 把 audio.currentTime → Player.currentTime，并通知外部
+   */
+  private updateCurrentTime = () => {
+    this.currentTime = this.audio.currentTime;
+    this.notifyStateChange();
+  };
+
+  // 监听音频加载完成事件
+  private onAudioCanPlay = () => {
+    this.setCurrentTime(0);
+    this.playQueue.currentTrack.duration = this.audio.duration;
+    this.setupEndedListener();
+    this.play();
+  };
+
+  private setupEndedListener() {
+    this.audio.removeEventListener('ended', this.onAudioEnded);
+    this.audio.addEventListener('ended', this.onAudioEnded, { once: true });
+  }
+
+  private onAudioEnded = () => {
+    this.stopProgressTimer();
+    this.playNext().then((r) => console.log('播放完毕, 尝试下一首', r));
+  };
+
+  /* --------------------- 公共控制接口 --------------------- */
+  private notifyStateChange() {
+    this.onStateChange?.(this.dumpPlayerState());
   }
 
 

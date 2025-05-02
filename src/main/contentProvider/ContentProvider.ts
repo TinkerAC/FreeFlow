@@ -1,5 +1,4 @@
 import { Lyric, TrackModel } from '@src/shared/types';
-import ping from 'ping';
 
 /**
  * ContentProvider 接口定义了统一的搜索和获取播放链接方法，
@@ -22,8 +21,9 @@ export abstract class ContentProvider {
   /**
    * 根据关键词搜索歌曲，返回统一的 TrackModel 数组
    * @param keyword 搜索关键词
+   * @param filterPaid 是否过滤付费歌曲
    */
-  abstract searchTracks(keyword: string): Promise<TrackModel[]>;
+  abstract searchTracks(keyword: string, filterPaid: boolean): Promise<TrackModel[]>;
 
   /**
    * 根据平台内部的唯一标识获取歌曲播放链接

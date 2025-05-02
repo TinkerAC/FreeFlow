@@ -1,5 +1,6 @@
 import HifiniThreadCacheRepository from '@main/repository/HifiniThreadCacheRepository';
-import {HifiniThreadCache,
+import {
+  HifiniThreadCache,
   HifiniThreadCacheAttributes,
   HifiniThreadCacheCreationAttributes,
 } from '@main/models/HifiniThreadCache';

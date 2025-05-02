@@ -7,7 +7,8 @@
 **（1）IPC 模块与类型导出**
 
 - 在各个 IPC 模块文件（例如 configContext.ts）中，你定义了具体的 API（如
-  configContext.getConfig、setConfig）以及对应的类型。这部分代码体现的是具体的业务功能，是在主进程或渲染进程中通过 ipcRenderer
+  configContext.getConfig、setConfig）以及对应的类型。这部分代码体现的是具体的业务功能，是在主进程或渲染进程中通过
+  ipcRenderer
   调用主进程的接口。
 
 **（2）Preload 脚本中的暴露**

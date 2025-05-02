@@ -17,12 +17,12 @@ import { FusionSearchResult, PlayerState } from '@src/shared/types';
 import { playerContext, shortcutContext } from '@main/app/electronContextApi';
 import Player from '@components/Player';
 
-import { MainContentViewStack, ViewName } from '@components/Maincontent/MainContentViewStack';
+import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 
 const Application: React.FC = () => {
   // === 1. 实例化导航栈 ===
   const viewStackRef = useRef(
-    new MainContentViewStack({ view: 'playlist' as ViewName }),
+    new MainContentViewStack({ view: 'playlist' as View }),
   );
 
   // 本地 state：整个栈和指针，用于触发渲染
@@ -176,7 +176,7 @@ const Application: React.FC = () => {
           refreshPlaylist={refreshPlaylists}
           onSelectItem={setSelectedItem}
           mainContentView={stack[pointer].view}
-          setMainContentView={(view: ViewName) =>
+          setMainContentView={(view: View) =>
             viewStackRef.current.navigate(view)
           }
           isMusicLibraryCollapsed={isMusicLibraryCollapsed}
@@ -186,15 +186,14 @@ const Application: React.FC = () => {
         />
 
         <MainContent
-          stack={stack}
-          pointer={pointer}
+          viewStack={viewStackRef.current}
           player={playerInstanceRef.current}
           selectedPlaylistInfo={selectedPlaylistInfo}
           setSelectedPlaylistInfo={setSelectedPlaylistInfo}
           searchResults={searchResults}
           refreshPlaylists={refreshPlaylists}
           playlists={playlists}
-          setMainContentView={(view: ViewName) =>
+          setMainContentView={(view: View) =>
             viewStackRef.current.navigate(view)
           }
         />

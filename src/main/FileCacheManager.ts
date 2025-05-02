@@ -54,18 +54,12 @@ export class FileCacheManager {
     const currentUsage = await this.getDiskUsage();
     if (currentUsage + fileSize > this.maxDiskUsageBytes) {
       throw new Error(
-        `超出最大缓存限制：当前已使用 ${currentUsage} 字节，尝试添加 ${fileSize} 字节，但最大允许 ${this.maxDiskUsageBytes} 字节。`
+        `超出最大缓存限制：当前已使用 ${currentUsage} 字节，尝试添加 ${fileSize} 字节，但最大允许 ${this.maxDiskUsageBytes} 字节。`,
       );
     }
 
     // 写入文件到磁盘缓存
     await fs.writeFile(diskCachePath, fileBuffer);
-  }
-
-  // 获取磁盘缓存路径，缓存文件名通过 `platform-platform_unique_id` 来命名
-  private getDiskCachePath(trackKey: string): string {
-    const sanitizedKey = trackKey.replace(/[^a-zA-Z0-9]/g, '_'); // 确保缓存文件名合法
-    return path.join(this.diskCacheDir, `${sanitizedKey}.mp3`); // 假设缓存的是MP3文件
   }
 
   // 生成缓存键：平台 + 唯一 ID
@@ -80,5 +74,11 @@ export class FileCacheManager {
       const filePath = path.join(this.diskCacheDir, file);
       await fs.remove(filePath); // 删除文件
     }
+  }
+
+  // 获取磁盘缓存路径，缓存文件名通过 `platform-platform_unique_id` 来命名
+  private getDiskCachePath(trackKey: string): string {
+    const sanitizedKey = trackKey.replace(/[^a-zA-Z0-9]/g, '_'); // 确保缓存文件名合法
+    return path.join(this.diskCacheDir, `${sanitizedKey}.mp3`); // 假设缓存的是MP3文件
   }
 }

@@ -17,15 +17,32 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "paths": {
-      "*": ["node_modules/*"],
-      "@assets/*": ["./assets/*"],
-      "@components/*": ["./src/renderer/components/*"],
-      "@common/*": ["./src/common/*"],
-      "@main/*": ["./src/main/*"],
-      "@renderer/*": ["./src/renderer/*"],
-      "@src/*": ["./src/*"]
+      "*": [
+        "node_modules/*"
+      ],
+      "@assets/*": [
+        "./assets/*"
+      ],
+      "@components/*": [
+        "./src/renderer/components/*"
+      ],
+      "@common/*": [
+        "./src/common/*"
+      ],
+      "@main/*": [
+        "./src/main/*"
+      ],
+      "@renderer/*": [
+        "./src/renderer/*"
+      ],
+      "@src/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["src/**/*", "tools/**/*"]
+  "include": [
+    "src/**/*",
+    "tools/**/*"
+  ]
 }
 

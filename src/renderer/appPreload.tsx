@@ -1,4 +1,4 @@
-import "@main/app/windowPreload";
+import '@main/app/windowPreload';
 
 
 // Say something

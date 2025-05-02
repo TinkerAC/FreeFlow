@@ -9,6 +9,7 @@ import NetEaseCloudMusic from '@assets/icons/NetEaseCloudMusic.svg';
 import Hifini from '@assets/icons/Hifini.png';
 import Local from '@assets/icons/appIcon.png';
 import QQMusic from '@assets/icons/QQMusic.svg';
+import debug from '@assets/icons/debug.svg';
 
 import DefaultCover from '@assets/default-cover.png';
 
@@ -26,6 +27,7 @@ export {
   Local,
   DefaultCover,
   QQMusic,
+  debug,
 };
 
 

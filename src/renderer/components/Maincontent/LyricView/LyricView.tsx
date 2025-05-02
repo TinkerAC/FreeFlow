@@ -3,12 +3,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Lyric } from '@src/shared/types';
 import { lyricsContext } from '@main/app/electronContextApi';
 import Player from '@components/Player';
+import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
 
 interface LyricViewProps {
-  player: Player;
+  player: Player,
+  viewStack?: MainContentViewStack
 }
 
-const LyricView: React.FC<LyricViewProps> = ({ player }) => {
+const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
   /* --------------------------- 状态 --------------------------- */
   const [lyric, setLyric] = useState<Lyric | null>(null);
   const [error, setError] = useState('');

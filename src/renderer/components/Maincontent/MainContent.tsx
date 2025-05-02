@@ -1,7 +1,6 @@
 // file: src/renderer/components/MainContent/MainContent.tsx
 
 import React from 'react';
-import NetSearchResultView from '@components/Maincontent/SearchResultView/SearchResultView';
 import PlaylistView from '@components/Maincontent/PlaylistView/PlaylistView';
 import ProfileView from '@components/Maincontent/ProfileView/ProfileView';
 import LyricView from '@components/Maincontent/LyricView/LyricView';
@@ -9,16 +8,14 @@ import ContentPanel from '@components/ContentPanel/ContentPenal';
 
 import { FusionSearchResult, PlaylistModel } from '@src/shared/types';
 import Player from '@components/Player';
-import { StackItem, ViewName } from '@components/Maincontent/MainContentViewStack';
+import { MainContentViewStack, StackItem, View } from '@components/Maincontent/MainContentViewStack';
+import TabbedSearchResultView from '@components/Maincontent/SearchResultView/SearchREs';
+import DebugView from '@components/Maincontent/DebugView/DebugView';
 
 interface MainContentProps {
-  /** 来自 App 的完整视图栈 */
-  stack: StackItem[];
-  /** 来自 App 的当前指针 */
-  pointer: number;
-
   player: Player | null;
 
+  viewStack: MainContentViewStack;                  // 假设提供 items + pointer
   selectedPlaylistInfo: PlaylistModel;
   setSelectedPlaylistInfo: (playlist: PlaylistModel) => void;
 
@@ -27,13 +24,12 @@ interface MainContentProps {
   playlists: PlaylistModel[];
 
   /** 内部切换也走导航栈 */
-  setMainContentView: (view: ViewName) => void;
+  setMainContentView: (view: View) => void;
 }
 
 export default function MainContent({
-                                      stack,
-                                      pointer,
                                       player,
+                                      viewStack,
                                       selectedPlaylistInfo,
                                       setSelectedPlaylistInfo,
                                       searchResults,
@@ -41,60 +37,78 @@ export default function MainContent({
                                       playlists,
                                       setMainContentView,
                                     }: MainContentProps) {
-  return (
-    <ContentPanel className="relative h-full w-full">
-      {stack.map((item, idx) => {
-        let Comp: React.ReactNode = null;
-        switch (item.view) {
-          case 'playlist':
-            Comp = (
-              <PlaylistView
-                playListInfo={selectedPlaylistInfo}
-                player={player}
-                refreshPlaylist={refreshPlaylists}
-                playlists={playlists}
-              />
-            );
-            break;
-          case 'searchResults':
-            Comp = (
-              <NetSearchResultView
-                player={player}
-                refreshPlaylists={refreshPlaylists}
-                fusionSearchResult={searchResults}
-                onSelectOnlinePlaylist={(pl) => {
-                  setSelectedPlaylistInfo(pl);
-                  setMainContentView(ViewName.PLAY_LIST);
-                }}
-                setMainContentView={setMainContentView}
-                savedPlaylists={playlists}
-              />
-            );
-            break;
-          case 'profile':
-            Comp = <ProfileView />;
-            break;
-          case 'lyric':
-            Comp = <LyricView player={player} />;
-            break;
-          default:
-            Comp = (
-              <div className="text-center text-gray-500 p-4">
-                未知视图：{item.view}
-              </div>
-            );
-        }
-
+  /** 根据 StackItem 决定渲染哪个视图 */
+  const renderView = (item: StackItem): React.ReactNode => {
+    switch (item.view) {
+      case View.PLAY_LIST:
         return (
-          <div
-            key={idx}
-            className="absolute inset-0"
-            style={{ display: idx === pointer ? 'block' : 'none' }}
-          >
-            {Comp}
+          <PlaylistView
+            playListInfo={selectedPlaylistInfo}
+            player={player}
+            refreshPlaylist={refreshPlaylists}
+            playlists={playlists}
+          />
+        );
+
+      case View.SEARCH_RESULTS:
+        return (
+          <TabbedSearchResultView
+            player={player}
+            refreshPlaylists={refreshPlaylists}
+            fusionSearchResult={searchResults}
+            onSelectOnlinePlaylist={(pl) => {
+              setSelectedPlaylistInfo(pl);
+              setMainContentView(View.PLAY_LIST);
+            }}
+            setMainContentView={setMainContentView}
+            savedPlaylists={playlists}
+          />
+        );
+
+      case View.PROFILE:
+        return <ProfileView />;
+
+      case View.LYRIC:
+        if (!player) {
+          return (
+            <div className="text-center text-red-400 p-4">
+              播放器尚未初始化
+            </div>
+          );
+        }
+        return <LyricView player={player}
+                          viewStack={viewStack}
+
+        />;
+
+      case View.DEBUG:
+        return <DebugView player={
+          player
+        } mainContentStack={
+          viewStack
+        } />;
+      default:
+        return (
+          <div className="text-center text-gray-500 p-4">
+            未知视图：{item.view as string}
           </div>
         );
-      })}
+    }
+  };
+
+  const items = viewStack.getStack();
+  const pointer = viewStack.getPointer();
+  return (
+    <ContentPanel className="relative h-full w-full">
+      {items.map((item, idx) => (
+        <div
+          key={idx}
+          className="absolute inset-0"
+          style={{ display: idx === pointer ? 'block' : 'none' }}
+        >
+          {renderView(item)}
+        </div>
+      ))}
     </ContentPanel>
   );
 }

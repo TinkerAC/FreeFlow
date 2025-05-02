@@ -19,10 +19,9 @@ import {
  */
 @injectable()
 export default class NetEaseCloudMusic implements ContentProvider {
-  private readonly base_url: string;
   public readonly platformName: string;
   public readonly serverNodes: string[];
-
+  private readonly base_url: string;
 
   constructor() {
     this.serverNodes = ['http://47.97.185.179/neteasecloudmusicapi/', 'https://neteasecloudmusicapi-pi-flax.vercel.app/',
@@ -32,29 +31,42 @@ export default class NetEaseCloudMusic implements ContentProvider {
   }
 
 
-
-
   /**
    * 根据关键词搜索网易云音乐免费歌曲，并返回统一的 TrackModel 数组
    * （原 cloudSearch 方法逻辑重构而来，参数已内置默认值）
    * @param keyword 搜索关键词
+   * @param filterPaid 是否过滤付费歌曲（默认值 true）
    */
-  public async searchTracks(keyword: string): Promise<TrackModel[]> {
-    const url = `${this.base_url}cloudsearch?keywords=${encodeURIComponent(keyword)}&type=1&limit=10&offset=0`;
-    const response = await axios.get(url);
-    const data: CloudSearchResponse = response.data;
-    const songs: Song[] = data.result.songs;
+  public async searchTracks(
+    keyword: string,
+    filterPaid: boolean = true,
+  ): Promise<TrackModel[]> {
+    // 构造请求 URL
+    const url = `${this.base_url}cloudsearch?keywords=${encodeURIComponent(
+      keyword,
+    )}&type=1&limit=10&offset=0`;
 
-    const freeSongs = songs.filter((song) => this.isFree(song));
+    // 发起请求
+    const response = await axios.get<CloudSearchResponse>(url);
+    const songs: Song[] = response.data.result.songs;
 
+    // 根据 filterPaid 决定是否过滤付费歌曲
+    const resultSongs = filterPaid
+      ? songs.filter((song) => this.isFree(song))
+      : songs;
+
+    // 打印日志
     console.log(`
 网易云音乐搜索结果:
-  免费歌曲: ${freeSongs.length} 首
-${freeSongs.map((song) => `  - ${song.name} (fee: ${song.fee})`).join('\n')}
-    `);
+  ${filterPaid ? '免费歌曲' : '所有歌曲'}: ${resultSongs.length} 首
+${resultSongs
+      .map((song) => `  - ${song.name} (fee: ${song.fee})`)
+      .join('\n')}
+  `);
 
-    return freeSongs.map((song) => {
-      return NetEaseCloudMusicTrackModel.build({
+    // 构造并返回 TrackModel 列表
+    return resultSongs.map((song) =>
+      NetEaseCloudMusicTrackModel.build({
         platform: 'NetEaseCloudMusic',
         platform_unique_id: song.id.toString(),
         title: song.name,
@@ -64,8 +76,8 @@ ${freeSongs.map((song) => `  - ${song.name} (fee: ${song.fee})`).join('\n')}
         cover_src: song.al.picUrl,
         created_at: new Date(),
         fee: song.fee,
-      });
-    });
+      }),
+    );
   }
 
   /**
@@ -149,6 +161,26 @@ ${freeSongs.map((song) => `  - ${song.name} (fee: ${song.fee})`).join('\n')}
   }
 
   /**
+   * 判断歌曲是否可以免费播放
+   * @param song 歌曲数据
+   */
+  isFree(song: any): boolean {
+    // fee 为 0 或 8 时，表示歌曲可以免费播放
+    return song.fee === 0 || song.fee === 8;
+  }
+
+  async getLyrics(uniqueId: string): Promise<Lyric | void> {
+    const url = `${this.base_url}lyric?id=${uniqueId}`;
+    const response = await axios.get(url, { timeout: 10000 });
+    const data = response.data;
+    if (!data.lrc || typeof data.lrc.lyric !== 'string') {
+      throw new Error('无效的歌词数据: 缺少 lrc.lyric 字段');
+    }
+    console.log('获取歌词数据:', data);
+    return this.parseLyrics(data.lrc.lyric);
+  }
+
+  /**
    * 检查音乐可用性
    * @param id 歌曲 ID
    */
@@ -158,15 +190,6 @@ ${freeSongs.map((song) => `  - ${song.name} (fee: ${song.fee})`).join('\n')}
     const data: CheckMusicResponse = response.data;
 
     return data.success;
-  }
-
-  /**
-   * 判断歌曲是否可以免费播放
-   * @param song 歌曲数据
-   */
-  isFree(song: any): boolean {
-    // fee 为 0 或 8 时，表示歌曲可以免费播放
-    return song.fee === 0 || song.fee === 8;
   }
 
   /**
@@ -193,18 +216,6 @@ ${freeSongs.map((song) => `  - ${song.name} (fee: ${song.fee})`).join('\n')}
       }
     }
     return { lines };
-  }
-
-
-  async getLyrics(uniqueId: string): Promise<Lyric | void> {
-    const url = `${this.base_url}lyric?id=${uniqueId}`;
-    const response = await axios.get(url, { timeout: 10000 });
-    const data = response.data;
-    if (!data.lrc || typeof data.lrc.lyric !== 'string') {
-      throw new Error('无效的歌词数据: 缺少 lrc.lyric 字段');
-    }
-    console.log('获取歌词数据:', data);
-    return this.parseLyrics(data.lrc.lyric);
   }
 
 }

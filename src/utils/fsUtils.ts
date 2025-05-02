@@ -1,4 +1,3 @@
-
 /**
  * 存储单元枚举
  */
@@ -34,7 +33,6 @@ export function convertStorage(bytes: number, unit: StorageUnit): number {
 }
 
 
-
 /**
  * 格式化字节大小为最适合的单位，并保留一定小数位。
  * 当数值达到或超过下一个单位时，会自动升级到更大的单位。
@@ -48,7 +46,7 @@ export function formatStorageUnit(bytes: number, decimals = 2): string {
     { unit: StorageUnit.GIGABYTE, size: 1024 ** 3 },
     { unit: StorageUnit.MEGABYTE, size: 1024 ** 2 },
     { unit: StorageUnit.KILOBYTE, size: 1024 },
-    { unit: StorageUnit.BYTE, size: 1 }
+    { unit: StorageUnit.BYTE, size: 1 },
   ];
 
   for (const { unit, size } of units) {

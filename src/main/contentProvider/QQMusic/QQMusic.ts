@@ -23,24 +23,36 @@ export class QQMusic implements ContentProvider {
    * 根据关键词搜索 QQ 音乐免费歌曲，并返回统一的 TrackModel 数组
    * （原 cloudSearchQQ 方法逻辑重构而来）
    * @param keyword 搜索关键词
+   * @param filterPaid 是否过滤付费歌曲（默认值 true）
    */
-  public async searchTracks(keyword: string): Promise<TrackModel[]> {
+  public async searchTracks(
+    keyword: string,
+    filterPaid: boolean = true,
+  ): Promise<TrackModel[]> {
+    // 构造请求 URL
     const url = `${this.base_url}getSearchByKey?key=${encodeURIComponent(keyword)}`;
-    const response = await axios.get(url);
-    const data: QQCloudSearchResponse = response.data;
-    const songs = data.response.data.song.list;
 
-    // 根据业务规则：如果 pay.play 为 0 则认为是免费歌曲
-    const freeSongs = songs.filter(song => this.isFree(song));
+    // 发起请求
+    const response = await axios.get<QQCloudSearchResponse>(url);
+    const songs = response.data.response.data.song.list;
 
+    // 根据 filterPaid 决定是否过滤付费歌曲
+    const resultSongs = filterPaid ? songs.filter(song => this.isFree(song)) : songs;
+
+    // 打印日志
     console.log(`
 QQ音乐搜索结果:
-  总共返回: ${songs.length} 首
-  免费歌曲: ${freeSongs.length} 首
-${freeSongs.map((song) => `  - ${song.songname}（${song.albumname}）`).join('\n')}
-    `);
+  返回总数: ${songs.length} 首
+  ${filterPaid ? '免费歌曲' : '所有歌曲'}: ${resultSongs.length} 首
+${resultSongs
+      .map(song => `  - ${song.songname}（${song.albumname}）`)
+      .join('\n')}
+  `);
 
-    return freeSongs.map((song) => QQMusicTrackModel.buildFromResponse(song));
+    // 构造并返回 TrackModel 列表
+    return resultSongs.map(song =>
+      QQMusicTrackModel.buildFromResponse(song),
+    );
   }
 
   /**
@@ -62,6 +74,21 @@ ${freeSongs.map((song) => `  - ${song.songname}（${song.albumname}）`).join('\
    */
   isFree(song: any): boolean {
     return song.pay.payplay === 0;
+  }
+
+  public async getLyrics(uniqueId: string): Promise<Lyric | void> {
+    const url = `${this.base_url}getLyric?songmid=${uniqueId}`;
+    try {
+      const response = await axios.get(url);
+      const data = response.data;
+      if (data.code !== 0) {
+        console.error('无效的歌词数据');
+      }
+      return this.parseLyrics(data.response.lyric);
+    } catch (error) {
+      console.error('获取歌词失败:', error);
+      throw error;
+    }
   }
 
   /**
@@ -89,21 +116,6 @@ ${freeSongs.map((song) => `  - ${song.songname}（${song.albumname}）`).join('\
       }
     }
     return { lines };
-  }
-
-  public async getLyrics(uniqueId: string): Promise<Lyric | void> {
-    const url = `${this.base_url}getLyric?songmid=${uniqueId}`;
-    try {
-      const response = await axios.get(url);
-      const data = response.data;
-      if (data.code !== 0) {
-        console.error('无效的歌词数据');
-      }
-      return this.parseLyrics(data.response.lyric);
-    } catch (error) {
-      console.error('获取歌词失败:', error);
-      throw error;
-    }
   }
 }
 

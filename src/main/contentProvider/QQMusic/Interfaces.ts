@@ -3,7 +3,7 @@ export interface QQMusicTrackData {
 }
 
 export interface QQMusicTrackResponse {
-  data:Data
+  data: Data;
 }
 
 interface PlayUrlItem {
@@ -14,9 +14,8 @@ interface PlayUrlItem {
 interface Data {
   playUrl: {
     [key: string]: PlayUrlItem; // 键名是动态的字符串
-  }
+  };
 }
-
 
 
 // 定义 QQ 音乐接口返回数据的部分结构

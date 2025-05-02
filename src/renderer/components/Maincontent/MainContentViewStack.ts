@@ -1,14 +1,15 @@
 // file: src/renderer/navigation/MainContentViewStack.ts
 
-export enum ViewName {
+export enum View {
   PLAY_LIST = 'playlist',
   SEARCH_RESULTS = 'searchResults',
   PROFILE = 'profile',
   LYRIC = 'lyric',
+  DEBUG = 'debug',
 }
 
 export interface StackItem {
-  view: ViewName;
+  view: View;
 }
 
 export type ViewChangeListener = (stack: StackItem[], pointer: number) => void;
@@ -25,6 +26,10 @@ export class MainContentViewStack {
   constructor(initial: StackItem) {
     this.stack = [initial];
     this.pointer = 0;
+  }
+
+  public get currentView(): View {
+    return this.stack[this.pointer].view;
   }
 
   /** 获取当前整个栈 */
@@ -47,13 +52,17 @@ export class MainContentViewStack {
     };
   }
 
-  /** 通知所有监听器 */
-  private notify() {
-    this.listeners.forEach(fn => fn(this.stack, this.pointer));
-  }
-
   /** 导航到新视图，会截断 pointer 之后的历史 */
-  public navigate(view: ViewName) {
+  public navigate(view: View) {
+
+    //如果新视图已经在栈中，直接跳转到该视图
+    const existingIndex = this.stack.findIndex(item => item.view === view);
+    if (existingIndex !== -1) {
+      this.pointer = existingIndex;
+      this.notify();
+      return;
+    }
+    //如果新视图不在栈中，则添加到栈中
     this.stack = this.stack.slice(0, this.pointer + 1);
     this.stack.push({ view });
     this.pointer = this.stack.length - 1;
@@ -74,5 +83,10 @@ export class MainContentViewStack {
       this.pointer++;
       this.notify();
     }
+  }
+
+  /** 通知所有监听器 */
+  private notify() {
+    this.listeners.forEach(fn => fn(this.stack, this.pointer));
   }
 }

@@ -43,8 +43,8 @@ export class LyricService {
         const searchKeyword = `${track_model.title} ${track_model.artist}`;
         // 使用 Promise.all 并发请求 NetEase 和 QQ 的搜索接口
         const [netease_response, qq_response] = await Promise.all([
-          this.netEaseMusic.searchTracks(searchKeyword),
-          this.qqMusic.searchTracks(searchKeyword),
+          this.netEaseMusic.searchTracks(searchKeyword, false),
+          this.qqMusic.searchTracks(searchKeyword, false),
         ]);
 
         // 分别获取搜索结果中的第一首歌曲（如果存在）

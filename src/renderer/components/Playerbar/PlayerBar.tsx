@@ -3,7 +3,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { DefaultCover } from '@components/static';
 import ProgressBar from '@components/ProgressBar';
 import Player from '@components/Player';
-import { MainContentViewStack, ViewName } from '@components/Maincontent/MainContentViewStack';
+import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 
 interface PlayerBarProps {
   player: Player;
@@ -95,7 +95,7 @@ export default function PlayerBar({
         <i className="fas fa-filter mx-3 cursor-pointer" title="播放所有歌曲" />
         <i
           className="fas fa-align-center mx-3 cursor-pointer"
-          onClick={() => mainContentStack.navigate(ViewName.LYRIC)}
+          onClick={() => mainContentStack.navigate(View.LYRIC)}
         />
         <input
           type="range"
