@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron';
-import { TrackModel } from '@src/shared/types';
+
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
 
 export const libraryApi = {
   // 读取本地音乐库

@@ -5,10 +5,9 @@ import path from 'path';
 import { inject, injectable } from 'inversify';
 import { getConfig } from '@main/services/ConfigService';
 import { fileExists } from '@src/utils/helpers';
-import TrackRepository from '@main/repository/TrackRepository';
-import { ModelFactory, TrackModel } from '@src/shared/types';
+import TrackRepository from '@main/database/repository/TrackRepository';
 import Store from 'electron-store';
-import { Platform } from '@main/enum/Platform';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
 
 @injectable()
 class LocalLibraryService {
@@ -76,18 +75,20 @@ class LocalLibraryService {
                 // 检查文件是否已存在于库中
                 const existingTrack = await this.trackRepository.findByPlatformAndPlatformUniqueId('Local', normalizedPath);
 
-                if (!existingTrack) {
-                  console.log(`发现新文件: ${normalizedPath}`);
-                  const trackData: TrackModel =
-                    ModelFactory.buildTrackModel(
-                      {
-                        platform: Platform.LOCAL,
-                        platform_unique_id: normalizedPath,
-                        created_at: new Date(),
-                        // 添加其他必要的字段
-                      });
-                  tracks.push(trackData);
-                }
+                // if (!existingTrack) {
+                //   console.log(`发现新文件: ${normalizedPath}`);
+                //   const trackData: TrackModel =
+                //     ModelFactory.buildTrackModel(
+                //       {
+                //         platform: Platform.LOCAL,
+                //         platform_unique_id: normalizedPath,
+                //         created_at: new Date(),
+                //         // 添加其他必要的字段
+                //       });
+                //   tracks.push(trackData);
+                // }
+
+                throw new Error('Unimplemented: 读取本地文件');
               }
             }
           }

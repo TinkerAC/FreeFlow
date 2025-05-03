@@ -1,12 +1,13 @@
 import { inject } from 'inversify';
-import { PlaylistModel, TrackModel } from '@src/shared/types';
-import PlaylistRepository from '@main/repository/PlaylistRepository';
-import TrackRepository from '@main/repository/TrackRepository';
-import PlaylistDetailRepository from '@main/repository/PlaylistDetailRepository';
+import PlaylistRepository from '@main/database/repository/PlaylistRepository';
+import TrackRepository from '@main/database/repository/TrackRepository';
+import PlaylistDetailRepository from '@main/database/repository/PlaylistDetailRepository';
 import { fileExists } from '@src/utils/helpers';
 import TrackService from '@main/services/TrackService';
 import ElectronStore from 'electron-store';
 import { Platform } from '@main/enum/Platform';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 
 export default class PlaylistService {
@@ -129,12 +130,10 @@ export default class PlaylistService {
 
   public async addTrackToPlaylist(playlistId: number, trackModel: TrackModel) {
 
-
     console.log(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(trackModel));
     try {
       //如果不在库中,则添加到库中
       const track = await this.trackRepository.findOrCreate(trackModel);
-
       await this.playlistDetailRepository.create({
         playlist_id: playlistId,
         track_id: track.id,
@@ -162,53 +161,6 @@ export default class PlaylistService {
     });
   }
 
-
-  // public async importPlaylistFromList(db: sqlite3.Database, playlistContext: any, store: any) {
-  //
-  //   // 从列表中提取歌曲信息
-  //   const unbind_tracks = playlistContext.split('\n').map((line: any) => {
-  //     const [title, artist] = line.split('-').map((s: any) => s.trim());
-  //     return { title, artist };
-  //   });
-  //
-  //   const length = unbind_tracks.length;
-  //   const tracks: TrackModel[] = [];
-  //   // 从 hifini 网站获取歌曲信息
-  //   for (const [index, track] of unbind_tracks.entries()) {
-  //     try {
-  //       const searchResults = await this.hifiniMusicService.searchTracks(`${track.title} ${track.artist}`, db, store);
-  //       console.log(`正在处理第${index + 1}/${length}首歌曲: ${track.title} - ${track.artist}`);
-  //
-  //       if (searchResults.length > 0) {
-  //         const firstResult = searchResults[0];
-  //         tracks.push({
-  //           data_href: firstResult.data_href,
-  //           file_path: null,
-  //         });
-  //         console.log(`成功导入${track.title} - ${track.artist}`);
-  //       } else {
-  //         console.log(`未找到${track.title} - ${track.artist}`);
-  //       }
-  //     } catch (error) {
-  //       console.error(`Error importing track: ${track.title} - ${track.artist}`, error);
-  //       console.log(`导入${track.title} - ${track.artist}失败`);
-  //     }
-  //   }
-  //
-  //   // 插入歌曲到库
-  //   for (const track of tracks) {
-  //     try {
-  //       const trackId: number = await this.trackService.addTrackToLibrary(track);
-  //       console.log(`成功添加${track.title} - ${track.artist}到库，id: ${trackId}`);
-  //     } catch (error) {
-  //       console.log(`添加${track.title} - ${track.artist}到库失败`);
-  //     }
-  //   }
-  //
-  //
-  // }
-
-
   public async modifyPlaylist(
     playlistModel: PlaylistModel,
   ) {
@@ -228,5 +180,18 @@ export default class PlaylistService {
   public async removePlaylist(playlistId: number) {
     return this.playlistRepository.delete(playlistId);
   }
+
+
+  public async increasePlayedCount(playlistId: number) {
+    const playlist = await this.playlistRepository.findById(playlistId);
+    if (playlist) {
+      playlist.played_count += 1;
+      await this.playlistRepository.update(playlist);
+      return playlist.played_count;
+    } else {
+      throw new Error(`Playlist with ID ${playlistId} not found`);
+    }
+  }
+
 }
 

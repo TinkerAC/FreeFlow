@@ -2,7 +2,7 @@ import React from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { DefaultCover } from '@components/static';
 import ProgressBar from '@components/ProgressBar';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 
 interface PlayerBarProps {

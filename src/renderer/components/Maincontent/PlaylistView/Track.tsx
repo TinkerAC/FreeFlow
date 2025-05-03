@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
-import { TrackModel } from '@src/shared/types';
 import { DefaultCover } from '@components/static';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
 
 interface TrackProps {
   track: TrackModel;

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { PlaylistModel, TrackModel } from '@src/shared/types';
 import ContextMenu from './ContextMenu';
 import Track from '@components/Maincontent/PlaylistView/Track';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 interface PlaylistProps {
   filteredTracks: TrackModel[];

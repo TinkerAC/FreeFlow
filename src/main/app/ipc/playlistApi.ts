@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron';
-import { PlaylistModel, TrackModel } from '@src/shared/types';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 export const playlistApi = {
   getPlaylists: async (): Promise<PlaylistModel[]> => ipcRenderer.invoke('get-playlists'),

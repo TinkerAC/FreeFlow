@@ -7,12 +7,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { inject, injectable } from 'inversify';
 import { getConfig } from '@main/services/ConfigService';
-import HifiniThreadCacheRepository from '@main/repository/HifiniThreadCacheRepository';
-import { HifiniThreadCacheModel, Lyric, TrackModel } from '@src/shared/types';
+import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
 import { isSameUTCDay } from '@src/utils/timeUtils';
 import ElectronStore from 'electron-store';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
 import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/Interfaces';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
+import { Lyric } from '@src/shared/domainModel/lyricLine';
 
 
 @injectable()

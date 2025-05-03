@@ -1,5 +1,6 @@
 import fs from 'fs';
-import { PlayerState } from '@src/shared/types';
+
+import { PlayerState } from '@src/shared/domainModel/playerState';
 
 function loadPlayer(playerStateDumpFile: string) {
   try {

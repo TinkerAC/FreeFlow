@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
 import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
 
 interface DebugViewProps {

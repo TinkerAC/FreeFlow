@@ -1,7 +1,8 @@
 import { inject, injectable } from 'inversify';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
-import { Lyric, TrackModel } from '@src/shared/types';
 import { Platform } from '@main/enum/Platform';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { Lyric } from '@src/shared/domainModel/lyricLine';
 
 /**
  * 根据传入 TrackModel 获取歌词数据
@@ -21,21 +22,21 @@ export class LyricService {
   }
 
   async getLyrics(track_model: TrackModel): Promise<Lyric | void> {
-    const track_identifier = track_model.getIdentifier();
-    console.log('后台收到加载歌词请求:', track_identifier);
+    const { platform, platform_unique_id } = track_model;
+    console.log('后台收到加载歌词请求:', platform, platform_unique_id);
 
-    if (!track_identifier.platform_unique_id) {
+    if (!platform || !platform_unique_id) {
       throw new Error('无效的歌曲标识符: 缺少 platform_unique_id 字段');
     }
 
-    switch (track_identifier.platform) {
+    switch (platform) {
       case Platform.NET_EASE_CLOUD_MUSIC: {
         console.log('正在获取网易云歌词');
-        return await this.netEaseMusic.getLyrics(track_identifier.platform_unique_id);
+        return await this.netEaseMusic.getLyrics(platform_unique_id);
       }
       case Platform.QQ_MUSIC: {
         console.log('正在获取QQ音乐歌词');
-        return await this.qqMusic.getLyrics(track_identifier.platform_unique_id);
+        return await this.qqMusic.getLyrics(platform_unique_id);
       }
       default: {
         console.log('正在获取其他平台歌词');

@@ -1,10 +1,10 @@
 // file: src/renderer/components/TopBar/TopBar.tsx
 import React, { useEffect, useState } from 'react';
 import './TopBar.css';
-import { FusionSearchResult } from '@src/shared/types';
 import { configContext, searchContext, systemContext, windowControlContext } from '@main/app/electronContextApi';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import { debug } from '@components/static';
+import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
 
 async function getSearchResults(searchTerm: string) {
   const results: FusionSearchResult = await searchContext.getSearchResults(searchTerm);
@@ -103,7 +103,7 @@ export default function TopBar({
         <div className="icon">
           <img src={debug} alt={'Debug'} sizes="24px"
                onClick={() => {
-                 mainContentViewStack.navigate(View.DEBUG);
+                 // mainContentViewStack.navigate(View.DEBUG);
                }}
           />
         </div>

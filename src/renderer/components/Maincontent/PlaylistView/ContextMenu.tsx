@@ -1,8 +1,9 @@
 // src/renderer/components/SearchResultView/contextMenu.tsx
 import React, { useState } from 'react';
-import { PlaylistModel, TrackModel } from '@src/shared/types';
 import { libraryContext, playlistContext } from '@main/app/electronContextApi';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 interface ContextMenuProps {
   x: number,

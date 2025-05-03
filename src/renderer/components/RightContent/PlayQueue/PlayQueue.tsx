@@ -1,6 +1,6 @@
 import React from 'react';
-import { TrackModel } from '@src/shared/types';
 import { DefaultCover } from '@components/static';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
 
 interface PlayQueueProps {
   currentTrack: TrackModel;

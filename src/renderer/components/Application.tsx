@@ -13,11 +13,12 @@ import PlayerBar from '@components/Playerbar/PlayerBar';
 import useMusicLibrary from '@renderer/hooks/useMusiclibrary';
 import useMainWindow from '@renderer/hooks/useMainWindow';
 
-import { FusionSearchResult, PlayerState } from '@src/shared/types';
 import { playerContext, shortcutContext } from '@main/app/electronContextApi';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
 
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
+import { PlayerState } from '@src/shared/domainModel/playerState';
+import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
 
 const Application: React.FC = () => {
   // === 1. 实例化导航栈 ===

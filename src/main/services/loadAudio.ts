@@ -1,6 +1,6 @@
 // 返回dataHref的BlobUrl或者file_path对应的音频文件路径
 
-import { TrackModel } from '@src/shared/types';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
 
 export default async function getAudioSrc(
   track: TrackModel,

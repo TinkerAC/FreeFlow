@@ -1,6 +1,6 @@
 import React from 'react';
-import { PlaylistModel } from '@src/shared/types';
 import { playlistContext } from '@main/app/electronContextApi';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 interface ContextMenuProps {
 

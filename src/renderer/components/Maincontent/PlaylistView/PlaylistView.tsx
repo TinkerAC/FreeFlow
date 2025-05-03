@@ -5,13 +5,13 @@ import React, { useEffect, useState } from 'react';
 //@ts-expect-error
 import ColorThief from 'colorthief';
 import './PlaylistView.css';
-import { PlaylistModel } from '@src/shared/types';
 
 import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
 import { DefaultCover } from '@components/static';
 import { playlistContext } from '@main/app/electronContextApi';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 interface PlaylistViewProps {
   playListInfo: PlaylistModel;

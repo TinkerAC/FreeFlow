@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { Lyric, LyricLine, QQMusicTrackModel, TrackModel } from '@src/shared/types';
 import { ContentProvider } from '../ContentProvider';
 import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvider/QQMusic/Interfaces';
 import { injectable } from 'inversify';
+import { QQMusicTrackModel, TrackModel } from '@src/shared/domainModel/TrackModel';
+import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 
 
 @injectable()

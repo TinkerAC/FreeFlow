@@ -3,8 +3,7 @@
 // ------------------------------
 import React, { useState } from 'react';
 import useStateRef from 'react-usestateref';
-import { FusionSearchResult, PlaylistModel, TrackModel } from '@src/shared/types';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
 import TabNav, { TabKey } from './TabNav';
 
 import ContextMenu from '@components/Maincontent/SearchResultView/ContextMenu';
@@ -12,6 +11,9 @@ import { libraryContext, playlistContext } from '@main/app/electronContextApi';
 import PlaylistsTab from '@components/Maincontent/SearchResultView/PlaylistTab';
 import TracksTab from '@components/Maincontent/SearchResultView/TrackTab';
 import PopularTab from '@components/Maincontent/SearchResultView/PopularTab';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 export interface TabbedSearchResultViewProps {
   /** 外部可选：初始激活的 Tab */

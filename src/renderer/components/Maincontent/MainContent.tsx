@@ -6,11 +6,12 @@ import ProfileView from '@components/Maincontent/ProfileView/ProfileView';
 import LyricView from '@components/Maincontent/LyricView/LyricView';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
 
-import { FusionSearchResult, PlaylistModel } from '@src/shared/types';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
 import { MainContentViewStack, StackItem, View } from '@components/Maincontent/MainContentViewStack';
 import TabbedSearchResultView from '@components/Maincontent/SearchResultView/SearchREs';
 import DebugView from '@components/Maincontent/DebugView/DebugView';
+import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 interface MainContentProps {
   player: Player | null;

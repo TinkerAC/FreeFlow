@@ -3,7 +3,6 @@ import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'e
 import PlaylistService from '@main/services/playlistService';
 import { loadPlayer, savePlayer } from '@main/services/playerService';
 import { dataPath, dbPath, playerStateDumpFile } from './pathConfig';
-import { ModelFactory, PlayerState, PlaylistModel, TrackModel } from '@src/shared/types';
 import { container } from '@main/di/di-container';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import TrackService from '@main/services/TrackService';
@@ -13,6 +12,9 @@ import Store from 'electron-store';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import { LyricService } from '@main/services/LyricService';
 import { FileCacheManager } from '@main/FileCacheManager';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { PlayerState } from '@src/shared/domainModel/playerState';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 
 const hifiniMusic: HifiniMusic = container.get('HifiniMusic');
@@ -172,11 +174,9 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   });
 
   ipcMain.handle('get-lyrics', async (_event: IpcMainInvokeEvent, track_model: TrackModel) => {
-    //如果 track_model 不是TrackModel 的实例,调用工厂方法创建一个
-    if (!(track_model instanceof TrackModel)) {
-      track_model = ModelFactory.buildTrackModel(track_model);
-    }
 
+    console.log('IPC: 获取歌词:', track_model);
+    console.log(track_model.constructor.name);
     return await lyricService.getLyrics(track_model);
 
   });

@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron';
-import { FusionSearchResult, PlaylistModel } from '@src/shared/types';
+import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 export const searchApi = {
   getSearchResults: (term: string): Promise<FusionSearchResult> => ipcRenderer.invoke('get-search-result', term),

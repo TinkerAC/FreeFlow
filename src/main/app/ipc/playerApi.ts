@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron';
-import { PlayerState } from '@src/shared/types';
+
+import { PlayerState } from '@src/shared/domainModel/playerState';
 
 export const playerApi = {
 

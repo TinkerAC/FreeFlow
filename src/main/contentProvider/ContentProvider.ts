@@ -1,4 +1,5 @@
-import { Lyric, TrackModel } from '@src/shared/types';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { Lyric } from '@src/shared/domainModel/lyricLine';
 
 /**
  * ContentProvider 接口定义了统一的搜索和获取播放链接方法，

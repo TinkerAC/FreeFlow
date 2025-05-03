@@ -2,8 +2,8 @@
 // File: src/renderer/components/SearchResultView/tabs/PopularTab.tsx
 // ------------------------------
 import React from 'react';
-import { TrackModel } from '@src/shared/types';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
 
 interface PopularTabProps {
   track?: TrackModel;

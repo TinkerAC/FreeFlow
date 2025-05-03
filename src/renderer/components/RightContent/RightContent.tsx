@@ -2,7 +2,7 @@
 import React from 'react';
 import PlayQueue from '@components/RightContent/PlayQueue/PlayQueue';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
 
 interface RightContentProps {
   className?: string;

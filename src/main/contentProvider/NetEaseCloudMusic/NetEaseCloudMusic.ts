@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { Lyric, LyricLine, NetEaseCloudMusicTrackModel, PlaylistModel, TrackModel } from '@src/shared/types';
 import { injectable } from 'inversify';
 import { Platform } from '@main/enum/Platform';
 import { ContentProvider } from '../ContentProvider';
@@ -10,6 +9,9 @@ import {
   Result,
   Song,
 } from '@main/contentProvider/NetEaseCloudMusic/Interfaces';
+import { NetEaseCloudMusicTrackModel, TrackModel } from '@src/shared/domainModel/TrackModel';
+import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 
 /**

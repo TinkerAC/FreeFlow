@@ -9,7 +9,7 @@ import { initConfig } from './configInit';
 
 import { container } from '@main/di/di-container';
 import LocalLibraryService from '@main/services/localLibraryService';
-import { sequelize } from '@main/models';
+import { sequelize } from '@main/database/seqimpl';
 import { is_hifini_cookies_expired } from '@main/services/AuthService';
 import Store from 'electron-store';
 
@@ -52,7 +52,6 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   app.whenReady().then(async () => {
 
     await sequelize.sync(); // 同步数据库
-
     await initConfig(store); // 初始化配置
 
     await localLibraryServiceInstance.updateLocalLibrary(); // 更新本地音乐库

@@ -2,9 +2,9 @@
 // File: src/renderer/components/SearchResultView/tabs/PlaylistsTab.tsx
 // ------------------------------
 import React from 'react';
-import { PlaylistModel } from '@src/shared/types';
 import { DefaultCover } from '@components/static';
 import { searchContext } from '@main/app/electronContextApi';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 interface PlaylistsTabProps {
   playlists: PlaylistModel[];

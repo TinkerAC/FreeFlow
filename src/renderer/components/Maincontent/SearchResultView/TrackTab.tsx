@@ -2,9 +2,9 @@
 // File: src/renderer/components/SearchResultView/tabs/TracksTab.tsx
 // ------------------------------
 import React from 'react';
-import { TrackModel } from '@src/shared/types';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
 import { Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
 
 interface TracksTabProps {
   tracks: TrackModel[];

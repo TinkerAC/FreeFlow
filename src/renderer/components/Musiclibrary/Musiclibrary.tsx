@@ -2,9 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import Item from './Item';
 import ContextMenu from './ContextMenu';
-import { PlaylistModel } from '@src/shared/types';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
 import { playlistContext } from '@main/app/electronContextApi';
+import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
 
 
 interface MusicLibraryProps {

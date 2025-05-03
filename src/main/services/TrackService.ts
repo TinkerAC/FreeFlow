@@ -1,11 +1,12 @@
 import { inject } from 'inversify';
-import TrackRepository from '@main/repository/TrackRepository';
+import TrackRepository from '@main/database/repository/TrackRepository';
 
 import { IAudioMetadata, parseFile } from 'music-metadata';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
-import { TrackModel } from '@src/shared/types';
-import PlaylistDetailRepository from '@main/repository/PlaylistDetailRepository';
+import PlaylistDetailRepository from '@main/database/repository/PlaylistDetailRepository';
 import { Platform } from '@main/enum/Platform';
+import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 
 export default class TrackService {
 
@@ -67,7 +68,7 @@ export default class TrackService {
         break;
       }
       case Platform.HIFINI: {
-        const metaData = await this.hifiniMusic.getMusicInfo(trackModel.platform_unique_id);
+        const metaData:HifiniThreadCacheModel = await this.hifiniMusic.getMusicInfo(trackModel.platform_unique_id);
         return Object.assign(trackModel, metaData);
       }
 

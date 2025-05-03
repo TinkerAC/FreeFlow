@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Lyric } from '@src/shared/types';
 import { lyricsContext } from '@main/app/electronContextApi';
-import Player from '@components/Player';
+import Player from '@renderer/core/player/Player';
 import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
+import { Lyric } from '@src/shared/domainModel/lyricLine';
 
 interface LyricViewProps {
   player: Player;
