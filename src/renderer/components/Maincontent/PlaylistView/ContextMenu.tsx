@@ -122,6 +122,14 @@ function ContextMenu({
         从{currentPlaylist?.title}中移除
       </div>
 
+      {/*<div*/}
+      {/*  className="p-2 hover:bg-gray-700 cursor-pointer"*/}
+      {/*  onClick={async () => {*/}
+      {/*    await libraryContext.downFromHifini(track);*/}
+      {/*  }}>*/}
+      {/*  下载*/}
+      {/*</div>*/}
+
     </div>
   );
 }

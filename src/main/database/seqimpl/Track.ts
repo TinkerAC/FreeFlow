@@ -7,7 +7,7 @@ import { sequelize } from '@main/database/seqimpl/database';
 /**
  * 定义创建 Track 实例时可选的属性,防止编译器报错
  */
-export interface TrackCreationAttributes extends Optional<TrackEntityProps, 'id'|'title' | 'artist' | 'duration' | 'cover_src' | 'lyrics' | 'created_at' | 'modified_at'> {
+export interface TrackCreationAttributes extends Optional<TrackEntityProps, 'id' | 'title' | 'artist' | 'duration' | 'cover_src' | 'lyrics' | 'created_at' | 'modified_at'> {
 }
 
 export class Track extends Model<TrackEntityProps, TrackCreationAttributes> implements TrackEntityProps {

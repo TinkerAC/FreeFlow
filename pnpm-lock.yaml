@@ -26,6 +26,9 @@ importers:
       canvas:
         specifier: ^2.11.2
         version: 2.11.2(encoding@0.1.13)
+      chalk:
+        specifier: ^5.4.1
+        version: 5.4.1
       cheerio:
         specifier: ^1.0.0
         version: 1.0.0
@@ -77,6 +80,9 @@ importers:
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
+      node-stream-zip:
+        specifier: ^1.15.0
+        version: 1.15.0
       pg-hstore:
         specifier: ^2.3.4
         version: 2.3.4
@@ -89,6 +95,12 @@ importers:
       pinyin-pro:
         specifier: ^3.26.0
         version: 3.26.0
+      progress:
+        specifier: ^2.0.3
+        version: 2.0.3
+      prompts:
+        specifier: ^2.4.2
+        version: 2.4.2
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
@@ -171,6 +183,9 @@ importers:
       '@types/ping':
         specifier: ^0.4.4
         version: 0.4.4
+      '@types/progress':
+        specifier: ^2.0.7
+        version: 2.0.7
       '@types/prop-types':
         specifier: ^15.7.14
         version: 15.7.14
@@ -1107,6 +1122,9 @@ packages:
   '@types/ping@0.4.4':
     resolution: {integrity: sha512-ifvo6w2f5eJYlXm+HiVx67iJe8WZp87sfa683nlqED5Vnt9Z93onkokNoWqOG21EaE8fMxyKPobE+mkPEyxsdw==}
 
+  '@types/progress@2.0.7':
+    resolution: {integrity: sha512-iadjw02vte8qWx7U0YM++EybBha2CQLPGu9iJ97whVgJUT5Zq9MjAPYUnbfRI2Kpehimf1QjFJYxD0t8nqzu5w==}
+
   '@types/prop-types@15.7.14':
     resolution: {integrity: sha512-gNMvNH49DJ7OJYv+KAKn0Xp45p8PLl6zo2YnvDIbTd4J6MER2BmWN49TG7n9LvkyihINxeKW8+3bfS2yDC9dzQ==}
 
@@ -1658,6 +1676,10 @@ packages:
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
+
+  chalk@5.4.1:
+    resolution: {integrity: sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   char-regex@1.0.2:
     resolution: {integrity: sha512-kWWXztvZ5SBQV+eRgKFeh8q5sLuZY2+8WUIzlxWVTg+oGwY14qylx1KbKzHd8P6ZYkAg0xyIDU9JMHhyJMZ1jw==}
@@ -3893,6 +3915,10 @@ packages:
 
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
+
+  node-stream-zip@1.15.0:
+    resolution: {integrity: sha512-LN4fydt9TqhZhThkZIVQnF9cwjU3qmUH9h78Mx/K7d3VvfRqqwthLwJEUOEL0QPZ0XQmNN7be5Ggit5+4dq3Bw==}
+    engines: {node: '>=0.12.0'}
 
   nopt@5.0.0:
     resolution: {integrity: sha512-Tbj67rffqceeLpcRXrT7vKAN8CwfPeIBgM7E6iBkmKLV7bEMwpGgYLGv0jACUsECaa/vuxP0IjEont6umdMgtQ==}
@@ -6802,6 +6828,10 @@ snapshots:
 
   '@types/ping@0.4.4': {}
 
+  '@types/progress@2.0.7':
+    dependencies:
+      '@types/node': 20.17.23
+
   '@types/prop-types@15.7.14': {}
 
   '@types/qs@6.9.18': {}
@@ -7515,6 +7545,8 @@ snapshots:
     dependencies:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
+
+  chalk@5.4.1: {}
 
   char-regex@1.0.2: {}
 
@@ -10306,6 +10338,8 @@ snapshots:
       webpack: 5.98.0
 
   node-releases@2.0.19: {}
+
+  node-stream-zip@1.15.0: {}
 
   nopt@5.0.0:
     dependencies:

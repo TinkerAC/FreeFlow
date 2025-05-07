@@ -4,17 +4,18 @@ import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvid
 import { injectable } from 'inversify';
 import { QQMusicTrackModel, TrackModel } from '@src/shared/domainModel/TrackModel';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
+import { Platform } from '@main/enum/Platform';
 
 
 @injectable()
 export class QQMusic implements ContentProvider {
 
-  public readonly platformName: string;
+  public readonly platformName: Platform;
   public readonly serverNodes: string[];
   private readonly base_url: string;
 
   constructor() {
-    this.platformName = 'QQMusic';
+    this.platformName = Platform.QQ_MUSIC;
     this.serverNodes = ['http://47.97.185.179/qqmusicapi/'];
     this.base_url = this.serverNodes[0];
   }

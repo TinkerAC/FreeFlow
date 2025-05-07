@@ -73,7 +73,7 @@ export default class PlaylistService {
       console.log(`共获取到歌单数量: ${playlists.length}`);
       // console.log('歌单信息:', playlists);
 
-      // Step 5: 获取每首歌曲的详细信息
+      // Step 5: 获取每首歌曲的详细信息,如 封面、时长等
       return await Promise.all(
         playlists.map(async (playlist: PlaylistModel) => {
           const tracksWithInfo = await Promise.allSettled(

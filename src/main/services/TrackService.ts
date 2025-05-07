@@ -68,7 +68,7 @@ export default class TrackService {
         break;
       }
       case Platform.HIFINI: {
-        const metaData:HifiniThreadCacheModel = await this.hifiniMusic.getMusicInfo(trackModel.platform_unique_id);
+        const metaData: HifiniThreadCacheModel = await this.hifiniMusic.getMusicInfo(trackModel.platform_unique_id);
         return Object.assign(trackModel, metaData);
       }
 

@@ -103,7 +103,7 @@ export default function TopBar({
         <div className="icon">
           <img src={debug} alt={'Debug'} sizes="24px"
                onClick={() => {
-                 // mainContentViewStack.navigate(View.DEBUG);
+                 mainContentViewStack.navigate(View.DEBUG);
                }}
           />
         </div>

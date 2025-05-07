@@ -21,7 +21,7 @@ import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
  */
 @injectable()
 export default class NetEaseCloudMusic implements ContentProvider {
-  public readonly platformName: string;
+  public readonly platformName: Platform;
   public readonly serverNodes: string[];
   private readonly base_url: string;
 
@@ -29,7 +29,7 @@ export default class NetEaseCloudMusic implements ContentProvider {
     this.serverNodes = ['http://47.97.185.179/neteasecloudmusicapi/', 'https://neteasecloudmusicapi-pi-flax.vercel.app/',
     ];
     this.base_url = this.serverNodes[0];
-    this.platformName = 'NetEaseCloudMusic';
+    this.platformName = Platform.NET_EASE_CLOUD_MUSIC;
   }
 
 

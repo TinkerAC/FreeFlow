@@ -15,11 +15,12 @@ import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/I
 import { TrackModel } from '@src/shared/domainModel/TrackModel';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
+import { Platform } from '@main/enum/Platform';
 
 
 @injectable()
 export default class HifiniMusic implements ContentProvider {
-  public readonly platformName: string;
+  public readonly platformName: Platform;
   public readonly serverNodes: string[] = [];
   private readonly __filename: string;
   private readonly __dirname: string;
@@ -30,7 +31,7 @@ export default class HifiniMusic implements ContentProvider {
   ) {
     this.__filename = fileURLToPath(import.meta.url);
     this.__dirname = path.dirname(this.__filename);
-    this.platformName = 'Hifini';
+    this.platformName = Platform.HIFINI;
   }
 
   /**
@@ -159,7 +160,7 @@ export default class HifiniMusic implements ContentProvider {
   /**
    * 获取搜索结果，并转换为 TrackModel 数组
    */
-  public async searchTracks(keyword: string, filterPaid: boolean = true): Promise<TrackModel[]> {
+  public async searchTracks(keyword: string): Promise<TrackModel[]> {
     try {
       const searchResults: HifiniSearchResult[] = await this.search(keyword);
       console.info(`搜索操作完成，结果数量: ${searchResults?.length || 0}`);
@@ -227,8 +228,8 @@ export default class HifiniMusic implements ContentProvider {
     return true;
   }
 
-  async getLyrics(uniqueId: string): Promise<Lyric | void> {
-    return Promise.resolve(undefined);
+  async getLyrics(): Promise<Lyric | void> {
+    throw new Error('NotImplementedError: HifiniMusic getLyrics not implemented');
   }
 
   async chooseBestServerNode(): Promise<string> {

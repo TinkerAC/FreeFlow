@@ -1,5 +1,6 @@
 import { TrackModel } from '@src/shared/domainModel/TrackModel';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
+import { Platform } from '@main/enum/Platform';
 
 /**
  * ContentProvider 接口定义了统一的搜索和获取播放链接方法，
@@ -12,7 +13,7 @@ export abstract class ContentProvider {
    * 平台名称
    * @example 'QQMusic'
    */
-  abstract platformName: string;
+  abstract platformName: Platform;
 
   /**
    *  所有可用的服务器节点

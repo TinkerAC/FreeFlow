@@ -19,11 +19,14 @@ if (!fs.existsSync(dataPath)) {
   console.log(`数据目录已存在: ${dataPath}`);
 }
 
-
-const fileCacheDir = path.join(dataPath, 'fileCache');
+//存放播放中加载的音乐
+const musicCacheDir = path.join(dataPath, 'fileCache');
 
 const playlistsDir = path.join(dataPath, 'playlists');
 const playerStateDumpFile = path.join(dataPath, 'playerState.json');
 const dbPath = path.join(dataPath, 'database.sqlite');
 
-export { environment, dataPath, playlistsDir, playerStateDumpFile, dbPath, fileCacheDir };
+//存放用户下载的音乐
+const music_Dir: string = path.join(dataPath, 'music');
+
+export { environment, dataPath, playlistsDir, playerStateDumpFile, dbPath, musicCacheDir, music_Dir };

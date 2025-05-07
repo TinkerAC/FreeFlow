@@ -15,6 +15,7 @@ import { FileCacheManager } from '@main/FileCacheManager';
 import { TrackModel } from '@src/shared/domainModel/TrackModel';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { HifiniDownloader } from '@main/services/Downloader';
 
 
 const hifiniMusic: HifiniMusic = container.get('HifiniMusic');
@@ -25,6 +26,7 @@ const netEaseCloudMusic: NetEaseCloudMusic = container.get('NetEaseCloudMusic');
 const qqMusic: QQMusic = container.get('QQMusic');
 const lyricService: LyricService = container.get('LyricService');
 const fileCacheManager: FileCacheManager = container.get<FileCacheManager>('FileCacheManager');
+const downloader: HifiniDownloader = container.get<HifiniDownloader>('HifiniDownloader');
 
 export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
@@ -190,5 +192,14 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle('calculate-file-cache-disk-usage', async () => {
     return await fileCacheManager.getDiskUsage();
   });
+
+  ipcMain.on('down-from-hifini', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
+      console.log('IPC: 下载歌曲:', track);
+      const result_summary = await downloader.downloadFromThread(
+        track.platform_unique_id,
+      );
+
+    },
+  );
 
 }
