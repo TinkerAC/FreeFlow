@@ -1,27 +1,27 @@
 // file: src/renderer/core/PlayQueue.ts
 
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 export interface QueueDump {
-  queue: TrackModel[];
+  queue: TrackEntity[];
   indexList: number[];
   currentIndex: number;
 }
 
 export class PlayQueue {
-  private queueLibrary: TrackModel[] = [];
+  private queueLibrary: TrackEntity[] = [];
   private indexList: number[] = [];
   private currentIndex = 0;
 
   /** 或者直接暴露成动态属性 */
-  public get currentTrack(): TrackModel | null {
+  public get currentTrack(): TrackEntity | null {
     if (!this.indexList.length) return null;
     const libIdx = this.indexList[this.currentIndex];
     return this.queueLibrary[libIdx] || null;
   }
 
   /** 剩余未播放的曲目列表，按播放顺序 */
-  public get remainingTracks(): TrackModel[] {
+  public get remainingTracks(): TrackEntity[] {
     return this.indexList
       .slice(this.currentIndex + 1)
       .map((libIdx) => this.queueLibrary[libIdx]);
@@ -39,7 +39,7 @@ export class PlayQueue {
   }
 
   /** 在“下一首”位置添加：原方法 */
-  public addTrackToNextInQueue(track: TrackModel) {
+  public addTrackToNextInQueue(track: TrackEntity) {
     const exists = this.findTrackIndexInQueueLibrary(track);
     if (exists === -1) {
       const newLength = this.queueLibrary.push(track);
@@ -60,7 +60,7 @@ export class PlayQueue {
   }
 
   /** 获取“下一首”——原方法 */
-  public getNextTrack(step = 1): TrackModel | null {
+  public getNextTrack(step = 1): TrackEntity | null {
     const nextId = this.indexList.length
       ? (this.currentIndex + step) % this.indexList.length
       : 0;
@@ -68,7 +68,7 @@ export class PlayQueue {
   }
 
   /** 获取“上一首”——原方法（名称调整为 getPrevTrack） */
-  public getPrevTrack(step = 1): TrackModel | null {
+  public getPrevTrack(step = 1): TrackEntity | null {
     const prevId = this.indexList.length
       ? (this.currentIndex - step + this.indexList.length) % this.indexList.length
       : 0;
@@ -76,7 +76,7 @@ export class PlayQueue {
   }
 
   /** 备用版本：与 addTrackToNextInQueue 等价，只是内部写法不同 */
-  public _addTrackToNextInQueue(track: TrackModel, playBackMode: 'loop' | 'repeat' | 'shuffle') {
+  public _addTrackToNextInQueue(track: TrackEntity, playBackMode: 'loop' | 'repeat' | 'shuffle') {
 
 
     const trackIdxInLib = this.findTrackIndexInQueueLibrary(track);
@@ -101,7 +101,7 @@ export class PlayQueue {
    * 切到指定曲目（必须在队列中）
    * @param track
    */
-  public switchToTrack(track: TrackModel) {
+  public switchToTrack(track: TrackEntity) {
     const idx = this.findTrackIndexInQueueLibrary(track);
     if (idx === -1) {
       console.warn('Track not found in playQueue');
@@ -148,7 +148,7 @@ export class PlayQueue {
    * @param playbackMode 播放模式
    */
   public replaceQueueLibraryAndIndexList(
-    tracks: TrackModel[],
+    tracks: TrackEntity[],
     playbackMode: 'loop' | 'repeat' | 'shuffle',
   ) {
     this.queueLibrary = [...tracks];
@@ -157,7 +157,7 @@ export class PlayQueue {
   }
 
   /** 获取队头曲目 */
-  public getHeadTrack(): TrackModel | null {
+  public getHeadTrack(): TrackEntity | null {
     return this.queueLibrary[this.indexList[0]] || null;
   }
 
@@ -189,7 +189,7 @@ export class PlayQueue {
    * 找到给定曲目在 library 中的索引
    * @param track
    */
-  private findTrackIndexInQueueLibrary(track: TrackModel): number {
+  private findTrackIndexInQueueLibrary(track: TrackEntity): number {
     return this.queueLibrary.findIndex(item =>
       item.platform === track.platform &&
       item.platform_unique_id === track.platform_unique_id,

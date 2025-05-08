@@ -9,9 +9,9 @@ import {
   Result,
   Song,
 } from '@main/contentProvider/NetEaseCloudMusic/Interfaces';
-import { NetEaseCloudMusicTrackModel, TrackModel } from '@src/shared/domainModel/TrackModel';
+import { NetEaseCloudMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 
 /**
@@ -34,7 +34,7 @@ export default class NetEaseCloudMusic implements ContentProvider {
 
 
   /**
-   * 根据关键词搜索网易云音乐免费歌曲，并返回统一的 TrackModel 数组
+   * 根据关键词搜索网易云音乐免费歌曲，并返回统一的 TrackRecord 数组
    * （原 cloudSearch 方法逻辑重构而来，参数已内置默认值）
    * @param keyword 搜索关键词
    * @param filterPaid 是否过滤付费歌曲（默认值 true）
@@ -42,7 +42,7 @@ export default class NetEaseCloudMusic implements ContentProvider {
   public async searchTracks(
     keyword: string,
     filterPaid: boolean = true,
-  ): Promise<TrackModel[]> {
+  ): Promise<TrackEntity[]> {
     // 构造请求 URL
     const url = `${this.base_url}cloudsearch?keywords=${encodeURIComponent(
       keyword,
@@ -66,7 +66,7 @@ ${resultSongs
       .join('\n')}
   `);
 
-    // 构造并返回 TrackModel 列表
+    // 构造并返回 TrackRecord 列表
     return resultSongs.map((song) =>
       NetEaseCloudMusicTrackModel.build({
         platform: 'NetEaseCloudMusic',
@@ -104,14 +104,14 @@ ${resultSongs
    * @param limit 数量（默认值 10）
    * @param offset 偏移量（默认值 0）
    */
-  public async cloudSearchPlaylist(keyword: string, type: number = 1000, limit: number = 10, offset: number = 0): Promise<PlaylistModel[]> {
+  public async cloudSearchPlaylist(keyword: string, type: number = 1000, limit: number = 10, offset: number = 0): Promise<PlaylistEntity[]> {
     const url = `${this.base_url}cloudsearch?keywords=${keyword}&type=${type}&limit=${limit}&offset=${offset}`;
     const response = await axios.get(url);
     const data: CloudSearchResponse = response.data;
     const playlists = data.result.playlists;
 
     return playlists.map((playlist) => {
-      return PlaylistModel.build({
+      return PlaylistEntity.build({
         playlist_id: playlist.id,
         title: playlist.name,
         description: playlist.description,
@@ -131,13 +131,13 @@ ${resultSongs
    * @param limit 数量（默认值 1000）
    * @param offset 偏移量（默认值 0）
    */
-  public async getPlaylistDetail(playlist_id: string, limit: number = 1000, offset: number = 0): Promise<PlaylistModel> {
+  public async getPlaylistDetail(playlist_id: string, limit: number = 1000, offset: number = 0): Promise<PlaylistEntity> {
     const url = `${this.base_url}/playlist/track/all?id=${playlist_id}&limit=${limit}&offset=${offset}`;
     const response = await axios.get(url);
     const data: Result = response.data;
     const songs = data.songs;
 
-    return PlaylistModel.build({
+    return PlaylistEntity.build({
       platform: Platform.NET_EASE_CLOUD_MUSIC,
       platform_unique_id: playlist_id,
       title: '',

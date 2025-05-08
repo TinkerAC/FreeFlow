@@ -11,18 +11,18 @@ import { MainContentViewStack, StackItem, View } from '@components/Maincontent/M
 import TabbedSearchResultView from '@components/Maincontent/SearchResultView/SearchREs';
 import DebugView from '@components/Maincontent/DebugView/DebugView';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface MainContentProps {
   player: Player | null;
 
   viewStack: MainContentViewStack;
-  selectedPlaylistInfo: PlaylistModel;
-  setSelectedPlaylistInfo: (playlist: PlaylistModel) => void;
+  selectedPlaylistInfo: PlaylistEntity;
+  setSelectedPlaylistInfo: (playlist: PlaylistEntity) => void;
 
   searchResults: FusionSearchResult;
   refreshPlaylists: () => void;
-  playlists: PlaylistModel[];
+  playlists: PlaylistEntity[];
 
   /** 内部切换也走导航栈 */
   setMainContentView: (view: View) => void;

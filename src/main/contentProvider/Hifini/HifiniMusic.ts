@@ -12,7 +12,7 @@ import { isSameUTCDay } from '@src/utils/timeUtils';
 import ElectronStore from 'electron-store';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
 import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/Interfaces';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/enum/Platform';
@@ -158,9 +158,9 @@ export default class HifiniMusic implements ContentProvider {
   }
 
   /**
-   * 获取搜索结果，并转换为 TrackModel 数组
+   * 获取搜索结果，并转换为 TrackRecord 数组
    */
-  public async searchTracks(keyword: string): Promise<TrackModel[]> {
+  public async searchTracks(keyword: string): Promise<TrackEntity[]> {
     try {
       const searchResults: HifiniSearchResult[] = await this.search(keyword);
       console.info(`搜索操作完成，结果数量: ${searchResults?.length || 0}`);
@@ -205,8 +205,8 @@ export default class HifiniMusic implements ContentProvider {
       );
       console.info(`成功获取到 ${validMusicInfos.length} 个有效的音乐信息`);
 
-      // 转换为 TrackModel 数组（仅设置必要字段）
-      return validMusicInfos.map((info: HifiniThreadCacheModel): TrackModel => {
+      // 转换为 TrackRecord 数组（仅设置必要字段）
+      return validMusicInfos.map((info: HifiniThreadCacheModel): TrackEntity => {
         return {
           platform: 'Hifini',
           platform_unique_id: info.data_href,
@@ -216,7 +216,7 @@ export default class HifiniMusic implements ContentProvider {
           duration: 0,
           album: '',
           created_at: new Date(),
-        } as TrackModel;
+        } as TrackEntity;
       });
     } catch (error: unknown) {
       console.error('searchTracks 函数执行出错:', error);

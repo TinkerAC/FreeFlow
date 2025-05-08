@@ -4,20 +4,20 @@ import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './index';
 import { Playlist } from './Playlist';
 import { Track } from './Track';
-import { PlaylistDetailEntityProps } from '@main/database/entity/PlaylistDetailEntity';
+import { PlaylistDetailRecordProps } from '@main/database/record/PlaylistDetailRecord';
 
 
 /**
  * 定义创建 PlaylistDetail 实例时可选的属性
  */
-export interface PlaylistDetailCreationAttributes extends Optional<PlaylistDetailEntityProps, 'created_at' | 'modified_at'> {
+export interface PlaylistDetailCreationAttributes extends Optional<PlaylistDetailRecordProps, 'created_at' | 'modified_at'> {
 }
 
 /**
  * PlaylistDetail 模型
  */
-export class PlaylistDetail extends Model<PlaylistDetailEntityProps, PlaylistDetailCreationAttributes>
-  implements PlaylistDetailEntityProps {
+export class PlaylistDetail extends Model<PlaylistDetailRecordProps, PlaylistDetailCreationAttributes>
+  implements PlaylistDetailRecordProps {
   public playlist_id!: number;
   public track_id!: number;
   public created_at?: Date;

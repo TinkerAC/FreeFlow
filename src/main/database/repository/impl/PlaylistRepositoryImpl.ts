@@ -1,69 +1,70 @@
+// file: src/main/database/repository/impl/PlaylistRepositoryImpl.ts
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
-import { Playlist } from '@main/database/seqimpl/Playlist';
-import PlaylistMapper from '@main/database/repository/mappers/PlaylistMapper';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { inject, injectable } from 'inversify';
+import { PlaylistDataSource } from '@main/database/dataSource/PlaylistDataSource';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import { PlaylistRecord } from '@main/database/record/PlaylistRecord';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import { PlaylistDetailDataSource } from '@main/database/dataSource/PlaylistDetailDataSource';
+import { TrackDataSource } from '@main/database/dataSource/TrackDataSource';
 
-
-export default class PlaylistRepositoryImpl implements PlaylistRepository {
-
-
-  async findAll(): Promise<PlaylistModel[]> {
-    const playlists = await Playlist.findAll();
-    return playlists.map(PlaylistMapper.toModel);
+@injectable()
+export class PlaylistRepositoryImpl implements PlaylistRepository {
+  constructor(
+    @inject('TrackDataSource') private trackDataSource: TrackDataSource,
+    @inject('PlaylistDataSource') private ds: PlaylistDataSource,
+    @inject('PlaylistDetailDataSource') private playlistDetailDataSource: PlaylistDetailDataSource,
+  ) {
   }
 
-  delete(id: number): Promise<number> {
-    return Playlist.destroy({
-      where: {
-        playlist_id: id,
-      },
-    });
+  async findAll(): Promise<PlaylistEntity[]> {
+    const recs = await this.ds.findAll();
+    return recs.map(it => it.toEntity());
   }
 
-  async findById(id: number): Promise<PlaylistModel> {
-    const playlist = await Playlist.findByPk(id);
-    return PlaylistMapper.toModel(playlist);
+  async delete(id: number): Promise<number> {
+    return this.ds.delete(id);
   }
 
-  async save(playlist: PlaylistModel): Promise<PlaylistModel> {
-    const playlist_1 = await Playlist.create({
-      platform: playlist.platform,
-      platform_unique_id: playlist.platform_unique_id,
-      title: playlist.title,
-      description: playlist.description,
-      creator: playlist.creator,
-      created_at: playlist.created_at,
-      modified_at: playlist.modified_at,
-    });
-    return PlaylistMapper.toModel(playlist_1);
+  async findById(id: number): Promise<PlaylistEntity | null> {
+    const rec = await this.ds.findById(id);
+    return rec ? rec.toEntity() : null;
   }
 
-  async update(playlist: PlaylistModel): Promise<PlaylistModel> {
+  async save(entity: PlaylistEntity): Promise<PlaylistEntity> {
+    const rec = await this.ds.create(PlaylistRecord.fromEntity(entity));
+    return rec.toEntity();
+  }
 
-    await Playlist.update({
-      title: playlist.title,
-      description: playlist.description,
-    }, {
-      where: {
-        playlist_id: playlist.playlist_id,
-      },
-    });
-    return playlist;
+  async update(entity: PlaylistEntity): Promise<PlaylistEntity> {
+    const rec = await this.ds.update(PlaylistRecord.fromEntity(entity));
+    return rec.toEntity();
+  }
 
+  async create(entity: PlaylistEntity): Promise<PlaylistEntity> {
+    const rec = await this.ds.create(PlaylistRecord.fromEntity(entity));
+    return rec.toEntity();
   }
 
 
-  async create(playlist: PlaylistModel): Promise<PlaylistModel> {
-    const playlist_1 = await Playlist.create(
-      {
-        platform: playlist.platform,
-        platform_unique_id: playlist.platform_unique_id,
-        title: playlist.title,
-        description: playlist.description,
-        creator: playlist.creator,
-        created_at: playlist.created_at,
-        modified_at: playlist.modified_at,
-      });
-    return PlaylistMapper.toModel(playlist_1);
+  async findTracksByPlaylistId(playlistId: number): Promise<TrackEntity[]> {
+    const records = await this.playlistDetailDataSource.findByPlaylistId(playlistId);
+    if (!records) {
+      return [];
+    }
+
+    const trackIds = records.map(it => it.track_id);
+    const tracks = await this.trackDataSource.findByIds(trackIds);
+    return tracks.map(it => it.toEntity());
+
+  }
+
+  async deleteByPlaylistIdAndTrackId(playlistId: number, trackId: number): Promise<number> {
+    return await this.playlistDetailDataSource.deleteByPlaylistIdAndTrackId(playlistId, trackId);
+  }
+
+  async createPlaylistDetail(playlistId: number, trackId: number): Promise<void> {
+    await this.playlistDetailDataSource.createFromRaw(playlistId, trackId);
+
   }
 }

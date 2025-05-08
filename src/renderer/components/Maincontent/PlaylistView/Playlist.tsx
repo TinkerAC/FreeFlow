@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import ContextMenu from './ContextMenu';
 import Track from '@components/Maincontent/PlaylistView/Track';
 import Player from '@renderer/core/player/Player';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface PlaylistProps {
-  filteredTracks: TrackModel[];
-  playlists: PlaylistModel[];
-  currentPlaylist: PlaylistModel;
+  filteredTracks: TrackEntity[];
+  playlists: PlaylistEntity[];
+  currentPlaylist: PlaylistEntity;
   refreshPlaylists: () => void;
   player: Player;
 }
@@ -25,7 +25,7 @@ export function Playlist({
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const [selectedTrack, setSelectedTrack] = useState<TrackModel>(null); // 添加 selectedTrack 状态
+  const [selectedTrack, setSelectedTrack] = useState<TrackEntity>(null); // 添加 selectedTrack 状态
 
   // 监听滚动事件，显示/隐藏返回顶部按钮
   useEffect(() => {
@@ -51,7 +51,7 @@ export function Playlist({
     });
   };
 
-  const handleRightClick = (e: { preventDefault: () => void; pageX: number; pageY: number; }, track: TrackModel) => {
+  const handleRightClick = (e: { preventDefault: () => void; pageX: number; pageY: number; }, track: TrackEntity) => {
     e.preventDefault();
     setContextMenuPosition({ x: e.pageX - window.scrollX, y: e.pageY - window.scrollY });
     setSelectedTrack(track); // 设置选中的 track

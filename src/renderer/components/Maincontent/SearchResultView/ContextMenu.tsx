@@ -1,17 +1,17 @@
 // src/renderer/components/SearchResultView/ContextMenu.tsx
 import React, { useState } from 'react';
 import Player from '@renderer/core/player/Player';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface ContextMenuProps {
   x: number;
   y: number;
-  track: TrackModel;
-  addToLibrary: (track: TrackModel) => void;
+  track: TrackEntity;
+  addToLibrary: (track: TrackEntity) => void;
   handleCloseMenu: () => void;
-  addTrackToPlaylist: (track: TrackModel, playlistId: number) => void;
-  playlists: PlaylistModel[];
+  addTrackToPlaylist: (track: TrackEntity, playlistId: number) => void;
+  playlists: PlaylistEntity[];
   player: Player;
 }
 

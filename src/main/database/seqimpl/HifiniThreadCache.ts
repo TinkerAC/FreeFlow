@@ -2,15 +2,15 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './index';
 import { injectable } from 'inversify';
-import { HifiniThreadCacheEntityProps } from '@main/database/entity/HifiniThreadCacheEntity';
+import { HifiniThreadCacheRecordProps } from '@main/database/record/HifiniThreadCacheRecord';
 
 
-export interface HifiniThreadCacheCreationAttributes extends Optional<HifiniThreadCacheEntityProps, 'cached_at' | 'modified_at'> {
+export interface HifiniThreadCacheCreationAttributes extends Optional<HifiniThreadCacheRecordProps, 'cached_at' | 'modified_at'> {
 }
 
 
 @injectable()
-export class HifiniThreadCache extends Model<HifiniThreadCacheEntityProps, HifiniThreadCacheCreationAttributes> implements HifiniThreadCacheEntityProps {
+export class HifiniThreadCache extends Model<HifiniThreadCacheRecordProps, HifiniThreadCacheCreationAttributes> implements HifiniThreadCacheRecordProps {
   public data_href!: string;
   public title?: string;
   public artist?: string;

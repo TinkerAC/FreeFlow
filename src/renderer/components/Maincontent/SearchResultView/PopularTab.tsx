@@ -3,12 +3,12 @@
 // ------------------------------
 import React from 'react';
 import Player from '@renderer/core/player/Player';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 interface PopularTabProps {
-  track?: TrackModel;
+  track?: TrackEntity;
   player: Player;
-  onContextMenu: (e: React.MouseEvent<HTMLDivElement, MouseEvent>, track: TrackModel) => void;
+  onContextMenu: (e: React.MouseEvent<HTMLDivElement, MouseEvent>, track: TrackEntity) => void;
 }
 
 function PopularTab({ track, player, onContextMenu }: PopularTabProps) {

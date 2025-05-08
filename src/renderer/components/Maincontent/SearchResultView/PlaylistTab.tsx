@@ -4,11 +4,11 @@
 import React from 'react';
 import { DefaultCover } from '@components/static';
 import { searchContext } from '@main/app/electronContextApi';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface PlaylistsTabProps {
-  playlists: PlaylistModel[];
-  onSelectOnlinePlaylist: (playlistModel: PlaylistModel) => void;
+  playlists: PlaylistEntity[];
+  onSelectOnlinePlaylist: (playlistModel: PlaylistEntity) => void;
   setMainContentView: (view: string) => void;
 }
 
@@ -25,7 +25,7 @@ function PlaylistsTab({ playlists, onSelectOnlinePlaylist, setMainContentView }:
           className="flex items-center space-x-4 p-2 border-b hover:bg-item-bg-hover cursor-pointer"
         >
           <img
-            src={playlist.cover_src || DefaultCover}
+            src={playlist.playlist_cover || DefaultCover}
             alt={playlist.title}
             className="w-12 h-12 rounded"
             onClick={async () => {

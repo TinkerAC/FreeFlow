@@ -1,15 +1,15 @@
 // src/database/Playlist.ts
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './index';
-import { PlaylistEntityProps } from '@main/database/entity/PlaylistEntity';
+import { PlaylistRecordProps } from '@main/database/record/PlaylistRecord';
 
 
-interface PlaylistCreationAttributes extends Optional<PlaylistEntityProps, 'created_at' | 'modified_at'> {
+interface PlaylistCreationAttributes extends Optional<PlaylistRecordProps, 'created_at' | 'modified_at'> {
 
 }
 
 
-export class Playlist extends Model<PlaylistEntityProps, PlaylistCreationAttributes> implements PlaylistEntityProps {
+export class Playlist extends Model<PlaylistRecordProps, PlaylistCreationAttributes> implements PlaylistRecordProps {
   public playlist_id!: number;
   public playlist_cover?: string;
   public title!: string;

@@ -65,91 +65,6 @@ export class HifiniDownloader {
     fs.mkdirSync(this.musicDir, { recursive: true });
   }
 
-  /**
-   * 批量下载指定帖子内所有蓝奏链接音频
-   */
-  async downloadFromThread(dataHref: string): Promise<ResultSummary> {
-    const summary: ResultSummary = {
-      dataHref,
-      commented: false,
-      links: [],
-      musicPath: this.musicDir,
-    };
-
-    try {
-      // 1. 获取帖子 HTML
-      const { data: html } = await this.http.get<string>(dataHref, { responseType: 'text' });
-
-      // 2. 评论帖子（若未评论）
-      summary.commented = !html.includes('alert-warning');
-      if (!summary.commented) {
-        await this.postComment(dataHref);
-        summary.commented = true;
-      }
-
-      // 3. 解析隐藏内容，提取链接和提取码
-      const { links, codes } = this.parseHiddenContent(html);
-      console.log(chalk.green('发现下载链接:'), links);
-      console.log(chalk.green('发现提取码:'), codes);
-
-      // 4. 遍历每个链接，下载并解压
-      for (let i = 0; i < links.length; i++) {
-        const linkInfo: LinkInfo = {
-          originalLink: links[i],
-          code: codes[i] || '',
-          downloadSuccess: false,
-          extractedFiles: [],
-          extractionSuccess: false,
-        };
-        summary.links.push(linkInfo);
-
-        try {
-          if (!this.isValidUrl(links[i])) throw new Error('无效链接');
-
-          // 4.1 获取直链
-          console.log(chalk.blue('解析直链:'), links[i]);
-          let directUrl = await getLanzouDirectLink(links[i], codes[i]);
-          linkInfo.directLink = directUrl;
-
-          /**
-           * 并入 downloadFromThread 的下载逻辑中：
-           */
-          const verifiedUrl = await this.resolveVerification(directUrl);
-          console.log(chalk.blue('最终下载 URL:'), verifiedUrl);
-
-          directUrl = verifiedUrl;
-
-
-          // 4.2 下载 ZIP 文件
-          console.log(chalk.blue('开始下载:'), directUrl);
-          const fileName = path.basename(new URL(directUrl).pathname);
-          const filePath = path.join(this.downloadDir, fileName);
-          linkInfo.fileName = fileName;
-          linkInfo.filePath = filePath;
-          await this.downloadFileWithProgress(directUrl, filePath);
-          linkInfo.downloadSuccess = true;
-          console.log(chalk.green('下载完成:'), filePath);
-
-          // 4.3 解压 FLAC 音频
-          console.log(chalk.blue('开始解压:'), filePath);
-          const extracted = await this.extractAudioFiles(filePath, this.musicDir);
-          linkInfo.extractedFiles = extracted;
-          linkInfo.extractionSuccess = extracted.length > 0;
-          console.log(chalk.green('解压完成:'), extracted);
-        } catch (err: any) {
-          console.error(chalk.red('处理链接失败:'), err.message);
-          linkInfo.downloadError = err.message;
-        }
-      }
-
-      // 输出最终结果
-      console.log(chalk.blueBright('任务完成，结果:'), JSON.stringify(summary, null, 2));
-    } catch (err: any) {
-      console.error(chalk.red('执行下载流程出错:'), err.message);
-    }
-
-    return summary;
-  }
 
   private async postComment(dataHref: string): Promise<void> {
     const trackId = dataHref.match(/\d+/)?.[0];
@@ -284,6 +199,49 @@ export class HifiniDownloader {
       return false;
     }
   }
+
+
+  public async getLanzouDirectLink(dataHref: string): Promise<string[]> {
+    // 1. 首次拉取帖子页面
+    let html = await this.http
+      .get<string>(dataHref, { responseType: 'text' })
+      .then(res => res.data);
+
+    // 2. 如果未评论，先自动评论再重拉一次
+    if (!html.includes('alert-warning')) {
+      console.log(chalk.yellow('未检测到评论，正在自动评论…'));
+      await this.postComment(dataHref);
+      html = await this.http
+        .get<string>(dataHref, { responseType: 'text' })
+        .then(res => res.data);
+      console.log(chalk.green('评论完成，已重新拉取页面'));
+    }
+
+    // 3. 解析所有隐藏的蓝奏云分享链接及其提取码
+    const { links, codes } = this.parseHiddenContent(html);
+    console.log(chalk.green('发现下载链接:'), links);
+    console.log(chalk.green('发现提取码:'), codes);
+
+    // 4. 逐条处理，调用外部工具拿到直链
+    const directUrls: string[] = [];
+    for (let i = 0; i < links.length; i++) {
+      const link = links[i];
+      const code = codes[i] || '';
+      try {
+        if (!this.isValidUrl(link)) {
+          throw new Error('URL 格式不合法');
+        }
+        console.log(chalk.blue(`解析第 ${i + 1} 条直链，原始链接：`), link);
+        const direct = await getLanzouDirectLink(link, code);
+        console.log(chalk.blue(`解析成功：`), direct);
+        directUrls.push(direct);
+      } catch (err: any) {
+        console.error(chalk.red(`第 ${i + 1} 条直链解析失败:`), err.message);
+        // 不抛出，继续下一个
+      }
+    }
+
+    // 5. 返回所有成功解析到的直链
+    return directUrls;
+  }
 }
-
-

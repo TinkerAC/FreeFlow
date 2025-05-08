@@ -12,11 +12,11 @@ import Store from 'electron-store';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import { LyricService } from '@main/services/LyricService';
 import { FileCacheManager } from '@main/FileCacheManager';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlayerState } from '@src/shared/domainModel/playerState';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import { WindowKey, WindowManager } from '@main/window/windowManager';
 import { HifiniDownloader } from '@main/services/Downloader';
-
 
 const hifiniMusic: HifiniMusic = container.get('HifiniMusic');
 const playlistService: PlaylistService = container.get('PlaylistService');
@@ -27,6 +27,7 @@ const qqMusic: QQMusic = container.get('QQMusic');
 const lyricService: LyricService = container.get('LyricService');
 const fileCacheManager: FileCacheManager = container.get<FileCacheManager>('FileCacheManager');
 const downloader: HifiniDownloader = container.get<HifiniDownloader>('HifiniDownloader');
+const windowManager: WindowManager = container.get<WindowManager>('WindowManager');
 
 export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
@@ -106,13 +107,13 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   });
 
   // 添加音乐到库事件
-  ipcMain.handle('add-track-to-libraryContext', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
+  ipcMain.handle('add-track-to-libraryContext', async (_event: IpcMainInvokeEvent, track: TrackEntity) => {
     return await trackService.addTrackToLibrary(track);
   });
 
   // 添加音乐到歌单事件
   ipcMain.handle(
-    'add-track-to-playlist', async (_event: IpcMainInvokeEvent, track: TrackModel, playlistId: number) => {
+    'add-track-to-playlist', async (_event: IpcMainInvokeEvent, track: TrackEntity, playlistId: number) => {
       console.dir(track, { depth: null });
       return await playlistService.addTrackToPlaylist(playlistId, track);
     },
@@ -121,7 +122,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   // 从歌单中删除音乐事件
   ipcMain.handle(
     'remove-track-from-playlistContext',
-    async (_event: IpcMainInvokeEvent, playlistId: number, track: TrackModel) => {
+    async (_event: IpcMainInvokeEvent, playlistId: number, track: TrackEntity) => {
       return await playlistService.removeTrackFromPlaylist(playlistId, track);
     },
   );
@@ -142,7 +143,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     'modify-playlistContext',
     async (
       _event: IpcMainInvokeEvent,
-      playlistModel: PlaylistModel,
+      playlistModel: PlaylistEntity,
     ) => {
       return await playlistService.modifyPlaylist(playlistModel);
     });
@@ -162,7 +163,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
   });
 
 
-  ipcMain.handle('remove-track-from-libraryContext', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
+  ipcMain.handle('remove-track-from-libraryContext', async (_event: IpcMainInvokeEvent, track: TrackEntity) => {
     return await trackService.removeTrackFromLibrary(track);
   });
 
@@ -171,11 +172,11 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     return await netEaseCloudMusic.getPlaylistDetail(playlist_id);
   });
 
-  ipcMain.handle('add-playlistContext', async (_event: IpcMainInvokeEvent, playlist: PlaylistModel) => {
+  ipcMain.handle('add-playlistContext', async (_event: IpcMainInvokeEvent, playlist: PlaylistEntity) => {
     return await playlistService.addPlaylist(playlist);
   });
 
-  ipcMain.handle('get-lyrics', async (_event: IpcMainInvokeEvent, track_model: TrackModel) => {
+  ipcMain.handle('get-lyrics', async (_event: IpcMainInvokeEvent, track_model: TrackEntity) => {
 
     console.log('IPC: 获取歌词:', track_model);
     console.log(track_model.constructor.name);
@@ -193,13 +194,34 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     return await fileCacheManager.getDiskUsage();
   });
 
-  ipcMain.on('down-from-hifini', async (_event: IpcMainInvokeEvent, track: TrackModel) => {
+  ipcMain.on('down-from-hifini', async (_event: IpcMainInvokeEvent, track: TrackEntity) => {
       console.log('IPC: 下载歌曲:', track);
-      const result_summary = await downloader.downloadFromThread(
+
+      const lanzouDirectLinks = await downloader.getLanzouDirectLink(
         track.platform_unique_id,
       );
 
-    },
-  );
+      if (!lanzouDirectLinks) {
+        console.error('获取蓝奏云直链失败');
+        return;
+      }
+
+      const directLink = lanzouDirectLinks[0];
+
+      const workerWindow = windowManager.get(WindowKey.WORKER);
+      if (!workerWindow) {
+
+        console.error('Worker 窗口未创建');
+        return;
+      }
+      //委托给workerWindow下载
+      // 用 downloadURL 触发下载；will-download 监听器会接管
+      workerWindow.webContents.downloadURL(directLink);
+
+    }
+    ,
+  )
+  ;
+
 
 }

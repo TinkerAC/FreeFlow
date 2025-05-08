@@ -1,19 +1,19 @@
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 export default interface TrackRepository {
-  findAll(): Promise<TrackModel[]>;
+  findAll(): Promise<TrackEntity[]>;
 
-  findById(id: number): Promise<TrackModel | null>;
+  findById(id: number): Promise<TrackEntity | null>;
 
-  create(trackModel: TrackModel): Promise<TrackModel>;
+  create(trackModel: TrackEntity): Promise<TrackEntity>;
 
   delete(id: number): Promise<number>;
 
-  update(track: TrackModel): Promise<TrackModel>;
+  update(track: TrackEntity): Promise<TrackEntity>;
 
-  findByPlatformAndPlatformUniqueId(platform: string, platformUniqueId: string): Promise<TrackModel | null>;
+  findByPlatformAndPlatformUniqueId(platform: string, platformUniqueId: string): Promise<TrackEntity | null>;
 
-  findOrCreate(trackModel: TrackModel): Promise<TrackModel>;
+  findOrCreate(trackModel: TrackEntity): Promise<TrackEntity>;
 
 
 }

@@ -1,16 +1,16 @@
 // src/main/database/Track.ts
 
 import { DataTypes, Model, Optional } from 'sequelize';
-import { TrackEntityProps } from '@main/database/entity/TrackEntity';
+import { TrackRecordProps } from '@main/database/record/TrackRecord';
 import { sequelize } from '@main/database/seqimpl/database';
 
 /**
  * 定义创建 Track 实例时可选的属性,防止编译器报错
  */
-export interface TrackCreationAttributes extends Optional<TrackEntityProps, 'id' | 'title' | 'artist' | 'duration' | 'cover_src' | 'lyrics' | 'created_at' | 'modified_at'> {
+export interface TrackCreationAttributes extends Optional<TrackRecordProps, 'id' | 'title' | 'artist' | 'duration' | 'cover_src' | 'lyrics' | 'created_at' | 'modified_at'> {
 }
 
-export class Track extends Model<TrackEntityProps, TrackCreationAttributes> implements TrackEntityProps {
+export class Track extends Model<TrackRecordProps, TrackCreationAttributes> implements TrackRecordProps {
   public id!: number;
   public platform!: string;
   public platform_unique_id!: string;

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ContentProvider } from '../ContentProvider';
 import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvider/QQMusic/Interfaces';
 import { injectable } from 'inversify';
-import { QQMusicTrackModel, TrackModel } from '@src/shared/domainModel/TrackModel';
+import { QQMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/enum/Platform';
 
@@ -22,7 +22,7 @@ export class QQMusic implements ContentProvider {
 
 
   /**
-   * 根据关键词搜索 QQ 音乐免费歌曲，并返回统一的 TrackModel 数组
+   * 根据关键词搜索 QQ 音乐免费歌曲，并返回统一的 TrackRecord 数组
    * （原 cloudSearchQQ 方法逻辑重构而来）
    * @param keyword 搜索关键词
    * @param filterPaid 是否过滤付费歌曲（默认值 true）
@@ -30,7 +30,7 @@ export class QQMusic implements ContentProvider {
   public async searchTracks(
     keyword: string,
     filterPaid: boolean = true,
-  ): Promise<TrackModel[]> {
+  ): Promise<TrackEntity[]> {
     // 构造请求 URL
     const url = `${this.base_url}getSearchByKey?key=${encodeURIComponent(keyword)}`;
 
@@ -51,7 +51,7 @@ ${resultSongs
       .join('\n')}
   `);
 
-    // 构造并返回 TrackModel 列表
+    // 构造并返回 TrackRecord 列表
     return resultSongs.map(song =>
       QQMusicTrackModel.buildFromResponse(song),
     );

@@ -1,47 +1,32 @@
+// file: src/main/database/repository/impl/HifiniThreadCacheRepositoryImpl.ts
+import { inject, injectable } from 'inversify';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
-import { HifiniThreadCache, HifiniThreadCacheCreationAttributes } from '@main/database/seqimpl/HifiniThreadCache';
-import { inject } from 'inversify';
-import HifiniThreadCacheMapper from '@main/database/repository/mappers/HifiniThreadCacheMapper';
-
-import { HifiniThreadCacheEntityProps } from '@main/database/entity/HifiniThreadCacheEntity';
+import { HifiniThreadCacheDataSource } from '@main/database/dataSource/HifiniThreadCacheDataSource';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 
-export default class HifiniThreadCacheRepositoryImpl implements HifiniThreadCacheRepository {
+@injectable()
+export class HifiniThreadCacheRepositoryImpl implements HifiniThreadCacheRepository {
   constructor(
-    @inject('HifiniThreadCache') private hifiniThreadCache: HifiniThreadCache,
+    @inject('HifiniThreadCacheDataSource') private ds: HifiniThreadCacheDataSource,
   ) {
   }
 
-  async create(creationAttributes: HifiniThreadCacheCreationAttributes): Promise<HifiniThreadCacheModel> {
-    const hifiniThreadCache = await HifiniThreadCache.create(creationAttributes);
-    return HifiniThreadCacheMapper.toModel(hifiniThreadCache);
+  async create(attrs: Partial<HifiniThreadCacheModel>): Promise<HifiniThreadCacheModel> {
+    const rec = await this.ds.create(attrs as any);
+    return rec.toEntity();
   }
 
-  delete(dataHref: string): Promise<number> {
-    return HifiniThreadCache.destroy({
-      where: {
-        data_href: dataHref,
-      },
-    });
+  async delete(dataHref: string): Promise<number> {
+    return this.ds.delete(dataHref);
   }
 
   async findByDataHref(dataHref: string): Promise<HifiniThreadCacheModel | null> {
-    const result = await HifiniThreadCache.findOne({
-      where: {
-        data_href: dataHref,
-      },
-    });
-    if (result) {
-      return HifiniThreadCacheMapper.toModel(result);
-    } else {
-      return null;
-    }
+    const rec = await this.ds.findByDataHref(dataHref);
+    return rec ? rec.toEntity() : null;
   }
 
-  async save(attributes: HifiniThreadCacheEntityProps): Promise<HifiniThreadCacheModel> {
-    const result = await HifiniThreadCache.upsert(attributes);
-    return HifiniThreadCacheMapper.toModel(result[0]);
+  async save(attrs: Partial<HifiniThreadCacheModel>): Promise<HifiniThreadCacheModel> {
+    const rec = await this.ds.save(attrs as any);
+    return rec.toEntity();
   }
-
-
 }

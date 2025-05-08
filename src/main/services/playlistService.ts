@@ -1,13 +1,12 @@
 import { inject } from 'inversify';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import TrackRepository from '@main/database/repository/TrackRepository';
-import PlaylistDetailRepository from '@main/database/repository/PlaylistDetailRepository';
 import { fileExists } from '@src/utils/helpers';
 import TrackService from '@main/services/TrackService';
 import ElectronStore from 'electron-store';
 import { Platform } from '@main/enum/Platform';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 
 export default class PlaylistService {
@@ -15,17 +14,16 @@ export default class PlaylistService {
     @inject('Store') private store: ElectronStore,
     @inject('PlaylistRepository') private playlistRepository: PlaylistRepository,
     @inject('TrackRepository') private trackRepository: TrackRepository,
-    @inject('PlaylistDetailRepository') private playlistDetailRepository: PlaylistDetailRepository,
     @inject('TrackService') private trackService: TrackService,
   ) {
   }
 
 
-  public async getPlaylists(): Promise<PlaylistModel[]> {
+  public async getPlaylists(): Promise<PlaylistEntity[]> {
     try {
-      // Step 1: 获取库中的所有 TrackModel，并检查文件是否存在
-      const libraryTracks: TrackModel[] = await this.trackRepository.findAll();
-      const validTracks: TrackModel[] = [];
+      // Step 1: 获取库中的所有 TrackRecord，并检查文件是否存在
+      const libraryTracks: TrackEntity[] = await this.trackRepository.findAll();
+      const validTracks: TrackEntity[] = [];
 
       for (const track of libraryTracks) {
         if (track.platform == Platform.LOCAL) {
@@ -43,7 +41,7 @@ export default class PlaylistService {
       console.log(`库中有效歌曲数量: ${validTracks.length} / ${libraryTracks.length}`);
 
       // Step 2: 获取所有歌单的基本信息
-      const playlists: PlaylistModel[] = await this.playlistRepository.findAll();
+      const playlists: PlaylistEntity[] = await this.playlistRepository.findAll();
 
       // Step 3: 获取每个歌单对应的歌曲列表，并过滤无效歌曲
       for (const playlist of playlists) {
@@ -66,7 +64,7 @@ export default class PlaylistService {
           creator: '系统',
           description: '所有库中的音乐文件',
           modified_at: new Date(),
-          cover_src: '',
+          playlist_cover: '',
         },
       );
 
@@ -75,7 +73,7 @@ export default class PlaylistService {
 
       // Step 5: 获取每首歌曲的详细信息,如 封面、时长等
       return await Promise.all(
-        playlists.map(async (playlist: PlaylistModel) => {
+        playlists.map(async (playlist: PlaylistEntity) => {
           const tracksWithInfo = await Promise.allSettled(
             playlist.tracks.map(async (track) => {
               try {
@@ -94,7 +92,7 @@ export default class PlaylistService {
           // 移除发生错误的 track
           const validTracks = tracksWithInfo
             .filter((result) => result.status === 'fulfilled' && result.value !== null)
-            .map((result) => (result as PromiseFulfilledResult<TrackModel>).value);
+            .map((result) => (result as PromiseFulfilledResult<TrackEntity>).value);
 
           return {
             ...playlist,
@@ -111,10 +109,10 @@ export default class PlaylistService {
   }
 
 
-  public async addPlaylist(playlistModel: PlaylistModel) {
+  public async addPlaylist(playlistModel: PlaylistEntity) {
     console.log('主进程: 添加歌单:', playlistModel);
 
-    const track_collection: TrackModel[] = [];
+    const track_collection: TrackEntity[] = [];
     // add All Platform Tracks to Library
     for (const track of playlistModel.tracks) {
       track_collection.push(await this.trackRepository.findOrCreate(track));
@@ -128,16 +126,14 @@ export default class PlaylistService {
     }
   }
 
-  public async addTrackToPlaylist(playlistId: number, trackModel: TrackModel) {
+  public async addTrackToPlaylist(playlistId: number, trackModel: TrackEntity) {
 
     console.log(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(trackModel));
     try {
       //如果不在库中,则添加到库中
       const track = await this.trackRepository.findOrCreate(trackModel);
-      await this.playlistDetailRepository.create({
-        playlist_id: playlistId,
-        track_id: track.id,
-      });
+      await this.playlistRepository.createPlaylistDetail(playlistId, track.id);
+
       return track.id;
     } catch (error) {
       console.error('Error in add-track-to-playlistContext:', error);
@@ -148,7 +144,7 @@ export default class PlaylistService {
 
   public async creatNewEmptyPlaylist() {
     return this.playlistRepository.create({
-      cover_src: '',
+      playlist_cover: '',
       playlist_id: 0,
       tracks: [],
       title: '新建歌单',
@@ -162,7 +158,7 @@ export default class PlaylistService {
   }
 
   public async modifyPlaylist(
-    playlistModel: PlaylistModel,
+    playlistModel: PlaylistEntity,
   ) {
     console.log('主进程: 修改歌单信息:', playlistModel);
     await this.playlistRepository.update(playlistModel);
@@ -171,9 +167,9 @@ export default class PlaylistService {
 
   public async removeTrackFromPlaylist(
     playlistId: number
-    , track: TrackModel,
+    , track: TrackEntity,
   ) {
-    return this.playlistDetailRepository.deleteByPlaylistIdAndTrackId(playlistId, track.id);
+    return this.playlistRepository.deleteByPlaylistIdAndTrackId(playlistId, track.id);
   }
 
 

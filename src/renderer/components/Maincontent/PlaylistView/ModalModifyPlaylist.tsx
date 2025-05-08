@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { playlistContext } from '@main/app/electronContextApi';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 
 interface ModalModifyPlaylistProps {
   onClose: () => void;
-  playList: PlaylistModel;
+  playList: PlaylistEntity;
   refreshPlaylist: () => void;
 }
 

@@ -4,13 +4,8 @@ import { Container } from 'inversify';
 import { Playlist, PlaylistDetail, sequelize } from '@main/database/seqimpl';
 import { Sequelize } from 'sequelize';
 import TrackRepository from '@main/database/repository/TrackRepository';
-import TrackRepositoryImpl from '@main/database/repository/impl/TrackRepositoryImpl';
-import PlaylistRepositoryImpl from '@main/database/repository/impl/PlaylistRepositoryImpl';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
-import HifiniThreadCacheRepositoryImpl from '@main/database/repository/impl/HifiniThreadCacheRepositoryImpl';
-import PlaylistDetailRepositoryImpl from '@main/database/repository/impl/PlaylistDetailRepositoryImpl';
-import PlaylistDetailRepository from '@main/database/repository/PlaylistDetailRepository';
 import Store from 'electron-store';
 import LocalLibraryService from '@main/services/localLibraryService';
 import ProxyServerManager from '@main/app/proxyServer';
@@ -25,6 +20,18 @@ import { LyricService } from '@main/services/LyricService';
 import { FileCacheManager } from '@main/FileCacheManager';
 import { musicCacheDir } from '@main/app/pathConfig';
 import { HifiniDownloader } from '@main/services/Downloader';
+import { WindowManager } from '@main/window/windowManager';
+import { TrackRepositoryImpl } from '@main/database/repository/impl/TrackRepositoryImpl';
+import { PlaylistRepositoryImpl } from '@main/database/repository/impl/PlaylistRepositoryImpl';
+import { HifiniThreadCacheRepositoryImpl } from '@main/database/repository/impl/HifiniThreadCacheRepositoryImpl';
+import { PlaylistDetailDataSource } from '@main/database/dataSource/PlaylistDetailDataSource';
+import { PlaylistDetailDataSourceImpl } from '@main/database/dataSource/impl/PlaylistDetailDataSourceImpl';
+import { HifiniThreadCacheDataSourceImpl } from '@main/database/dataSource/impl/HifiniThreadCacheDataSourceImpl';
+import { HifiniThreadCacheDataSource } from '@main/database/dataSource/HifiniThreadCacheDataSource';
+import { TrackDataSourceImpl } from '@main/database/dataSource/impl/TrackDataSourceImpl';
+import { TrackDataSource } from '@main/database/dataSource/TrackDataSource';
+import { PlaylistDataSource } from '@main/database/dataSource/PlaylistDataSource';
+import { PlaylistDataSourceImpl } from '@main/database/dataSource/impl/PlaylistDataSourceImpl';
 
 const container = new Container();
 export { container };
@@ -43,28 +50,37 @@ container.bind<FileCacheManager>('FileCacheManager').toConstantValue(
 );
 
 
+container.bind<WindowManager>('WindowManager').toConstantValue(
+  new WindowManager(),
+);
+
+
 container.bind<HifiniDownloader>('HifiniDownloader').toConstantValue(
   new HifiniDownloader(
     container.get('Store'),
   ),
 );
 
+
 container.bind<Sequelize>('Sequelize').toConstantValue(sequelize);
+
 
 container.bind<HifiniThreadCache>('HifiniThreadCache').to(HifiniThreadCache);
 
 container.bind<Track>('Track').to(Track);
 container.bind<Playlist>('Playlist').to(Playlist);
 
+//绑定数据源
+container.bind<PlaylistDetailDataSource>('PlaylistDetailDataSource').to(PlaylistDetailDataSourceImpl);
+container.bind<HifiniThreadCacheDataSource>('HifiniThreadCacheDataSource').to(HifiniThreadCacheDataSourceImpl);
+container.bind<PlaylistDataSource>('PlaylistDataSource').to(PlaylistDataSourceImpl);
+container.bind<TrackDataSource>('TrackDataSource').to(TrackDataSourceImpl);
 
 container.bind<TrackRepository>('TrackRepository').to(TrackRepositoryImpl);
 
 container.bind<PlaylistRepository>('PlaylistRepository').to(PlaylistRepositoryImpl);
 
 container.bind<HifiniThreadCacheRepository>('HifiniThreadCacheRepository').to(HifiniThreadCacheRepositoryImpl);
-
-container.bind<PlaylistDetailRepository>('PlaylistDetailRepository').to(PlaylistDetailRepositoryImpl);
-
 container.bind<LocalLibraryService>('LocalLibraryService').to(LocalLibraryService);
 container.bind<TrackService>('TrackService').to(TrackService);
 container.bind<ProxyServerManager>('ProxyServerManager').to(ProxyServerManager);

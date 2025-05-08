@@ -1,13 +1,13 @@
 import React from 'react';
 import { playlistContext } from '@main/app/electronContextApi';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface ContextMenuProps {
 
   x: number;
   y: number;
   handleCloseMenu: () => void;
-  eventPlaylist: PlaylistModel;
+  eventPlaylist: PlaylistEntity;
   refreshPlaylist: () => void;
 
 }

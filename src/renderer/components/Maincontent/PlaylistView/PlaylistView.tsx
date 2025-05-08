@@ -11,12 +11,12 @@ import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModif
 import { DefaultCover } from '@components/static';
 import { playlistContext } from '@main/app/electronContextApi';
 import Player from '@renderer/core/player/Player';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface PlaylistViewProps {
-  playListInfo: PlaylistModel;
+  playListInfo: PlaylistEntity;
   refreshPlaylist: () => void;
-  playlists: PlaylistModel[];
+  playlists: PlaylistEntity[];
   player: Player;
 }
 

@@ -1,9 +1,11 @@
 import { Platform } from '@main/enum/Platform';
+import { AbstractEntity } from '@src/shared/domainModel/AbstractEntity';
+
 
 /**
- * TrackModel 抽象类，代表音乐平台中的一首歌曲
+ * TrackRecord 抽象类，代表音乐平台中的一首歌曲
  */
-export abstract class TrackModel {
+export abstract class TrackEntity extends AbstractEntity {
   id?: number;                   // 数据库主键,在业务逻辑中是可选的
   platform!: Platform;           // 所属平台
   platform_unique_id!: string;   // 平台内唯一标识
@@ -16,16 +18,6 @@ export abstract class TrackModel {
   modified_at?: Date;           // 修改时间
   played_count?: number;         // 播放次数
 
-
-  /**
-   * 获取歌曲的唯一标识信息
-   */
-  getIdentifier(): TrackIdentifier {
-    return {
-      platform: this.platform,
-      platform_unique_id: this.platform_unique_id,
-    };
-  }
 }
 
 /**
@@ -37,9 +29,9 @@ export interface TrackIdentifier {
 }
 
 /**
- * LocalPlayTrackModel 类：本地音乐的 TrackModel 实现
+ * LocalPlayTrackModel 类：本地音乐的 TrackRecord 实现
  */
-export class LocalPlayTrackModel extends TrackModel {
+export class LocalPlayTrackModel extends TrackEntity {
   album: string;
   artist: string;
   cover_src: string;
@@ -74,7 +66,7 @@ export class LocalPlayTrackModel extends TrackModel {
    * 根据 JSON 数据构建本地歌曲实例
    * @param json JSON 数据
    */
-  public static build(json: any): TrackModel {
+  public static build(json: any): TrackEntity {
     return new LocalPlayTrackModel(
       json.album,
       json.artist,
@@ -90,15 +82,15 @@ export class LocalPlayTrackModel extends TrackModel {
   /**
    * 返回一个空实例
    */
-  static empty(): TrackModel {
+  static empty(): TrackEntity {
     return new LocalPlayTrackModel('', '', '', new Date(), 0, '', '', '');
   }
 }
 
 /**
- * HifiniTrackModel 类：Hifini 平台的 TrackModel 实现
+ * HifiniTrackEntity 类：Hifini 平台的 TrackRecord 实现
  */
-export class HifiniTrackModel extends TrackModel {
+export class HifiniTrackEntity extends TrackEntity {
   id: number;
   album: string;
   artist: string;
@@ -136,8 +128,8 @@ export class HifiniTrackModel extends TrackModel {
    * 根据 JSON 数据构建 Hifini 平台歌曲实例
    * @param json JSON 数据
    */
-  public static build(json: any): TrackModel {
-    return new HifiniTrackModel(
+  public static build(json: any): TrackEntity {
+    return new HifiniTrackEntity(
       json.id,
       json.album,
       json.artist,
@@ -153,15 +145,15 @@ export class HifiniTrackModel extends TrackModel {
   /**
    * 返回一个空实例
    */
-  static empty(): TrackModel {
-    return new HifiniTrackModel(0, '', '', '', new Date(), 0, '', '', '');
+  static empty(): TrackEntity {
+    return new HifiniTrackEntity(0, '', '', '', new Date(), 0, '', '', '');
   }
 }
 
 /**
- * QQMusicTrackModel 类：QQ音乐平台的 TrackModel 实现
+ * QQMusicTrackModel 类：QQ音乐平台的 TrackRecord 实现
  */
-export class QQMusicTrackModel extends TrackModel {
+export class QQMusicTrackModel extends TrackEntity {
   id: number;
   album: string;
   artist: string;
@@ -202,7 +194,7 @@ export class QQMusicTrackModel extends TrackModel {
    * 根据 JSON 数据构建 QQ 音乐歌曲实例
    * @param json JSON 数据，字段参考 QQ 音乐接口返回
    */
-  public static buildFromResponse(json: any): TrackModel {
+  public static buildFromResponse(json: any): TrackEntity {
     // 判断收费规则，这里示例为：pay.play === 1 表示免费，否则视为收费
     const fee = (json.pay && json.pay.payplay === 1) ? 0 : 1;
     // 提取各字段，注意做合理的空值处理
@@ -235,7 +227,7 @@ export class QQMusicTrackModel extends TrackModel {
     );
   }
 
-  public static build(json: any): TrackModel {
+  public static build(json: any): TrackEntity {
     return new QQMusicTrackModel(
       json.id,
       json.album,
@@ -254,7 +246,7 @@ export class QQMusicTrackModel extends TrackModel {
   /**
    * 返回一个空实例
    */
-  static empty(): TrackModel {
+  static empty(): TrackEntity {
     return new QQMusicTrackModel(0, '', '', '', new Date(), 0, '', '', '', 0);
   }
 
@@ -267,9 +259,9 @@ export class QQMusicTrackModel extends TrackModel {
 }
 
 /**
- * NetEaseCloudMusicTrackModel 类：网易云音乐平台的 TrackModel 实现
+ * NetEaseCloudMusicTrackModel 类：网易云音乐平台的 TrackRecord 实现
  */
-export class NetEaseCloudMusicTrackModel extends TrackModel {
+export class NetEaseCloudMusicTrackModel extends TrackEntity {
   id: number;
   album: string;
   artist: string;
@@ -308,7 +300,7 @@ export class NetEaseCloudMusicTrackModel extends TrackModel {
    * 根据 JSON 数据构建网易云音乐歌曲实例
    * @param json JSON 数据
    */
-  public static build(json: any): TrackModel {
+  public static build(json: any): TrackEntity {
     return new NetEaseCloudMusicTrackModel(
       json.id,
       json.album,
@@ -325,7 +317,7 @@ export class NetEaseCloudMusicTrackModel extends TrackModel {
   /**
    * 返回一个空实例
    */
-  static empty(): TrackModel {
+  static empty(): TrackEntity {
     return new NetEaseCloudMusicTrackModel(0, '', '', '', new Date(), 0, '', '', '');
   }
 

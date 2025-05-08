@@ -1,9 +1,9 @@
 // 返回dataHref的BlobUrl或者file_path对应的音频文件路径
 
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 export default async function getAudioSrc(
-  track: TrackModel,
+  track: TrackEntity,
 ): Promise<string> {
 
   if (track === null || track === undefined) {

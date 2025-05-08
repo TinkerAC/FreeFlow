@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { libraryContext, playlistContext } from '@main/app/electronContextApi';
 import Player from '@renderer/core/player/Player';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface ContextMenuProps {
   x: number,
   y: number,
-  track: TrackModel,
+  track: TrackEntity,
   player: Player;
   handleCloseMenu: () => void,
-  playlists: PlaylistModel[],
-  currentPlaylist: PlaylistModel,
+  playlists: PlaylistEntity[],
+  currentPlaylist: PlaylistEntity,
   refreshPlaylists?: () => void
 }
 
@@ -122,13 +122,13 @@ function ContextMenu({
         从{currentPlaylist?.title}中移除
       </div>
 
-      {/*<div*/}
-      {/*  className="p-2 hover:bg-gray-700 cursor-pointer"*/}
-      {/*  onClick={async () => {*/}
-      {/*    await libraryContext.downFromHifini(track);*/}
-      {/*  }}>*/}
-      {/*  下载*/}
-      {/*</div>*/}
+      <div
+        className="p-2 hover:bg-gray-700 cursor-pointer"
+        onClick={async () => {
+          await libraryContext.downFromHifini(track);
+        }}>
+        下载
+      </div>
 
     </div>
   );

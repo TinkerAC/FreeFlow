@@ -1,4 +1,4 @@
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/enum/Platform';
 
@@ -21,11 +21,11 @@ export abstract class ContentProvider {
   abstract serverNodes: string[];
 
   /**
-   * 根据关键词搜索歌曲，返回统一的 TrackModel 数组
+   * 根据关键词搜索歌曲，返回统一的 TrackRecord 数组
    * @param keyword 搜索关键词
    * @param filterPaid 是否过滤付费歌曲
    */
-  abstract searchTracks(keyword: string, filterPaid: boolean): Promise<TrackModel[]>;
+  abstract searchTracks(keyword: string, filterPaid: boolean): Promise<TrackEntity[]>;
 
   /**
    * 根据平台内部的唯一标识获取歌曲播放链接

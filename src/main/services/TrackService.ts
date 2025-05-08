@@ -3,17 +3,17 @@ import TrackRepository from '@main/database/repository/TrackRepository';
 
 import { IAudioMetadata, parseFile } from 'music-metadata';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
-import PlaylistDetailRepository from '@main/database/repository/PlaylistDetailRepository';
 import { Platform } from '@main/enum/Platform';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
+import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 
 export default class TrackService {
 
   constructor(
     @inject('TrackRepository') private trackRepository: TrackRepository,
     @inject('HifiniMusic') private hifiniMusic: HifiniMusic,
-    @inject('PlaylistDetailRepository') private playlistDetailRepository: PlaylistDetailRepository,
+    @inject('PlaylistRepository') private playlistRepository: PlaylistRepository,
   ) {
   }
 
@@ -50,7 +50,7 @@ export default class TrackService {
   public async getTrackInfo(
     platform: Platform,
     platform_unique_id: string,
-  ): Promise<TrackModel> {
+  ): Promise<TrackEntity> {
 
     // only file_path or data_href is provided
     const trackModel = await this.trackRepository.findByPlatformAndPlatformUniqueId(platform, platform_unique_id);
@@ -82,12 +82,12 @@ export default class TrackService {
   }
 
 
-  public async addTrackToLibrary(track: TrackModel): Promise<TrackModel> {
+  public async addTrackToLibrary(track: TrackEntity): Promise<TrackEntity> {
 
     const platform: string = track.platform;
     const platform_unique_id: string = track.platform_unique_id;
 
-    const track1: TrackModel = await this.trackRepository.findByPlatformAndPlatformUniqueId(platform, platform_unique_id);
+    const track1: TrackEntity = await this.trackRepository.findByPlatformAndPlatformUniqueId(platform, platform_unique_id);
 
     if (track1) {
       console.log('待添加的音乐已在库中，id:', track1.id);
@@ -99,9 +99,16 @@ export default class TrackService {
   }
 
 
-  public async findTracksByPlaylistId(playlistId: number): Promise<TrackModel[]> {
+  public async findTracksByPlaylistId(playlistId: number): Promise<TrackEntity[]> {
 
-    const trackIds = await this.playlistDetailRepository.findTrackIdsByPlaylistId(playlistId);
+    const tracks = await this.playlistRepository.findTracksByPlaylistId(playlistId);
+
+    if (!tracks || tracks.length === 0) {
+      return [];
+    }
+
+    const trackIds = tracks.map((track) => track.id);
+
 
     return await Promise.all(
       trackIds.map(async (trackId) => {
@@ -112,9 +119,19 @@ export default class TrackService {
   }
 
 
-  public async removeTrackFromLibrary(track: TrackModel): Promise<number> {
+  public async removeTrackFromLibrary(track: TrackEntity): Promise<number> {
     return await this.trackRepository.delete(track.id);
   }
 
+  // //用于将下载后的本地文件绑定到数据库中的曲目
+  // public async bindLocalTrackFile(track: TrackEntity, filePath: string): Promise<TrackEntity> {
+  //   const trackInDb = await this.trackRepository.findByPlatformAndPlatformUniqueId(track.platform, track.platform_unique_id);
+  //   if (trackInDb) {
+  //     trackInDb.relative_local_path = filePath;
+  //     return await this.trackRepository.update(trackInDb);
+  //   } else {
+  //     throw new Error('Track not found in the database');
+  //   }
+  // }
 
 }

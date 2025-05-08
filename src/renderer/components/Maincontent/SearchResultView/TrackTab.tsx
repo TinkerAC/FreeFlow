@@ -4,12 +4,12 @@
 import React from 'react';
 import Player from '@renderer/core/player/Player';
 import { Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 interface TracksTabProps {
-  tracks: TrackModel[];
+  tracks: TrackEntity[];
   player: Player;
-  onContextMenu: (e: React.MouseEvent<HTMLDivElement, MouseEvent>, track: TrackModel) => void;
+  onContextMenu: (e: React.MouseEvent<HTMLDivElement, MouseEvent>, track: TrackEntity) => void;
 }
 
 function PlatformIcon({ platform }: { platform: string }) {

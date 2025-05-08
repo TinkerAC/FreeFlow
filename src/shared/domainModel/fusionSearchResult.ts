@@ -1,11 +1,11 @@
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 /**
  * FusionSearchResult 接口：表示搜索结果，包含歌曲和歌单
  */
 export interface FusionSearchResult {
-  tracks: TrackModel[];
-  playlists: PlaylistModel[];
+  tracks: TrackEntity[];
+  playlists: PlaylistEntity[];
 }

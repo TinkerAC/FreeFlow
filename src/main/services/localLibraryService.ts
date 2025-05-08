@@ -7,7 +7,7 @@ import { getConfig } from '@main/services/ConfigService';
 import { fileExists } from '@src/utils/helpers';
 import TrackRepository from '@main/database/repository/TrackRepository';
 import Store from 'electron-store';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 @injectable()
 class LocalLibraryService {
@@ -58,8 +58,8 @@ class LocalLibraryService {
     }
   }
 
-  private async getTracksFromPaths(paths: string[], formats: string[]): Promise<TrackModel[]> {
-    const tracks: TrackModel[] = [];
+  private async getTracksFromPaths(paths: string[], formats: string[]): Promise<TrackEntity[]> {
+    const tracks: TrackEntity[] = [];
 
     for (const directoryPath of paths) {
       if (await fileExists(directoryPath)) {
@@ -77,7 +77,7 @@ class LocalLibraryService {
 
                 // if (!existingTrack) {
                 //   console.log(`发现新文件: ${normalizedPath}`);
-                //   const trackData: TrackModel =
+                //   const trackData: TrackRecord =
                 //     ModelFactory.buildTrackModel(
                 //       {
                 //         platform: Platform.LOCAL,

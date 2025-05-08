@@ -1,11 +1,11 @@
 import { inject, injectable } from 'inversify';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
 import { Platform } from '@main/enum/Platform';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 
 /**
- * 根据传入 TrackModel 获取歌词数据
+ * 根据传入 TrackRecord 获取歌词数据
  * @param track_model 歌曲模型
  * @returns Promise<Lyric>
  *
@@ -21,7 +21,7 @@ export class LyricService {
   ) {
   }
 
-  async getLyrics(track_model: TrackModel): Promise<Lyric | void> {
+  async getLyrics(track_model: TrackEntity): Promise<Lyric | void> {
     const { platform, platform_unique_id } = track_model;
     console.log('后台收到加载歌词请求:', platform, platform_unique_id);
 
@@ -49,8 +49,8 @@ export class LyricService {
         ]);
 
         // 分别获取搜索结果中的第一首歌曲（如果存在）
-        const qq_first_song: TrackModel = qq_response && qq_response[0];
-        const netease_first_song: TrackModel = netease_response && netease_response[0];
+        const qq_first_song: TrackEntity = qq_response && qq_response[0];
+        const netease_first_song: TrackEntity = netease_response && netease_response[0];
 
         // 优先使用网易云的歌曲
         if (netease_first_song) {

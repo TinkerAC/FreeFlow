@@ -11,9 +11,9 @@ import { libraryContext, playlistContext } from '@main/app/electronContextApi';
 import PlaylistsTab from '@components/Maincontent/SearchResultView/PlaylistTab';
 import TracksTab from '@components/Maincontent/SearchResultView/TrackTab';
 import PopularTab from '@components/Maincontent/SearchResultView/PopularTab';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 export interface TabbedSearchResultViewProps {
   /** 外部可选：初始激活的 Tab */
@@ -23,11 +23,11 @@ export interface TabbedSearchResultViewProps {
   /** 综合搜索结果 */
   fusionSearchResult: FusionSearchResult | null;
   /** 点击在线歌单回调 */
-  onSelectOnlinePlaylist: (playlistModel: PlaylistModel) => void;
+  onSelectOnlinePlaylist: (playlistModel: PlaylistEntity) => void;
   /** 切换主内容区域视图 */
   setMainContentView: (view: string) => void;
   /** 已保存的本地歌单 */
-  savedPlaylists: PlaylistModel[];
+  savedPlaylists: PlaylistEntity[];
   /** 播放器实例 */
   player: Player;
 }
@@ -54,7 +54,7 @@ function TabbedSearchResultView({
   // context‑menu state
   // ----------------------
   const [contextMenu, setContextMenu] = useStateRef<{ x: number; y: number } | null>(null);
-  const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackModel | null>(null);
+  const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackEntity | null>(null);
 
   //---------------------------------------
   // 还未搜索
@@ -66,7 +66,7 @@ function TabbedSearchResultView({
   }
 
   const { tracks, playlists } = fusionSearchResult;
-  const popularResult = tracks[0] as TrackModel | undefined;
+  const popularResult = tracks[0] as TrackEntity | undefined;
 
   //---------------------------------------
   // 无搜索结果
@@ -82,7 +82,7 @@ function TabbedSearchResultView({
   //---------------------------------------
   const openContextMenu = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    track: TrackModel,
+    track: TrackEntity,
   ) => {
     e.preventDefault();
     setSelectedTrack(track);

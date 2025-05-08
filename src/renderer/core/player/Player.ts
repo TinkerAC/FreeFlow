@@ -1,7 +1,7 @@
 // file: src/player/Player.ts
 import getAudioSrc from '@main/services/loadAudio';
 import { PlayQueue } from '@renderer/core/player/PlayQueue';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 
 type PlaybackMode = 'loop' | 'repeat' | 'shuffle';
@@ -169,17 +169,17 @@ export default class Player {
     this.setVolume(this.volume + delta);
   }
 
-  public addTrackToNext(track: TrackModel) {
+  public addTrackToNext(track: TrackEntity) {
     this.playQueue._addTrackToNextInQueue(track, this.playbackMode);
     this.notifyStateChange();
   }
 
-  public addTrackToNextAndPlay(track: TrackModel) {
+  public addTrackToNextAndPlay(track: TrackEntity) {
     this.addTrackToNext(track);
     this.playNext().then();
   }
 
-  public async replacePlayQueue(tracks: TrackModel[], mode?: PlaybackMode) {
+  public async replacePlayQueue(tracks: TrackEntity[], mode?: PlaybackMode) {
     this.pause();
     this.playbackMode = mode ?? this.playbackMode;
     this.playQueue.replaceQueueLibraryAndIndexList(
@@ -189,7 +189,7 @@ export default class Player {
     this.isLoading = true;
     this.notifyStateChange();
 
-    const first: TrackModel = this.playQueue.getHeadTrack();
+    const first: TrackEntity = this.playQueue.getHeadTrack();
     try {
       const src = await getAudioSrc(first);
       this.isLoading = false;

@@ -4,12 +4,12 @@ import Item from './Item';
 import ContextMenu from './ContextMenu';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
 import { playlistContext } from '@main/app/electronContextApi';
-import { PlaylistModel } from '@src/shared/domainModel/playlistModel';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 
 interface MusicLibraryProps {
   className?: string;
-  libraryItems: PlaylistModel[];
+  libraryItems: PlaylistEntity[];
   selectedItem: number;
   onSelectItem: (index: number) => void;
   mainContentView: string;
@@ -31,7 +31,7 @@ export default function MusicLibrary({
                                      }: MusicLibraryProps) {
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const [eventPlaylist, setEventPlaylist] = useState<PlaylistModel | null>(null);
+  const [eventPlaylist, setEventPlaylist] = useState<PlaylistEntity | null>(null);
 
   const handleSelectItem = (index: number) => {
     if (mainContentView !== 'playlist') {

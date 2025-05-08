@@ -1,12 +1,12 @@
 import React from 'react';
 import { DefaultCover } from '@components/static';
-import { TrackModel } from '@src/shared/domainModel/TrackModel';
+import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 interface PlayQueueProps {
-  currentTrack: TrackModel;
-  nextTracks: TrackModel[];
+  currentTrack: TrackEntity;
+  nextTracks: TrackEntity[];
   clearQueue: () => void;
-  addToNextAndPlay: (track: TrackModel) => void;
+  addToNextAndPlay: (track: TrackEntity) => void;
 }
 
 export default function PlayQueue({
