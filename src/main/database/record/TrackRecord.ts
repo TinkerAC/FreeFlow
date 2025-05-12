@@ -42,6 +42,7 @@ export class TrackRecord extends AbstractRecord implements TrackRecordProps {
       created_at: this.created_at,
       duration: this.duration,
       id: this.id,
+      downloaded: !!this.relative_local_path,
       modified_at: this.modified_at,
       platform: this.platform,
       platform_unique_id: this.platform_unique_id,

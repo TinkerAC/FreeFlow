@@ -61,7 +61,7 @@ export default function TopBar({
   };
 
   return (
-    <div className={`top-bar sticky top-0 w-full ${''}`}>
+    <div className={`top-bar sticky top-0 w-full`}>
       {/* macOS 红绿灯 */}
       {platform === 'darwin' && (
         <div id="traffic-lights">

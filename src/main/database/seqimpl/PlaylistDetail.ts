@@ -1,23 +1,19 @@
-// src/main/database/PlaylistDetail.ts
-
 import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from './index';
+import { sequelize } from './database';
 import { Playlist } from './Playlist';
 import { Track } from './Track';
 import { PlaylistDetailRecordProps } from '@main/database/record/PlaylistDetailRecord';
 
+export interface PlaylistDetailCreationAttributes
+  extends Optional<
+    PlaylistDetailRecordProps,
+    'created_at' | 'modified_at'
+  > {}
 
-/**
- * 定义创建 PlaylistDetail 实例时可选的属性
- */
-export interface PlaylistDetailCreationAttributes extends Optional<PlaylistDetailRecordProps, 'created_at' | 'modified_at'> {
-}
-
-/**
- * PlaylistDetail 模型
- */
-export class PlaylistDetail extends Model<PlaylistDetailRecordProps, PlaylistDetailCreationAttributes>
-  implements PlaylistDetailRecordProps {
+export class PlaylistDetail
+  extends Model<PlaylistDetailRecordProps, PlaylistDetailCreationAttributes>
+  implements PlaylistDetailRecordProps
+{
   public playlist_id!: number;
   public track_id!: number;
   public created_at?: Date;
@@ -29,45 +25,23 @@ PlaylistDetail.init(
     playlist_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      allowNull: false,
-      references: {
-        model: Playlist,
-        key: 'playlist_id',
-      },
+      references: { model: Playlist, key: 'playlist_id' },
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     },
     track_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      allowNull: false,
-      references: {
-        model: Track,
-        key: 'id',
-      },
+      references: { model: Track, key: 'id' },
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
     },
   },
   {
     sequelize,
     tableName: 'playlist_detail',
-    timestamps: false,
-    hooks: {
-      beforeUpdate: (instance: PlaylistDetail) => {
-        instance.modified_at = new Date();
-      },
-    },
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'modified_at',
   },
 );
-

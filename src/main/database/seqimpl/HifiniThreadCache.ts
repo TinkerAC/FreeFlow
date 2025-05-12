@@ -1,16 +1,22 @@
-// src/database/HifiniThreadCache.ts
 import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from './index';
+import { sequelize } from './database';
 import { injectable } from 'inversify';
 import { HifiniThreadCacheRecordProps } from '@main/database/record/HifiniThreadCacheRecord';
 
-
-export interface HifiniThreadCacheCreationAttributes extends Optional<HifiniThreadCacheRecordProps, 'cached_at' | 'modified_at'> {
-}
-
+export interface HifiniThreadCacheCreationAttributes
+  extends Optional<
+    HifiniThreadCacheRecordProps,
+    'cached_at' | 'modified_at'
+  > {}
 
 @injectable()
-export class HifiniThreadCache extends Model<HifiniThreadCacheRecordProps, HifiniThreadCacheCreationAttributes> implements HifiniThreadCacheRecordProps {
+export class HifiniThreadCache
+  extends Model<
+    HifiniThreadCacheRecordProps,
+    HifiniThreadCacheCreationAttributes
+  >
+  implements HifiniThreadCacheRecordProps
+{
   public data_href!: string;
   public title?: string;
   public artist?: string;
@@ -19,7 +25,6 @@ export class HifiniThreadCache extends Model<HifiniThreadCacheRecordProps, Hifin
   public cached_at?: Date;
   public modified_at?: Date;
 }
-
 
 HifiniThreadCache.init(
   {
@@ -31,23 +36,12 @@ HifiniThreadCache.init(
     artist: DataTypes.TEXT,
     cover_src: DataTypes.TEXT,
     un_redirected_url: DataTypes.TEXT,
-    cached_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   },
   {
     sequelize,
     tableName: 'hifini_thread_cache',
-    timestamps: false,
-    hooks: {
-      beforeUpdate: (instance) => {
-        instance.modified_at = new Date();
-      },
-    },
+    timestamps: true,
+    createdAt: 'cached_at',     // ← 关键：映射到旧列名
+    updatedAt: 'modified_at',
   },
 );

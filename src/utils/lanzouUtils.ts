@@ -25,7 +25,7 @@
  * ```
  */
 
-import type AxiosRequestHeaders from 'axios';
+import type { RawAxiosRequestHeaders } from 'axios';
 import axios from 'axios';
 
 import { URLSearchParams } from 'url';
@@ -85,7 +85,7 @@ function normaliseUrl(raw: string): string {
 }
 
 async function httpGet(url: string, referer: string = ''): Promise<string> {
-  const headers: AxiosRequestHeaders = {
+  const headers: RawAxiosRequestHeaders = {
     'User-Agent': USER_AGENT,
     'X-FORWARDED-FOR': randIP(),
     'CLIENT-IP': randIP(),
@@ -105,7 +105,7 @@ async function httpPost(
   referer: string = '',
 ): Promise<string> {
   const params = new URLSearchParams(data).toString();
-  const headers: AxiosRequestHeaders = {
+  const headers: RawAxiosRequestHeaders = {
     'User-Agent': USER_AGENT,
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
     'X-FORWARDED-FOR': randIP(),
@@ -166,7 +166,7 @@ async function handleNormalShare(
 }
 
 async function getFinalRedirect(url: string): Promise<string> {
-  const headers: AxiosRequestHeaders = {
+  const headers: RawAxiosRequestHeaders = {
     'User-Agent': USER_AGENT,
     Referer: 'https://developer.lanzoug.com',
     Cookie: 'down_ip=1; path=/; domain=.baidupan.com',

@@ -17,6 +17,8 @@ import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCach
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/enum/Platform';
 
+import { TYPES } from '@main/di/symbol';
+
 
 @injectable()
 export default class HifiniMusic implements ContentProvider {
@@ -26,8 +28,8 @@ export default class HifiniMusic implements ContentProvider {
   private readonly __dirname: string;
 
   constructor(
-    @inject('Store') private store: ElectronStore,
-    @inject('HifiniThreadCacheRepository') private hifiniThreadCacheRepository: HifiniThreadCacheRepository,
+    @inject(TYPES.Store) private store: ElectronStore,
+    @inject(TYPES.HifiniThreadCacheRepository) private hifiniThreadCacheRepository: HifiniThreadCacheRepository,
   ) {
     this.__filename = fileURLToPath(import.meta.url);
     this.__dirname = path.dirname(this.__filename);

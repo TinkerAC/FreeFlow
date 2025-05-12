@@ -3,29 +3,86 @@ import { inject, injectable } from 'inversify';
 import { isPortOccupied } from '@src/utils/netUtils';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
+import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
+import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 import { PassThrough } from 'stream';
 import Store from 'electron-store';
-import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import { FileCacheManager } from '@main/FileCacheManager';
+import TrackRepository from '@main/database/repository/TrackRepository';
+import fs from 'fs';
+import path from 'path';
+import { music_Dir } from '@main/app/pathConfig';
+import {TYPES} from '@main/di/symbol';
+
+/**
+ * 统一的音频 MIME Type 兜底
+ */
+const DEFAULT_AUDIO_MIME = 'audio/mpeg';
+
+/**
+ * 处理参数缺失时抛出的错误
+ */
+class BadRequestError extends Error {
+  public readonly status: number;
+
+  constructor(message: string) {
+    super(message);
+    this.status = 400;
+  }
+}
 
 @injectable()
 class ProxyServerManager {
-  private app: Application;
+  private readonly app: Application;
   private port: number;
 
   constructor(
-    @inject('HifiniMusic') private hifiniMusic: HifiniMusic,
-    @inject('NetEaseCloudMusic') private netEaseCloudMusic: NetEaseCloudMusic,
-    @inject('QQMusic') private qqMusic: QQMusic,
-    @inject('Store') private store: Store,
-    @inject('FileCacheManager') private cacheManager: FileCacheManager, // 注入 FileCacheManager
+    @inject(TYPES.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
+    @inject(TYPES.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
+    @inject(TYPES.QQMusic) private readonly qqMusic: QQMusic,
+    @inject(TYPES.Store) private readonly store: Store,
+    @inject(TYPES.FileCacheManager) private readonly cacheManager: FileCacheManager,
+    @inject(TYPES.TrackRepository) private readonly trackRepository: TrackRepository,
   ) {
     this.app = express();
     this.port = 4399; // 默认端口
 
-    // 添加全局 CORS 设置，允许所有来源的请求
-    this.app.use((req, res, next) => {
+    this.configureMiddlewares();
+    this.setupRoutes();
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                Public API                                  */
+
+  /* -------------------------------------------------------------------------- */
+  /**
+   * 启动代理服务器。
+   */
+  public async start(): Promise<void> {
+    console.log('代理服务器数据库已连接');
+
+    // 动态探测可用端口
+    while (await isPortOccupied(this.port)) {
+      console.warn(`端口 ${this.port} 已被占用，尝试使用下一个端口`);
+      this.port++;
+    }
+
+    this.app.listen(this.port, () => {
+      console.log(`代理服务器正在监听端口 ${this.port}`);
+    });
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                             Lifecycle Helpers                              */
+
+  /* -------------------------------------------------------------------------- */
+  /**
+   * 设置 CORS / JSON 等全局中间件。
+   */
+  private configureMiddlewares(): void {
+    // 允许所有来源访问，避免跨域问题
+    this.app.use((_req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -33,144 +90,186 @@ class ProxyServerManager {
     });
   }
 
-  public async start(): Promise<void> {
-    console.log('代理服务器数据库已连接');
+  /**
+   * 注册所有 HTTP 路由。
+   */
+  private setupRoutes(): void {
+    this.app.get('/proxy', (req, res) => void this.handleProxyRequest(req, res));
+  }
 
-    this.app.get('/proxy', async (req: Request, res: Response) => {
-      const platform = req.query.platform as string;
-      const platformUniqueId = req.query.platformUniqueId as string;
+  /* -------------------------------------------------------------------------- */
+  /*                                Route Logic                                 */
 
+  /* -------------------------------------------------------------------------- */
+  /**
+   * 统一处理 /proxy 请求
+   */
+  private async handleProxyRequest(req: Request, res: Response): Promise<void> {
+    try {
+      const { platform, platformUniqueId } = this.extractAndValidateParams(req);
       console.log('代理服务器收到请求:', platform, platformUniqueId);
 
-      if (!platform || !platformUniqueId) {
-        res.status(400).send('Error: Missing systemContext or platformUniqueId.');
+      /* ---------- 1. 本地文件优先 ---------- */
+      const localFilePath = await this.findLocalFile(platform, platformUniqueId);
+      if (localFilePath) {
+        console.log(`找到本地文件: ${localFilePath}`);
+        await this.streamLocalFile(res, localFilePath);
         return;
       }
 
-      // 使用平台名和唯一 ID 来生成缓存文件的 key
+      /* ---------- 2. 磁盘缓存 ---------- */
       const cacheKey = this.cacheManager.generateCacheKey(platform, platformUniqueId);
-
-      // 使用 FileCacheManager 来查找缓存文件
       const cachedData = await this.cacheManager.getCachedFile(cacheKey);
-
       if (cachedData) {
         console.log(`${platform}-${platformUniqueId} 缓存命中，直接返回缓存数据`);
-        res.setHeader('Content-Type', 'audio/mpeg'); // 根据实际情况设置 MIME 类型
-        res.end(cachedData);
+        this.sendBuffer(res, cachedData, DEFAULT_AUDIO_MIME);
         return;
       }
 
+      /* ---------- 3. 远程拉取 & 缓存 ---------- */
       console.log(`${platform}-${platformUniqueId} 缓存未命中，开始请求数据`);
+      await this.fetchStreamAndCache(platform, platformUniqueId, cacheKey, res);
+    } catch (err) {
+      const status = err instanceof BadRequestError ? err.status : 500;
+      console.error('Proxy Error:', err.message);
+      if (!res.headersSent) res.status(status).send(err.message);
+    }
+  }
 
+  /* -------------------------------------------------------------------------- */
+  /*                              Business Helpers                              */
+
+  /* -------------------------------------------------------------------------- */
+  /**
+   * 提取并校验 query 参数。
+   */
+  private extractAndValidateParams(req: Request): { platform: string; platformUniqueId: string } {
+    const platform = String(req.query.platform ?? '').trim();
+    const platformUniqueId = String(req.query.platformUniqueId ?? '').trim();
+    if (!platform || !platformUniqueId) {
+      throw new BadRequestError('Missing platform or platformUniqueId.');
+    }
+    return { platform, platformUniqueId };
+  }
+
+  /**
+   * 查询 TrackRepository 并判定本地文件是否存在。
+   */
+  private async findLocalFile(platform: string, platformUniqueId: string): Promise<string | null> {
+    const relativePath: string = await this.trackRepository.findLocalFilePathByPlatformAndPlatformUniqueId(platform, platformUniqueId);
+    if (!relativePath) return null;
+
+    const absolutePath = path.join(music_Dir, relativePath);
+    try {
+      await fs.promises.access(absolutePath, fs.constants.R_OK);
+      return absolutePath;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /**
+   * 将本地文件以流形式返回给客户端。
+   */
+  private async streamLocalFile(res: Response, absolutePath: string): Promise<void> {
+    const stat = await fs.promises.stat(absolutePath);
+    res.writeHead(200, {
+      'Content-Type': DEFAULT_AUDIO_MIME, // 若想精准类型可用 mime 包，根据扩展名推断
+      'Content-Length': stat.size,
+    });
+
+    const readStream = fs.createReadStream(absolutePath);
+    readStream.pipe(res);
+
+    readStream.on('error', (err) => {
+      console.error('读取本地文件错误:', err.message);
+      if (!res.headersSent) res.status(500).end('Error reading local file');
+    });
+  }
+
+  /**
+   * 从缓存中命中后直接输出 Buffer
+   */
+  private sendBuffer(res: Response, data: Buffer, mime: string): void {
+    res.setHeader('Content-Type', mime);
+    res.end(data);
+  }
+
+  /**
+   * 远程拉取音频流并保存到缓存。
+   * 如果遇到返回码 "-1" 的特殊情况，则自动 forceReload 再尝试一次。
+   */
+  private async fetchStreamAndCache(
+    platform: string,
+    platformUniqueId: string,
+    cacheKey: string,
+    res: Response,
+  ): Promise<void> {
+    const tryFetch = async (forceReload: boolean): Promise<AxiosResponse<PassThrough>> => {
+      const musicLink = await this.getMusicLink(platform, platformUniqueId, forceReload);
+      if (!musicLink) throw new Error('Music link not found.');
+
+      const headers: Record<string, string> = musicLink.includes('hifini') ? { Referer: 'https://hifini.com/' } : {};
+      return axios.get(musicLink, { responseType: 'stream', headers });
+    };
+
+    let response: AxiosResponse<PassThrough> | null = null;
+
+    try {
+      response = await tryFetch(false);
+    } catch (err) {
+      // 若后端返回码 -1（多见于 Hifini），重试一次
+      if (err.message?.includes('-1')) {
+        console.log('检测到 -1，使用 forceReload 重试...');
+        response = await tryFetch(true);
+      } else {
+        throw err;
+      }
+    }
+
+    // response 一定有值
+    const mimeType = String(response.headers['content-type'] ?? DEFAULT_AUDIO_MIME);
+    const passThrough = new PassThrough();
+    response.data.pipe(passThrough);
+
+    const chunks: Buffer[] = [];
+    passThrough.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+    passThrough.on('end', async () => {
       try {
-        const performRequest = async (forceReload = false): Promise<void> => {
-          let musicLink: string | undefined;
-          switch (platform) {
-            case 'Hifini':
-              musicLink = await this.hifiniMusic.getTrackLink(platformUniqueId, forceReload);
-              console.log(`Hifini music link${forceReload ? ' (forceReload)' : ''}:`, musicLink);
-              break;
-            case 'NetEaseCloudMusic':
-              musicLink = await this.netEaseCloudMusic.getTrackLink(platformUniqueId);
-              console.log(`NetEaseCloudMusic music link${forceReload ? ' (forceReload)' : ''}:`, musicLink);
-              break;
-
-            case 'QQMusic':
-              musicLink = await this.qqMusic.getTrackLink(platformUniqueId);
-              break;
-            default:
-              res.status(400).send('Error: Unsupported systemContext.');
-              return;
-          }
-
-          if (!musicLink) {
-            res.status(404).send('Error: Music link not found.');
-            return;
-          }
-
-          const headers: Record<string, string> = {};
-          if (musicLink.includes('hifini')) {
-            headers['Referer'] = 'https://hifini.com/';
-          }
-
-          // 发起请求获取音频流
-          const response = await axios.get(musicLink, {
-            responseType: 'stream',
-            headers: headers,
-          });
-
-          const nodeHeaders: Record<string, string> = {};
-          for (const [key, value] of Object.entries(response.headers)) {
-            nodeHeaders[key] = String(value);
-          }
-
-          const passThrough = new PassThrough();
-          response.data.pipe(passThrough);
-
-          const audioData: Buffer[] = []; // 用于存储音频流的缓存
-
-          passThrough.on('data', (chunk: Buffer) => {
-            audioData.push(chunk); // 累加音频数据
-          });
-
-          passThrough.on('end', async () => {
-            if (audioData.length > 0) {
-              const completeAudioData = Buffer.concat(audioData); // 合并所有音频数据
-
-              // 缓存音频流到磁盘
-              await this.cacheManager.cacheFile(cacheKey, completeAudioData); // 缓存当前音频文件
-              res.setHeader('Content-Type', 'audio/mpeg'); // 设置 MIME 类型
-              res.end(completeAudioData);
-            }
-          });
-
-          passThrough.on('error', (err: Error) => {
-            console.error('音频流错误:', err.message);
-            res.status(500).send('Error processing music stream.');
-          });
-        };
-
-        // 首次尝试
-        try {
-          await performRequest(false);
-        } catch (err) {
-          // 如果是第一次出现 "-1" 错误，则forceReload重试
-          if (err.message && err.message.includes('-1')) {
-            console.log('检测到-1，使用 forceReload 重试...');
-            try {
-              await performRequest(true);
-            } catch (secondErr) {
-              console.error('第二次重试仍然失败:', secondErr.message);
-              if (!res.headersSent) {
-                res.status(500).send('Error fetching music link after forced reload.');
-              }
-            }
-          } else {
-            console.error('Error fetching music link:', err.message);
-            if (!res.headersSent) {
-              res.status(500).send('Error fetching music link.');
-            }
-          }
-        }
-
-      } catch (error) {
-        console.error('Error fetching music link:', error.message);
-        if (!res.headersSent) {
-          res.status(500).send('Error fetching music link.');
-        }
+        const completeBuffer = Buffer.concat(chunks);
+        await this.cacheManager.cacheFile(cacheKey, completeBuffer);
+        this.sendBuffer(res, completeBuffer, mimeType);
+      } catch (err) {
+        console.error('缓存写入失败:', err.message);
+        if (!res.headersSent) res.status(500).send('Error writing cache');
       }
     });
 
-    let isPortInUse = await isPortOccupied(this.port);
-    while (isPortInUse) {
-      console.warn(`端口 ${this.port} 已被占用，尝试使用下一个端口`);
-      this.port++;
-      isPortInUse = await isPortOccupied(this.port);
-    }
-
-    this.app.listen(this.port, () => {
-      console.log(`代理服务器正在监听端口 ${this.port}`);
+    passThrough.on('error', (err) => {
+      console.error('音频流错误:', err.message);
+      if (!res.headersSent) res.status(500).send('Error processing music stream');
     });
+  }
+
+  /**
+   * 根据平台获取可用的直链。部分平台支持 forceReload。
+   */
+  private async getMusicLink(
+    platform: string,
+    platformUniqueId: string,
+    forceReload = false,
+  ): Promise<string | undefined> {
+    switch (platform) {
+      case 'Hifini':
+        return this.hifiniMusic.getTrackLink(platformUniqueId, forceReload);
+      case 'NetEaseCloudMusic':
+        return this.netEaseCloudMusic.getTrackLink(platformUniqueId);
+      case 'QQMusic':
+        return this.qqMusic.getTrackLink(platformUniqueId);
+      default:
+        throw new BadRequestError('Unsupported platform.');
+    }
   }
 }
 

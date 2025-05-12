@@ -87,6 +87,7 @@
     "colorthief": "^2.6.0",
     "conf": "^13.0.1",
     "deep-equal": "^2.2.3",
+    "electron-dl": "^4.0.0",
     "electron-localshortcut": "^3.2.1",
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^8.2.0",

@@ -1,18 +1,30 @@
-// src/main/database/Track.ts
-
 import { DataTypes, Model, Optional } from 'sequelize';
+import { sequelize } from './database';
 import { TrackRecordProps } from '@main/database/record/TrackRecord';
-import { sequelize } from '@main/database/seqimpl/database';
+import { Platform } from '@main/enum/Platform';
 
-/**
- * 定义创建 Track 实例时可选的属性,防止编译器报错
- */
-export interface TrackCreationAttributes extends Optional<TrackRecordProps, 'id' | 'title' | 'artist' | 'duration' | 'cover_src' | 'lyrics' | 'created_at' | 'modified_at'> {
+/** 创建 Track 实例时可选的属性 */
+export interface TrackCreationAttributes
+  extends Optional<
+    TrackRecordProps,
+    | 'id'
+    | 'title'
+    | 'artist'
+    | 'duration'
+    | 'cover_src'
+    | 'lyrics'
+    | 'played_count'
+    | 'relative_local_path'
+    | 'created_at'
+    | 'modified_at'
+  > {
 }
 
-export class Track extends Model<TrackRecordProps, TrackCreationAttributes> implements TrackRecordProps {
+export class Track
+  extends Model<TrackRecordProps, TrackCreationAttributes>
+  implements TrackRecordProps {
   public id!: number;
-  public platform!: string;
+  public platform!: Platform;
   public platform_unique_id!: string;
   public title?: string;
   public artist?: string;
@@ -20,6 +32,8 @@ export class Track extends Model<TrackRecordProps, TrackCreationAttributes> impl
   public duration?: number;
   public cover_src?: string;
   public lyrics?: string;
+  public played_count!: number;
+  public relative_local_path!: string;
   public created_at?: Date;
   public modified_at?: Date;
 }
@@ -48,29 +62,26 @@ Track.init(
     duration: DataTypes.INTEGER,
     cover_src: DataTypes.TEXT,
     lyrics: DataTypes.TEXT,
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+    played_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
-    modified_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+    relative_local_path: {
+      type: DataTypes.TEXT,
+      defaultValue: '',
     },
   },
   {
     sequelize,
     tableName: 'track',
-    timestamps: false,
-    hooks: {
-      beforeUpdate: (instance) => {
-        instance.modified_at = new Date();
-      },
-    },
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'modified_at',
     indexes: [
       {
         unique: true,
         fields: ['platform', 'platform_unique_id'],
-        name: 'unique_platform_unique_id', // 为索引命名以便后续管理
+        name: 'unique_platform_unique_id',
       },
     ],
   },

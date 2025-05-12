@@ -7,13 +7,14 @@ import { Platform } from '@main/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
+import { TYPES } from '@main/di/symbol';
 
 export default class TrackService {
 
   constructor(
-    @inject('TrackRepository') private trackRepository: TrackRepository,
-    @inject('HifiniMusic') private hifiniMusic: HifiniMusic,
-    @inject('PlaylistRepository') private playlistRepository: PlaylistRepository,
+    @inject(TYPES.TrackRepository) private trackRepository: TrackRepository,
+    @inject(TYPES.HifiniMusic) private hifiniMusic: HifiniMusic,
+    @inject(TYPES.PlaylistRepository) private playlistRepository: PlaylistRepository,
   ) {
   }
 
@@ -123,15 +124,9 @@ export default class TrackService {
     return await this.trackRepository.delete(track.id);
   }
 
-  // //用于将下载后的本地文件绑定到数据库中的曲目
-  // public async bindLocalTrackFile(track: TrackEntity, filePath: string): Promise<TrackEntity> {
-  //   const trackInDb = await this.trackRepository.findByPlatformAndPlatformUniqueId(track.platform, track.platform_unique_id);
-  //   if (trackInDb) {
-  //     trackInDb.relative_local_path = filePath;
-  //     return await this.trackRepository.update(trackInDb);
-  //   } else {
-  //     throw new Error('Track not found in the database');
-  //   }
-  // }
+  //用于将下载后的本地文件绑定到数据库中的曲目
+  public async bindLocalTrackFile(trackId: number, filePath: string): Promise<TrackEntity> {
+    return await this.trackRepository.bindLocalFileToTrack(trackId, filePath);
+  }
 
 }

@@ -50,4 +50,30 @@ export class TrackDataSourceImpl implements TrackDataSource {
     const updated = await Track.findByPk(track.id);
     return Object.assign(new TrackRecord(), updated!.get({ plain: true }));
   }
+
+  async bindLocalFileToTrack(trackId: number, fileName: string): Promise<TrackRecord> {
+    // 1. 执行更新，并检查受影响行数
+    const operatingObject: Track = await Track.findByPk(trackId);
+    if (!operatingObject) {
+      throw new Error(`Track #${trackId} 查询不到记录`);
+    }
+
+    operatingObject.relative_local_path = fileName;
+
+    await operatingObject.save();
+
+    return Object.assign(new TrackRecord(), operatingObject.get({ plain: true }));
+  }
+
+  async findLocalFilePathByPlatformAndPlatformUniqueId(
+    platform: string, platformUniqueId: string,
+  ): Promise<string | null> {
+    return Track.findOne({ where: { platform: platform, platform_unique_id: platformUniqueId } })
+      .then((row) => {
+        if (row) {
+          return row.relative_local_path;
+        }
+        return null;
+      }).catch();
+  }
 }

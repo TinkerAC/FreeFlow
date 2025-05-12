@@ -15,6 +15,7 @@ export abstract class TrackEntity extends AbstractEntity {
   duration?: number;             // 歌曲时长（单位：秒或毫秒，根据项目约定）
   cover_src?: string;            // 封面图片地址
   created_at?: Date;             // 创建时间
+  downloaded?: boolean;           // 是否已下载
   modified_at?: Date;           // 修改时间
   played_count?: number;         // 播放次数
 

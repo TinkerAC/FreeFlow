@@ -7,14 +7,15 @@ import ElectronStore from 'electron-store';
 import { Platform } from '@main/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import { TYPES } from '@main/di/symbol';
 
 
 export default class PlaylistService {
   constructor(
-    @inject('Store') private store: ElectronStore,
-    @inject('PlaylistRepository') private playlistRepository: PlaylistRepository,
-    @inject('TrackRepository') private trackRepository: TrackRepository,
-    @inject('TrackService') private trackService: TrackService,
+    @inject(TYPES.Store) private store: ElectronStore,
+    @inject(TYPES.PlaylistRepository) private playlistRepository: PlaylistRepository,
+    @inject(TYPES.TrackRepository) private trackRepository: TrackRepository,
+    @inject(TYPES.TrackService) private trackService: TrackService,
   ) {
   }
 

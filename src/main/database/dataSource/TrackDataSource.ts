@@ -24,4 +24,9 @@ export interface TrackDataSource {
 
   findOrCreate(trackModel: TrackRecord): Promise<TrackRecord>;
 
+  bindLocalFileToTrack(trackId: number, fileName: string): Promise<TrackRecord>;
+
+  findLocalFilePathByPlatformAndPlatformUniqueId(
+    platform: string,platformUniqueId: string
+  ): Promise<string | null>;
 }

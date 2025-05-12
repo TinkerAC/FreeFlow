@@ -9,3 +9,5 @@ export const sequelize = new Sequelize({
   storage: dbPath,
   logging: false,
 });
+
+

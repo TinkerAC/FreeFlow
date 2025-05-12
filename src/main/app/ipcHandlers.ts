@@ -2,7 +2,7 @@
 import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import PlaylistService from '@main/services/playlistService';
 import { loadPlayer, savePlayer } from '@main/services/playerService';
-import { dataPath, dbPath, playerStateDumpFile } from './pathConfig';
+import { dataPath, dbPath, music_Dir, playerStateDumpFile } from './pathConfig';
 import { container } from '@main/di/di-container';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import TrackService from '@main/services/TrackService';
@@ -17,17 +17,22 @@ import { PlayerState } from '@src/shared/domainModel/playerState';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { WindowKey, WindowManager } from '@main/window/windowManager';
 import { HifiniDownloader } from '@main/services/Downloader';
+import * as os from 'node:os';
+import path from 'path';
+import chalk from 'chalk';
+import fs from 'fs';
+import { TYPES } from '@main/di/symbol';
 
-const hifiniMusic: HifiniMusic = container.get('HifiniMusic');
-const playlistService: PlaylistService = container.get('PlaylistService');
-const store: Store = container.get('Store');
-const trackService: TrackService = container.get('TrackService');
-const netEaseCloudMusic: NetEaseCloudMusic = container.get('NetEaseCloudMusic');
-const qqMusic: QQMusic = container.get('QQMusic');
-const lyricService: LyricService = container.get('LyricService');
-const fileCacheManager: FileCacheManager = container.get<FileCacheManager>('FileCacheManager');
-const downloader: HifiniDownloader = container.get<HifiniDownloader>('HifiniDownloader');
-const windowManager: WindowManager = container.get<WindowManager>('WindowManager');
+const hifiniMusic: HifiniMusic = container.get(TYPES.HifiniMusic);
+const playlistService: PlaylistService = container.get(TYPES.PlaylistService);
+const store: Store = container.get(TYPES.Store);
+const trackService: TrackService = container.get(TYPES.TrackService);
+const netEaseCloudMusic: NetEaseCloudMusic = container.get(TYPES.NetEaseCloudMusic);
+const qqMusic: QQMusic = container.get(TYPES.QQMusic);
+const lyricService: LyricService = container.get(TYPES.LyricService);
+const fileCacheManager: FileCacheManager = container.get<FileCacheManager>(TYPES.FileCacheManager);
+const downloader: HifiniDownloader = container.get<HifiniDownloader>(TYPES.HifiniDownloader);
+const windowManager: WindowManager = container.get<WindowManager>(TYPES.WindowManager);
 
 export function setupIpcHandlers(mainWindow: BrowserWindow): void {
 
@@ -194,34 +199,79 @@ export function setupIpcHandlers(mainWindow: BrowserWindow): void {
     return await fileCacheManager.getDiskUsage();
   });
 
-  ipcMain.on('down-from-hifini', async (_event: IpcMainInvokeEvent, track: TrackEntity) => {
-      console.log('IPC: 下载歌曲:', track);
 
-      const lanzouDirectLinks = await downloader.getLanzouDirectLink(
-        track.platform_unique_id,
-      );
+  ipcMain.on('down-from-hifini', async (_e, track: TrackEntity) => {
+    const [rawLink] = await downloader.getLanzouDirectLink(track.platform_unique_id);
+    if (!rawLink) return;
 
-      if (!lanzouDirectLinks) {
-        console.error('获取蓝奏云直链失败');
-        return;
-      }
+    const token = crypto.randomUUID();
+    downloader.registerDownload(token, track.id);        // 1) 只记住 trackId
 
-      const directLink = lanzouDirectLinks[0];
+    // 2) 用 once 将 token 绑定到接下来的 DownloadItem
+    const ses = windowManager.get(WindowKey.WORKER)!.webContents.session;
+    ses.once('will-download', (event, item) => {
+      const fileName = item.getFilename();
+      const total = item.getTotalBytes();
+      const savePath = path.join(os.tmpdir(), fileName); // 先写临时目录
 
-      const workerWindow = windowManager.get(WindowKey.WORKER);
-      if (!workerWindow) {
+      item.setSavePath(savePath);
+      downloader.fillMeta(token, fileName, total, savePath); // 2.1) 补全注册表
 
-        console.error('Worker 窗口未创建');
-        return;
-      }
-      //委托给workerWindow下载
-      // 用 downloadURL 触发下载；will-download 监听器会接管
-      workerWindow.webContents.downloadURL(directLink);
+      /** 进度 → 可以发给渲染进程 **/
+      item.on('updated', (_e, state) => {
+        if (state === 'progressing') {
+          const received = item.getReceivedBytes();
+          // mainWindow.webContents.send('download-progress', { token, received, total })
+        }
+      });
 
-    }
-    ,
-  )
-  ;
+      /** 下载完成 **/
+      item.once('done', async (_e, state) => {
+        if (state !== 'completed') {
+          console.error(chalk.red(`[下载失败] ${fileName}`));
+          downloader.delete(token);
+          return;
+        }
 
+        console.log(chalk.green(`[下载完成] ${fileName}`));
 
+        let finalFlac = '';
+        try {
+          if (fileName.toLowerCase().endsWith('.zip')) {
+            // 3) 解压首个 .flac 并返回文件名
+            finalFlac = await downloader.extractFlacFile(savePath, music_Dir);
+          } else if (fileName.toLowerCase().endsWith('.flac')) {
+            // 3’) 直接是 flac，则拷贝
+            finalFlac = fileName;
+            const dest = path.join(music_Dir, finalFlac);
+            fs.copyFileSync(savePath, dest);
+            console.log(chalk.green(`[FLAC 拷贝完成] → ${dest}`));
+          } else {
+            console.warn('未知格式，忽略');
+          }
+
+          console.log(`正在绑定数据库:track:${track} - ${finalFlac}`);
+
+          // 4) 绑定数据库 
+          await trackService.bindLocalTrackFile(track.id, finalFlac);
+
+          console.log(chalk.green(`[数据库绑定完成] ${track.id} → ${finalFlac}`));
+
+          // 5) 通知渲染端
+          // mainWindow.webContents.send('download-done', { token, flac: finalFlac });
+
+        } catch (err) {
+          console.error(chalk.red('后处理失败:'), err);
+          // mainWindow.webContents.send('download-failed', { token, err: err.message });
+        } finally {
+          downloader.delete(token);               // 清理注册表
+          fs.unlink(savePath, () => {
+          });          // 可选：删临时包
+        }
+      });
+    });
+
+    // 6) 真正触发下载（不用 token 拼 URL，重定向也不丢）
+    ses.downloadURL(rawLink);
+  });
 }

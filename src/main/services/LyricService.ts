@@ -4,6 +4,8 @@ import { Platform } from '@main/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 
+import { TYPES } from '@main/di/symbol';
+
 /**
  * 根据传入 TrackRecord 获取歌词数据
  * @param track_model 歌曲模型
@@ -16,8 +18,8 @@ import { Lyric } from '@src/shared/domainModel/lyricLine';
 export class LyricService {
 
   constructor(
-    @inject('NetEaseCloudMusic') private netEaseMusic: ContentProvider,
-    @inject('QQMusic') private qqMusic: ContentProvider,
+    @inject(TYPES.NetEaseCloudMusic) private netEaseMusic: ContentProvider,
+    @inject(TYPES.QQMusic) private qqMusic: ContentProvider,
   ) {
   }
 

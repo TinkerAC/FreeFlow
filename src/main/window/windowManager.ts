@@ -2,8 +2,6 @@
 import { BrowserWindow } from 'electron';
 import AppWindow from '@main/window/AppWindow';
 import WorkerWindow from '@main/window/WorkerWindow';
-import { music_Dir } from '@main/app/pathConfig';
-import { attachDownloadListener } from '@main/window/downloadListener';
 
 export enum WindowKey {
   MAIN = 'MAIN',      // 主 UI 窗口
@@ -12,6 +10,10 @@ export enum WindowKey {
 }
 
 export class WindowManager {
+
+  constructor() {
+  }
+
   private windows = new Map<WindowKey, BrowserWindow>();
 
 
@@ -24,13 +26,6 @@ export class WindowManager {
   public createWorkerWindow(): BrowserWindow {
     const workerWindow = new WorkerWindow();
     this.windows.set(WindowKey.WORKER, workerWindow);
-
-    // 通过回调把“如何取得主窗”告诉监听器
-    attachDownloadListener(workerWindow, {
-      musicDir: music_Dir,
-      getMainWindow: () => this.get(WindowKey.MAIN),
-    });
-
     return workerWindow;
   }
 

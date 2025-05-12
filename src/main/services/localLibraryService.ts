@@ -9,11 +9,13 @@ import TrackRepository from '@main/database/repository/TrackRepository';
 import Store from 'electron-store';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
+import { TYPES } from '@main/di/symbol';
+
 @injectable()
 class LocalLibraryService {
   constructor(
-    @inject('TrackRepository') private trackRepository: TrackRepository,
-    @inject('Store') private store: Store,
+    @inject(TYPES.TrackRepository) private trackRepository: TrackRepository,
+    @inject(TYPES.Store) private store: Store,
     // 注入其他需要的依赖
   ) {
   }

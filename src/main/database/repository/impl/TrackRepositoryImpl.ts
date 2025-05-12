@@ -4,11 +4,12 @@ import { inject, injectable } from 'inversify';
 import { TrackDataSource } from '@main/database/dataSource/TrackDataSource';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { TrackRecord } from '@main/database/record/TrackRecord';
+import { TYPES } from '@main/di/symbol';
 
 @injectable()
 export class TrackRepositoryImpl implements TrackRepository {
   constructor(
-    @inject('TrackDataSource') private ds: TrackDataSource,
+    @inject(TYPES.TrackDataSource) private ds: TrackDataSource,
   ) {
   }
 
@@ -47,5 +48,15 @@ export class TrackRepositoryImpl implements TrackRepository {
   async findOrCreate(model: TrackEntity): Promise<TrackEntity> {
     const rec = await this.ds.findOrCreate(TrackRecord.fromEntity(model));
     return rec.toEntity();
+  }
+
+  async bindLocalFileToTrack(trackId: number, fileName: string): Promise<TrackEntity> {
+
+    const updated = await this.ds.bindLocalFileToTrack(trackId, fileName);
+    return updated.toEntity();
+  }
+
+  async findLocalFilePathByPlatformAndPlatformUniqueId(platform: string, platformUniqueId: string): Promise<string | null> {
+    return this.ds.findLocalFilePathByPlatformAndPlatformUniqueId(platform, platformUniqueId);
   }
 }

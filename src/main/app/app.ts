@@ -14,6 +14,7 @@ import { is_hifini_cookies_expired } from '@main/services/AuthService';
 import Store from 'electron-store';
 import { container } from '@main/di/di-container';
 import { setupIpcHandlers } from '@main/app/ipcHandlers';
+import { TYPES } from '@main/di/symbol';
 
 let isQuitting = false;
 let tray: Tray;
@@ -29,7 +30,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 } else {
   console.log('App is running...');
 
-  const windowManager = container.get<WindowManager>('WindowManager');
+  const windowManager = container.get<WindowManager>(TYPES.WindowManager);
   // 若用户再次启动应用，将唤起已有主窗口
   app.on('second-instance', () => {
     windowManager.focus(WindowKey.MAIN);
@@ -41,15 +42,17 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   }
 
   // 依赖注入获取服务实例
-  const localLibraryService = container.get<LocalLibraryService>('LocalLibraryService');
-  const store: Store = container.get('Store');
-  const proxyServerManager = container.get<ProxyServerManager>('ProxyServerManager');
+  const localLibraryService = container.get<LocalLibraryService>(TYPES.LocalLibraryService);
+  const store: Store = container.get(TYPES.Store);
+  const proxyServerManager = container.get<ProxyServerManager>(TYPES.ProxyServerManager);
 
   // ─────────────────────────────────────────────────────────
   // READY 阶段
   // ─────────────────────────────────────────────────────────
   app.whenReady().then(async () => {
-    await sequelize.sync();                 // 初始化数据库
+    await sequelize.sync(
+      // { force: false, alter: true, logging: true },  // 是否强制同步数据库
+    );
     await initConfig(store);                // 初始化配置
     await localLibraryService.updateLocalLibrary();
     await proxyServerManager.start();       // 启动本地代理

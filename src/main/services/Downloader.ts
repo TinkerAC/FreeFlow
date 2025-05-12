@@ -13,6 +13,8 @@ import { HifiniCookies } from '@src/shared/hifiniCookies';
 import * as os from 'node:os';
 import { music_Dir } from '@main/app/pathConfig';
 
+import { TYPES } from '@main/di/symbol';
+
 // ----------------- 类型定义 -----------------
 export interface LinkInfo {
   originalLink: string;
@@ -27,21 +29,46 @@ export interface LinkInfo {
   extractionError?: string;
 }
 
-export interface ResultSummary {
-  dataHref: string;
-  commented: boolean;
-  links: LinkInfo[];
-  musicPath: string;
+
+export interface DownloadMeta {
+  trackId: number;          // 业务主键
+  token: string;            // 唯一任务 ID
+  fileName?: string;        // 真正文件名
+  totalBytes?: number;      // 总大小
+  savePath?: string;        // 本地路径
 }
 
+
+//全局唯一的下载注册表实例
 @injectable()
 export class HifiniDownloader {
-  private http: AxiosInstance;
+  private axios: AxiosInstance;
   private readonly downloadDir: string;
   private readonly musicDir: string;
 
+  private readonly registry = new Map<string, DownloadMeta>();
+
+  /** 仅注册 track → token，文件信息稍后补充 */
+  public registerDownload(token: string, trackId: number): void {
+    this.registry.set(token, { token, trackId });
+  }
+
+  /** will-download 回调里补充文件信息 */
+  public fillMeta(token: string, fileName: string, total: number, savePath: string) {
+    const meta = this.registry.get(token);
+    if (meta) Object.assign(meta, { fileName, totalBytes: total, savePath });
+  }
+
+  public getMeta(token: string): DownloadMeta | undefined {
+    return this.registry.get(token);
+  }
+
+  public delete(token: string): void {
+    this.registry.delete(token);
+  }
+
   constructor(
-    @inject('Store') private readonly store: ElectronStore,
+    @inject(TYPES.Store) private readonly store: ElectronStore,
   ) {
     const cookies: HifiniCookies = store.get('hifini_cookie');
     // 下载目录使用系统临时目录
@@ -50,7 +77,7 @@ export class HifiniDownloader {
     console.log('下载目录:', this.downloadDir);
     console.log('音乐目录:', this.musicDir);
     const cookieHeader = `bbs_sid=${cookies.bbs_sid}; bbs_token=${cookies.bbs_token}`;
-    this.http = axios.create({
+    this.axios = axios.create({
       baseURL: 'https://www.hifini.com/',
       headers: {
         Cookie: cookieHeader,
@@ -70,7 +97,7 @@ export class HifiniDownloader {
     const trackId = dataHref.match(/\d+/)?.[0];
     if (!trackId) throw new Error('无法解析帖子 ID');
     const url = `post-create-${trackId}-1.htm`;
-    await this.http.post(
+    await this.axios.post(
       url,
       new URLSearchParams({
         doctype: '1',
@@ -110,86 +137,79 @@ export class HifiniDownloader {
     return { links, codes };
   }
 
-  private async downloadFileWithProgress(url: string, filePath: string): Promise<void> {
-    const { data, headers } = await this.http.get(url, { responseType: 'stream' });
+  /**
+   * 下载文件并显示进度条
+   * @param url 下载链接
+   * @param fileName 文件保存路径（相对或绝对都可以）
+   * @returns {Promise<string>} 返回下载后的文件在本地的绝对路径
+   */
+  public async downloadFileWithProgress(url: string, fileName: string): Promise<string> {
+    // 解析为绝对路径
+    const resolvedPath = path.resolve(fileName);
+
+    // 发起 GET 流式请求
+    const { data, headers } = await this.axios.get(url, { responseType: 'stream' });
     const total = Number(headers['content-length'] || 0);
+
+    // 创建进度条
     const bar = new ProgressBar(
       `${chalk.green('下载中')} [:bar] :percent :rate/bps :etas`,
       { total, width: 40 },
     );
+
+    // 将流写入文件并在完成后 resolve
     await new Promise<void>((resolve, reject) => {
-      const writer = fs.createWriteStream(filePath);
+      const writer = fs.createWriteStream(resolvedPath);
       data.on('data', (chunk: Buffer) => bar.tick(chunk.length));
       data.pipe(writer);
       writer.on('finish', resolve);
       writer.on('error', reject);
     });
+
+    // 下载完成后返回绝对路径
+    return resolvedPath;
   }
 
-  private async extractAudioFiles(zipPath: string, destDir: string): Promise<string[]> {
-    if (!fs.existsSync(zipPath)) throw new Error('ZIP 文件不存在');
-
-    const zip = new StreamZip.async({ file: zipPath, nameEncoding: 'gbk' });
-    const entries = await zip.entries();
-    const extracted: string[] = [];
-    for (const name of Object.keys(entries)) {
-      if (name.toLowerCase().endsWith('.flac')) {
-        const out = path.join(destDir, path.basename(name));
-        await zip.extract(name, out);
-        extracted.push(out);
-      }
-    }
-    await zip.close();
-    return extracted;
-  }
 
   /**
-   * 如果直链返回的是 HTML 验证页，则自动提取参数并调用 ajax.php 拿到真正文件 URL
+   * 提取 ZIP 文件中的第一个 .flac 音频文件
+   * @param zipPath ZIP 文件的完整路径
+   * @param destDir 解压目标目录
+   * @returns {Promise<string>} 返回提取后的 .flac 文件名
+   * @throws {Error} ZIP 文件不存在或未找到 .flac 文件
    */
-  private async resolveVerification(directUrl: string): Promise<string> {
-    // 1. 拉取页面，拿到 HTML
-    const html = await this.http
-      .get<string>(directUrl, { responseType: 'text' })
-      .then(r => r.data);
-
-    // 2. 如果不是 HTML 验证页，直接返回原 URL
-    if (!html.includes('down_r(') || !html.includes('ajax.php')) {
-      return directUrl;
+  public async extractFlacFile(zipPath: string, destDir: string): Promise<string> {
+    if (!fs.existsSync(zipPath)) {
+      throw new Error('ZIP 文件不存在');
     }
 
-    // 3. 提取 el（down_r(1) 里的数字）
-    const elMatch = html.match(/down_r\s*\(\s*(\d+)\s*\)/);
-    const el = elMatch ? elMatch[1] : '1';
+    // 打开 ZIP
+    const zip = new StreamZip.async({ file: zipPath, nameEncoding: 'gbk' });
 
-    // 4. 提取 file 和 sign
-    const fileMatch = html.match(/['"]file['"]\s*:\s*['"]([^'"]+)['"]/);
-    const signMatch = html.match(/['"]sign['"]\s*:\s*['"]([^'"]+)['"]/);
-    if (!fileMatch || !signMatch) {
-      throw new Error('无法提取验证参数');
+    try {
+      const entries = await zip.entries();
+      for (const name of Object.keys(entries)) {
+        if (name.toLowerCase().endsWith('.flac')) {
+          // 确保目标目录存在
+          fs.mkdirSync(destDir, { recursive: true });
+
+          const fileName = path.basename(name);
+          const outPath = path.join(destDir, fileName);
+
+          // 提取第一个 .flac 文件
+          await zip.extract(name, outPath);
+
+          return fileName;
+        }
+      }
+
+      // 如果循环结束还没找到 .flac
+      throw new Error('ZIP 中未找到任何 .flac 文件');
+    } finally {
+      // 无论如何都要关闭 ZIP
+      await zip.close();
     }
-    const file = fileMatch[1];
-    const sign = signMatch[1];
-
-    // 5. 构造 ajax.php 地址并提交
-    const ajaxUrl = new URL('ajax.php', directUrl).toString();
-    const params = new URLSearchParams({ file, el, sign }).toString();
-    const json = await this.http
-      .post<{ zt: string; url: string }>(
-        ajaxUrl,
-        params,
-        {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          responseType: 'json',
-        },
-      )
-      .then(r => r.data);
-
-    if (json.zt !== '1' || !json.url) {
-      throw new Error('验证失败，无法下载');
-    }
-    return json.url;
   }
-
 
   private isValidUrl(u: string): boolean {
     try {
@@ -203,15 +223,15 @@ export class HifiniDownloader {
 
   public async getLanzouDirectLink(dataHref: string): Promise<string[]> {
     // 1. 首次拉取帖子页面
-    let html = await this.http
+    let html = await this.axios
       .get<string>(dataHref, { responseType: 'text' })
       .then(res => res.data);
 
     // 2. 如果未评论，先自动评论再重拉一次
-    if (!html.includes('alert-warning')) {
+    if (html.includes('本帖含有隐藏内容')) {
       console.log(chalk.yellow('未检测到评论，正在自动评论…'));
       await this.postComment(dataHref);
-      html = await this.http
+      html = await this.axios
         .get<string>(dataHref, { responseType: 'text' })
         .then(res => res.data);
       console.log(chalk.green('评论完成，已重新拉取页面'));
