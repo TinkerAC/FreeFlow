@@ -127,10 +127,10 @@ export class HifiniDownloader {
     );
 
     // 提取所有 lanzou 链接
-    const urls = Array.from(new Set(
-      (html.match(/https?:\/\/[\w./?=&%-]+/g) || []).filter(u => u.includes('lanz')),
-    ));
-    const links = urls;
+    const matches: string[] = html.match(/https?:\/\/[\w./?=&%-]+/g) ?? [];
+    const links: string[] = Array.from(
+      new Set(matches.filter((u): u is string => u.includes('lanz'))),
+    );
     if (links.length !== codes.length) {
       return { links: links.slice(-1), codes: codes.slice(-1) };
     }

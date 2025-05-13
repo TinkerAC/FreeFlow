@@ -215,7 +215,7 @@ export interface Song {
   rt: string; // 类型
   fee: number; // 费用类型
   v: number;
-  crbt: never; // 彩铃信息
+  crbt: any; // 彩铃信息
   cf: string;
   al: Album; // 专辑信息
   dt: number; // 歌曲时长（毫秒）
@@ -224,7 +224,7 @@ export interface Song {
   l?: Quality; // 低质量音频信息
   sq?: Quality; // 超高质量音频信息
   hr?: unknown; // 无损音频信息
-  a?: never;
+  a?: any;
   cd: string; // CD编号
   no: number; // 歌曲序号
   rtUrl?: string | null;
@@ -235,15 +235,15 @@ export interface Song {
   s_id: number;
   mark: number;
   originCoverType: number;
-  originSongSimpleData?: never;
-  tagPicList?: never;
+  originSongSimpleData?: any;
+  tagPicList?: any;
   resourceState: boolean;
   version: number;
-  songJumpInfo?: never;
-  entertainmentTags?: never;
-  awardTags?: never;
+  songJumpInfo?: any;
+  entertainmentTags?: any;
+  awardTags?: any;
   single: number;
-  noCopyrightRcmd?: never;
+  noCopyrightRcmd?: any;
   mv: number; // MV ID
   rtype: number;
   rurl?: string | null;

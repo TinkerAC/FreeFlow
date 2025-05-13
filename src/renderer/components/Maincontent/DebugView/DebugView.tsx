@@ -43,7 +43,7 @@ const DebugView: React.FC<DebugViewProps> = ({ player, mainContentStack }) => {
   const audio = playerSnapshot.audio as HTMLAudioElement | undefined;
   const audioDiagnostics = audio
     ? {
-      bitrate: (audio as any).bitrate ?? playerSnapshot.audio?.bitrate ?? 'N/A',
+      bitrate: (audio as any).bitrate ?? 'N/A',
       sampleRate: (audio as any).sampleRate ?? 'N/A',
       networkState: audio.networkState,
       readyState: audio.readyState,

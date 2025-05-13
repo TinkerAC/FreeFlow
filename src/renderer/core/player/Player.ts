@@ -21,9 +21,43 @@ export default class Player {
   /* --------------------- 进度同步定时器 --------------------- */
   private progressTimer: number | null = null;
 
+  /**
+   * 防止在 MediaSession 中出现 null/undefined 字段
+   */
+  private safeStr(val?: string | null): string {
+    return val ?? '';
+  }
+
   constructor(audio: HTMLAudioElement) {
     this.audio = audio;
     this.audio.volume = this.volume;
+    this.initMediaSession();
+  }
+
+  /**
+   * 注册系统级媒体按键处理
+   */
+  private initMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.setActionHandler('play', () => this.play());
+    navigator.mediaSession.setActionHandler('pause', () => this.pause());
+    navigator.mediaSession.setActionHandler('previoustrack', () => this.playPrevious());
+    navigator.mediaSession.setActionHandler('nexttrack', () => this.playNext());
+
+    navigator.mediaSession.setActionHandler('seekbackward', (d) =>
+      this.setCurrentTime(
+        Math.max(this.audio.currentTime - (d?.seekOffset ?? 10), 0),
+      ),
+    );
+    navigator.mediaSession.setActionHandler('seekforward', (d) =>
+      this.setCurrentTime(
+        Math.min(
+          this.audio.currentTime + (d?.seekOffset ?? 10),
+          this.audio.duration,
+        ),
+      ),
+    );
   }
 
   /**
@@ -92,7 +126,12 @@ export default class Player {
         this.isPlaying = false;
         this.stopProgressTimer();
       })
-      .finally(() => this.notifyStateChange());
+      .finally(() => {
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.playbackState = 'playing';
+        }
+        this.notifyStateChange();
+      });
   }
 
   public pause() {
@@ -103,6 +142,9 @@ export default class Player {
     } finally {
       this.isPlaying = false;
       this.stopProgressTimer();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
       this.notifyStateChange();
     }
   }
@@ -265,10 +307,54 @@ export default class Player {
 
   private updateCurrentTime = () => {
     this.currentTime = this.audio.currentTime;
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setPositionState({
+        duration: this.audio.duration,
+        position: this.audio.currentTime,
+        playbackRate: this.audio.playbackRate,
+      });
+    }
     this.notifyStateChange();
   };
 
   private onAudioCanPlay = () => {
+    /* ---- 写入当前曲目信息到 MediaSession ---- */
+    if ('mediaSession' in navigator && this.playQueue.currentTrack) {
+      const t = this.playQueue.currentTrack;
+      const cover_src_1 = t.cover_src ? [t.cover_src] : [];
+      const artworkArr =
+        cover_src_1
+          .filter(
+            (u: string | null | undefined): u is string => !!u,
+          )
+          .map((u) => ({
+            src: u,
+            sizes: '512x512',
+            type: 'image/png',
+          }));
+
+      if (artworkArr.length === 0) {
+        artworkArr.push({
+          src: 'app://assets/default-cover.png',
+          sizes: '512x512',
+          type: 'image/png',
+        });
+      }
+
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: this.safeStr(t.title),
+        artist: this.safeStr(t.artist),
+        album: this.safeStr(t.album),
+        artwork: artworkArr,
+      });
+
+      navigator.mediaSession.playbackState = 'playing';
+      navigator.mediaSession.setPositionState({
+        duration: this.audio.duration,
+        position: 0,
+        playbackRate: this.audio.playbackRate,
+      });
+    }
     this.setCurrentTime(0);
     if (this.playQueue.currentTrack) {
       this.playQueue.currentTrack.duration = this.audio.duration;
@@ -284,6 +370,9 @@ export default class Player {
 
   private onAudioEnded = () => {
     this.stopProgressTimer();
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'none';
+    }
     this.playNext().then((r) =>
       console.log('播放完毕, 尝试下一首', r),
     );
