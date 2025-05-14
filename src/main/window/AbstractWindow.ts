@@ -17,7 +17,6 @@ export abstract class AbstractWindow extends BrowserWindow {
       minHeight: 600,
       backgroundColor: '#202020',
       show: false,
-      frame: false,
       autoHideMenuBar: true,
       icon: path.resolve('assets/images/appIcon.ico'),
       webPreferences: {
@@ -41,7 +40,7 @@ export abstract class AbstractWindow extends BrowserWindow {
 
     // 所有窗口共通：失去引用时自动销毁
     this.on('closed', () => {
-      // macOS 下保留 app 激活逻辑，Windows/Linux 直接回收
+      // macOS 下保留 core 激活逻辑，Windows/Linux 直接回收
       if (process.platform !== 'darwin') this.destroy();
     });
   }

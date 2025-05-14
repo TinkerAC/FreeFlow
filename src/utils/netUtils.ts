@@ -61,7 +61,7 @@ async function chooseBestServerNode(hosts: string[]) {
 export { isPortOccupied, chooseBestServerNode };
 // // 使用示例
 // const serverNodes = [
-//   'neteasecloudmusicapi-pi-flax.vercel.app',
+//   'neteasecloudmusicapi-pi-flax.vercel.core',
 //   '47.97.185.179'
 // ];
 //

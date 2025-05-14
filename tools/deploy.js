@@ -50,7 +50,13 @@ async function main() {
   candidates.sort((a, b) => compareVersion(a.version, b.version));
   const latest = candidates[candidates.length - 1];
   const zipPath = path.join(zipDir, latest.file);
-  console.log(`✅ 找到最新构建：${latest.file} (v${latest.version})`);
+  //fs 读取zip文件的创建时间
+  const stat = await fs.stat(zipPath);
+  const createdTime = new Date(stat.birthtime).toLocaleString('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    hour12: false,
+  });
+  console.log(`✅ 找到最新构建：${latest.file} (v${latest.version}) ,构建时间：${createdTime}`);
 
   // 4. 解压到临时目录
   const tmpDir = path.join(zipDir, 'tmp_extract');
@@ -62,8 +68,8 @@ async function main() {
   console.log('🗜️  正在解压…');
   execSync(`unzip -q "${zipPath}" -d "${tmpDir}"`);
 
-  // 5. 移动 .app 到 /Applications，覆盖同名应用
-  const appName = 'FreeFlow.app';
+  // 5. 移动 .core 到 /Applications，覆盖同名应用
+  const appName = 'FreeFlow.core';
   const extractedApp = path.join(tmpDir, appName);
   const destApp = path.join('/Applications', appName);
 

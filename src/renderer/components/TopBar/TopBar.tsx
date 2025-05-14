@@ -1,7 +1,7 @@
 // file: src/renderer/components/TopBar/TopBar.tsx
 import React, { useEffect, useState } from 'react';
 import './TopBar.css';
-import { configContext, searchContext, systemContext, windowControlContext } from '@main/app/electronContextApi';
+import { configContext, searchContext, systemContext, windowControlContext } from '@main/core/electronContextApi';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import { debug } from '@components/static';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
@@ -96,7 +96,13 @@ export default function TopBar({
       </div>
 
       <div className="right-icons">
-        <button className="premium-btn">探索 Premium</button>
+        <button className="premium-btn"
+                onClick={() => {
+                  windowControlContext.openPreferenceWindow();
+                }}
+
+        >探索 Premium
+        </button>
         <div className="icon">
           <i className="fa fa-bell"></i>
         </div>

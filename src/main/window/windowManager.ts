@@ -1,12 +1,13 @@
-// file: src/main/app/windowManager.ts
+// file: src/main/core/windowManager.ts
 import { BrowserWindow } from 'electron';
 import AppWindow from '@main/window/AppWindow';
 import WorkerWindow from '@main/window/WorkerWindow';
+import { PreferenceWindow } from '@main/window/PreferenceWindow';
 
 export enum WindowKey {
   MAIN = 'MAIN',      // 主 UI 窗口
   WORKER = 'WORKER',    // 后台下载 / 解析窗口
-  SECONDARY = 'SECONDARY', // 其他备用窗口
+  Preference = 'PREFERENCE', // 设置窗口
 }
 
 export class WindowManager {
@@ -19,14 +20,21 @@ export class WindowManager {
 
   public createMainWindow(): BrowserWindow {
     const mainWindow = new AppWindow();
-    this.windows.set(WindowKey.MAIN, mainWindow);
+    this.set(WindowKey.MAIN, mainWindow);
     return mainWindow;
   }
 
   public createWorkerWindow(): BrowserWindow {
     const workerWindow = new WorkerWindow();
-    this.windows.set(WindowKey.WORKER, workerWindow);
+    this.set(WindowKey.WORKER, workerWindow);
     return workerWindow;
+  }
+
+
+  public createPreferenceWindow(): BrowserWindow {
+    const preferenceWindow = new PreferenceWindow();
+    this.set(WindowKey.Preference, preferenceWindow);
+    return preferenceWindow;
   }
 
 
@@ -39,7 +47,32 @@ export class WindowManager {
     win.on('closed', () => this.windows.delete(key));
   }
 
+
   show(key: WindowKey): void {
+    const window = this.get(key);
+    if (window?.isDestroyed()) {
+      console.warn(`窗口 ${key} 已经被销毁`);
+      return;
+    }
+
+    if (!this.windows.has(key)) {
+      console.warn(`窗口 ${key} 不存在,正在创建新实例`);
+      switch (key) {
+        case WindowKey.MAIN:
+          this.createMainWindow();
+          break;
+        case WindowKey.WORKER:
+          this.createWorkerWindow();
+          break;
+        case WindowKey.Preference:
+          this.createPreferenceWindow();
+          break;
+        default:
+          console.warn(`未知窗口类型: ${key}`);
+          return;
+      }
+    }
+
     this.get(key)?.show();
   }
 

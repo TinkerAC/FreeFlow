@@ -1,6 +1,7 @@
 // file: src/renderer/core/PlayQueue.ts
 
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import { PlaybackMode } from '@renderer/core/player/Player';
 
 export interface QueueDump {
   queue: TrackEntity[];
@@ -76,13 +77,13 @@ export class PlayQueue {
   }
 
   /** 备用版本：与 addTrackToNextInQueue 等价，只是内部写法不同 */
-  public _addTrackToNextInQueue(track: TrackEntity, playBackMode: 'loop' | 'repeat' | 'shuffle') {
+  public _addTrackToNextInQueue(track: TrackEntity, playBackMode: PlaybackMode) {
 
 
     const trackIdxInLib = this.findTrackIndexInQueueLibrary(track);
 
     if (
-      playBackMode === 'repeat'
+      playBackMode === PlaybackMode.REPEAT
     ) {
       this.indexList = [trackIdxInLib];
     }
@@ -119,7 +120,7 @@ export class PlayQueue {
    * 重建播放顺序,需要保留当前播放曲目的位置正确.
    * @param playbackMode 'loop' | 'repeat' | 'shuffle'
    */
-  public rebuildIndexList(playbackMode: 'loop' | 'repeat' | 'shuffle') {
+  public rebuildIndexList(playbackMode: PlaybackMode) {
 
     const currentTrack = this.currentTrack;
     let curLibIdx: number | null = null;
@@ -149,7 +150,7 @@ export class PlayQueue {
    */
   public replaceQueueLibraryAndIndexList(
     tracks: TrackEntity[],
-    playbackMode: 'loop' | 'repeat' | 'shuffle',
+    playbackMode: PlaybackMode,
   ) {
     this.queueLibrary = [...tracks];
     this.rebuildIndexList(playbackMode);
@@ -197,18 +198,18 @@ export class PlayQueue {
 
   }
 
-  private generateNewIndexList(playbackMode: 'loop' | 'repeat' | 'shuffle', queueLibraryLength: number, repeatLibIdx: number = null) {
+  private generateNewIndexList(playbackMode: PlaybackMode, queueLibraryLength: number, repeatLibIdx: number = null) {
 
     switch (playbackMode) {
-      case 'loop':
+      case PlaybackMode.LOOP:
         this.indexList = this.queueLibrary.map((_, i) => i);
         break;
-      case 'shuffle':
+      case PlaybackMode.SHUFFLE:
         this.indexList = this.queueLibrary
           .map((_, i) => i)
           .sort(() => Math.random() - 0.5);
         break;
-      case 'repeat':
+      case PlaybackMode.REPEAT:
         if (repeatLibIdx === null) {
           console.error('未为repeat曲目提供索引');
         }

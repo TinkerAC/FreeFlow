@@ -80,7 +80,7 @@ contextBridge.exposeInMainWorld('windowControlContext', windowControlContext);
     - 在 `src/main/app/windowPreload.ts` 中，使用 contextBridge.exposeInMainWorld 将这些 API 以特定名称暴露给渲染进程：
       ```ts
       import { contextBridge } from 'electron';
-      import { windowControlContext } from '@main/app/ipc/windowControlContext';
+      import { windowControlContext } from '@main/core/ipc/windowControlContext';
       // 其他模块同理……
       
       contextBridge.exposeInMainWorld('windowControlContext', windowControlContext);
@@ -97,7 +97,7 @@ contextBridge.exposeInMainWorld('windowControlContext', windowControlContext);
       window.windowControlContext.minimize();
       
       // 或者在 electronContextApi.ts 中
-      import { windowControlContext } from '@main/app/electronContextApi';
+      import { windowControlContext } from '@main/core/electronContextApi';
       windowControlContext.minimize();
       ```
     - 同时，如果你在 global.d.ts 中声明了对应类型，TypeScript 将为这些调用提供类型检查和自动补全。

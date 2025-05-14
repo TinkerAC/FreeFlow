@@ -1,4 +1,4 @@
-import '@main/app/windowPreload';
+import '@renderer/core/windowPreload';
 
 
 // Say something
@@ -31,6 +31,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (v) versions[type] = v.replace('^', '+');
   }
 
-  // Set versions to app data
+  // Set versions to core data
   app.setAttribute('data-versions', JSON.stringify(versions));
 });

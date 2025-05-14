@@ -11,13 +11,13 @@ import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadC
 import { isSameUTCDay } from '@src/utils/timeUtils';
 import ElectronStore from 'electron-store';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
-import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/Interfaces';
+import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/HifiniInterfaces';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 
-import { TYPES } from '@main/di/symbol';
+import { DiSymbol } from '@main/di/symbol';
 
 
 @injectable()
@@ -28,8 +28,8 @@ export default class HifiniMusic implements ContentProvider {
   private readonly __dirname: string;
 
   constructor(
-    @inject(TYPES.Store) private store: ElectronStore,
-    @inject(TYPES.HifiniThreadCacheRepository) private hifiniThreadCacheRepository: HifiniThreadCacheRepository,
+    @inject(DiSymbol.Store) private store: ElectronStore,
+    @inject(DiSymbol.HifiniThreadCacheRepository) private hifiniThreadCacheRepository: HifiniThreadCacheRepository,
   ) {
     this.__filename = fileURLToPath(import.meta.url);
     this.__dirname = path.dirname(this.__filename);

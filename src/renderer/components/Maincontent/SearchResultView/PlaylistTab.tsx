@@ -3,7 +3,7 @@
 // ------------------------------
 import React from 'react';
 import { DefaultCover } from '@components/static';
-import { searchContext } from '@main/app/electronContextApi';
+import { searchContext } from '@main/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface PlaylistsTabProps {

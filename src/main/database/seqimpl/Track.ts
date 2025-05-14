@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './database';
 import { TrackRecordProps } from '@main/database/record/TrackRecord';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 
 /** 创建 Track 实例时可选的属性 */
 export interface TrackCreationAttributes

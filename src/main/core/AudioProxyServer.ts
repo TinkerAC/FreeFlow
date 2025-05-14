@@ -8,12 +8,12 @@ import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 import { PassThrough } from 'stream';
 import Store from 'electron-store';
-import { FileCacheManager } from '@main/FileCacheManager';
+import { FileCacheManager } from '@main/core/FileCacheManager';
 import TrackRepository from '@main/database/repository/TrackRepository';
 import fs from 'fs';
 import path from 'path';
-import { music_Dir } from '@main/app/pathConfig';
-import {TYPES} from '@main/di/symbol';
+import { music_Dir } from '@main/core/pathConfig';
+import {DiSymbol} from '@main/di/symbol';
 
 /**
  * 统一的音频 MIME Type 兜底
@@ -38,12 +38,12 @@ class ProxyServerManager {
   private port: number;
 
   constructor(
-    @inject(TYPES.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
-    @inject(TYPES.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
-    @inject(TYPES.QQMusic) private readonly qqMusic: QQMusic,
-    @inject(TYPES.Store) private readonly store: Store,
-    @inject(TYPES.FileCacheManager) private readonly cacheManager: FileCacheManager,
-    @inject(TYPES.TrackRepository) private readonly trackRepository: TrackRepository,
+    @inject(DiSymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
+    @inject(DiSymbol.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
+    @inject(DiSymbol.QQMusic) private readonly qqMusic: QQMusic,
+    @inject(DiSymbol.Store) private readonly store: Store,
+    @inject(DiSymbol.FileCacheManager) private readonly cacheManager: FileCacheManager,
+    @inject(DiSymbol.TrackRepository) private readonly trackRepository: TrackRepository,
   ) {
     this.app = express();
     this.port = 4399; // 默认端口

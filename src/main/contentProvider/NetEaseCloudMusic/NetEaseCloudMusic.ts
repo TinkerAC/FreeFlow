@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { injectable } from 'inversify';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 import { ContentProvider } from '../ContentProvider';
 import {
   CheckMusicResponse,
@@ -8,7 +8,7 @@ import {
   NetEaseCloudMusicTrackResponse,
   Result,
   Song,
-} from '@main/contentProvider/NetEaseCloudMusic/Interfaces';
+} from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusicInterfaces';
 import { NetEaseCloudMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';

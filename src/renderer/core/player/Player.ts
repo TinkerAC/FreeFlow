@@ -4,12 +4,17 @@ import { PlayQueue } from '@renderer/core/player/PlayQueue';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 
-type PlaybackMode = 'loop' | 'repeat' | 'shuffle';
+
+export enum PlaybackMode {
+  LOOP = 'loop',
+  REPEAT = 'repeat',
+  SHUFFLE = 'shuffle',
+}
 
 export default class Player {
   /* --------------------- 基础状态 --------------------- */
   public playQueue: PlayQueue = new PlayQueue();
-  public playbackMode: PlaybackMode = 'loop';
+  public playbackMode: PlaybackMode = PlaybackMode.LOOP;
   public isPlaying: boolean = false;
   public isLoading: boolean = false;
   public volume: number = 0.5;
@@ -99,7 +104,7 @@ export default class Player {
           // 绑定结束事件
           this.setupEndedListener();
 
-
+          this.updateMediaSession();
           this.isLoading = false;
           this.notifyStateChange();
 
@@ -250,7 +255,7 @@ export default class Player {
   }
 
   public cyclePlaybackMode() {
-    const modes: PlaybackMode[] = ['loop', 'repeat', 'shuffle'];
+    const modes: PlaybackMode[] = [PlaybackMode.LOOP, PlaybackMode.REPEAT, PlaybackMode.SHUFFLE];
     const nextMode =
       modes[(modes.indexOf(this.playbackMode) + 1) % modes.length];
     this.setPlayBackMode(nextMode);
@@ -317,8 +322,8 @@ export default class Player {
     this.notifyStateChange();
   };
 
-  private onAudioCanPlay = () => {
-    /* ---- 写入当前曲目信息到 MediaSession ---- */
+
+  private updateMediaSession() {
     if ('mediaSession' in navigator && this.playQueue.currentTrack) {
       const t = this.playQueue.currentTrack;
       const cover_src_1 = t.cover_src ? [t.cover_src] : [];
@@ -335,7 +340,7 @@ export default class Player {
 
       if (artworkArr.length === 0) {
         artworkArr.push({
-          src: 'app://assets/default-cover.png',
+          src: 'core://assets/default-cover.png',
           sizes: '512x512',
           type: 'image/png',
         });
@@ -355,6 +360,11 @@ export default class Player {
         playbackRate: this.audio.playbackRate,
       });
     }
+  }
+
+  private onAudioCanPlay = () => {
+    /* ---- 写入当前曲目信息到 MediaSession ---- */
+    this.updateMediaSession();
     this.setCurrentTime(0);
     if (this.playQueue.currentTrack) {
       this.playQueue.currentTrack.duration = this.audio.duration;

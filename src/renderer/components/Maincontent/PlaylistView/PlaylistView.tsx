@@ -9,7 +9,7 @@ import './PlaylistView.css';
 import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
 import { DefaultCover } from '@components/static';
-import { playlistContext } from '@main/app/electronContextApi';
+import { playlistContext } from '@main/core/electronContextApi';
 import Player from '@renderer/core/player/Player';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 

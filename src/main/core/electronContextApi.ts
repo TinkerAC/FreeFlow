@@ -1,12 +1,12 @@
-import { ConfigApi } from '@main/app/ipc/configApi';
-import { LibraryApi } from '@main/app/ipc/libraryApi';
-import { LyricsApi } from '@main/app/ipc/lyricsApi';
-import { SystemApi } from '@main/app/ipc/systemApi';
-import { PlayerApi } from '@main/app/ipc/playerApi';
-import { PlaylistApi } from '@main/app/ipc/playlistApi';
-import { SearchApi } from '@main/app/ipc/searchApi';
-import { ShortcutApi } from '@main/app/ipc/shortcutApi';
-import { WindowControlApi } from '@main/app/ipc/windowControlApi';
+import { ConfigApi } from '@renderer/core/ipc/configApi';
+import { LibraryApi } from '@renderer/core/ipc/libraryApi';
+import { LyricsApi } from '@renderer/core/ipc/lyricsApi';
+import { SystemApi } from '@renderer/core/ipc/systemApi';
+import { PlayerApi } from '@renderer/core/ipc/playerApi';
+import { PlaylistApi } from '@renderer/core/ipc/playlistApi';
+import { SearchApi } from '@renderer/core/ipc/searchApi';
+import { ShortcutApi } from '@renderer/core/ipc/shortcutApi';
+import { WindowControlApi } from '@renderer/core/ipc/windowControlApi';
 
 const configContext: ConfigApi = window.mainApi.configApi;
 const playerContext: PlayerApi = window.mainApi.playerApi;

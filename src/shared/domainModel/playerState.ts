@@ -1,4 +1,5 @@
 import { QueueDump } from '@renderer/core/player/PlayQueue';
+import { PlaybackMode } from '@renderer/core/player/Player';
 
 /**
  * PlayerState 类：表示播放器的当前状态
@@ -6,7 +7,7 @@ import { QueueDump } from '@renderer/core/player/PlayQueue';
 export class PlayerState {
   queue: QueueDump;
   volume: number;
-  playbackMode: 'loop' | 'shuffle' | 'repeat';
+  playbackMode: PlaybackMode;
   audioSrc: string;
   isPlaying: boolean;
   isLoading: boolean;
@@ -19,7 +20,7 @@ export class PlayerState {
     return {
       queue: null,
       volume: 1,
-      playbackMode: 'loop',
+      playbackMode: PlaybackMode.LOOP,
       audioSrc: '',
       isPlaying: false,
       isLoading: false,

@@ -1,20 +1,20 @@
-// file: src/main/app/app.ts
+// file: src/main/core/core.ts
 import { app, Tray } from 'electron';
-import { WindowKey, WindowManager } from '../window/windowManager';
+import { WindowKey, WindowManager } from './window/windowManager';
 import electronSquirrelStartup from 'electron-squirrel-startup';
-import { createTray } from './trayManager';
-import { registerGlobalShortcuts, unregisterGlobalShortcuts } from './shortcutManager';
+import { createTray } from '@main/core/trayManager';
+import { registerGlobalShortcuts, unregisterGlobalShortcuts } from '@main/core/shortcutManager';
 
-import ProxyServerManager from './proxyServer';
-import { initConfig } from './configInit';
+import ProxyServerManager from '@main/core/AudioProxyServer';
+import { initConfig } from '@main/core/configInit';
 
 import LocalLibraryService from '@main/services/localLibraryService';
 import { sequelize } from '@main/database/seqimpl';
 import { is_hifini_cookies_expired } from '@main/services/AuthService';
 import Store from 'electron-store';
 import { container } from '@main/di/di-container';
-import { setupIpcHandlers } from '@main/app/ipcHandlers';
-import { TYPES } from '@main/di/symbol';
+import { DiSymbol } from '@main/di/symbol';
+import IpcController from '@main/core/IpcController';
 
 let isQuitting = false;
 let tray: Tray;
@@ -30,7 +30,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 } else {
   console.log('App is running...');
 
-  const windowManager = container.get<WindowManager>(TYPES.WindowManager);
+  const windowManager = container.get<WindowManager>(DiSymbol.WindowManager);
   // 若用户再次启动应用，将唤起已有主窗口
   app.on('second-instance', () => {
     windowManager.focus(WindowKey.MAIN);
@@ -42,10 +42,10 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   }
 
   // 依赖注入获取服务实例
-  const localLibraryService = container.get<LocalLibraryService>(TYPES.LocalLibraryService);
-  const store: Store = container.get(TYPES.Store);
-  const proxyServerManager = container.get<ProxyServerManager>(TYPES.ProxyServerManager);
-
+  const localLibraryService = container.get<LocalLibraryService>(DiSymbol.LocalLibraryService);
+  const store: Store = container.get(DiSymbol.Store);
+  const proxyServerManager = container.get<ProxyServerManager>(DiSymbol.ProxyServerManager);
+  const ipcController = container.get<IpcController>(DiSymbol.IpcController);
   // ─────────────────────────────────────────────────────────
   // READY 阶段
   // ─────────────────────────────────────────────────────────
@@ -58,7 +58,8 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
     await proxyServerManager.start();       // 启动本地代理
 
     const mainWindow = windowManager.createMainWindow();
-    setupIpcHandlers(mainWindow);
+
+    await ipcController.register();
     windowManager.createWorkerWindow();
 
     // 检查 hifini Cookie 过期状态
@@ -105,7 +106,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   // ─────────────────────────────────────────────────────────
   // 触发退出
   // ─────────────────────────────────────────────────────────
-  // app.ts
+  // core.ts
   app.on('before-quit', (event) => {
     if (!isQuitting) {
       event.preventDefault();

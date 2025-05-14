@@ -1,7 +1,7 @@
 /**
  * Inversify 注入标识符统一管理
  */
-export const TYPES = {
+export const DiSymbol = {
   Store: Symbol.for('Store'),
   Sequelize: Symbol.for('Sequelize'),
   FileCacheManager: Symbol.for('FileCacheManager'),
@@ -22,4 +22,6 @@ export const TYPES = {
   TrackRepository: Symbol.for('TrackRepository'),
   PlaylistRepository: Symbol.for('PlaylistRepository'),
   HifiniThreadCacheRepository: Symbol.for('HifiniThreadCacheRepository'),
+  PreferenceService: Symbol.for('PreferenceService'),
+  IpcController: Symbol.for('IpcController'),
 };

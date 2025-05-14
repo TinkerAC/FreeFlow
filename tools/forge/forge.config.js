@@ -14,8 +14,10 @@ module.exports = {
     // Set application copyright
     appCopyright: 'Copyright (C) 2024 Tinker',
     // Set application icon
-    icon: path.resolve('assets/images/appIcon_jetbrains'),
+    icon: path.resolve('assets/appIcons/appIcon_default.icns'),
 
+    // ⬇️ 新增，把可切换图标文件夹带进最终应用包
+    extraResource: ['assets/appIcons'],
   },
   // Forge Makers
   makers: [

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import useStateRef from 'react-usestateref';
-import { playlistContext } from '@main/app/electronContextApi';
+import { playlistContext } from '@main/core/electronContextApi';
 
 
 function useMusicLibrary() {

@@ -1,6 +1,6 @@
 import { AbstractRecord } from '@main/database/record/AbstractRecord';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 
 export interface TrackRecordProps {
   id: number;

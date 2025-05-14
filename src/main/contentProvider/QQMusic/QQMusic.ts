@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { ContentProvider } from '../ContentProvider';
-import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvider/QQMusic/Interfaces';
+import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvider/QQMusic/QQMusicInterfaces';
 import { injectable } from 'inversify';
 import { QQMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 
 
 @injectable()

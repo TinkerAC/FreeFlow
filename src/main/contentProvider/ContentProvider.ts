@@ -1,6 +1,6 @@
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 
 /**
  * ContentProvider 接口定义了统一的搜索和获取播放链接方法，

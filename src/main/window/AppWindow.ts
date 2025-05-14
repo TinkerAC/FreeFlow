@@ -8,6 +8,7 @@ declare const APP_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 export default class AppWindow extends AbstractWindow {
   constructor() {
     super({
+      frame: false, // 主界面窗口不需要边框
       // 覆写/追加差异化配置
       webPreferences: {
         preload: APP_WINDOW_PRELOAD_WEBPACK_ENTRY,

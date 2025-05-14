@@ -4,18 +4,18 @@ import TrackRepository from '@main/database/repository/TrackRepository';
 import { fileExists } from '@src/utils/helpers';
 import TrackService from '@main/services/TrackService';
 import ElectronStore from 'electron-store';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
-import { TYPES } from '@main/di/symbol';
+import { DiSymbol } from '@main/di/symbol';
 
 
 export default class PlaylistService {
   constructor(
-    @inject(TYPES.Store) private store: ElectronStore,
-    @inject(TYPES.PlaylistRepository) private playlistRepository: PlaylistRepository,
-    @inject(TYPES.TrackRepository) private trackRepository: TrackRepository,
-    @inject(TYPES.TrackService) private trackService: TrackService,
+    @inject(DiSymbol.Store) private store: ElectronStore,
+    @inject(DiSymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
+    @inject(DiSymbol.TrackRepository) private trackRepository: TrackRepository,
+    @inject(DiSymbol.TrackService) private trackService: TrackService,
   ) {
   }
 

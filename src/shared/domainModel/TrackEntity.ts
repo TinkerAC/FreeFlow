@@ -1,4 +1,4 @@
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 import { AbstractEntity } from '@src/shared/domainModel/AbstractEntity';
 
 

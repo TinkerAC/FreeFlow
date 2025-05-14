@@ -1,6 +1,6 @@
 import { AbstractRecord } from '@main/database/record/AbstractRecord';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 
 export interface PlaylistRecordProps {
   playlist_id: number;

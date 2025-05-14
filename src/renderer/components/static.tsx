@@ -7,11 +7,14 @@ import webpack from '@assets/icons/webpack.png';
 import license from '@assets/icons/license.png';
 import NetEaseCloudMusic from '@assets/icons/NetEaseCloudMusic.svg';
 import Hifini from '@assets/icons/Hifini.png';
-import Local from '@assets/icons/appIcon.png';
+import Local from '@assets/appIcons/appIcon_default.png';
 import QQMusic from '@assets/icons/QQMusic.svg';
 import debug from '@assets/icons/debug.svg';
 
 import DefaultCover from '@assets/default-cover.png';
+
+
+
 
 
 export {

@@ -1,20 +1,21 @@
-import { inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import TrackRepository from '@main/database/repository/TrackRepository';
 
 import { IAudioMetadata, parseFile } from 'music-metadata';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
-import { TYPES } from '@main/di/symbol';
+import { DiSymbol } from '@main/di/symbol';
 
+
+@injectable()
 export default class TrackService {
-
   constructor(
-    @inject(TYPES.TrackRepository) private trackRepository: TrackRepository,
-    @inject(TYPES.HifiniMusic) private hifiniMusic: HifiniMusic,
-    @inject(TYPES.PlaylistRepository) private playlistRepository: PlaylistRepository,
+    @inject(DiSymbol.TrackRepository) private trackRepository: TrackRepository,
+    @inject(DiSymbol.HifiniMusic) private hifiniMusic: HifiniMusic,
+    @inject(DiSymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
   ) {
   }
 

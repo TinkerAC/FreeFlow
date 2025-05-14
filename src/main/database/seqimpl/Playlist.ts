@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './database';
 import { PlaylistRecordProps } from '@main/database/record/PlaylistRecord';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 
 export interface PlaylistCreationAttributes
   extends Optional<

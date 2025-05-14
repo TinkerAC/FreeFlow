@@ -4,12 +4,12 @@ import { inject, injectable } from 'inversify';
 import { TrackDataSource } from '@main/database/dataSource/TrackDataSource';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { TrackRecord } from '@main/database/record/TrackRecord';
-import { TYPES } from '@main/di/symbol';
+import { DiSymbol } from '@main/di/symbol';
 
 @injectable()
 export class TrackRepositoryImpl implements TrackRepository {
   constructor(
-    @inject(TYPES.TrackDataSource) private ds: TrackDataSource,
+    @inject(DiSymbol.TrackDataSource) private ds: TrackDataSource,
   ) {
   }
 

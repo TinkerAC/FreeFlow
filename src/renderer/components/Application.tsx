@@ -13,8 +13,8 @@ import PlayerBar from '@components/Playerbar/PlayerBar';
 import useMusicLibrary from '@renderer/hooks/useMusiclibrary';
 import useMainWindow from '@renderer/hooks/useMainWindow';
 
-import { playerContext, shortcutContext } from '@main/app/electronContextApi';
-import Player from '@renderer/core/player/Player';
+import { playerContext, shortcutContext } from '@main/core/electronContextApi';
+import Player, { PlaybackMode } from '@renderer/core/player/Player';
 
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import { PlayerState } from '@src/shared/domainModel/playerState';
@@ -45,7 +45,7 @@ const Application: React.FC = () => {
   const [playerState, setPlayerState] = useState<PlayerState>({
     queue: { queue: [], indexList: [], currentIndex: 0 },
     volume: 0.5,
-    playbackMode: 'loop',
+    playbackMode: PlaybackMode.LOOP,
     audioSrc: '',
     isPlaying: false,
     isLoading: false,

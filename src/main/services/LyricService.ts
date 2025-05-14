@@ -1,10 +1,10 @@
 import { inject, injectable } from 'inversify';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
-import { Platform } from '@main/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 
-import { TYPES } from '@main/di/symbol';
+import { DiSymbol } from '@main/di/symbol';
 
 /**
  * 根据传入 TrackRecord 获取歌词数据
@@ -18,8 +18,8 @@ import { TYPES } from '@main/di/symbol';
 export class LyricService {
 
   constructor(
-    @inject(TYPES.NetEaseCloudMusic) private netEaseMusic: ContentProvider,
-    @inject(TYPES.QQMusic) private qqMusic: ContentProvider,
+    @inject(DiSymbol.NetEaseCloudMusic) private netEaseMusic: ContentProvider,
+    @inject(DiSymbol.QQMusic) private qqMusic: ContentProvider,
   ) {
   }
 
