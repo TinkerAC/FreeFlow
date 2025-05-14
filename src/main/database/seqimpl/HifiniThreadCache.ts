@@ -7,7 +7,8 @@ export interface HifiniThreadCacheCreationAttributes
   extends Optional<
     HifiniThreadCacheRecordProps,
     'cached_at' | 'modified_at'
-  > {}
+  > {
+}
 
 @injectable()
 export class HifiniThreadCache
@@ -15,8 +16,7 @@ export class HifiniThreadCache
     HifiniThreadCacheRecordProps,
     HifiniThreadCacheCreationAttributes
   >
-  implements HifiniThreadCacheRecordProps
-{
+  implements HifiniThreadCacheRecordProps {
   public data_href!: string;
   public title?: string;
   public artist?: string;

@@ -33,6 +33,22 @@ export class TrackRecord extends AbstractRecord implements TrackRecordProps {
   modified_at?: Date;
   relative_local_path: string;
 
+  static fromEntity(entity: TrackEntity): TrackRecord {
+    const rec = new TrackRecord();
+    // 依次映射所有 DTO 字段
+    rec.id = entity.id!;
+    rec.platform = entity.platform;
+    rec.platform_unique_id = entity.platform_unique_id;
+    rec.title = entity.title;
+    rec.artist = entity.artist;
+    rec.album = entity.album;
+    rec.duration = entity.duration;
+    rec.cover_src = entity.cover_src;
+    rec.played_count = entity.played_count;
+    rec.created_at = entity.created_at;
+    rec.modified_at = entity.modified_at;
+    return rec;
+  }
 
   toEntity(): TrackEntity {
     return {
@@ -49,22 +65,5 @@ export class TrackRecord extends AbstractRecord implements TrackRecordProps {
       played_count: this.played_count,
       title: this.title,
     };
-  }
-
-  static fromEntity(entity: TrackEntity): TrackRecord {
-    const rec = new TrackRecord();
-    // 依次映射所有 DTO 字段
-    rec.id = entity.id!;
-    rec.platform = entity.platform;
-    rec.platform_unique_id = entity.platform_unique_id;
-    rec.title = entity.title;
-    rec.artist = entity.artist;
-    rec.album = entity.album;
-    rec.duration = entity.duration;
-    rec.cover_src = entity.cover_src;
-    rec.played_count = entity.played_count;
-    rec.created_at = entity.created_at;
-    rec.modified_at = entity.modified_at;
-    return rec;
   }
 }

@@ -14,9 +14,6 @@ import debug from '@assets/icons/debug.svg';
 import DefaultCover from '@assets/default-cover.png';
 
 
-
-
-
 export {
   chrome,
   react,

@@ -11,5 +11,5 @@ const sequelize = new Sequelize({
 sequelize.sync(
   { force: false, alter: true, logging: false },  // 是否强制同步数据库
 ).then(
-  console.log
-)
+  console.log,
+);

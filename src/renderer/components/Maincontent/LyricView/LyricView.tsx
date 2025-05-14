@@ -35,7 +35,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
       }
       try {
         const lyricData = await lyricsContext.getLyrics(
-          player.playQueue.currentTrack
+          player.playQueue.currentTrack,
         );
         setLyric(lyricData);
       } catch (e) {
@@ -60,16 +60,16 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
       hideTimerRef.current = window.setTimeout(
         () => setShowTimestamp(false),
-        2000
+        2000,
       );
     };
 
     ['wheel', 'mousedown', 'touchstart'].forEach((ev) =>
-      container.addEventListener(ev, markUserInteraction)
+      container.addEventListener(ev, markUserInteraction),
     );
     return () => {
       ['wheel', 'mousedown', 'touchstart'].forEach((ev) =>
-        container.removeEventListener(ev, markUserInteraction)
+        container.removeEventListener(ev, markUserInteraction),
       );
     };
   }, []);
@@ -102,7 +102,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
     lastActiveIndexRef.current = activeIndex;
 
     const activeElem = lyricsContainerRef.current.querySelector<HTMLElement>(
-      `[data-index=\"${activeIndex}\"]`
+      `[data-index=\"${activeIndex}\"]`,
     );
     if (!activeElem) return;
 
@@ -150,7 +150,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
   const shimmerStyle: React.CSSProperties = {
     background: 'linear-gradient(90deg, #374151 25%, #4B5563 50%, #374151 75%)',
     backgroundSize: '200% 100%',
-    animation: 'shimmer 2s infinite'
+    animation: 'shimmer 2s infinite',
   };
 
   const renderSkeleton = () => (
@@ -169,7 +169,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
             height: '1rem',
             width: `${Math.floor(60 + Math.random() * 30)}%`,
             borderRadius: '0.25rem',
-            margin: '0.5rem 0'
+            margin: '0.5rem 0',
           }}
         />
       ))}
@@ -203,7 +203,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
             if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
             hideTimerRef.current = window.setTimeout(
               () => setShowTimestamp(false),
-              2000
+              2000,
             );
           }
         }}

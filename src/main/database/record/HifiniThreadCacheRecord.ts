@@ -21,6 +21,20 @@ export class HifiniThreadCacheRecord extends AbstractRecord implements HifiniThr
   cached_at?: Date;
   modified_at?: Date;
 
+  static fromEntity(entity: HifiniThreadCacheModel): HifiniThreadCacheRecord {
+    const rec = new HifiniThreadCacheRecord();
+    // 依次映射所有 DTO 字段
+    rec.data_href = entity.data_href;
+    rec.title = entity.title;
+    rec.artist = entity.artist;
+    rec.cover_src = entity.cover_src;
+    rec.un_redirected_url = entity.un_redirected_url;
+    rec.cached_at = entity.cached_at;
+    rec.modified_at = entity.modified_at;
+
+    return rec;
+  }
+
   toEntity(): HifiniThreadCacheModel {
     return {
       data_href: this.data_href,
@@ -35,20 +49,6 @@ export class HifiniThreadCacheRecord extends AbstractRecord implements HifiniThr
         ? new Date(this.modified_at)
         : undefined,
     };
-  }
-
-  static fromEntity(entity: HifiniThreadCacheModel): HifiniThreadCacheRecord {
-    const rec = new HifiniThreadCacheRecord();
-    // 依次映射所有 DTO 字段
-    rec.data_href = entity.data_href;
-    rec.title = entity.title;
-    rec.artist = entity.artist;
-    rec.cover_src = entity.cover_src;
-    rec.un_redirected_url = entity.un_redirected_url;
-    rec.cached_at = entity.cached_at;
-    rec.modified_at = entity.modified_at;
-
-    return rec;
   }
 
 

@@ -26,43 +26,10 @@ export default class Player {
   /* --------------------- 进度同步定时器 --------------------- */
   private progressTimer: number | null = null;
 
-  /**
-   * 防止在 MediaSession 中出现 null/undefined 字段
-   */
-  private safeStr(val?: string | null): string {
-    return val ?? '';
-  }
-
   constructor(audio: HTMLAudioElement) {
     this.audio = audio;
     this.audio.volume = this.volume;
     this.initMediaSession();
-  }
-
-  /**
-   * 注册系统级媒体按键处理
-   */
-  private initMediaSession() {
-    if (!('mediaSession' in navigator)) return;
-
-    navigator.mediaSession.setActionHandler('play', () => this.play());
-    navigator.mediaSession.setActionHandler('pause', () => this.pause());
-    navigator.mediaSession.setActionHandler('previoustrack', () => this.playPrevious());
-    navigator.mediaSession.setActionHandler('nexttrack', () => this.playNext());
-
-    navigator.mediaSession.setActionHandler('seekbackward', (d) =>
-      this.setCurrentTime(
-        Math.max(this.audio.currentTime - (d?.seekOffset ?? 10), 0),
-      ),
-    );
-    navigator.mediaSession.setActionHandler('seekforward', (d) =>
-      this.setCurrentTime(
-        Math.min(
-          this.audio.currentTime + (d?.seekOffset ?? 10),
-          this.audio.duration,
-        ),
-      ),
-    );
   }
 
   /**
@@ -180,7 +147,7 @@ export default class Player {
     this.notifyStateChange();
   }
 
-  public async playPrevious() {
+  public async playPrevious(): Promise<void> {
     this.pause();
     if (this.playQueue.isEmpty) return;
     this.isLoading = true;
@@ -286,6 +253,39 @@ export default class Player {
     this.setCurrentTime(0);
     this.audio.src = '';
     this.notifyStateChange();
+  }
+
+  /**
+   * 防止在 MediaSession 中出现 null/undefined 字段
+   */
+  private safeStr(val?: string | null): string {
+    return val ?? '';
+  }
+
+  /**
+   * 注册系统级媒体按键处理
+   */
+  private initMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.setActionHandler('play', () => this.play());
+    navigator.mediaSession.setActionHandler('pause', () => this.pause());
+    navigator.mediaSession.setActionHandler('previoustrack', () => this.playPrevious());
+    navigator.mediaSession.setActionHandler('nexttrack', () => this.playNext());
+
+    navigator.mediaSession.setActionHandler('seekbackward', (d) =>
+      this.setCurrentTime(
+        Math.max(this.audio.currentTime - (d?.seekOffset ?? 10), 0),
+      ),
+    );
+    navigator.mediaSession.setActionHandler('seekforward', (d) =>
+      this.setCurrentTime(
+        Math.min(
+          this.audio.currentTime + (d?.seekOffset ?? 10),
+          this.audio.duration,
+        ),
+      ),
+    );
   }
 
   private startProgressTimer() {

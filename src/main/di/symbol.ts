@@ -24,4 +24,6 @@ export const DiSymbol = {
   HifiniThreadCacheRepository: Symbol.for('HifiniThreadCacheRepository'),
   PreferenceService: Symbol.for('PreferenceService'),
   IpcController: Symbol.for('IpcController'),
+  TrayManager: Symbol.for('TrayManager'),
+  ShortcutManager: Symbol.for('ShortcutManager'),
 };

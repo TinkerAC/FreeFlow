@@ -24,7 +24,7 @@ export default interface TrackRepository {
 
 
   findLocalFilePathByPlatformAndPlatformUniqueId(
-    platform: string,platformUniqueId: string
+    platform: string, platformUniqueId: string,
   ): Promise<string | null>;
 
 

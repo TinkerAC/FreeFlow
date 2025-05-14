@@ -1,9 +1,7 @@
 // file: src/main/core/core.ts
-import { app, Tray } from 'electron';
+import { app } from 'electron';
 import { WindowKey, WindowManager } from './window/windowManager';
 import electronSquirrelStartup from 'electron-squirrel-startup';
-import { createTray } from '@main/core/trayManager';
-import { registerGlobalShortcuts, unregisterGlobalShortcuts } from '@main/core/shortcutManager';
 
 import ProxyServerManager from '@main/core/AudioProxyServer';
 import { initConfig } from '@main/core/configInit';
@@ -15,9 +13,11 @@ import Store from 'electron-store';
 import { container } from '@main/di/di-container';
 import { DiSymbol } from '@main/di/symbol';
 import IpcController from '@main/core/IpcController';
+import TrayManager from '@main/core/trayManager';
+import ShortcutManager from '@main/core/shortcutManager';
 
 let isQuitting = false;
-let tray: Tray;
+
 
 // ───────────────────────────────────────────────────────────
 // 单实例锁
@@ -46,6 +46,8 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   const store: Store = container.get(DiSymbol.Store);
   const proxyServerManager = container.get<ProxyServerManager>(DiSymbol.ProxyServerManager);
   const ipcController = container.get<IpcController>(DiSymbol.IpcController);
+  const trayManager = container.get<TrayManager>(DiSymbol.TrayManager);
+  const shortcutManager = container.get<ShortcutManager>(DiSymbol.ShortcutManager);
   // ─────────────────────────────────────────────────────────
   // READY 阶段
   // ─────────────────────────────────────────────────────────
@@ -73,11 +75,11 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 
     // Windows 创建系统托盘
     if (process.platform === 'win32') {
-      tray = createTray(mainWindow);
+      trayManager.create();
     }
 
     // 注册全局快捷键
-    registerGlobalShortcuts(mainWindow);
+    shortcutManager.register();
   });
 
   // ─────────────────────────────────────────────────────────
@@ -129,7 +131,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 
   // 真正退出前：注销快捷键
   app.on('will-quit', () => {
-    unregisterGlobalShortcuts();
+    shortcutManager.unregister();
     windowManager.shutdown();
   });
 }

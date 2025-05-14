@@ -8,12 +8,12 @@ export interface PlaylistDetailCreationAttributes
   extends Optional<
     PlaylistDetailRecordProps,
     'created_at' | 'modified_at'
-  > {}
+  > {
+}
 
 export class PlaylistDetail
   extends Model<PlaylistDetailRecordProps, PlaylistDetailCreationAttributes>
-  implements PlaylistDetailRecordProps
-{
+  implements PlaylistDetailRecordProps {
   public playlist_id!: number;
   public track_id!: number;
   public created_at?: Date;

@@ -13,7 +13,7 @@ import TrackRepository from '@main/database/repository/TrackRepository';
 import fs from 'fs';
 import path from 'path';
 import { music_Dir } from '@main/core/pathConfig';
-import {DiSymbol} from '@main/di/symbol';
+import { DiSymbol } from '@main/di/symbol';
 
 /**
  * 统一的音频 MIME Type 兜底

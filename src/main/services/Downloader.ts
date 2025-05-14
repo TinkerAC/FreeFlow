@@ -48,25 +48,6 @@ export class HifiniDownloader {
 
   private readonly registry = new Map<string, DownloadMeta>();
 
-  /** 仅注册 track → token，文件信息稍后补充 */
-  public registerDownload(token: string, trackId: number): void {
-    this.registry.set(token, { token, trackId });
-  }
-
-  /** will-download 回调里补充文件信息 */
-  public fillMeta(token: string, fileName: string, total: number, savePath: string) {
-    const meta = this.registry.get(token);
-    if (meta) Object.assign(meta, { fileName, totalBytes: total, savePath });
-  }
-
-  public getMeta(token: string): DownloadMeta | undefined {
-    return this.registry.get(token);
-  }
-
-  public delete(token: string): void {
-    this.registry.delete(token);
-  }
-
   constructor(
     @inject(DiSymbol.Store) private readonly store: ElectronStore,
   ) {
@@ -92,6 +73,141 @@ export class HifiniDownloader {
     fs.mkdirSync(this.musicDir, { recursive: true });
   }
 
+  /** 仅注册 track → token，文件信息稍后补充 */
+  public registerDownload(token: string, trackId: number): void {
+    this.registry.set(token, { token, trackId });
+  }
+
+  /** will-download 回调里补充文件信息 */
+  public fillMeta(token: string, fileName: string, total: number, savePath: string) {
+    const meta = this.registry.get(token);
+    if (meta) Object.assign(meta, { fileName, totalBytes: total, savePath });
+  }
+
+  public getMeta(token: string): DownloadMeta | undefined {
+    return this.registry.get(token);
+  }
+
+  public delete(token: string): void {
+    this.registry.delete(token);
+  }
+
+  /**
+   * 下载文件并显示进度条
+   * @param url 下载链接
+   * @param fileName 文件保存路径（相对或绝对都可以）
+   * @returns {Promise<string>} 返回下载后的文件在本地的绝对路径
+   */
+  public async downloadFileWithProgress(url: string, fileName: string): Promise<string> {
+    // 解析为绝对路径
+    const resolvedPath = path.resolve(fileName);
+
+    // 发起 GET 流式请求
+    const { data, headers } = await this.axios.get(url, { responseType: 'stream' });
+    const total = Number(headers['content-length'] || 0);
+
+    // 创建进度条
+    const bar = new ProgressBar(
+      `${chalk.green('下载中')} [:bar] :percent :rate/bps :etas`,
+      { total, width: 40 },
+    );
+
+    // 将流写入文件并在完成后 resolve
+    await new Promise<void>((resolve, reject) => {
+      const writer = fs.createWriteStream(resolvedPath);
+      data.on('data', (chunk: Buffer) => bar.tick(chunk.length));
+      data.pipe(writer);
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
+
+    // 下载完成后返回绝对路径
+    return resolvedPath;
+  }
+
+  /**
+   * 提取 ZIP 文件中的第一个 .flac 音频文件
+   * @param zipPath ZIP 文件的完整路径
+   * @param destDir 解压目标目录
+   * @returns {Promise<string>} 返回提取后的 .flac 文件名
+   * @throws {Error} ZIP 文件不存在或未找到 .flac 文件
+   */
+  public async extractFlacFile(zipPath: string, destDir: string): Promise<string> {
+    if (!fs.existsSync(zipPath)) {
+      throw new Error('ZIP 文件不存在');
+    }
+
+    // 打开 ZIP
+    const zip = new StreamZip.async({ file: zipPath, nameEncoding: 'gbk' });
+
+    try {
+      const entries = await zip.entries();
+      for (const name of Object.keys(entries)) {
+        if (name.toLowerCase().endsWith('.flac')) {
+          // 确保目标目录存在
+          fs.mkdirSync(destDir, { recursive: true });
+
+          const fileName = path.basename(name);
+          const outPath = path.join(destDir, fileName);
+
+          // 提取第一个 .flac 文件
+          await zip.extract(name, outPath);
+
+          return fileName;
+        }
+      }
+
+      // 如果循环结束还没找到 .flac
+      throw new Error('ZIP 中未找到任何 .flac 文件');
+    } finally {
+      // 无论如何都要关闭 ZIP
+      await zip.close();
+    }
+  }
+
+  public async getLanzouDirectLink(dataHref: string): Promise<string[]> {
+    // 1. 首次拉取帖子页面
+    let html = await this.axios
+      .get<string>(dataHref, { responseType: 'text' })
+      .then(res => res.data);
+
+    // 2. 如果未评论，先自动评论再重拉一次
+    if (html.includes('本帖含有隐藏内容')) {
+      console.log(chalk.yellow('未检测到评论，正在自动评论…'));
+      await this.postComment(dataHref);
+      html = await this.axios
+        .get<string>(dataHref, { responseType: 'text' })
+        .then(res => res.data);
+      console.log(chalk.green('评论完成，已重新拉取页面'));
+    }
+
+    // 3. 解析所有隐藏的蓝奏云分享链接及其提取码
+    const { links, codes } = this.parseHiddenContent(html);
+    console.log(chalk.green('发现下载链接:'), links);
+    console.log(chalk.green('发现提取码:'), codes);
+
+    // 4. 逐条处理，调用外部工具拿到直链
+    const directUrls: string[] = [];
+    for (let i = 0; i < links.length; i++) {
+      const link = links[i];
+      const code = codes[i] || '';
+      try {
+        if (!this.isValidUrl(link)) {
+          throw new Error('URL 格式不合法');
+        }
+        console.log(chalk.blue(`解析第 ${i + 1} 条直链，原始链接：`), link);
+        const direct = await getLanzouDirectLink(link, code);
+        console.log(chalk.blue(`解析成功：`), direct);
+        directUrls.push(direct);
+      } catch (err: any) {
+        console.error(chalk.red(`第 ${i + 1} 条直链解析失败:`), err.message);
+        // 不抛出，继续下一个
+      }
+    }
+
+    // 5. 返回所有成功解析到的直链
+    return directUrls;
+  }
 
   private async postComment(dataHref: string): Promise<void> {
     const trackId = dataHref.match(/\d+/)?.[0];
@@ -137,80 +253,6 @@ export class HifiniDownloader {
     return { links, codes };
   }
 
-  /**
-   * 下载文件并显示进度条
-   * @param url 下载链接
-   * @param fileName 文件保存路径（相对或绝对都可以）
-   * @returns {Promise<string>} 返回下载后的文件在本地的绝对路径
-   */
-  public async downloadFileWithProgress(url: string, fileName: string): Promise<string> {
-    // 解析为绝对路径
-    const resolvedPath = path.resolve(fileName);
-
-    // 发起 GET 流式请求
-    const { data, headers } = await this.axios.get(url, { responseType: 'stream' });
-    const total = Number(headers['content-length'] || 0);
-
-    // 创建进度条
-    const bar = new ProgressBar(
-      `${chalk.green('下载中')} [:bar] :percent :rate/bps :etas`,
-      { total, width: 40 },
-    );
-
-    // 将流写入文件并在完成后 resolve
-    await new Promise<void>((resolve, reject) => {
-      const writer = fs.createWriteStream(resolvedPath);
-      data.on('data', (chunk: Buffer) => bar.tick(chunk.length));
-      data.pipe(writer);
-      writer.on('finish', resolve);
-      writer.on('error', reject);
-    });
-
-    // 下载完成后返回绝对路径
-    return resolvedPath;
-  }
-
-
-  /**
-   * 提取 ZIP 文件中的第一个 .flac 音频文件
-   * @param zipPath ZIP 文件的完整路径
-   * @param destDir 解压目标目录
-   * @returns {Promise<string>} 返回提取后的 .flac 文件名
-   * @throws {Error} ZIP 文件不存在或未找到 .flac 文件
-   */
-  public async extractFlacFile(zipPath: string, destDir: string): Promise<string> {
-    if (!fs.existsSync(zipPath)) {
-      throw new Error('ZIP 文件不存在');
-    }
-
-    // 打开 ZIP
-    const zip = new StreamZip.async({ file: zipPath, nameEncoding: 'gbk' });
-
-    try {
-      const entries = await zip.entries();
-      for (const name of Object.keys(entries)) {
-        if (name.toLowerCase().endsWith('.flac')) {
-          // 确保目标目录存在
-          fs.mkdirSync(destDir, { recursive: true });
-
-          const fileName = path.basename(name);
-          const outPath = path.join(destDir, fileName);
-
-          // 提取第一个 .flac 文件
-          await zip.extract(name, outPath);
-
-          return fileName;
-        }
-      }
-
-      // 如果循环结束还没找到 .flac
-      throw new Error('ZIP 中未找到任何 .flac 文件');
-    } finally {
-      // 无论如何都要关闭 ZIP
-      await zip.close();
-    }
-  }
-
   private isValidUrl(u: string): boolean {
     try {
       const { protocol, host } = new URL(u);
@@ -218,50 +260,5 @@ export class HifiniDownloader {
     } catch {
       return false;
     }
-  }
-
-
-  public async getLanzouDirectLink(dataHref: string): Promise<string[]> {
-    // 1. 首次拉取帖子页面
-    let html = await this.axios
-      .get<string>(dataHref, { responseType: 'text' })
-      .then(res => res.data);
-
-    // 2. 如果未评论，先自动评论再重拉一次
-    if (html.includes('本帖含有隐藏内容')) {
-      console.log(chalk.yellow('未检测到评论，正在自动评论…'));
-      await this.postComment(dataHref);
-      html = await this.axios
-        .get<string>(dataHref, { responseType: 'text' })
-        .then(res => res.data);
-      console.log(chalk.green('评论完成，已重新拉取页面'));
-    }
-
-    // 3. 解析所有隐藏的蓝奏云分享链接及其提取码
-    const { links, codes } = this.parseHiddenContent(html);
-    console.log(chalk.green('发现下载链接:'), links);
-    console.log(chalk.green('发现提取码:'), codes);
-
-    // 4. 逐条处理，调用外部工具拿到直链
-    const directUrls: string[] = [];
-    for (let i = 0; i < links.length; i++) {
-      const link = links[i];
-      const code = codes[i] || '';
-      try {
-        if (!this.isValidUrl(link)) {
-          throw new Error('URL 格式不合法');
-        }
-        console.log(chalk.blue(`解析第 ${i + 1} 条直链，原始链接：`), link);
-        const direct = await getLanzouDirectLink(link, code);
-        console.log(chalk.blue(`解析成功：`), direct);
-        directUrls.push(direct);
-      } catch (err: any) {
-        console.error(chalk.red(`第 ${i + 1} 条直链解析失败:`), err.message);
-        // 不抛出，继续下一个
-      }
-    }
-
-    // 5. 返回所有成功解析到的直链
-    return directUrls;
   }
 }

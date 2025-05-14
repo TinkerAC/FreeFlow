@@ -27,24 +27,6 @@ export class PlaylistRecord extends AbstractRecord implements PlaylistRecordProp
   created_at?: Date;
   modified_at?: Date;
 
-
-  toEntity(): PlaylistEntity {
-    return {
-      is_persistent: false, tracks: [],
-      playlist_id: this.playlist_id,
-      playlist_cover: this.playlist_cover,
-      title: this.title,
-      description: this.description,
-      creator: this.creator,
-      platform: this.platform,
-      platform_unique_id: this.platform_unique_id,
-      played_count: this.played_count,
-      created_at: this.created_at,
-      modified_at: this.modified_at,
-    };
-  }
-
-
   static fromEntity(entity: PlaylistEntity): PlaylistRecord {
     const rec = new PlaylistRecord();
     // 依次映射所有 DTO 字段
@@ -60,6 +42,22 @@ export class PlaylistRecord extends AbstractRecord implements PlaylistRecordProp
     rec.modified_at = entity.modified_at;
 
     return rec;
+  }
+
+  toEntity(): PlaylistEntity {
+    return {
+      is_persistent: false, tracks: [],
+      playlist_id: this.playlist_id,
+      playlist_cover: this.playlist_cover,
+      title: this.title,
+      description: this.description,
+      creator: this.creator,
+      platform: this.platform,
+      platform_unique_id: this.platform_unique_id,
+      played_count: this.played_count,
+      created_at: this.created_at,
+      modified_at: this.modified_at,
+    };
   }
 
 

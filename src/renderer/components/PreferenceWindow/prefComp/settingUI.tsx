@@ -1,6 +1,6 @@
-import React, { useState, useContext, createContext } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import React, { createContext, useContext, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 
 /* ===============================================================
    JetBrains-style lightweight UI primitives
@@ -8,7 +8,7 @@ import { ChevronDown } from "lucide-react";
 
 /* --------------------------- Card ---------------------------- */
 export const Card: React.FC<{ className?: string; children: React.ReactNode }> = ({
-                                                                                    className = "",
+                                                                                    className = '',
                                                                                     children,
                                                                                   }) => (
   <div className={`rounded-2xl bg-[#2b2b2b]/60 shadow-lg ${className}`}>{
@@ -16,13 +16,14 @@ export const Card: React.FC<{ className?: string; children: React.ReactNode }> =
   }</div>
 );
 export const CardContent: React.FC<{ className?: string; children: React.ReactNode }> = ({
-                                                                                           className = "",
+                                                                                           className = '',
                                                                                            children,
-                                                                                         }) => <div className={className}>{children}</div>;
+                                                                                         }) => <div
+  className={className}>{children}</div>;
 
 /* --------------------------- Label --------------------------- */
 export const Label: React.FC<React.LabelHTMLAttributes<HTMLLabelElement>> = ({
-                                                                               className = "",
+                                                                               className = '',
                                                                                children,
                                                                                ...rest
                                                                              }) => (
@@ -36,7 +37,7 @@ export const Checkbox: React.FC<{
   checked: boolean;
   onCheckedChange: () => void;
   className?: string;
-}> = ({ checked, onCheckedChange, className = "" }) => (
+}> = ({ checked, onCheckedChange, className = '' }) => (
   <input
     type="checkbox"
     checked={checked}
@@ -53,6 +54,7 @@ interface SelectCtxType {
   setOpen: (o: boolean) => void;
   placeholder?: string;
 }
+
 const SelectCtx = createContext<SelectCtxType | null>(null);
 
 export const Select: React.FC<{
@@ -70,7 +72,7 @@ export const Select: React.FC<{
 };
 
 export const SelectTrigger: React.FC<{ className?: string; children?: React.ReactNode }> = ({
-                                                                                              className = "",
+                                                                                              className = '',
                                                                                               children,
                                                                                             }) => {
   const ctx = useContext(SelectCtx)!;
@@ -92,7 +94,7 @@ export const SelectValue: React.FC<{ placeholder?: string }> = ({ placeholder })
 };
 
 export const SelectContent: React.FC<{ className?: string; children: React.ReactNode }> = ({
-                                                                                             className = "",
+                                                                                             className = '',
                                                                                              children,
                                                                                            }) => {
   const ctx = useContext(SelectCtx)!;
@@ -117,7 +119,7 @@ export const SelectItem: React.FC<{ value: string; children: React.ReactNode }> 
   const selected = ctx.value === value;
   return (
     <li
-      className={`cursor-pointer px-3 py-1 text-sm text-neutral-200 hover:bg-white/10 ${selected ? "bg-blue-600/30" : ""}`}
+      className={`cursor-pointer px-3 py-1 text-sm text-neutral-200 hover:bg-white/10 ${selected ? 'bg-blue-600/30' : ''}`}
       onClick={() => {
         ctx.setValue(value);
         ctx.setOpen(false);
@@ -138,6 +140,7 @@ interface SettingSectionProps {
   description?: string;
   children: React.ReactNode;
 }
+
 export const SettingSection: React.FC<SettingSectionProps> = ({ title, description, children }) => (
   <motion.section
     className="mb-6 rounded-2xl bg-[#2b2b2b]/60 shadow-lg backdrop-blur"
@@ -160,6 +163,7 @@ interface SettingRowProps {
   label: string;
   children: React.ReactNode;
 }
+
 export const SettingRow: React.FC<SettingRowProps> = ({ label, children }) => (
   <div className="flex items-center justify-between gap-6 py-3">
     <Label className="whitespace-nowrap text-sm text-neutral-200">{label}</Label>
@@ -168,17 +172,22 @@ export const SettingRow: React.FC<SettingRowProps> = ({ label, children }) => (
 );
 
 /* ------------------------ Dropdown -------------------------- */
-interface DropdownOption { label: string; value: string }
+interface DropdownOption {
+  label: string;
+  value: string;
+}
+
 interface SettingDropdownProps {
   value: string;
   onChange: (value: string) => void;
   options: DropdownOption[];
   placeholder?: string;
 }
+
 export const SettingDropdown: React.FC<SettingDropdownProps> = ({ value, onChange, options, placeholder }) => (
   <Select value={value} onValueChange={onChange} placeholder={placeholder}>
     <SelectTrigger>
-      <SelectValue placeholder={placeholder ?? "请选择…"} />
+      <SelectValue placeholder={placeholder ?? '请选择…'} />
     </SelectTrigger>
     <SelectContent>
       {options.map((opt) => (
@@ -189,25 +198,40 @@ export const SettingDropdown: React.FC<SettingDropdownProps> = ({ value, onChang
     </SelectContent>
   </Select>
 );
-interface DropdownRowProps extends SettingDropdownProps { label: string }
+
+interface DropdownRowProps extends SettingDropdownProps {
+  label: string;
+}
+
 export const SettingDropdownRow: React.FC<DropdownRowProps> = ({ label, ...rest }) => (
   <SettingRow label={label}><SettingDropdown {...rest} /></SettingRow>
 );
 
 /* ------------------------ Checkbox Group -------------------- */
-interface CheckboxOption { label: string; value: string }
+interface CheckboxOption {
+  label: string;
+  value: string;
+}
+
 interface SettingCheckboxGroupProps {
   values: string[];
   onChange: (values: string[]) => void;
   options: CheckboxOption[];
   columns?: number;
 }
-export const SettingCheckboxGroup: React.FC<SettingCheckboxGroupProps> = ({ values, onChange, options, columns = 1 }) => {
+
+export const SettingCheckboxGroup: React.FC<SettingCheckboxGroupProps> = ({
+                                                                            values,
+                                                                            onChange,
+                                                                            options,
+                                                                            columns = 1,
+                                                                          }) => {
   const toggle = (val: string) => onChange(values.includes(val) ? values.filter((v) => v !== val) : [...values, val]);
   return (
-    <div className={`grid gap-y-2 ${columns > 1 ? `grid-cols-${columns}` : ""}`}>
+    <div className={`grid gap-y-2 ${columns > 1 ? `grid-cols-${columns}` : ''}`}>
       {options.map((opt) => (
-        <label key={opt.value} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-neutral-200 hover:bg-white/5">
+        <label key={opt.value}
+               className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-neutral-200 hover:bg-white/5">
           <Checkbox checked={values.includes(opt.value)} onCheckedChange={() => toggle(opt.value)} />
           {opt.label}
         </label>
@@ -215,7 +239,11 @@ export const SettingCheckboxGroup: React.FC<SettingCheckboxGroupProps> = ({ valu
     </div>
   );
 };
-interface CheckboxGroupRowProps extends SettingCheckboxGroupProps { label: string }
+
+interface CheckboxGroupRowProps extends SettingCheckboxGroupProps {
+  label: string;
+}
+
 export const SettingCheckboxGroupRow: React.FC<CheckboxGroupRowProps> = ({ label, ...rest }) => (
   <SettingRow label={label}><SettingCheckboxGroup {...rest} /></SettingRow>
 );

@@ -60,7 +60,7 @@ const PreferenceWindow: React.FC = () => {
             systemContext.setAppIcon(val as AppIcon); // 调用主进程
           }}
           options={[
-            { label: 'Default',   value: AppIcon.Default },
+            { label: 'Default', value: AppIcon.Default },
             { label: 'JetBrains', value: AppIcon.JetBrains },
           ]}
         />

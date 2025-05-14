@@ -12,11 +12,10 @@ export enum WindowKey {
 
 export class WindowManager {
 
-  constructor() {
-  }
-
   private windows = new Map<WindowKey, BrowserWindow>();
 
+  constructor() {
+  }
 
   public createMainWindow(): BrowserWindow {
     const mainWindow = new AppWindow();

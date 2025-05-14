@@ -10,7 +10,6 @@ export interface TrackDataSource {
   findByIds(ids: number[]): Promise<TrackRecord[]>;
 
 
-
   create(trackModel: TrackRecord): Promise<TrackRecord>;
 
   delete(id: number): Promise<number>;
@@ -27,6 +26,6 @@ export interface TrackDataSource {
   bindLocalFileToTrack(trackId: number, fileName: string): Promise<TrackRecord>;
 
   findLocalFilePathByPlatformAndPlatformUniqueId(
-    platform: string,platformUniqueId: string
+    platform: string, platformUniqueId: string,
   ): Promise<string | null>;
 }

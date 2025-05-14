@@ -1,8 +1,5 @@
 import { HifiniThreadCacheDataSource } from '@main/database/dataSource/HifiniThreadCacheDataSource';
-import {
-  HifiniThreadCacheRecord,
-  HifiniThreadCacheRecordProps,
-} from '@main/database/record/HifiniThreadCacheRecord';
+import { HifiniThreadCacheRecord, HifiniThreadCacheRecordProps } from '@main/database/record/HifiniThreadCacheRecord';
 import { HifiniThreadCache } from '@main/database/seqimpl/HifiniThreadCache';
 import { injectable } from 'inversify';
 

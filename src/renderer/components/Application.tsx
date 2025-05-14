@@ -19,6 +19,7 @@ import Player, { PlaybackMode } from '@renderer/core/player/Player';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
+import chalk from 'chalk';
 
 const Application: React.FC = () => {
   // === 1. 实例化导航栈 ===
@@ -69,7 +70,10 @@ const Application: React.FC = () => {
         }
       }
     };
-    initPlayer();
+
+    initPlayer().then(() => {
+      console.log(chalk.green('播放器初始化完成!'));
+    });
   }, [audioRef.current]);
 
   // IPC 监听：状态请求、快捷键、通知
@@ -83,10 +87,19 @@ const Application: React.FC = () => {
       if (!player) return;
       switch (data) {
         case 'prev':
-          player.playPrevious();
+          player.playPrevious().then(
+            () => {
+              console.info(chalk.green('播放上一首成功'));
+            },
+          );
           break;
         case 'next':
-          player.playNext();
+          player.playNext().then(
+            () => {
+              console.info(chalk.green('播放下一首成功'));
+            },
+          );
+
           break;
         case 'play-pause':
           player.togglePlayPause();

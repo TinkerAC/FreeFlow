@@ -8,6 +8,23 @@ import path from 'path';
  *  - 统一资源释放
  */
 export abstract class AbstractWindow extends BrowserWindow {
+  protected constructor(opts: BrowserWindowConstructorOptions) {
+    super({ ...AbstractWindow.getDefaultOptions(), ...opts });
+
+    // 窗口准备好后显示（避免白屏闪烁）
+    this.once('ready-to-show', () => this.show());
+
+    // 最大化时取消窗口阴影（可选）
+    this.on('maximize', () => this.setHasShadow(false));
+    this.on('unmaximize', () => this.setHasShadow(true));
+
+    // 所有窗口共通：失去引用时自动销毁
+    this.on('closed', () => {
+      // macOS 下保留 core 激活逻辑，Windows/Linux 直接回收
+      if (process.platform !== 'darwin') this.destroy();
+    });
+  }
+
   /** 子类可通过 super.getDefaultOptions() 自行拓展 */
   protected static getDefaultOptions(): BrowserWindowConstructorOptions {
     return {
@@ -28,21 +45,15 @@ export abstract class AbstractWindow extends BrowserWindow {
     };
   }
 
-  protected constructor(opts: BrowserWindowConstructorOptions) {
-    super({ ...AbstractWindow.getDefaultOptions(), ...opts });
+  /** 切换显隐 */
+  toggle(): void {
+    this.isVisible() ? this.hide() : this.show();
+  }
 
-    // 窗口准备好后显示（避免白屏闪烁）
-    this.once('ready-to-show', () => this.show());
-
-    // 最大化时取消窗口阴影（可选）
-    this.on('maximize', () => this.setHasShadow(false));
-    this.on('unmaximize', () => this.setHasShadow(true));
-
-    // 所有窗口共通：失去引用时自动销毁
-    this.on('closed', () => {
-      // macOS 下保留 core 激活逻辑，Windows/Linux 直接回收
-      if (process.platform !== 'darwin') this.destroy();
-    });
+  /** 聚焦到此窗口（若被最小化则恢复） */
+  refocus(): void {
+    if (this.isMinimized()) this.restore();
+    this.focus();
   }
 
   /** 包装 loadURL，输出错误堆栈 */
@@ -57,16 +68,5 @@ export abstract class AbstractWindow extends BrowserWindow {
   /** 开发环境自动打开 devtools */
   protected openDevtoolsIfDev(): void {
     if (process.env.NODE_ENV === 'development') this.webContents.openDevTools();
-  }
-
-  /** 切换显隐 */
-  toggle(): void {
-    this.isVisible() ? this.hide() : this.show();
-  }
-
-  /** 聚焦到此窗口（若被最小化则恢复） */
-  refocus(): void {
-    if (this.isMinimized()) this.restore();
-    this.focus();
   }
 }
