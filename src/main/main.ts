@@ -13,8 +13,8 @@ import Store from 'electron-store';
 import { container } from '@main/di/di-container';
 import { DiSymbol } from '@main/di/symbol';
 import IpcController from '@main/core/IpcController';
-import TrayManager from '@main/core/trayManager';
-import ShortcutManager from '@main/core/shortcutManager';
+import TrayManager from '@main/core/TrayManager';
+import ShortCutManager from '@main/core/ShortCutManager';
 
 let isQuitting = false;
 
@@ -47,7 +47,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   const proxyServerManager = container.get<ProxyServerManager>(DiSymbol.ProxyServerManager);
   const ipcController = container.get<IpcController>(DiSymbol.IpcController);
   const trayManager = container.get<TrayManager>(DiSymbol.TrayManager);
-  const shortcutManager = container.get<ShortcutManager>(DiSymbol.ShortcutManager);
+  const shortcutManager = container.get<ShortCutManager>(DiSymbol.ShortcutManager);
   // ─────────────────────────────────────────────────────────
   // READY 阶段
   // ─────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 
     const mainWindow = windowManager.createMainWindow();
 
-    await ipcController.register();
+    ipcController.register();
     windowManager.createWorkerWindow();
 
     // 检查 hifini Cookie 过期状态

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Item from './Item';
 import ContextMenu from './ContextMenu';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
-import { playlistContext } from '@main/core/electronContextApi';
+import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 

@@ -1,6 +1,6 @@
 // src/renderer/components/SearchResultView/contextMenu.tsx
 import React, { useState } from 'react';
-import { libraryContext, playlistContext } from '@main/core/electronContextApi';
+import { libraryContext, playlistContext } from '@renderer/core/electronContextApi';
 import Player from '@renderer/core/player/Player';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';

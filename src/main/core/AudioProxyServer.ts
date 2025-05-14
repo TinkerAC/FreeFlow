@@ -14,23 +14,14 @@ import fs from 'fs';
 import path from 'path';
 import { music_Dir } from '@main/core/pathConfig';
 import { DiSymbol } from '@main/di/symbol';
+import { BadRequestError } from '@main/core/exceptions/BadLoadAudio';
+import { castToPlatform, Platform } from '@main/core/enum/Platform';
 
 /**
  * 统一的音频 MIME Type 兜底
  */
 const DEFAULT_AUDIO_MIME = 'audio/mpeg';
 
-/**
- * 处理参数缺失时抛出的错误
- */
-class BadRequestError extends Error {
-  public readonly status: number;
-
-  constructor(message: string) {
-    super(message);
-    this.status = 400;
-  }
-}
 
 @injectable()
 class ProxyServerManager {
@@ -105,8 +96,13 @@ class ProxyServerManager {
    * 统一处理 /proxy 请求
    */
   private async handleProxyRequest(req: Request, res: Response): Promise<void> {
+    const { platform, platformUniqueId } = this.extractAndValidateParams(req);
+
     try {
-      const { platform, platformUniqueId } = this.extractAndValidateParams(req);
+
+      //将收到的platform 转为 Platform 枚举
+      const platformEnum: Platform = castToPlatform(platform);
+
       console.log('代理服务器收到请求:', platform, platformUniqueId);
 
       /* ---------- 1. 本地文件优先 ---------- */
@@ -128,7 +124,7 @@ class ProxyServerManager {
 
       /* ---------- 3. 远程拉取 & 缓存 ---------- */
       console.log(`${platform}-${platformUniqueId} 缓存未命中，开始请求数据`);
-      await this.fetchStreamAndCache(platform, platformUniqueId, cacheKey, res);
+      await this.fetchStreamAndCache(platformEnum, platformUniqueId, cacheKey, res);
     } catch (err) {
       const status = err instanceof BadRequestError ? err.status : 500;
       console.error('Proxy Error:', err.message);
@@ -200,7 +196,7 @@ class ProxyServerManager {
    * 如果遇到返回码 "-1" 的特殊情况，则自动 forceReload 再尝试一次。
    */
   private async fetchStreamAndCache(
-    platform: string,
+    platform: Platform,
     platformUniqueId: string,
     cacheKey: string,
     res: Response,
@@ -256,16 +252,16 @@ class ProxyServerManager {
    * 根据平台获取可用的直链。部分平台支持 forceReload。
    */
   private async getMusicLink(
-    platform: string,
+    platform: Platform,
     platformUniqueId: string,
     forceReload = false,
   ): Promise<string | undefined> {
     switch (platform) {
-      case 'Hifini':
+      case Platform.HIFINI:
         return this.hifiniMusic.getTrackLink(platformUniqueId, forceReload);
-      case 'NetEaseCloudMusic':
+      case Platform.NET_EASE_CLOUD_MUSIC:
         return this.netEaseCloudMusic.getTrackLink(platformUniqueId);
-      case 'QQMusic':
+      case Platform.QQ_MUSIC:
         return this.qqMusic.getTrackLink(platformUniqueId);
       default:
         throw new BadRequestError('Unsupported platform.');

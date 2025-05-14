@@ -33,6 +33,9 @@ import { musicCacheDir } from '@main/core/pathConfig';
 import { DiSymbol } from '@main/di/symbol';
 import { PreferenceService } from '@main/services/PreferenceService';
 import IpcController from '@main/core/IpcController';
+import TrayManager from '@main/core/TrayManager';
+import ShortCutManager from '@main/core/ShortCutManager';
+import chalk from 'chalk';
 
 
 const container = new Container();
@@ -67,6 +70,15 @@ container
 container
   .bind<ProxyServerManager>(DiSymbol.ProxyServerManager)
   .to(ProxyServerManager)
+  .inSingletonScope();
+
+container
+  .bind<TrayManager>(DiSymbol.TrayManager)
+  .to(TrayManager)
+  .inSingletonScope();
+container
+  .bind<ShortCutManager>(DiSymbol.ShortcutManager)
+  .to(ShortCutManager)
   .inSingletonScope();
 
 // ===== 业务服务（单例） =====
@@ -138,3 +150,7 @@ container
   .bind<HifiniThreadCacheRepository>(DiSymbol.HifiniThreadCacheRepository)
   .to(HifiniThreadCacheRepositoryImpl)
   .inSingletonScope();
+
+
+// ===== 其他 =====
+console.info(chalk.green('DI 容器初始化完成'));

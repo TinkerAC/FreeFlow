@@ -4,8 +4,8 @@ import {
   SettingDropdownRow,
   SettingSection,
 } from '@components/PreferenceWindow/prefComp/settingUI';
-import { AppIcon } from '@src/shared/hifiniCookies';
-import { systemContext } from '@main/core/electronContextApi';
+import { AppIcon, getIconOptions } from '@src/shared/hifiniCookies';
+import { systemContext } from '@renderer/core/electronContextApi';
 
 /**
  * PreferenceWindow – JetBrains-style settings panel for FreeFlow.
@@ -59,10 +59,7 @@ const PreferenceWindow: React.FC = () => {
             setAppIcon(val as AppIcon);       // 更新本地 state
             systemContext.setAppIcon(val as AppIcon); // 调用主进程
           }}
-          options={[
-            { label: 'Default', value: AppIcon.Default },
-            { label: 'JetBrains', value: AppIcon.JetBrains },
-          ]}
+          options={getIconOptions()}
         />
 
         <SettingCheckboxGroupRow

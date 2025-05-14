@@ -1,7 +1,7 @@
 // src/components/PlaylistView/ModalModifyPlaylist.jsx
 
 import React, { useState } from 'react';
-import { playlistContext } from '@main/core/electronContextApi';
+import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 

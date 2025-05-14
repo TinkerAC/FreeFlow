@@ -7,7 +7,7 @@ import Player from '@renderer/core/player/Player';
 import TabNav, { TabKey } from './TabNav';
 
 import ContextMenu from '@components/Maincontent/SearchResultView/ContextMenu';
-import { libraryContext, playlistContext } from '@main/core/electronContextApi';
+import { libraryContext, playlistContext } from '@renderer/core/electronContextApi';
 import PlaylistsTab from '@components/Maincontent/SearchResultView/PlaylistTab';
 import TracksTab from '@components/Maincontent/SearchResultView/TrackTab';
 import PopularTab from '@components/Maincontent/SearchResultView/PopularTab';

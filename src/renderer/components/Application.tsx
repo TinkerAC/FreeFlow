@@ -13,7 +13,7 @@ import PlayerBar from '@components/Playerbar/PlayerBar';
 import useMusicLibrary from '@renderer/hooks/useMusiclibrary';
 import useMainWindow from '@renderer/hooks/useMainWindow';
 
-import { playerContext, shortcutContext } from '@main/core/electronContextApi';
+import { playerContext, shortcutContext } from '@renderer/core/electronContextApi';
 import Player, { PlaybackMode } from '@renderer/core/player/Player';
 
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';

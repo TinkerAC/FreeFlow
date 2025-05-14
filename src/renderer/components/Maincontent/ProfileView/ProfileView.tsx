@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { configContext, systemContext } from '@main/core/electronContextApi';
+import { configContext, systemContext } from '@renderer/core/electronContextApi';
 import { formatStorageUnit } from '@src/utils/fsUtils';
 
 function ProfileView() {

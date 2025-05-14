@@ -1,7 +1,7 @@
 // file: src/renderer/components/TopBar/TopBar.tsx
 import React, { useEffect, useState } from 'react';
 import './TopBar.css';
-import { configContext, searchContext, systemContext, windowControlContext } from '@main/core/electronContextApi';
+import { configContext, searchContext, systemContext, windowControlContext } from '@renderer/core/electronContextApi';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import { debug } from '@components/static';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';

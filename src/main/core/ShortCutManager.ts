@@ -6,13 +6,13 @@ interface Shortcut {
 }
 
 /**
- * ShortcutManager
+ * ShortCutManager
  * ---------------
  * 对全局快捷键进行面向对象封装，提供 `register()` / `unregister()` 方法。
  * 仍然保留旧版的 `registerGlobalShortcuts` / `unregisterGlobalShortcuts`
  * 函数式接口，方便渐进迁移。
  */
-export default class ShortcutManager {
+export default class ShortCutManager {
   private readonly shortcuts: Shortcut[] = [
     { key: 'Control+Alt+Left', action: 'prev' },
     { key: 'Control+Alt+Right', action: 'next' },

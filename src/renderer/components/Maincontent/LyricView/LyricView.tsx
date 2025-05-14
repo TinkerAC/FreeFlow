@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { lyricsContext } from '@main/core/electronContextApi';
+import { lyricsContext } from '@renderer/core/electronContextApi';
 import Player from '@renderer/core/player/Player';
 import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
