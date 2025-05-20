@@ -11,7 +11,7 @@ import { sequelize } from '@main/database/seqimpl';
 import { is_hifini_cookies_expired } from '@main/services/AuthService';
 import Store from 'electron-store';
 import { container } from '@main/di/di-container';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 import IpcController from '@main/core/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
@@ -30,7 +30,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 } else {
   console.log('App is running...');
 
-  const windowManager = container.get<WindowManager>(DiSymbol.WindowManager);
+  const windowManager = container.get<WindowManager>(DISymbol.WindowManager);
   // 若用户再次启动应用，将唤起已有主窗口
   app.on('second-instance', () => {
     windowManager.focus(WindowKey.MAIN);
@@ -42,12 +42,12 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   }
 
   // 依赖注入获取服务实例
-  const localLibraryService = container.get<LocalLibraryService>(DiSymbol.LocalLibraryService);
-  const store: Store = container.get(DiSymbol.Store);
-  const proxyServerManager = container.get<ProxyServerManager>(DiSymbol.ProxyServerManager);
-  const ipcController = container.get<IpcController>(DiSymbol.IpcController);
-  const trayManager = container.get<TrayManager>(DiSymbol.TrayManager);
-  const shortcutManager = container.get<ShortCutManager>(DiSymbol.ShortcutManager);
+  const localLibraryService = container.get<LocalLibraryService>(DISymbol.LocalLibraryService);
+  const store: Store = container.get(DISymbol.Store);
+  const proxyServerManager = container.get<ProxyServerManager>(DISymbol.ProxyServerManager);
+  const ipcController = container.get<IpcController>(DISymbol.IpcController);
+  const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
+  const shortcutManager = container.get<ShortCutManager>(DISymbol.ShortcutManager);
   // ─────────────────────────────────────────────────────────
   // READY 阶段
   // ─────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 
 /**
  * 根据传入 TrackRecord 获取歌词数据
@@ -18,8 +18,8 @@ import { DiSymbol } from '@main/di/symbol';
 export class LyricService {
 
   constructor(
-    @inject(DiSymbol.NetEaseCloudMusic) private netEaseMusic: ContentProvider,
-    @inject(DiSymbol.QQMusic) private qqMusic: ContentProvider,
+    @inject(DISymbol.NetEaseCloudMusic) private netEaseMusic: ContentProvider,
+    @inject(DISymbol.QQMusic) private qqMusic: ContentProvider,
   ) {
   }
 

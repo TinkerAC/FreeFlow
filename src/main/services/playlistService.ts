@@ -7,15 +7,15 @@ import ElectronStore from 'electron-store';
 import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 
 
 export default class PlaylistService {
   constructor(
-    @inject(DiSymbol.Store) private store: ElectronStore,
-    @inject(DiSymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
-    @inject(DiSymbol.TrackRepository) private trackRepository: TrackRepository,
-    @inject(DiSymbol.TrackService) private trackService: TrackService,
+    @inject(DISymbol.Store) private store: ElectronStore,
+    @inject(DISymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
+    @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
+    @inject(DISymbol.TrackService) private trackService: TrackService,
   ) {
   }
 

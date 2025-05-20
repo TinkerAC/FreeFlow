@@ -3,12 +3,12 @@ import { inject, injectable } from 'inversify';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
 import { HifiniThreadCacheDataSource } from '@main/database/dataSource/HifiniThreadCacheDataSource';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 
 @injectable()
 export class HifiniThreadCacheRepositoryImpl implements HifiniThreadCacheRepository {
   constructor(
-    @inject(DiSymbol.HifiniThreadCacheDataSource) private ds: HifiniThreadCacheDataSource,
+    @inject(DISymbol.HifiniThreadCacheDataSource) private ds: HifiniThreadCacheDataSource,
   ) {
   }
 

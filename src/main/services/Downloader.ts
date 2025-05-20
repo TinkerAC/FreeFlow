@@ -13,7 +13,7 @@ import { HifiniCookies } from '@src/shared/hifiniCookies';
 import * as os from 'node:os';
 import { music_Dir } from '@main/core/pathConfig';
 
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 
 // ----------------- 类型定义 -----------------
 export interface LinkInfo {
@@ -49,7 +49,7 @@ export class HifiniDownloader {
   private readonly registry = new Map<string, DownloadMeta>();
 
   constructor(
-    @inject(DiSymbol.Store) private readonly store: ElectronStore,
+    @inject(DISymbol.Store) private readonly store: ElectronStore,
   ) {
     const cookies: HifiniCookies = store.get('hifini_cookie');
     // 下载目录使用系统临时目录

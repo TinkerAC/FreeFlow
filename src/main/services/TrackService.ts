@@ -7,15 +7,15 @@ import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 
 
 @injectable()
 export default class TrackService {
   constructor(
-    @inject(DiSymbol.TrackRepository) private trackRepository: TrackRepository,
-    @inject(DiSymbol.HifiniMusic) private hifiniMusic: HifiniMusic,
-    @inject(DiSymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
+    @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
+    @inject(DISymbol.HifiniMusic) private hifiniMusic: HifiniMusic,
+    @inject(DISymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
   ) {
   }
 

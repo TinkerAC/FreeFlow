@@ -69,7 +69,7 @@ async function main() {
   execSync(`unzip -q "${zipPath}" -d "${tmpDir}"`);
 
   // 5. 移动 .core 到 /Applications，覆盖同名应用
-  const appName = 'FreeFlow.core';
+  const appName = 'FreeFlow.app';
   const extractedApp = path.join(tmpDir, appName);
   const destApp = path.join('/Applications', appName);
 
@@ -77,6 +77,11 @@ async function main() {
     console.error(`❌ 解压后的目录中未找到 ${appName}`);
     process.exit(1);
   }
+
+  //打印解压后的app大小
+  const extractedStat = await fs.stat(extractedApp);
+  const extractedSize = (extractedStat.size / (1024 * 1024)).toFixed(2);
+  console.log(`📦 解压后的应用大小：${extractedSize} MB`);
 
   if (existsSync(destApp)) {
     console.log(`🗑️  删除旧版本：${destApp}`);

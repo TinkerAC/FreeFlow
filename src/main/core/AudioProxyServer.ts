@@ -13,7 +13,7 @@ import TrackRepository from '@main/database/repository/TrackRepository';
 import fs from 'fs';
 import path from 'path';
 import { music_Dir } from '@main/core/pathConfig';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 import { BadRequestError } from '@main/core/exceptions/BadLoadAudio';
 import { castToPlatform, Platform } from '@main/core/enum/Platform';
 
@@ -29,12 +29,12 @@ class ProxyServerManager {
   private port: number;
 
   constructor(
-    @inject(DiSymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
-    @inject(DiSymbol.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
-    @inject(DiSymbol.QQMusic) private readonly qqMusic: QQMusic,
-    @inject(DiSymbol.Store) private readonly store: Store,
-    @inject(DiSymbol.FileCacheManager) private readonly cacheManager: FileCacheManager,
-    @inject(DiSymbol.TrackRepository) private readonly trackRepository: TrackRepository,
+    @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
+    @inject(DISymbol.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
+    @inject(DISymbol.QQMusic) private readonly qqMusic: QQMusic,
+    @inject(DISymbol.Store) private readonly store: Store,
+    @inject(DISymbol.FileCacheManager) private readonly cacheManager: FileCacheManager,
+    @inject(DISymbol.TrackRepository) private readonly trackRepository: TrackRepository,
   ) {
     this.app = express();
     this.port = 4399; // 默认端口

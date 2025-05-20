@@ -7,15 +7,15 @@ import { PlaylistRecord } from '@main/database/record/PlaylistRecord';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistDetailDataSource } from '@main/database/dataSource/PlaylistDetailDataSource';
 import { TrackDataSource } from '@main/database/dataSource/TrackDataSource';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 
 
 @injectable()
 export class PlaylistRepositoryImpl implements PlaylistRepository {
   constructor(
-    @inject(DiSymbol.TrackDataSource) private trackDataSource: TrackDataSource,
-    @inject(DiSymbol.PlaylistDataSource) private ds: PlaylistDataSource,
-    @inject(DiSymbol.PlaylistDetailDataSource) private playlistDetailDataSource: PlaylistDetailDataSource,
+    @inject(DISymbol.TrackDataSource) private trackDataSource: TrackDataSource,
+    @inject(DISymbol.PlaylistDataSource) private ds: PlaylistDataSource,
+    @inject(DISymbol.PlaylistDetailDataSource) private playlistDetailDataSource: PlaylistDetailDataSource,
   ) {
   }
 

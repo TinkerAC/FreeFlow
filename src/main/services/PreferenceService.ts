@@ -1,11 +1,13 @@
 import { inject, injectable } from 'inversify';
 import ElectronStore from 'electron-store';
-import { app, nativeImage } from 'electron';
+import { app, BrowserWindow, nativeImage } from 'electron';
 
 import path from 'path';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 import { AppIcon } from '@src/shared/hifiniCookies';
-import sharp from 'sharp';
+import fs from 'fs';
+
+// import sharp from 'sharp';
 
 
 @injectable()
@@ -13,7 +15,7 @@ export class PreferenceService {
   private readonly KEY_APP_ICON = 'appIcon';
 
   constructor(
-    @inject(DiSymbol.Store) private store: ElectronStore,
+    @inject(DISymbol.Store) private store: ElectronStore,
   ) {
     // Apply saved icon on startup
     if (app.isReady()) {
@@ -48,16 +50,17 @@ export class PreferenceService {
   private resolveIconFile(icon: AppIcon, ext: 'icns' | 'png'): string {
     // 通用变量
     const baseDir = app.isPackaged
-      ? path.join(process.resourcesPath, 'assets', 'appIcons')
+      ? path.join(process.resourcesPath, 'appIcons')
       : path.join(__dirname, '..', '..', 'assets', 'appIcons');
 
+
+    // png 时，打开对应的 文件夹，读取 icon_512x512@2x.png
+    const iconsetDir = `${icon}`;
     // icns 文件直接放在根目录下
     if (ext === 'icns') {
-      return path.join(baseDir, `appIcon_${icon}.icns`);
+      return path.join(baseDir, `${icon}`, `icon.icns`);
     }
 
-    // png 时，打开对应的 .iconset 文件夹，读取 icon_512x512@2x.png
-    const iconsetDir = `${icon}.iconset`;
     const pngFileName = 'icon_512x512@2x.png';
 
     return path.join(baseDir, iconsetDir, pngFileName);
@@ -69,72 +72,54 @@ export class PreferenceService {
   private async updateDockIcon(icon: AppIcon) {
     if (process.platform !== 'darwin') return;
 
-    const icnsPath = this.resolveIconFile(icon, 'icns');
     const pngPath = this.resolveIconFile(icon, 'png');
-
+    console.log('从路径加载图标：', pngPath);
     // 先按原来逻辑加载
-    let img = nativeImage.createFromPath(icnsPath);
-    if (img.isEmpty()) {
-      img = nativeImage.createFromPath(pngPath);
-    }
+    const img = nativeImage.createFromPath(pngPath);
+
     if (img.isEmpty()) {
       console.warn(`图标都加载失败，跳过圆角处理`);
       return;
     }
-
     app.dock.setIcon(img);
+    this.overwriteAppIcon(icon);
   }
 
 
-  private async createDockIcon(srcPngPath: string): Promise<Electron.NativeImage> {
-    // 1. 读取并缩放源图到 128×128
-    const baseBuf = await sharp(srcPngPath)
-      .resize(128, 128)
-      .png()
-      .toBuffer();
+  private overwriteAppIcon(icon: AppIcon): void {
+    const srcIcns = this.resolveIconFile(icon, 'icns');
+    console.log('[ICON] 源 icns 路径:', srcIcns);
 
-    // 2. 内联 SVG squircle / 圆角矩形蒙版（rx / ry 控制圆角半径）
-    const maskSvg = `
-    <svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
-      <!-- 连续曲率 squircle 用贝塞尔近似；如嫌复杂亦可改成 rx="20" 的 rect -->
-      <path d="
-        M64 0
-        C99 0 128 29 128 64
-        S99 128 64 128
-        0 99 0 64
-        29 0 64 0Z" fill="white"/>
-        
-    </svg>
-  `;
+    if (!fs.existsSync(srcIcns)) {
+      console.error('[ICON] icns 文件不存在，无法覆盖');
+      return;
+    }
 
-    const maskBuf = await sharp(Buffer.from(maskSvg))
-      .resize(128, 128) // 确保尺寸匹配
-      .png()
-      .toBuffer();
+    // 2. 主图标文件路径（不带扩展名的 CFBundleIconFile = appIcon_default）
+    const destIcns = path.join(
+      process.resourcesPath,
+      'electron.icns',
+    );
 
-    // 3. 组合蒙版 + 15% 阴影
-    // const outBuf = await sharp(baseBuf)
-    //   // 3-1 透明蒙版；非 squircle 区域全部清空
-    //   .composite([{ input: maskBuf, blend: 'dest-in' }])
-    //   // 3-2 统一 Dock 阴影（可按需调节透明度 / 模糊）
-    //   .composite([{
-    //     input: Buffer.from(`
-    //     <svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
-    //       <rect x="0" y="0" width="128" height="128"
-    //             fill="black" opacity="0.15" rx="64" ry="64"/>
-    //     </svg>`),
-    //     blend: 'over',
-    //   }])
-    //   .png()
-    //   .toBuffer();
-
-    const outBuf = await sharp(baseBuf).composite([{ input: maskBuf, blend: 'dest-in' }]).png().toBuffer();
+    try {
+      // 3. 同步复制覆盖并重命名为 electron.icns
+      fs.copyFileSync(srcIcns, destIcns);
 
 
-    // 4. 应用到 Dock
-    const ni = nativeImage.createFromBuffer(outBuf);
-    app.dock.setIcon(ni);
-    return ni;
+      console.log('[ICON] 已覆盖主 icns:', destIcns);
+
+      // 4. 运行时立即更新 Dock 图标
+      const dockImg = nativeImage.createFromPath(destIcns);
+      if (!dockImg.isEmpty() && process.platform === 'darwin') {
+        app.dock.setIcon(dockImg);
+      }
+
+      // 5. 更新所有已打开窗口的图标（Linux/Windows 也可以用这句）
+      const windows = BrowserWindow.getAllWindows();
+      windows.forEach(win => win.setIcon(dockImg));
+    } catch (e) {
+      console.error('[ICON] 覆盖或刷新图标时出错：', e);
+    }
   }
 
 

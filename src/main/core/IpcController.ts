@@ -21,7 +21,7 @@ import path from 'path';
 import chalk from 'chalk';
 import fs from 'fs';
 import crypto from 'node:crypto';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 import { PreferenceService } from '@main/services/PreferenceService';
 import { AppIcon } from '@src/shared/hifiniCookies';
 import { dataPath, dbPath, music_Dir, playerStateDumpFile } from '@main/core/pathConfig';
@@ -33,17 +33,17 @@ import { dataPath, dbPath, music_Dir, playerStateDumpFile } from '@main/core/pat
 @injectable()
 export default class IpcController {
   constructor(
-    @inject(DiSymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
-    @inject(DiSymbol.PlaylistService) private readonly playlistService: PlaylistService,
-    @inject(DiSymbol.Store) private readonly store: Store,
-    @inject(DiSymbol.TrackService) private readonly trackService: TrackService,
-    @inject(DiSymbol.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
-    @inject(DiSymbol.QQMusic) private readonly qqMusic: QQMusic,
-    @inject(DiSymbol.LyricService) private readonly lyricService: LyricService,
-    @inject(DiSymbol.FileCacheManager) private readonly fileCacheManager: FileCacheManager,
-    @inject(DiSymbol.HifiniDownloader) private readonly downloader: HifiniDownloader,
-    @inject(DiSymbol.WindowManager) private readonly windowManager: WindowManager,
-    @inject(DiSymbol.PreferenceService) private readonly preferenceService: PreferenceService,
+    @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
+    @inject(DISymbol.PlaylistService) private readonly playlistService: PlaylistService,
+    @inject(DISymbol.Store) private readonly store: Store,
+    @inject(DISymbol.TrackService) private readonly trackService: TrackService,
+    @inject(DISymbol.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
+    @inject(DISymbol.QQMusic) private readonly qqMusic: QQMusic,
+    @inject(DISymbol.LyricService) private readonly lyricService: LyricService,
+    @inject(DISymbol.FileCacheManager) private readonly fileCacheManager: FileCacheManager,
+    @inject(DISymbol.HifiniDownloader) private readonly downloader: HifiniDownloader,
+    @inject(DISymbol.WindowManager) private readonly windowManager: WindowManager,
+    @inject(DISymbol.PreferenceService) private readonly preferenceService: PreferenceService,
   ) {
   }
 

@@ -9,13 +9,13 @@ import TrackRepository from '@main/database/repository/TrackRepository';
 import Store from 'electron-store';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 
 @injectable()
 class LocalLibraryService {
   constructor(
-    @inject(DiSymbol.TrackRepository) private trackRepository: TrackRepository,
-    @inject(DiSymbol.Store) private store: Store,
+    @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
+    @inject(DISymbol.Store) private store: Store,
     // 注入其他需要的依赖
   ) {
   }

@@ -30,7 +30,7 @@ import { PlaylistRepositoryImpl } from '@main/database/repository/impl/PlaylistR
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
 import { HifiniThreadCacheRepositoryImpl } from '@main/database/repository/impl/HifiniThreadCacheRepositoryImpl';
 import { musicCacheDir } from '@main/core/pathConfig';
-import { DiSymbol } from '@main/di/symbol';
+import { DISymbol } from '@main/di/symbol';
 import { PreferenceService } from '@main/services/PreferenceService';
 import IpcController from '@main/core/IpcController';
 import TrayManager from '@main/core/TrayManager';
@@ -42,112 +42,112 @@ const container = new Container();
 export { container };
 
 // ===== 常量/第三方库实例 =====
-container.bind<Store>(DiSymbol.Store).toConstantValue(new Store({ watch: true }));
+container.bind<Store>(DISymbol.Store).toConstantValue(new Store({ watch: true }));
 container
-  .bind<SequelizeInstance>(DiSymbol.Sequelize)
+  .bind<SequelizeInstance>(DISymbol.Sequelize)
   .toConstantValue(sequelize as SequelizeInstance);
 
 // ===== IPC 控制器（单例） =====
 container
-  .bind<IpcController>(DiSymbol.IpcController)
+  .bind<IpcController>(DISymbol.IpcController)
   .to(IpcController)
   .inSingletonScope();
 // ===== 核心管理器/服务（单例） =====
 container
-  .bind<FileCacheManager>(DiSymbol.FileCacheManager)
+  .bind<FileCacheManager>(DISymbol.FileCacheManager)
   .toConstantValue(
     new FileCacheManager({
       diskCacheDir: musicCacheDir,
     }));
 container
-  .bind<WindowManager>(DiSymbol.WindowManager)
+  .bind<WindowManager>(DISymbol.WindowManager)
   .to(WindowManager)
   .inSingletonScope();
 container
-  .bind<HifiniDownloader>(DiSymbol.HifiniDownloader)
+  .bind<HifiniDownloader>(DISymbol.HifiniDownloader)
   .to(HifiniDownloader)
   .inSingletonScope();
 container
-  .bind<ProxyServerManager>(DiSymbol.ProxyServerManager)
+  .bind<ProxyServerManager>(DISymbol.ProxyServerManager)
   .to(ProxyServerManager)
   .inSingletonScope();
 
 container
-  .bind<TrayManager>(DiSymbol.TrayManager)
+  .bind<TrayManager>(DISymbol.TrayManager)
   .to(TrayManager)
   .inSingletonScope();
 container
-  .bind<ShortCutManager>(DiSymbol.ShortcutManager)
+  .bind<ShortCutManager>(DISymbol.ShortcutManager)
   .to(ShortCutManager)
   .inSingletonScope();
 
 // ===== 业务服务（单例） =====
 container
-  .bind<LocalLibraryService>(DiSymbol.LocalLibraryService)
+  .bind<LocalLibraryService>(DISymbol.LocalLibraryService)
   .to(LocalLibraryService)
   .inSingletonScope();
 container
-  .bind<TrackService>(DiSymbol.TrackService)
+  .bind<TrackService>(DISymbol.TrackService)
   .to(TrackService)
   .inSingletonScope();
 container
-  .bind<PlaylistService>(DiSymbol.PlaylistService)
+  .bind<PlaylistService>(DISymbol.PlaylistService)
   .to(PlaylistService)
   .inSingletonScope();
 container
-  .bind<LyricService>(DiSymbol.LyricService)
+  .bind<LyricService>(DISymbol.LyricService)
   .to(LyricService)
   .inSingletonScope();
 
 container
-  .bind<PreferenceService>(DiSymbol.PreferenceService)
+  .bind<PreferenceService>(DISymbol.PreferenceService)
   .to(PreferenceService)
   .inSingletonScope();
 
 // ===== 内容提供者（单例） =====
 container
-  .bind<HifiniMusic>(DiSymbol.HifiniMusic)
+  .bind<HifiniMusic>(DISymbol.HifiniMusic)
   .to(HifiniMusic)
   .inSingletonScope();
 container
-  .bind<NetEaseCloudMusic>(DiSymbol.NetEaseCloudMusic)
+  .bind<NetEaseCloudMusic>(DISymbol.NetEaseCloudMusic)
   .to(NetEaseCloudMusic)
   .inSingletonScope();
 container
-  .bind<QQMusic>(DiSymbol.QQMusic)
+  .bind<QQMusic>(DISymbol.QQMusic)
   .to(QQMusic)
   .inSingletonScope();
 
 // ===== 数据源 & 仓库（单例） =====
 // DataSource
 container
-  .bind<PlaylistDetailDataSource>(DiSymbol.PlaylistDetailDataSource)
+  .bind<PlaylistDetailDataSource>(DISymbol.PlaylistDetailDataSource)
   .to(PlaylistDetailDataSourceImpl)
   .inSingletonScope();
 container
-  .bind<HifiniThreadCacheDataSource>(DiSymbol.HifiniThreadCacheDataSource)
+  .bind<HifiniThreadCacheDataSource>(DISymbol.HifiniThreadCacheDataSource)
   .to(HifiniThreadCacheDataSourceImpl)
   .inSingletonScope();
 container
-  .bind<PlaylistDataSource>(DiSymbol.PlaylistDataSource)
+  .bind<PlaylistDataSource>(DISymbol.PlaylistDataSource)
   .to(PlaylistDataSourceImpl)
   .inSingletonScope();
 container
-  .bind<TrackDataSource>(DiSymbol.TrackDataSource)
+  .bind<TrackDataSource>(DISymbol.TrackDataSource)
   .to(TrackDataSourceImpl)
   .inSingletonScope();
 
 // Repository
 container
-  .bind<TrackRepository>(DiSymbol.TrackRepository)
+  .bind<TrackRepository>(DISymbol.TrackRepository)
   .to(TrackRepositoryImpl)
   .inSingletonScope();
 container
-  .bind<PlaylistRepository>(DiSymbol.PlaylistRepository)
+  .bind<PlaylistRepository>(DISymbol.PlaylistRepository)
   .to(PlaylistRepositoryImpl)
   .inSingletonScope();
 container
-  .bind<HifiniThreadCacheRepository>(DiSymbol.HifiniThreadCacheRepository)
+  .bind<HifiniThreadCacheRepository>(DISymbol.HifiniThreadCacheRepository)
   .to(HifiniThreadCacheRepositoryImpl)
   .inSingletonScope();
 

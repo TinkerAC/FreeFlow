@@ -33,10 +33,12 @@ export class TrackRecord extends AbstractRecord implements TrackRecordProps {
   modified_at?: Date;
   relative_local_path: string;
 
+  /**
+   * 从 TrackEntity 创建 一个 TrackRecord 持久化对象,滤除id、创建时间、修改时间等
+   * @param entity
+   */
   static fromEntity(entity: TrackEntity): TrackRecord {
     const rec = new TrackRecord();
-    // 依次映射所有 DTO 字段
-    rec.id = entity.id!;
     rec.platform = entity.platform;
     rec.platform_unique_id = entity.platform_unique_id;
     rec.title = entity.title;
@@ -44,9 +46,6 @@ export class TrackRecord extends AbstractRecord implements TrackRecordProps {
     rec.album = entity.album;
     rec.duration = entity.duration;
     rec.cover_src = entity.cover_src;
-    rec.played_count = entity.played_count;
-    rec.created_at = entity.created_at;
-    rec.modified_at = entity.modified_at;
     return rec;
   }
 

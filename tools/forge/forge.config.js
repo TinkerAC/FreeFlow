@@ -7,14 +7,14 @@ module.exports = {
   packagerConfig: {
     // Create asar archive for main, renderer process files
     asar: {
-      'unpack': '**/node_modules/**/*',
+      'unpack': '**/node_modules/sharp/**/*',
     },
     // Set executable name
     executableName: 'FreeFlow',
     // Set application copyright
     appCopyright: 'Copyright (C) 2024 Tinker',
     // Set application icon
-    icon: path.resolve('assets/appIcons/appIcon_default.icns'),
+    icon: path.resolve('assets/appIcons/icon.icns'),
 
     // ⬇️ 新增，把可切换图标文件夹带进最终应用包
     extraResource: ['assets/appIcons'],
