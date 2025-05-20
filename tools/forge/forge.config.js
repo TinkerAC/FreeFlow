@@ -22,18 +22,10 @@ module.exports = {
   // Forge Makers
   makers: [
     {
-      // Squirrel.Windows is a no-prompt, no-hassle, no-admin method of installing
-      // Windows applications and is therefore the most user-friendly you can get.
-      name: '@electron-forge/maker-squirrel',
-      config: {
-        name: 'freeflow',
-      },
-    },
-    {
       // The Zip target builds basic .zip files containing your packaged application.
       // There are no platformContext-specific dependencies for using this maker, and it will run on any platformContext.
       name: '@electron-forge/maker-zip',
-      platforms: ['darwin'],
+      platforms: ['darwin','win32'],
     },
     {
       // The deb target builds .deb packages, which are the standard package format for Debian-based

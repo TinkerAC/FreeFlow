@@ -88,6 +88,7 @@ out/
 
 workspace.xml
 /.idea/
+/pnpm-lock.yaml
 
 
 /data
