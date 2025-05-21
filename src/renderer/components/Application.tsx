@@ -148,8 +148,8 @@ const Application: React.FC = () => {
 
   /* ---------- 6. 搜索结果 ---------- */
   const [searchResults, setSearchResults] = useState<FusionSearchResult>({
-    tracks: [],
-    playlists: [],
+    track_result: [],
+    playlists_result: [],
   });
 
   /* ---------- 7. UI ---------- */

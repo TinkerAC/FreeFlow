@@ -16,8 +16,8 @@ const ModalModifyPlaylist = ({
                              }: ModalModifyPlaylistProps) => {
 
 
-  const [title, setTitle] = useState(musicLibraryController.selectedPlaylistInfo?.title || '');
-  const [description, setDescription] = useState(musicLibraryController.selectedPlaylistInfo?.description || '');
+  const [title, setTitle] = useState(musicLibraryController.activePlaylist?.title || '');
+  const [description, setDescription] = useState(musicLibraryController.activePlaylist?.description || '');
 
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
@@ -27,7 +27,7 @@ const ModalModifyPlaylist = ({
     // 调用 API 更新歌单信息
     await playlistContext.modifyPlaylist(
       {
-        playlist_id: musicLibraryController.selectedPlaylistInfo?.playlist_id,
+        playlist_id: musicLibraryController.activePlaylist?.playlist_id,
         title,
         description,
       },

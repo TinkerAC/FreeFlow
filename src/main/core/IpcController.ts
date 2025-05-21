@@ -92,11 +92,11 @@ export default class IpcController {
 
   /* -------------------------- 歌单相关 --------------------------- */
   private registerPlaylistHandlers(): void {
-    ipcMain.handle('create-playlists', async () => {
+    ipcMain.handle('create-playlists_result', async () => {
       return await this.playlistService.creatNewEmptyPlaylist();
     });
 
-    ipcMain.handle('get-playlists', async () => {
+    ipcMain.handle('get-playlists_result', async () => {
       return await this.playlistService.getPlaylists();
     });
 

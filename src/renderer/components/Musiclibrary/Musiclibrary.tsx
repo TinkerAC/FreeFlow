@@ -24,12 +24,12 @@ export default function MusicLibrary({
 
   const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState<boolean>(true);
   const [playlists, setPlaylists] = useState<PlaylistEntity[]>(musicLibraryController.playlists);
-  const [selectedItem, setSelectedItem] = useState<number>(musicLibraryController.selectedItem || 0);
+  const [selectedItem, setSelectedItem] = useState<number>(musicLibraryController.selectedLibraryItem || 0);
   useEffect(() => {
     const unsubscribe = musicLibraryController.subscribe(() => {
       setIsMusicLibraryCollapsed(musicLibraryController.isMusicLibraryCollapsed);
       setPlaylists(musicLibraryController.playlists);
-      setSelectedItem(musicLibraryController.selectedItem || 0);
+      setSelectedItem(musicLibraryController.selectedLibraryItem || 0);
     });
     return () => {
       unsubscribe();
@@ -91,7 +91,7 @@ export default function MusicLibrary({
                 className="w-12 h-12 m-1 rounded-md cursor-pointer"
                 onClick={() => {
                   musicLibraryController.selectItem(index);
-                  musicLibraryController.selectedPlaylistInfo = item;
+                  musicLibraryController.activePlaylist = item;
                   viewStack.navigate(View.PLAY_LIST);
                 }}
               />
@@ -153,7 +153,7 @@ export default function MusicLibrary({
                   isSelected={selectedItem === index}
                   onClick={() => {
                     musicLibraryController.selectItem(index);
-                    musicLibraryController.selectedPlaylistInfo = item;
+                    musicLibraryController.activePlaylist = item;
                     viewStack.navigate(View.PLAY_LIST);
                   }}
                   onRightClick={(e: { preventDefault: () => void; clientX: number; clientY: number }) =>

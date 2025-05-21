@@ -3,7 +3,7 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 export const playlistApi = {
-  getPlaylists: async (): Promise<PlaylistEntity[]> => ipcRenderer.invoke('get-playlists'),
+  getPlaylists: async (): Promise<PlaylistEntity[]> => ipcRenderer.invoke('get-playlists_result'),
   addPlaylist: async (playlist: PlaylistEntity) => ipcRenderer.invoke('add-playlistContext', playlist),
   modifyPlaylist: async (playlist: {
     playlist_id: number;
@@ -15,10 +15,10 @@ export const playlistApi = {
   removeTrackFromPlaylist: async (playlistId: number, track: TrackEntity) => ipcRenderer.invoke('remove-track-from-playlistContext', playlistId, track),
   createPlaylist: async () => {
     try {
-      await ipcRenderer.invoke('create-playlists');
+      await ipcRenderer.invoke('create-playlists_result');
       console.log('歌单创建成功');
     } catch (error) {
-      console.error('Error in create-playlists:', error);
+      console.error('Error in create-playlists_result:', error);
     }
   },
 

@@ -14,10 +14,10 @@ function useMusicLibrary() {
   const fetchAndCompletePlaylists = async () => {
     try {
       const playlists = await playlistContext.getPlaylists(); // 调用 electron API 获取歌单
-      console.log('playlists:', playlists);
+      console.log('playlists_result:', playlists);
       setPlaylists(playlists); // 更新歌单状态
     } catch (error) {
-      console.error('Failed to fetch and complete playlists:', error);
+      console.error('Failed to fetch and complete playlists_result:', error);
     }
   };
 

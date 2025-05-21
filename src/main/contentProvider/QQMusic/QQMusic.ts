@@ -124,8 +124,8 @@ ${resultSongs
 // 测试代码（可选）
 // (async () => {
 //   const qqMusic = new QQMusic();
-//   const tracks = await qqMusic.searchTracks('银临');
-//   console.log(tracks);
+//   const track_result = await qqMusic.searchTracks('银临');
+//   console.log(track_result);
 //   const trackLink = await qqMusic.getTrackLink('000A1xry3KwdhW');
 //   console.log(trackLink);
 // })();

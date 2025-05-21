@@ -5,9 +5,10 @@ import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 type Subscriber = (playlist: PlaylistEntity, playlists: PlaylistEntity[]) => void;
 
 export default class MusicLibraryController {
+
   playlists: PlaylistEntity[] = [];
-  selectedItem: number | null = null;
-  selectedPlaylistInfo: PlaylistEntity | null = null;
+  selectedLibraryItem: number | null = null;
+  private _activatePlaylistEntity: PlaylistEntity | null = null;
   private subscribers: Subscriber[] = [];
   public isMusicLibraryCollapsed = true;
 
@@ -27,7 +28,7 @@ export default class MusicLibraryController {
   }
 
   private notify() {
-    this.subscribers.forEach(fn => fn(this.selectedPlaylistInfo, this.playlists));
+    this.subscribers.forEach(fn => fn(this._activatePlaylistEntity, this.playlists));
   }
 
   async fetchAndCompletePlaylists() {
@@ -39,13 +40,13 @@ export default class MusicLibraryController {
       }
       this.notify();
     } catch (err) {
-      console.error('Failed to fetch playlists:', err);
+      console.error('Failed to fetch playlists_result:', err);
     }
   }
 
   selectItem(index: number) {
-    this.selectedItem = index;
-    this.selectedPlaylistInfo = this.playlists[index] || null;
+    this.selectedLibraryItem = index;
+    this._activatePlaylistEntity = this.playlists[index] || null;
     this.notify();
   }
 
@@ -57,7 +58,7 @@ export default class MusicLibraryController {
   subscribe(fn: Subscriber) {
     this.subscribers.push(fn);
     // 立即同步一次当前状态
-    fn(this.selectedPlaylistInfo, this.playlists);
+    fn(this._activatePlaylistEntity, this.playlists);
 
     return () => {
       this.subscribers = this.subscribers.filter(s => s !== fn);
@@ -69,4 +70,15 @@ export default class MusicLibraryController {
     this.isMusicLibraryCollapsed = !this.isMusicLibraryCollapsed;
     this.notify();
   }
+
+  public set activePlaylist(playlist: PlaylistEntity) {
+    this._activatePlaylistEntity = playlist;
+    this.notify();
+  }
+
+  public get activePlaylist(): PlaylistEntity | null {
+    return this._activatePlaylistEntity;
+  }
+
+
 }

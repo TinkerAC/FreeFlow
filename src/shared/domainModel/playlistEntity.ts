@@ -48,7 +48,7 @@ export class PlaylistEntity extends AbstractEntity {
 
   /**
    * 根据 JSON 数据构建 PlaylistRecord 实例
-   * 注意：tracks 字段需要在业务层调用 ModelFactory.buildTrackModel 进行转换
+   * 注意：track_result 字段需要在业务层调用 ModelFactory.buildTrackModel 进行转换
    * @param json JSON 数据
    */
   public static build(json: any): PlaylistEntity {
@@ -60,7 +60,7 @@ export class PlaylistEntity extends AbstractEntity {
       json.is_persistent,
       json.description,
       json.created_at,
-      json.tracks, // 这里 tracks 数组需要进一步处理转换成 TrackRecord 实例
+      json.tracks, // 这里 track_result 数组需要进一步处理转换成 TrackRecord 实例
       json.creator,
       json.modified_at,
       json.playlist_cover,

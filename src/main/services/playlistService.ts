@@ -8,6 +8,7 @@ import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { DISymbol } from '@main/di/symbol';
+import chalk from 'chalk';
 
 
 export default class PlaylistService {
@@ -44,6 +45,8 @@ export default class PlaylistService {
       // Step 2: 获取所有歌单的基本信息
       const playlists: PlaylistEntity[] = await this.playlistRepository.findAll();
 
+      console.log(chalk.green("PlaylistService: 获取到歌单数量:", playlists.length));
+
       // Step 3: 获取每个歌单对应的歌曲列表，并过滤无效歌曲
       for (const playlist of playlists) {
 
@@ -70,7 +73,7 @@ export default class PlaylistService {
       );
 
       console.log(`共获取到歌单数量: ${playlists.length}`);
-      // console.log('歌单信息:', playlists);
+      // console.log('歌单信息:', playlists_result);
 
       // Step 5: 获取每首歌曲的详细信息,如 封面、时长等
       return await Promise.all(

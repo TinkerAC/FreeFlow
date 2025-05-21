@@ -22,7 +22,7 @@ if (!fs.existsSync(dataPath)) {
 //存放播放中加载的音乐
 const musicCacheDir = path.join(dataPath, 'fileCache');
 
-const playlistsDir = path.join(dataPath, 'playlists');
+const playlistsDir = path.join(dataPath, 'playlists_result');
 const playerStateDumpFile = path.join(dataPath, 'playerState.json');
 const dbPath = path.join(dataPath, 'database.sqlite');
 

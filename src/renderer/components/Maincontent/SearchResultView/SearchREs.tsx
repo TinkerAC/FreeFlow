@@ -26,7 +26,6 @@ export interface TabbedSearchResultViewProps {
 
   viewStack: MainContentViewStack;
 
-
   musicLibraryController: MusicLibraryController;
 
   /** 播放器实例 */
@@ -64,13 +63,13 @@ function TabbedSearchResultView({
     );
   }
 
-  const { tracks, playlists } = fusionSearchResult;
-  const popularResult = tracks[0] as TrackEntity | undefined;
+  const { track_result, playlists_result } = fusionSearchResult;
+  const popularResult = track_result[0] as TrackEntity | undefined;
 
   //---------------------------------------
   // 无搜索结果
   //---------------------------------------
-  if (tracks.length === 0 && playlists.length === 0) {
+  if (track_result.length === 0 && playlists_result.length === 0) {
     return (
       <div className="text-center text-gray-500 text-xl p-4">没有搜索结果，请尝试其他关键词。</div>
     );
@@ -110,7 +109,7 @@ function TabbedSearchResultView({
 
         {activeTab === 'tracks' && (
           <TracksTab
-            tracks={tracks}
+            tracks={track_result}
             player={player}
             onContextMenu={openContextMenu}
           />
@@ -118,9 +117,9 @@ function TabbedSearchResultView({
 
         {activeTab === 'playlists' && (
           <PlaylistsTab
-            playlists={playlists}
+            playlists={playlists_result}
             onSelectOnlinePlaylist={(playlist: PlaylistEntity) => {
-              musicLibraryController.selectedPlaylistInfo = playlist;
+              musicLibraryController.activePlaylist = playlist;
             }}
             viewStack={viewStack}
           />

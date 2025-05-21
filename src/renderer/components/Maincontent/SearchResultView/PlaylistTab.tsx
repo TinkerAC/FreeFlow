@@ -31,8 +31,8 @@ function PlaylistsTab({ playlists, onSelectOnlinePlaylist, viewStack }: Playlist
             className="w-12 h-12 rounded"
             onClick={async () => {
               const playlist_id = playlist.platform_unique_id;
-              const playlistModel = await searchContext.getNetEaseCloudMusicPlaylistDetail(playlist_id);
-              onSelectOnlinePlaylist(playlistModel);
+              const playlistEntity = await searchContext.getNetEaseCloudMusicPlaylistDetail(playlist_id);
+              onSelectOnlinePlaylist(playlistEntity);
               viewStack.navigate(View.PLAY_LIST);
             }}
           />

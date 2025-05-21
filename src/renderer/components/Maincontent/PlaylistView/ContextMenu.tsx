@@ -79,7 +79,7 @@ function ContextMenu({
           >
             {/* 遍历所有的播放列表 */}
             {musicLibraryController.playlists
-              .filter((playlist) => playlist.playlist_id !== musicLibraryController.selectedPlaylistInfo.playlist_id && playlist.playlist_id !== 0)
+              .filter((playlist) => playlist.playlist_id !== musicLibraryController.activePlaylist.playlist_id && playlist.playlist_id !== 0)
               .map((playlist) => (
                 <div
                   key={playlist.playlist_id}
@@ -106,7 +106,7 @@ function ContextMenu({
       <div
         className="p-2 hover:bg-gray-700 cursor-pointer"
         onClick={async () => {
-          switch (musicLibraryController.selectedPlaylistInfo?.playlist_id) {
+          switch (musicLibraryController.activePlaylist?.playlist_id) {
             case 0:
               await libraryContext.removeTrackFromLibrary(track).then(musicLibraryController.refreshPlaylists);
               break;
@@ -115,7 +115,7 @@ function ContextMenu({
               break;
           }
         }}>
-        从{musicLibraryController.selectedPlaylistInfo?.title}中移除
+        从{musicLibraryController.activePlaylist?.title}中移除
       </div>
 
       <div
