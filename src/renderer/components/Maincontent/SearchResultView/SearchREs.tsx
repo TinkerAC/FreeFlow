@@ -14,20 +14,21 @@ import PopularTab from '@components/Maincontent/SearchResultView/PopularTab';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
+import MusicLibraryController from '@renderer/core/MusicLibraryController';
 
 export interface TabbedSearchResultViewProps {
   /** 外部可选：初始激活的 Tab */
   initialTab?: TabKey;
-  /** 刷新本地歌单 */
-  refreshPlaylists: () => void;
+
   /** 综合搜索结果 */
   fusionSearchResult: FusionSearchResult | null;
-  /** 点击在线歌单回调 */
-  onSelectOnlinePlaylist: (playlistModel: PlaylistEntity) => void;
-  /** 切换主内容区域视图 */
-  setMainContentView: (view: string) => void;
-  /** 已保存的本地歌单 */
-  savedPlaylists: PlaylistEntity[];
+
+  viewStack: MainContentViewStack;
+
+
+  musicLibraryController: MusicLibraryController;
+
   /** 播放器实例 */
   player: Player;
 }
@@ -38,12 +39,10 @@ export interface TabbedSearchResultViewProps {
  */
 function TabbedSearchResultView({
                                   initialTab = 'popular',
-                                  refreshPlaylists,
                                   fusionSearchResult,
-                                  onSelectOnlinePlaylist,
-                                  setMainContentView,
-                                  savedPlaylists,
                                   player,
+                                  viewStack,
+                                  musicLibraryController,
                                 }: TabbedSearchResultViewProps) {
   // ----------------------
   // tab state
@@ -120,8 +119,10 @@ function TabbedSearchResultView({
         {activeTab === 'playlists' && (
           <PlaylistsTab
             playlists={playlists}
-            onSelectOnlinePlaylist={onSelectOnlinePlaylist}
-            setMainContentView={setMainContentView}
+            onSelectOnlinePlaylist={(playlist: PlaylistEntity) => {
+              musicLibraryController.selectedPlaylistInfo = playlist;
+            }}
+            viewStack={viewStack}
           />
         )}
       </div>
@@ -133,11 +134,11 @@ function TabbedSearchResultView({
           y={contextMenu.y}
           track={selectedTrackRef.current}
           player={player}
-          addToLibrary={(track) => libraryContext.addTrackToLibrary(track).then(refreshPlaylists)}
+          addToLibrary={(track) => libraryContext.addTrackToLibrary(track).then(musicLibraryController.refreshPlaylists)}
           addTrackToPlaylist={(track, playlist_id) =>
-            playlistContext.addTrackToPlaylist(track, playlist_id).then(refreshPlaylists)
+            playlistContext.addTrackToPlaylist(track, playlist_id).then(musicLibraryController.refreshPlaylists)
           }
-          playlists={savedPlaylists}
+          playlists={musicLibraryController.playlists}
           handleCloseMenu={closeContextMenu}
         />
       )}

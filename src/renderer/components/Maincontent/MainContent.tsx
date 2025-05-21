@@ -1,6 +1,6 @@
 // file: src/renderer/components/MainContent/MainContent.tsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PlaylistView from '@components/Maincontent/PlaylistView/PlaylistView';
 import ProfileView from '@components/Maincontent/ProfileView/ProfileView';
 import LyricView from '@components/Maincontent/LyricView/LyricView';
@@ -11,19 +11,13 @@ import { MainContentViewStack, StackItem, View } from '@components/Maincontent/M
 import TabbedSearchResultView from '@components/Maincontent/SearchResultView/SearchREs';
 import DebugView from '@components/Maincontent/DebugView/DebugView';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
-import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import MusicLibraryController from '@renderer/core/MusicLibraryController';
 
 interface MainContentProps {
   player: Player | null;
-
   viewStack: MainContentViewStack;
-  selectedPlaylistInfo: PlaylistEntity;
-  setSelectedPlaylistInfo: (playlist: PlaylistEntity) => void;
-
   searchResults: FusionSearchResult;
-  refreshPlaylists: () => void;
-  playlists: PlaylistEntity[];
-
+  musicLibraryController: MusicLibraryController;
   /** 内部切换也走导航栈 */
   setMainContentView: (view: View) => void;
 }
@@ -31,23 +25,19 @@ interface MainContentProps {
 export default function MainContent({
                                       player,
                                       viewStack,
-                                      selectedPlaylistInfo,
-                                      setSelectedPlaylistInfo,
                                       searchResults,
-                                      refreshPlaylists,
-                                      playlists,
-                                      setMainContentView,
+                                      musicLibraryController,
                                     }: MainContentProps) {
+
+
   /** 根据 StackItem 决定渲染哪个视图 */
   const renderView = (item: StackItem): React.ReactNode => {
     switch (item.view) {
       case View.PLAY_LIST:
         return (
           <PlaylistView
-            playListInfo={selectedPlaylistInfo}
             player={player}
-            refreshPlaylist={refreshPlaylists}
-            playlists={playlists}
+            musicLibraryController={musicLibraryController}
           />
         );
 
@@ -55,14 +45,9 @@ export default function MainContent({
         return (
           <TabbedSearchResultView
             player={player}
-            refreshPlaylists={refreshPlaylists}
             fusionSearchResult={searchResults}
-            onSelectOnlinePlaylist={(pl) => {
-              setSelectedPlaylistInfo(pl);
-              setMainContentView(View.PLAY_LIST);
-            }}
-            setMainContentView={setMainContentView}
-            savedPlaylists={playlists}
+            viewStack={viewStack}
+            musicLibraryController={musicLibraryController}
           />
         );
 
@@ -97,8 +82,23 @@ export default function MainContent({
     }
   };
 
-  const items = viewStack.getStack();
-  const pointer = viewStack.getPointer();
+
+  // ----------------------
+
+  const [items, setItems] = useState<StackItem[]>(viewStack.getStack());
+  const [pointer, setPointer] = useState<number>(0);
+
+  useEffect(() => {
+    const unsubscribe = viewStack.subscribe((stack, pointer) => {
+      setItems(stack);
+      setPointer(pointer);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // ----------------------
   return (
     <ContentPanel className="relative h-full w-full">
       {items.map((item, idx) => (

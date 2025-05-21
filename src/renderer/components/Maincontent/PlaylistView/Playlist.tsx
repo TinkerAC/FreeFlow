@@ -3,24 +3,19 @@ import ContextMenu from './ContextMenu';
 import Track from '@components/Maincontent/PlaylistView/Track';
 import Player from '@renderer/core/player/Player';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import MusicLibraryController from '@renderer/core/MusicLibraryController';
 
 interface PlaylistProps {
   filteredTracks: TrackEntity[];
-  playlists: PlaylistEntity[];
-  currentPlaylist: PlaylistEntity;
-  refreshPlaylists: () => void;
   player: Player;
+  musicLibraryController: MusicLibraryController;
 }
 
 
 export function Playlist({
                            filteredTracks,
-                           playlists,
-                           currentPlaylist,
-                           refreshPlaylists = () => {
-                           },
                            player,
+                           musicLibraryController,
                          }: PlaylistProps) {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
@@ -147,10 +142,8 @@ export function Playlist({
           y={contextMenuPosition.y}
           track={selectedTrack} // 使用选中的 track
           handleCloseMenu={handleCloseMenu}
-          playlists={playlists}
           player={player}
-          currentPlaylist={currentPlaylist}
-          refreshPlaylists={refreshPlaylists}
+          musicLibraryController={musicLibraryController}
         />)}
     </div>
   );

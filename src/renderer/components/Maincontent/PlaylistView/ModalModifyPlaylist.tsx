@@ -2,24 +2,22 @@
 
 import React, { useState } from 'react';
 import { playlistContext } from '@renderer/core/electronContextApi';
-import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import MusicLibraryController from '@renderer/core/MusicLibraryController';
 
 
 interface ModalModifyPlaylistProps {
   onClose: () => void;
-  playList: PlaylistEntity;
-  refreshPlaylist: () => void;
+  musicLibraryController: MusicLibraryController;
 }
 
 const ModalModifyPlaylist = ({
                                onClose,
-                               playList,
-                               refreshPlaylist,
+                               musicLibraryController,
                              }: ModalModifyPlaylistProps) => {
 
 
-  const [title, setTitle] = useState(playList.title || '');
-  const [description, setDescription] = useState(playList.description || '');
+  const [title, setTitle] = useState(musicLibraryController.selectedPlaylistInfo?.title || '');
+  const [description, setDescription] = useState(musicLibraryController.selectedPlaylistInfo?.description || '');
 
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
@@ -29,11 +27,11 @@ const ModalModifyPlaylist = ({
     // 调用 API 更新歌单信息
     await playlistContext.modifyPlaylist(
       {
-        playlist_id: playList.playlist_id,
+        playlist_id: musicLibraryController.selectedPlaylistInfo?.playlist_id,
         title,
         description,
       },
-    ).then(refreshPlaylist);
+    ).then(musicLibraryController.refreshPlaylists);
     onClose();
   };
 

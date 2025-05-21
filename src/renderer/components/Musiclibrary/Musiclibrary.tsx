@@ -5,47 +5,44 @@ import ContextMenu from './ContextMenu';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 
 
 interface MusicLibraryProps {
-  className?: string;
-  libraryItems: PlaylistEntity[];
-  selectedItem: number;
-  onSelectItem: (index: number) => void;
-  mainContentView: string;
-  setMainContentView: (view: string) => void;
-  isMusicLibraryCollapsed: boolean;
-  onToggleMusicLibraryCollapsed: () => void;
-  refreshPlaylist: () => void;
+  musicLibraryController: MusicLibraryController;
+  viewStack: MainContentViewStack;
 }
 
 export default function MusicLibrary({
-                                       libraryItems = [],
-                                       selectedItem,
-                                       onSelectItem,
-                                       mainContentView,
-                                       setMainContentView,
-                                       isMusicLibraryCollapsed,
-                                       onToggleMusicLibraryCollapsed,
-                                       refreshPlaylist,
+                                       musicLibraryController,
+                                       viewStack,
                                      }: MusicLibraryProps) {
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [eventPlaylist, setEventPlaylist] = useState<PlaylistEntity | null>(null);
 
-  const handleSelectItem = (index: number) => {
-    if (mainContentView !== 'playlist') {
-      setMainContentView('playlist');
-    }
-    onSelectItem(index);
-  };
+  const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState<boolean>(true);
+  useEffect(() => {
+    const unsubscribe = musicLibraryController.subscribe(() => {
+      setIsMusicLibraryCollapsed(musicLibraryController.isMusicLibraryCollapsed);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [musicLibraryController]);
+
+
+
+
 
   const handleRightClick = (
     e: { preventDefault: () => void; clientX: number; clientY: number },
     playlist_id: number,
   ) => {
     e.preventDefault();
-    setEventPlaylist(libraryItems.find(item => item.playlist_id === playlist_id) || null);
+    setEventPlaylist(
+      musicLibraryController.playlists.find(item => item.playlist_id === playlist_id) || null);
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setContextMenuVisible(true);
   };
@@ -75,12 +72,14 @@ export default function MusicLibrary({
         <div className="flex items-center w-full p-6">
           <i
             className="fas fa-bars cursor-pointer text-2xl"
-            onClick={onToggleMusicLibraryCollapsed}
+            onClick={() => {
+              musicLibraryController.toggleMusicLibraryCollapse();
+            }}
           ></i>
         </div>
         {/* 歌单列表滚动区域 */}
         <div className="flex-1 flex justify-start items-center flex-col overflow-y-auto no-scrollbar">
-          {libraryItems.map((item, index) => (
+          {musicLibraryController.playlists.map((item, index) => (
             <div
               key={item.playlist_id}
               className="w-[4rem] h-[4rem] flex justify-center items-center rounded-lg hover:bg-item-bg-hover"
@@ -89,7 +88,9 @@ export default function MusicLibrary({
                 src={item?.tracks?.[0]?.cover_src || '../assets/default-playlistContext-cover.png'}
                 alt={`${item.title} key:${item.playlist_id}`}
                 className="w-12 h-12 m-1 rounded-md cursor-pointer"
-                onClick={() => handleSelectItem(index)}
+                onClick={() => {
+                  musicLibraryController.selectItem(index);
+                }}
               />
             </div>
           ))}
@@ -105,13 +106,15 @@ export default function MusicLibrary({
           <div className="flex items-center">
             <i
               className="fas fa-bars cursor-pointer text-2xl"
-              onClick={onToggleMusicLibraryCollapsed}
+              onClick={() => {
+                musicLibraryController.toggleMusicLibraryCollapse();
+              }}
             ></i>
             <h1 className="ml-2 text-lg whitespace-nowrap">音乐库</h1>
             <div className="ml-auto flex items-center">
               <i
                 className="fas fa-plus text-xl cursor-pointer"
-                onClick={() => playlistContext.createPlaylist().then(refreshPlaylist)}
+                onClick={() => playlistContext.createPlaylist().then(musicLibraryController.refreshPlaylists)}
               ></i>
             </div>
           </div>
@@ -135,8 +138,8 @@ export default function MusicLibrary({
         {/* 歌单列表滚动区域 */}
         <div className="flex-1 overflow-y-auto px-4 pb-4 no-scrollbar">
           <div className="flex flex-col gap-2">
-            {libraryItems && libraryItems.length !== 0 ? (
-              libraryItems.map((item, index) => (
+            {musicLibraryController.playlists.length !== 0 ? (
+              musicLibraryController.playlists.map((item, index) => (
                 <Item
                   key={item.playlist_id}
                   imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlistContext-cover.png'}
@@ -144,8 +147,12 @@ export default function MusicLibrary({
                   title={item.title}
                   description={item.description}
                   index={index}
-                  isSelected={selectedItem === index}
-                  onClick={() => handleSelectItem(index)}
+                  isSelected={musicLibraryController.selectedItem === index}
+                  onClick={() => {
+                    musicLibraryController.selectItem(index);
+                    musicLibraryController.selectedPlaylistInfo = item;
+                    viewStack.navigate(View.PLAY_LIST);
+                  }}
                   onRightClick={(e: { preventDefault: () => void; clientX: number; clientY: number }) =>
                     handleRightClick(e, item.playlist_id)
                   }
@@ -162,7 +169,7 @@ export default function MusicLibrary({
             y={contextMenuPosition.y}
             eventPlaylist={eventPlaylist}
             handleCloseMenu={handleCloseMenu}
-            refreshPlaylist={refreshPlaylist}
+            musicLibraryController={musicLibraryController}
           />
         )}
       </ContentPanel>

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { libraryContext, playlistContext } from '@renderer/core/electronContextApi';
 import Player from '@renderer/core/player/Player';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import MusicLibraryController from '@renderer/core/MusicLibraryController';
 
 interface ContextMenuProps {
   x: number,
@@ -11,9 +11,7 @@ interface ContextMenuProps {
   track: TrackEntity,
   player: Player;
   handleCloseMenu: () => void,
-  playlists: PlaylistEntity[],
-  currentPlaylist: PlaylistEntity,
-  refreshPlaylists?: () => void
+  musicLibraryController: MusicLibraryController;
 }
 
 function ContextMenu({
@@ -21,10 +19,8 @@ function ContextMenu({
                        y,
                        track,
                        handleCloseMenu,
-                       playlists,
-                       currentPlaylist,
-                       refreshPlaylists,
                        player,
+                       musicLibraryController,
                      }: ContextMenuProps) {
 
   const [showSubMenu, setShowSubMenu] = useState(false); // 控制是否显示子菜单
@@ -82,17 +78,17 @@ function ContextMenu({
             className="p-2"
           >
             {/* 遍历所有的播放列表 */}
-            {playlists
-              .filter((playlist) => playlist.playlist_id !== currentPlaylist.playlist_id && playlist.playlist_id !== 0)
+            {musicLibraryController.playlists
+              .filter((playlist) => playlist.playlist_id !== musicLibraryController.selectedPlaylistInfo.playlist_id && playlist.playlist_id !== 0)
               .map((playlist) => (
                 <div
                   key={playlist.playlist_id}
                   className="p-2 hover:bg-gray-700 cursor-pointer"
                   onClick={() => {
                     if (playlist.playlist_id === 0) {
-                      libraryContext.addTrackToLibrary(track).then(refreshPlaylists);
+                      libraryContext.addTrackToLibrary(track).then(musicLibraryController.refreshPlaylists);
                     } else {
-                      playlistContext.addTrackToPlaylist(track, playlist.playlist_id).then(refreshPlaylists);
+                      playlistContext.addTrackToPlaylist(track, playlist.playlist_id).then(musicLibraryController.refreshPlaylists);
                     }
                     handleCloseMenu();
                   }}
@@ -110,16 +106,16 @@ function ContextMenu({
       <div
         className="p-2 hover:bg-gray-700 cursor-pointer"
         onClick={async () => {
-          switch (currentPlaylist?.playlist_id) {
+          switch (musicLibraryController.selectedPlaylistInfo?.playlist_id) {
             case 0:
-              await libraryContext.removeTrackFromLibrary(track).then(refreshPlaylists);
+              await libraryContext.removeTrackFromLibrary(track).then(musicLibraryController.refreshPlaylists);
               break;
             default:
-              await libraryContext.removeTrackFromLibrary(track).then(refreshPlaylists);
+              await libraryContext.removeTrackFromLibrary(track).then(musicLibraryController.refreshPlaylists);
               break;
           }
         }}>
-        从{currentPlaylist?.title}中移除
+        从{musicLibraryController.selectedPlaylistInfo?.title}中移除
       </div>
 
       <div

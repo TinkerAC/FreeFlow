@@ -5,14 +5,15 @@ import React from 'react';
 import { DefaultCover } from '@components/static';
 import { searchContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 
 interface PlaylistsTabProps {
   playlists: PlaylistEntity[];
   onSelectOnlinePlaylist: (playlistModel: PlaylistEntity) => void;
-  setMainContentView: (view: string) => void;
+  viewStack: MainContentViewStack;
 }
 
-function PlaylistsTab({ playlists, onSelectOnlinePlaylist, setMainContentView }: PlaylistsTabProps) {
+function PlaylistsTab({ playlists, onSelectOnlinePlaylist, viewStack }: PlaylistsTabProps) {
   if (playlists.length === 0) {
     return <div className="text-gray-500">没有找到歌单。</div>;
   }
@@ -32,7 +33,7 @@ function PlaylistsTab({ playlists, onSelectOnlinePlaylist, setMainContentView }:
               const playlist_id = playlist.platform_unique_id;
               const playlistModel = await searchContext.getNetEaseCloudMusicPlaylistDetail(playlist_id);
               onSelectOnlinePlaylist(playlistModel);
-              setMainContentView('playlist');
+              viewStack.navigate(View.PLAY_LIST);
             }}
           />
           <div className="flex-grow overflow-x-clip whitespace-nowrap no-scrollbar">

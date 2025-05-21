@@ -11,27 +11,36 @@ import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModif
 import { DefaultCover } from '@components/static';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import Player from '@renderer/core/player/Player';
+import MusicLibraryController from '@renderer/core/MusicLibraryController';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface PlaylistViewProps {
-  playListInfo: PlaylistEntity;
-  refreshPlaylist: () => void;
-  playlists: PlaylistEntity[];
+  musicLibraryController: MusicLibraryController;
   player: Player;
 }
 
 export function PlaylistView({
-                               playListInfo,
+                               musicLibraryController,
                                player,
-                               refreshPlaylist = () => {
-                               },
-                               playlists,
                              }: PlaylistViewProps) {
-  const coverImage = playListInfo?.tracks?.[0]?.cover_src || DefaultCover;
+
+  const [presentPlaylist, setPresentPlaylist] = useState<PlaylistEntity>(null);
+  useEffect(() => {
+    const unsubscribe = musicLibraryController.subscribe(
+      (playlist: PlaylistEntity) => {
+        setPresentPlaylist(playlist);
+      });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const coverImage = presentPlaylist?.tracks?.[0]?.cover_src || DefaultCover;
   const [backgroundColor, setBackgroundColor] = useState('#333');
   const [modalVisible, setModalVisible] = useState(false);
-  const [filteredTracks, setFilteredTracks] = useState(playListInfo?.tracks || []);
+  const [filteredTracks, setFilteredTracks] = useState(presentPlaylist?.tracks || []);
   const [searchKeyword, setSearchKeyword] = useState('');
+
 
   const openModalModifyPlaylist = () => {
     setModalVisible(true);
@@ -66,8 +75,8 @@ export function PlaylistView({
 
   // 当 playListInfo 变化时更新过滤后的歌曲列表
   useEffect(() => {
-    setFilteredTracks(playListInfo?.tracks || []);
-  }, [playListInfo]);
+    setFilteredTracks(presentPlaylist?.tracks || []);
+  }, [presentPlaylist]);
 
   //保存前端搜索关键词
   useEffect(() => {
@@ -77,13 +86,13 @@ export function PlaylistView({
   //实现了歌曲搜索功能
   const search = (keyword: string) => {
     if (!keyword) {
-      setFilteredTracks(playListInfo?.tracks || []);
+      setFilteredTracks(presentPlaylist?.tracks || []);
       return;
     }
 
     const lowerCaseKeyword = keyword.toLowerCase();
 
-    const result = playListInfo?.tracks?.filter((track) => {
+    const result = presentPlaylist?.tracks?.filter((track) => {
       // 获取歌曲的标题、艺术家和专辑名称
       const title = track.title || '';
       const artist = track.artist || '';
@@ -120,11 +129,11 @@ export function PlaylistView({
             className="text-4xl font-bold mt-2 cursor-pointer hover:underline"
             onClick={openModalModifyPlaylist}
           >
-            {playListInfo?.title || '未知歌单'}
+            {presentPlaylist?.title || '未知歌单'}
           </h1>
           <p className="mt-2 text-gray-400">
-            {playListInfo?.creator || '未知创建者'} •{' '}
-            {playListInfo?.tracks?.length || 0} 首歌曲
+            {presentPlaylist?.creator || '未知创建者'} •{' '}
+            {presentPlaylist?.tracks?.length || 0} 首歌曲
           </p>
         </div>
       </div>
@@ -132,7 +141,7 @@ export function PlaylistView({
       <div className="flex items-center relative z-10 mb-4">
         <button
           className="bg-green-500 p-4 rounded-full text-2xl mr-4 hover:bg-green-600 focus:outline-none"
-          onClick={() => player.replacePlayQueue(playListInfo?.tracks || [])}
+          onClick={() => player.replacePlayQueue(presentPlaylist?.tracks || [])}
           aria-label="播放全部"
         >
           <i className="fas fa-play"></i>
@@ -152,17 +161,16 @@ export function PlaylistView({
         </button>
         {/*是否已经被持久化(以红心显示), 未持久化的歌单可以添加到数据库*/}
         <button>
-          {playListInfo?.is_persistent ? (
+          {presentPlaylist?.is_persistent ? (
             <i className="fas fa-heart text-red-500 text-2xl ml-auto"
                onClick={() => {
-                 playlistContext.removePlaylist(playListInfo?.playlist_id).then(refreshPlaylist);
-                 refreshPlaylist();
+                 playlistContext.removePlaylist(presentPlaylist?.playlist_id).then(musicLibraryController.refreshPlaylists);
                }}
             ></i>
           ) : (
             <i className="far fa-heart text-2xl ml-auto"
                onClick={() => {
-                 playlistContext.addPlaylist(playListInfo).then(refreshPlaylist);
+                 playlistContext.addPlaylist(presentPlaylist).then(musicLibraryController.refreshPlaylists);
                }}
             ></i>
           )}
@@ -184,18 +192,15 @@ export function PlaylistView({
       </div>
 
       <Playlist
-        playlists={playlists}
         filteredTracks={filteredTracks}
         player={player}
-        currentPlaylist={playListInfo}
-        refreshPlaylists={refreshPlaylist}
+        musicLibraryController={musicLibraryController}
       />
 
       {modalVisible && (
         <ModalModifyPlaylist
           onClose={closeModalModifyPlaylist}
-          playList={playListInfo}
-          refreshPlaylist={refreshPlaylist}
+          musicLibraryController={musicLibraryController}
         />
       )}
     </div>

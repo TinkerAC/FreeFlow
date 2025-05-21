@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 
+/**
+ * @deprecated
+ */
 function useMainWindow() {
   const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState(false);
   const [isRightContentVisible, setIsRightContentVisible] = useState(true);
@@ -15,6 +18,7 @@ function useMainWindow() {
         setIsMusicLibraryCollapsed(true);
         setIsRightContentVisible(true);
       } else {
+
         // 如果窗口宽度大于1400px，展开左侧栏并显示右侧栏
         setIsMusicLibraryCollapsed(false);
         setIsRightContentVisible(true);

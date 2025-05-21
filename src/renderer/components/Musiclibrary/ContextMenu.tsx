@@ -1,6 +1,7 @@
 import React from 'react';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import MusicLibraryController from '@renderer/core/MusicLibraryController';
 
 interface ContextMenuProps {
 
@@ -8,7 +9,7 @@ interface ContextMenuProps {
   y: number;
   handleCloseMenu: () => void;
   eventPlaylist: PlaylistEntity;
-  refreshPlaylist: () => void;
+  musicLibraryController: MusicLibraryController;
 
 }
 
@@ -17,7 +18,7 @@ function ContextMenu({
                        y,
                        handleCloseMenu,
                        eventPlaylist,
-                       refreshPlaylist,
+                       musicLibraryController,
 
                      }: ContextMenuProps) {
 
@@ -43,7 +44,7 @@ function ContextMenu({
         style={{ color: '#fff' }}
         onClick={() => {
           console.log(`前端正在删除歌单${eventPlaylist.playlist_id}`);
-          playlistContext.removePlaylist(eventPlaylist.playlist_id).then(refreshPlaylist);
+          playlistContext.removePlaylist(eventPlaylist.playlist_id).then(musicLibraryController.refreshPlaylists);
           handleCloseMenu();
         }}
       >

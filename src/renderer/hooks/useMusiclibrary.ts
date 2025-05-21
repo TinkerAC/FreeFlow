@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import useStateRef from 'react-usestateref';
 import { playlistContext } from '@renderer/core/electronContextApi';
 
-
+/**
+ * @deprecated
+ */
 function useMusicLibrary() {
   const [, setPlaylists, playlistsRef] = useStateRef([]); // 存储所有歌单的状态
   const [, setSelectedItem, selectedItemRef] = useStateRef(null); // 当前选中的歌单索引
