@@ -2,7 +2,7 @@
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
-type Subscriber = (playlist: PlaylistEntity) => void;
+type Subscriber = (playlist: PlaylistEntity, playlists: PlaylistEntity[]) => void;
 
 export default class MusicLibraryController {
   playlists: PlaylistEntity[] = [];
@@ -19,6 +19,7 @@ export default class MusicLibraryController {
         //选中第一个歌单
         if (this.playlists.length > 0) {
           this.selectItem(0);
+          this.notify();
         }
         console.log('歌单加载完成');
       },
@@ -26,7 +27,7 @@ export default class MusicLibraryController {
   }
 
   private notify() {
-    this.subscribers.forEach(fn => fn(this.selectedPlaylistInfo));
+    this.subscribers.forEach(fn => fn(this.selectedPlaylistInfo, this.playlists));
   }
 
   async fetchAndCompletePlaylists() {
@@ -56,7 +57,7 @@ export default class MusicLibraryController {
   subscribe(fn: Subscriber) {
     this.subscribers.push(fn);
     // 立即同步一次当前状态
-    fn(this.selectedPlaylistInfo);
+    fn(this.selectedPlaylistInfo, this.playlists);
 
     return () => {
       this.subscribers = this.subscribers.filter(s => s !== fn);

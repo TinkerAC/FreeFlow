@@ -23,17 +23,18 @@ export default function MusicLibrary({
   const [eventPlaylist, setEventPlaylist] = useState<PlaylistEntity | null>(null);
 
   const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState<boolean>(true);
+  const [playlists, setPlaylists] = useState<PlaylistEntity[]>(musicLibraryController.playlists);
+  const [selectedItem, setSelectedItem] = useState<number>(musicLibraryController.selectedItem || 0);
   useEffect(() => {
     const unsubscribe = musicLibraryController.subscribe(() => {
       setIsMusicLibraryCollapsed(musicLibraryController.isMusicLibraryCollapsed);
+      setPlaylists(musicLibraryController.playlists);
+      setSelectedItem(musicLibraryController.selectedItem || 0);
     });
     return () => {
       unsubscribe();
     };
   }, [musicLibraryController]);
-
-
-
 
 
   const handleRightClick = (
@@ -42,7 +43,7 @@ export default function MusicLibrary({
   ) => {
     e.preventDefault();
     setEventPlaylist(
-      musicLibraryController.playlists.find(item => item.playlist_id === playlist_id) || null);
+      playlists.find(item => item.playlist_id === playlist_id) || null);
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setContextMenuVisible(true);
   };
@@ -79,7 +80,7 @@ export default function MusicLibrary({
         </div>
         {/* 歌单列表滚动区域 */}
         <div className="flex-1 flex justify-start items-center flex-col overflow-y-auto no-scrollbar">
-          {musicLibraryController.playlists.map((item, index) => (
+          {playlists.map((item, index) => (
             <div
               key={item.playlist_id}
               className="w-[4rem] h-[4rem] flex justify-center items-center rounded-lg hover:bg-item-bg-hover"
@@ -90,6 +91,8 @@ export default function MusicLibrary({
                 className="w-12 h-12 m-1 rounded-md cursor-pointer"
                 onClick={() => {
                   musicLibraryController.selectItem(index);
+                  musicLibraryController.selectedPlaylistInfo = item;
+                  viewStack.navigate(View.PLAY_LIST);
                 }}
               />
             </div>
@@ -138,8 +141,8 @@ export default function MusicLibrary({
         {/* 歌单列表滚动区域 */}
         <div className="flex-1 overflow-y-auto px-4 pb-4 no-scrollbar">
           <div className="flex flex-col gap-2">
-            {musicLibraryController.playlists.length !== 0 ? (
-              musicLibraryController.playlists.map((item, index) => (
+            {playlists.length !== 0 ? (
+              playlists.map((item, index) => (
                 <Item
                   key={item.playlist_id}
                   imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlistContext-cover.png'}
@@ -147,7 +150,7 @@ export default function MusicLibrary({
                   title={item.title}
                   description={item.description}
                   index={index}
-                  isSelected={musicLibraryController.selectedItem === index}
+                  isSelected={selectedItem === index}
                   onClick={() => {
                     musicLibraryController.selectItem(index);
                     musicLibraryController.selectedPlaylistInfo = item;
