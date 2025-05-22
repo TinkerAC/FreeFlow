@@ -44,7 +44,7 @@ function ContextMenu({
         style={{ color: '#fff' }}
         onClick={() => {
           console.log(`前端正在删除歌单${eventPlaylist.playlist_id}`);
-          playlistContext.removePlaylist(eventPlaylist.playlist_id).then(musicLibraryController.refreshPlaylists);
+          playlistContext.removePlaylist(eventPlaylist.playlist_id).then(()=>{musicLibraryController.refreshPlaylists();});
           handleCloseMenu();
         }}
       >

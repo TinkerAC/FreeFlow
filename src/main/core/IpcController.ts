@@ -92,11 +92,11 @@ export default class IpcController {
 
   /* -------------------------- 歌单相关 --------------------------- */
   private registerPlaylistHandlers(): void {
-    ipcMain.handle('create-playlists_result', async () => {
+    ipcMain.handle('create-playlist', async () => {
       return await this.playlistService.creatNewEmptyPlaylist();
     });
 
-    ipcMain.handle('get-playlists_result', async () => {
+    ipcMain.handle('get-playlist', async () => {
       return await this.playlistService.getPlaylists();
     });
 
@@ -186,15 +186,15 @@ export default class IpcController {
       ]);
 
       return {
-        tracks: [...hifini, ...neteaseTracks, ...qqTracks],
-        playlists: neteasePlaylists,
+        track_result: [...hifini, ...neteaseTracks, ...qqTracks],
+        playlist_result: neteasePlaylists,
       };
     });
 
     ipcMain.handle(
       'get-netease-cloud-music-playlistContext-detail',
       async (_evt: IpcMainInvokeEvent, playlistId: string) => {
-        return await this.netEaseCloudMusic.getPlaylistDetail(playlistId);
+        return await this.netEaseCloudMusic.getFullPlaylist(playlistId);
       },
     );
   }

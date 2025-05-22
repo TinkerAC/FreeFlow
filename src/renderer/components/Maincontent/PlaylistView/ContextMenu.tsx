@@ -86,9 +86,13 @@ function ContextMenu({
                   className="p-2 hover:bg-gray-700 cursor-pointer"
                   onClick={() => {
                     if (playlist.playlist_id === 0) {
-                      libraryContext.addTrackToLibrary(track).then(musicLibraryController.refreshPlaylists);
+                      libraryContext.addTrackToLibrary(track).then(() => {
+                        musicLibraryController.refreshPlaylists();
+                      });
                     } else {
-                      playlistContext.addTrackToPlaylist(track, playlist.playlist_id).then(musicLibraryController.refreshPlaylists);
+                      playlistContext.addTrackToPlaylist(track, playlist.playlist_id).then(() => {
+                        musicLibraryController.refreshPlaylists();
+                      });
                     }
                     handleCloseMenu();
                   }}
@@ -108,10 +112,14 @@ function ContextMenu({
         onClick={async () => {
           switch (musicLibraryController.activePlaylist?.playlist_id) {
             case 0:
-              await libraryContext.removeTrackFromLibrary(track).then(musicLibraryController.refreshPlaylists);
+              await libraryContext.removeTrackFromLibrary(track).then(() => {
+                musicLibraryController.refreshPlaylists();
+              });
               break;
             default:
-              await libraryContext.removeTrackFromLibrary(track).then(musicLibraryController.refreshPlaylists);
+              await libraryContext.removeTrackFromLibrary(track).then(() => {
+                musicLibraryController.refreshPlaylists();
+              });
               break;
           }
         }}>

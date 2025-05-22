@@ -8,7 +8,7 @@ import ContentPanel from '@components/ContentPanel/ContentPenal';
 
 import Player from '@renderer/core/player/Player';
 import { MainContentViewStack, StackItem, View } from '@components/Maincontent/MainContentViewStack';
-import TabbedSearchResultView from '@components/Maincontent/SearchResultView/SearchREs';
+import TabbedSearchResultView from '@components/Maincontent/SearchResultView/TabbedSearchResultView';
 import DebugView from '@components/Maincontent/DebugView/DebugView';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
 import MusicLibraryController from '@renderer/core/MusicLibraryController';

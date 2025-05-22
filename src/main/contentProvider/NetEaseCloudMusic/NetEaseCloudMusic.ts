@@ -126,39 +126,54 @@ ${resultSongs
   }
 
   /**
-   * 获取歌单详情
+   * 获取歌单信息,只包含基本信息,不包含歌曲列表
+   * @param playlist_id
+   */
+  public async getFullPlaylist(playlist_id: string): Promise<PlaylistEntity> {
+    const url = `${this.base_url}playlist/detail?id=${playlist_id}`;
+    const response = await axios.get(url);
+    const data = response.data;
+    const playlist = data.playlist;
+    console.log('获取到的歌单基本信息:', playlist);
+    const trackEntities = await this.getPlaylistDetail(playlist_id);
+    console.debug('获取到的歌曲列表:', trackEntities);
+    return PlaylistEntity.build({
+      platform: Platform.NET_EASE_CLOUD_MUSIC,
+      platform_unique_id: playlist.id.toString(),
+      title: playlist.name,
+      description: playlist.description,
+      created_at: new Date(playlist.createTime),
+      tracks: trackEntities,
+      creator: playlist.creator.nickname,
+      modified_at: new Date(playlist.updateTime),
+      cover_src: playlist.coverImgUrl,
+    });
+  }
+
+  /**
+   * 获取歌单中的所有歌曲
    * @param playlist_id 歌单 ID
    * @param limit 数量（默认值 1000）
    * @param offset 偏移量（默认值 0）
    */
-  public async getPlaylistDetail(playlist_id: string, limit: number = 1000, offset: number = 0): Promise<PlaylistEntity> {
+  private async getPlaylistDetail(playlist_id: string, limit: number = 1000, offset: number = 0): Promise<TrackEntity[]> {
     const url = `${this.base_url}/playlist/track/all?id=${playlist_id}&limit=${limit}&offset=${offset}`;
     const response = await axios.get(url);
     const data: Result = response.data;
     const songs = data.songs;
 
-    return PlaylistEntity.build({
-      platform: Platform.NET_EASE_CLOUD_MUSIC,
-      platform_unique_id: playlist_id,
-      title: '',
-      description: '',
-      created_at: new Date(),
-      tracks: songs.map((song) => {
-        return NetEaseCloudMusicTrackModel.build({
-          platform: Platform.NET_EASE_CLOUD_MUSIC,
-          platform_unique_id: song.id.toString(),
-          title: song.name,
-          artist: song.ar.map((artist) => artist.name).join('/'),
-          album: song.al.name,
-          duration: song.dt / 1000,
-          cover_src: song.al.picUrl,
-          created_at: new Date(),
-          fee: song.fee,
-        });
-      }),
-      creator: '',
-      modified_at: new Date(),
-      cover_src: '',
+    return songs.map((song) => {
+      return NetEaseCloudMusicTrackModel.build({
+        platform: Platform.NET_EASE_CLOUD_MUSIC,
+        platform_unique_id: song.id.toString(),
+        title: song.name,
+        artist: song.ar.map((artist) => artist.name).join('/'),
+        album: song.al.name,
+        duration: song.dt / 1000,
+        cover_src: song.al.picUrl,
+        created_at: new Date(),
+        fee: song.fee,
+      });
     });
   }
 
@@ -166,7 +181,7 @@ ${resultSongs
    * 判断歌曲是否可以免费播放
    * @param song 歌曲数据
    */
-  isFree(song: any): boolean {
+  isFree(song:  any): boolean {
     // fee 为 0 或 8 时，表示歌曲可以免费播放
     return song.fee === 0 || song.fee === 8;
   }

@@ -62,7 +62,7 @@ Playlist.init(
   },
   {
     sequelize,
-    tableName: 'playlists_result',
+    tableName: 'playlists',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'modified_at',

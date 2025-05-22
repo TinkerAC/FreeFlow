@@ -40,7 +40,7 @@ export default class MusicLibraryController {
       }
       this.notify();
     } catch (err) {
-      console.error('Failed to fetch playlists_result:', err);
+      console.error('Failed to fetch playlist_result:', err);
     }
   }
 
@@ -52,7 +52,11 @@ export default class MusicLibraryController {
 
   refreshPlaylists() {
     console.log('正在重载歌单...');
-    this.fetchAndCompletePlaylists();
+    this.fetchAndCompletePlaylists().then(() => {
+      console.log('歌单重载完成');
+      this.notify();
+    });
+
   }
 
   subscribe(fn: Subscriber) {

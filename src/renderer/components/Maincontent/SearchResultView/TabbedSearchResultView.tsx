@@ -1,6 +1,3 @@
-// ------------------------------
-// File: src/renderer/components/SearchResultView/TabbedSearchResultView.tsx
-// ------------------------------
 import React, { useState } from 'react';
 import useStateRef from 'react-usestateref';
 import Player from '@renderer/core/player/Player';
@@ -13,7 +10,6 @@ import TracksTab from '@components/Maincontent/SearchResultView/TrackTab';
 import PopularTab from '@components/Maincontent/SearchResultView/PopularTab';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
-import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
 import MusicLibraryController from '@renderer/core/MusicLibraryController';
 
@@ -49,7 +45,7 @@ function TabbedSearchResultView({
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
 
   // ----------------------
-  // context‑menu state
+  // context-menu state
   // ----------------------
   const [contextMenu, setContextMenu] = useStateRef<{ x: number; y: number } | null>(null);
   const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackEntity | null>(null);
@@ -63,17 +59,23 @@ function TabbedSearchResultView({
     );
   }
 
-  const { track_result, playlists_result } = fusionSearchResult;
-  const popularResult = track_result[0] as TrackEntity | undefined;
+  // 解构并赋默认空数组，避免未定义时报错
+  const {
+    track_result = [],
+    playlist_result = [],
+  } = fusionSearchResult;
 
-  //---------------------------------------
-  // 无搜索结果
-  //---------------------------------------
-  if (track_result.length === 0 && playlists_result.length === 0) {
-    return (
-      <div className="text-center text-gray-500 text-xl p-4">没有搜索结果，请尝试其他关键词。</div>
-    );
-  }
+
+  const popularResult = track_result[0];
+  //
+  // //---------------------------------------
+  // // 无搜索结果
+  // //---------------------------------------
+  // if (track_result.length === 0 && playlist_result.length === 0) {
+  //   return (
+  //     <div className="text-center text-gray-500 text-xl p-4">没有搜索结果，请尝试其他关键词。</div>
+  //   );
+  // }
 
   //---------------------------------------
   // 右键菜单逻辑
@@ -117,10 +119,8 @@ function TabbedSearchResultView({
 
         {activeTab === 'playlists' && (
           <PlaylistsTab
-            playlists={playlists_result}
-            onSelectOnlinePlaylist={(playlist: PlaylistEntity) => {
-              musicLibraryController.activePlaylist = playlist;
-            }}
+            playlists={playlist_result}
+            musicLibraryController={musicLibraryController}
             viewStack={viewStack}
           />
         )}
@@ -149,5 +149,3 @@ function TabbedSearchResultView({
 }
 
 export default TabbedSearchResultView;
-
-

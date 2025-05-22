@@ -7,5 +7,5 @@ import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
  */
 export interface FusionSearchResult {
   track_result: TrackEntity[];
-  playlists_result: PlaylistEntity[];
+  playlist_result: PlaylistEntity[];
 }

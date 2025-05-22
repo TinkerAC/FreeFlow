@@ -13,7 +13,6 @@ async function getSearchResults(searchTerm: string) {
 }
 
 interface TopBarProps {
-  className?: string;
   setSearchResults: (results: FusionSearchResult) => void;
   mainContentViewStack: MainContentViewStack;
 }
@@ -57,9 +56,11 @@ export default function TopBar({
     if (mainContentViewStack.currentView !== View.SEARCH_RESULTS) {
       mainContentViewStack.navigate(View.SEARCH_RESULTS);
     }
-    getSearchResults(term).then((res) => setSearchResults(res));
+    getSearchResults(term).then((res) => {
+      setSearchResults(res);
+      console.debug('已设置搜索结果:', res);
+    });
   };
-
   return (
     <div className={`top-bar sticky top-0 w-full`}>
       {/* macOS 红绿灯 */}
@@ -137,4 +138,4 @@ export default function TopBar({
       </div>
     </div>
   );
-}
+};

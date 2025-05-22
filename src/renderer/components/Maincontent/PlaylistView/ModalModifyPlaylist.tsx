@@ -31,7 +31,9 @@ const ModalModifyPlaylist = ({
         title,
         description,
       },
-    ).then(musicLibraryController.refreshPlaylists);
+    ).then(() => {
+      musicLibraryController.refreshPlaylists();
+    });
     onClose();
   };
 

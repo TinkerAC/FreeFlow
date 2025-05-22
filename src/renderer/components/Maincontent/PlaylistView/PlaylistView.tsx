@@ -27,9 +27,10 @@ export function PlaylistView({
   const [presentPlaylist, setPresentPlaylist] = useState<PlaylistEntity>(null);
   useEffect(() => {
     const unsubscribe = musicLibraryController.subscribe(
-      (playlist: PlaylistEntity) => {
-        setPresentPlaylist(playlist);
-      });
+      () => {
+        setPresentPlaylist(musicLibraryController.activePlaylist);
+      },
+    );
     return () => {
       unsubscribe();
     };
@@ -164,13 +165,18 @@ export function PlaylistView({
           {presentPlaylist?.is_persistent ? (
             <i className="fas fa-heart text-red-500 text-2xl ml-auto"
                onClick={() => {
-                 playlistContext.removePlaylist(presentPlaylist?.playlist_id).then(musicLibraryController.refreshPlaylists);
+                 playlistContext.removePlaylist(presentPlaylist?.playlist_id).then(() => {
+                   musicLibraryController.refreshPlaylists();
+                 });
                }}
             ></i>
           ) : (
             <i className="far fa-heart text-2xl ml-auto"
                onClick={() => {
-                 playlistContext.addPlaylist(presentPlaylist).then(musicLibraryController.refreshPlaylists);
+                 playlistContext.addPlaylist(presentPlaylist).then(() => {
+                     musicLibraryController.refreshPlaylists();
+                   },
+                 );
                }}
             ></i>
           )}
