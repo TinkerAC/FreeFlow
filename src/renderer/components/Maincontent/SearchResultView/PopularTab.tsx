@@ -2,12 +2,12 @@
 // File: src/renderer/components/SearchResultView/tabs/PopularTab.tsx
 // ------------------------------
 import React from 'react';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 interface PopularTabProps {
   track?: TrackEntity;
-  player: Player;
+  player: PlayerController;
   onContextMenu: (e: React.MouseEvent<HTMLDivElement, MouseEvent>, track: TrackEntity) => void;
 }
 

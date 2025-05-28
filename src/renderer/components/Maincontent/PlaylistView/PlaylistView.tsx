@@ -10,13 +10,13 @@ import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
 import { DefaultCover } from '@components/static';
 import { playlistContext } from '@renderer/core/electronContextApi';
-import Player from '@renderer/core/player/Player';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import PlayerController from '@renderer/core/controller/PlayerController';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 interface PlaylistViewProps {
   musicLibraryController: MusicLibraryController;
-  player: Player;
+  player: PlayerController;
 }
 
 export function PlaylistView({

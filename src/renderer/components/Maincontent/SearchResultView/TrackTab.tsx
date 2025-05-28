@@ -2,13 +2,13 @@
 // File: src/renderer/components/SearchResultView/tabs/TracksTab.tsx
 // ------------------------------
 import React from 'react';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 interface TracksTabProps {
   tracks: TrackEntity[];
-  player: Player;
+  player: PlayerController;
   onContextMenu: (e: React.MouseEvent<HTMLDivElement, MouseEvent>, track: TrackEntity) => void;
 }
 

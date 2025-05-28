@@ -1,5 +1,5 @@
-import { QueueDump } from '@renderer/core/player/PlayQueue';
-import { PlaybackMode } from '@renderer/core/player/Player';
+import { QueueDump } from '@renderer/core/controller/PlayQueue';
+import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
 
 /**
  * PlayerState 类：表示播放器的当前状态

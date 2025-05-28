@@ -17,7 +17,7 @@ export class PlaylistDataSourceImpl implements PlaylistDataSource {
   async findAll(): Promise<PlaylistRecord[]> {
     const rows = await Playlist.findAll();
 
-    console.debug('findAll rows:', rows);
+    // console.debug('findAll rows:', rows);
     return rows.map(r => Object.assign(new PlaylistRecord(), r.get({ plain: true })));
   }
 

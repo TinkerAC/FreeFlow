@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { lyricsContext } from '@renderer/core/electronContextApi';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 
 interface LyricViewProps {
-  player: Player;
+  player: PlayerController;
   viewStack?: MainContentViewStack;
 }
 

@@ -6,7 +6,7 @@ import { DefaultCover } from '@components/static';
 import { searchContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 
 interface PlaylistsTabProps {
   playlists: PlaylistEntity[];

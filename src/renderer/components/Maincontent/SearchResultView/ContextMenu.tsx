@@ -1,6 +1,6 @@
 // src/renderer/components/SearchResultView/ContextMenu.tsx
 import React, { useState } from 'react';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
@@ -12,7 +12,7 @@ interface ContextMenuProps {
   handleCloseMenu: () => void;
   addTrackToPlaylist: (track: TrackEntity, playlistId: number) => void;
   playlists: PlaylistEntity[];
-  player: Player;
+  player: PlayerController;
 }
 
 function ContextMenu({

@@ -19,7 +19,7 @@ function savePlayer(playerStateDumpFile: string
 ) {
 
   try {
-    console.log('Player 转储文件: ', playerStateDumpFile);
+    console.log('PlayerController 转储文件: ', playerStateDumpFile);
     fs.writeFileSync(playerStateDumpFile, JSON.stringify(playerState), 'utf-8');
     console.log('播放器状态已保存:', playerState);
   } catch (e) {

@@ -23,7 +23,7 @@ module.exports = {
   makers: [
     {
       // The Zip target builds basic .zip files containing your packaged application.
-      // There are no platformContext-specific dependencies for using this maker, and it will run on any platformContext.
+      // There are no platform-specific dependencies for using this maker, and it will run on any platform.
       name: '@electron-forge/maker-zip',
       platforms: ['darwin','win32'],
     },

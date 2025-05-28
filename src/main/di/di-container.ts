@@ -8,7 +8,7 @@ import { FileCacheManager } from '@main/core/FileCacheManager';
 import ProxyServerManager from '@main/core/AudioProxyServer';
 import LocalLibraryService from '@main/services/localLibraryService';
 import TrackService from '@main/services/TrackService';
-import PlaylistService from '@main/services/playlistService';
+import PlaylistService from '@main/services/PlaylistService';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { WindowManager } from '@main/window/windowManager';

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { playlistContext } from '@renderer/core/electronContextApi';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 
 
 interface ModalModifyPlaylistProps {

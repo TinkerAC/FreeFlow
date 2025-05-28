@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
 
 interface DebugViewProps {
-  player: Player;
+  player: PlayerController;
   mainContentStack: MainContentViewStack;
 }
 
 /**
- * DebugView – A dark‑theme debug panel for Player and MainContentViewStack.
+ * DebugView – A dark‑theme debug panel for PlayerController and MainContentViewStack.
  *
  * • Subscribes to `change` events (if exposed) to keep the UI in sync.
  * • Falls back to shallow‑copy snapshots when event bus isn’t available.
@@ -19,7 +19,7 @@ const DebugView: React.FC<DebugViewProps> = ({ player, mainContentStack }) => {
   const [playerSnapshot, setPlayerSnapshot] = useState(() => ({ ...player }));
   const [stackSnapshot, setStackSnapshot] = useState(() => ({ ...mainContentStack }));
 
-  /* Player event → snapshot */
+  /* PlayerController event → snapshot */
   useEffect(() => {
     const handlePlayerChange = () => setPlayerSnapshot({ ...player });
     if (typeof (player as any).on === 'function') {
@@ -54,7 +54,7 @@ const DebugView: React.FC<DebugViewProps> = ({ player, mainContentStack }) => {
 
   return (
     <div className="w-full h-full overflow-y-auto p-6 bg-gray-900 text-gray-100 font-mono">
-      {/* Player Debug Block */}
+      {/* PlayerController Debug Block */}
       <section
         className="w-full lg:w-3/4 xl:w-1/2 mx-auto mb-8 bg-gray-800/80 backdrop-blur rounded-xl shadow-lg p-6 space-y-3">
         <h2 className="text-2xl font-semibold text-purple-400">Player Snapshot</h2>

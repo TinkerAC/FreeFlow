@@ -6,15 +6,15 @@ import ProfileView from '@components/Maincontent/ProfileView/ProfileView';
 import LyricView from '@components/Maincontent/LyricView/LyricView';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
 
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { MainContentViewStack, StackItem, View } from '@components/Maincontent/MainContentViewStack';
 import TabbedSearchResultView from '@components/Maincontent/SearchResultView/TabbedSearchResultView';
 import DebugView from '@components/Maincontent/DebugView/DebugView';
-import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 
 interface MainContentProps {
-  player: Player | null;
+  player: PlayerController | null;
   viewStack: MainContentViewStack;
   searchResults: FusionSearchResult;
   musicLibraryController: MusicLibraryController;

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
 import { DefaultCover } from '@components/static';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 interface TrackProps {
   track: TrackEntity;
   index: number;
   onRightClick: (e: React.MouseEvent<HTMLTableRowElement>, track: TrackEntity) => void;
-  player: Player;
+  player: PlayerController;
 }
 
 

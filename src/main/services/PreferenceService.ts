@@ -7,9 +7,6 @@ import { DISymbol } from '@main/di/symbol';
 import { AppIcon } from '@src/shared/hifiniCookies';
 import fs from 'fs';
 
-// import sharp from 'sharp';
-
-
 @injectable()
 export class PreferenceService {
   private readonly KEY_APP_ICON = 'appIcon';

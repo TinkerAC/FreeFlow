@@ -3,7 +3,6 @@ import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import TrackRepository from '@main/database/repository/TrackRepository';
 import { fileExists } from '@src/utils/helpers';
 import TrackService from '@main/services/TrackService';
-import ElectronStore from 'electron-store';
 import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
@@ -13,7 +12,6 @@ import chalk from 'chalk';
 
 export default class PlaylistService {
   constructor(
-    @inject(DISymbol.Store) private store: ElectronStore,
     @inject(DISymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
     @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
     @inject(DISymbol.TrackService) private trackService: TrackService,
@@ -140,7 +138,7 @@ export default class PlaylistService {
 
       return track.id;
     } catch (error) {
-      console.error('Error in add-track-to-playlistContext:', error);
+      console.error('Error in add-track-to-playlist:', error);
       throw error;
     }
   }

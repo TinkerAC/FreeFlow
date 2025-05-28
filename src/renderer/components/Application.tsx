@@ -10,13 +10,14 @@ import RightContent from '@components/RightContent/RightContent';
 import PlayerBar from '@components/Playerbar/PlayerBar';
 
 import { playerContext, shortcutContext } from '@renderer/core/electronContextApi';
-import Player, { PlaybackMode } from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import { PlayerState } from '@src/shared/domainModel/playerState';
-import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import chalk from 'chalk';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
-import MainWindowService from '@renderer/core/MainWindowService';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
+import MainWindowController from '@renderer/core/controller/MainWindowController';
+import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
 
 const Application: React.FC = () => {
   /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
@@ -25,9 +26,9 @@ const Application: React.FC = () => {
     musicServiceRef.current = new MusicLibraryController();
   }
 
-  const mainWindowServiceRef = useRef<MainWindowService | null>(null);
+  const mainWindowServiceRef = useRef<MainWindowController | null>(null);
   if (mainWindowServiceRef.current === null) {
-    mainWindowServiceRef.current = new MainWindowService();
+    mainWindowServiceRef.current = new MainWindowController();
   }
 
   const viewStackRef = useRef<MainContentViewStack | null>(null);
@@ -35,7 +36,7 @@ const Application: React.FC = () => {
     viewStackRef.current = new MainContentViewStack({ view: 'playlist' as View });
   }
 
-  /* ---------- 3. 绑定 MainWindowService 状态 ---------- */
+  /* ---------- 3. 绑定 MainWindowController 状态 ---------- */
   const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState(
     musicServiceRef.current.isMusicLibraryCollapsed,
   );
@@ -65,7 +66,7 @@ const Application: React.FC = () => {
 
   /* ---------- 5. 播放器逻辑 ---------- */
   const audioRef = useRef<HTMLAudioElement>(null);
-  const playerInstanceRef = useRef<Player | null>(null);
+  const playerInstanceRef = useRef<PlayerController | null>(null);
   const [playerState, setPlayerState] = useState<PlayerState>({
     queue: { queue: [], indexList: [], currentIndex: 0 },
     volume: 0.5,
@@ -76,12 +77,19 @@ const Application: React.FC = () => {
     currentTime: 0,
   });
 
+
   useEffect(() => {
     const initPlayer = async () => {
+
+
       const dump = await playerContext.getPlayerStateFromMain();
       if (audioRef.current && !playerInstanceRef.current) {
-        const player = new Player(audioRef.current);
-        player.onStateChange = st => setPlayerState(st);
+        const player = new PlayerController(audioRef.current);
+
+        player.subscribe((st: PlayerState) => {
+          setPlayerState(st);
+        });
+
         playerInstanceRef.current = player;
         if (dump) {
           try {
@@ -93,7 +101,9 @@ const Application: React.FC = () => {
         console.log(chalk.green('播放器初始化完成!'));
       }
     };
-    initPlayer();
+    initPlayer().then(
+      () => console.info(chalk.green('播放器初始化成功')),
+    );
   }, [audioRef.current]);
 
   useEffect(() => {

@@ -2,11 +2,11 @@ import React from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { DefaultCover } from '@components/static';
 import ProgressBar from '@components/ProgressBar';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 
 interface PlayerBarProps {
-  player: Player;
+  player: PlayerController;
   mainContentStack: MainContentViewStack;
   onToggleRightContent: () => void;
 }

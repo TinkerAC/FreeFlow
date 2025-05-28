@@ -1,7 +1,7 @@
 import { app, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import { inject, injectable } from 'inversify';
-import PlaylistService from '@main/services/playlistService';
-import { loadPlayer, savePlayer } from '@main/services/playerService';
+import PlaylistService from '@main/services/PlaylistService';
+import { loadPlayer, savePlayer } from '@main/services/PlayerService';
 
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import TrackService from '@main/services/TrackService';
@@ -64,8 +64,17 @@ export default class IpcController {
 
   /* -------------------------- 系统相关 --------------------------- */
   private registerSystemHandlers(): void {
-    ipcMain.handle('get-systemContext', async () => process.platform);
+    ipcMain.handle('get-system', async () => process.platform);
+
+    ipcMain.handle('get-app-version', () => {
+      return app.getVersion();
+    });
+
+    ipcMain.handle('get-app-author', () => {
+      return 'Tinker';
+    });
   }
+
 
   /* -------------------------- 窗口相关 --------------------------- */
   private registerWindowHandlers(): void {
@@ -90,6 +99,7 @@ export default class IpcController {
     });
   }
 
+
   /* -------------------------- 歌单相关 --------------------------- */
   private registerPlaylistHandlers(): void {
     ipcMain.handle('create-playlist', async () => {
@@ -109,24 +119,24 @@ export default class IpcController {
     );
 
     ipcMain.handle(
-      'remove-track-from-playlistContext',
+      'remove-track-from-playlist',
       async (_evt: IpcMainInvokeEvent, playlistId: number, track: TrackEntity) => {
         return await this.playlistService.removeTrackFromPlaylist(playlistId, track);
       },
     );
 
     ipcMain.handle(
-      'modify-playlistContext',
+      'modify-playlist',
       async (_evt: IpcMainInvokeEvent, playlist: PlaylistEntity) => {
         return await this.playlistService.modifyPlaylist(playlist);
       },
     );
 
-    ipcMain.handle('remove-playlistContext', async (_evt: IpcMainInvokeEvent, playlistId: number) => {
+    ipcMain.handle('remove-playlist', async (_evt: IpcMainInvokeEvent, playlistId: number) => {
       return await this.playlistService.removePlaylist(playlistId);
     });
 
-    ipcMain.handle('add-playlistContext', async (_evt: IpcMainInvokeEvent, playlist: PlaylistEntity) => {
+    ipcMain.handle('add-playlist', async (_evt: IpcMainInvokeEvent, playlist: PlaylistEntity) => {
       return await this.playlistService.addPlaylist(playlist);
     });
   }
@@ -155,14 +165,14 @@ export default class IpcController {
     );
 
     ipcMain.handle(
-      'add-track-to-libraryContext',
+      'add-track-to-library',
       async (_evt: IpcMainInvokeEvent, track: TrackEntity) => {
         return await this.trackService.addTrackToLibrary(track);
       },
     );
 
     ipcMain.handle(
-      'remove-track-from-libraryContext',
+      'remove-track-from-library',
       async (_evt: IpcMainInvokeEvent, track: TrackEntity) => {
         return await this.trackService.removeTrackFromLibrary(track);
       },
@@ -192,7 +202,7 @@ export default class IpcController {
     });
 
     ipcMain.handle(
-      'get-netease-cloud-music-playlistContext-detail',
+      'get-netease-cloud-music-playlist-detail',
       async (_evt: IpcMainInvokeEvent, playlistId: string) => {
         return await this.netEaseCloudMusic.getFullPlaylist(playlistId);
       },
@@ -201,11 +211,11 @@ export default class IpcController {
 
   /* -------------------------- 设置 & 配置 --------------------------- */
   private registerConfigHandlers(): void {
-    ipcMain.handle('get-configContext', (_evt: IpcMainInvokeEvent, key: string) => {
+    ipcMain.handle('get-config', (_evt: IpcMainInvokeEvent, key: string) => {
       return this.store.get(key);
     });
 
-    ipcMain.handle('set-configContext', (_evt: IpcMainInvokeEvent, key: string, value: unknown) => {
+    ipcMain.handle('set-config', (_evt: IpcMainInvokeEvent, key: string, value: unknown) => {
       this.store.set(key, value);
       return true;
     });

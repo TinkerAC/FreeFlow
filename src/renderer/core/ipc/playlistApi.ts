@@ -4,15 +4,15 @@ import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 export const playlistApi = {
   getPlaylists: async (): Promise<PlaylistEntity[]> => ipcRenderer.invoke('get-playlist'),
-  addPlaylist: async (playlist: PlaylistEntity) => ipcRenderer.invoke('add-playlistContext', playlist),
+  addPlaylist: async (playlist: PlaylistEntity) => ipcRenderer.invoke('add-playlist', playlist),
   modifyPlaylist: async (playlist: {
     playlist_id: number;
     description: string;
     title: string
-  }) => ipcRenderer.invoke('modify-playlistContext', playlist),
-  removePlaylist: async (playlistId: number) => ipcRenderer.invoke('remove-playlistContext', playlistId),
+  }) => ipcRenderer.invoke('modify-playlist', playlist),
+  removePlaylist: async (playlistId: number) => ipcRenderer.invoke('remove-playlist', playlistId),
   addTrackToPlaylist: async (track: TrackEntity, playlistId: number) => ipcRenderer.invoke('add-track-to-playlist', track, playlistId),
-  removeTrackFromPlaylist: async (playlistId: number, track: TrackEntity) => ipcRenderer.invoke('remove-track-from-playlistContext', playlistId, track),
+  removeTrackFromPlaylist: async (playlistId: number, track: TrackEntity) => ipcRenderer.invoke('remove-track-from-playlist', playlistId, track),
   createPlaylist: async () => {
     try {
       await ipcRenderer.invoke('create-playlist');

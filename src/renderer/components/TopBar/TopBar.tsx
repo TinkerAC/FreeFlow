@@ -4,7 +4,7 @@ import './TopBar.css';
 import { configContext, searchContext, systemContext, windowControlContext } from '@renderer/core/electronContextApi';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import { debug } from '@components/static';
-import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 
 async function getSearchResults(searchTerm: string) {
   const results: FusionSearchResult = await searchContext.getSearchResults(searchTerm);

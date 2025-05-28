@@ -1,7 +1,7 @@
 // file: src/renderer/core/PlayQueue.ts
 
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { PlaybackMode } from '@renderer/core/player/Player';
+import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
 
 export interface QueueDump {
   queue: TrackEntity[];

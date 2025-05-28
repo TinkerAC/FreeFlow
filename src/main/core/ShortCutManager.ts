@@ -30,7 +30,7 @@ export default class ShortCutManager {
     this.shortcuts.forEach(({ key, action }) => {
       const ok = globalShortcut.register(key, () => {
         console.log(`${key} 按下`);
-        this.mainWindow.webContents.send('global-shortcutContext', action);
+        this.mainWindow.webContents.send('global-shortcut', action);
       });
 
       if (!ok) {

@@ -1,15 +1,15 @@
 // src/renderer/components/SearchResultView/contextMenu.tsx
 import React, { useState } from 'react';
 import { libraryContext, playlistContext } from '@renderer/core/electronContextApi';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 
 interface ContextMenuProps {
   x: number,
   y: number,
   track: TrackEntity,
-  player: Player;
+  player: PlayerController;
   handleCloseMenu: () => void,
   musicLibraryController: MusicLibraryController;
 }

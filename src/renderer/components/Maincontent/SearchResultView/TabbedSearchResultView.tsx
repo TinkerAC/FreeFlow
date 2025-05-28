@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useStateRef from 'react-usestateref';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import TabNav, { TabKey } from './TabNav';
 
 import ContextMenu from '@components/Maincontent/SearchResultView/ContextMenu';
@@ -9,9 +9,9 @@ import PlaylistsTab from '@components/Maincontent/SearchResultView/PlaylistTab';
 import TracksTab from '@components/Maincontent/SearchResultView/TrackTab';
 import PopularTab from '@components/Maincontent/SearchResultView/PopularTab';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { FusionSearchResult } from '@src/shared/domainModel/fusionSearchResult';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 
 export interface TabbedSearchResultViewProps {
   /** 外部可选：初始激活的 Tab */
@@ -25,7 +25,7 @@ export interface TabbedSearchResultViewProps {
   musicLibraryController: MusicLibraryController;
 
   /** 播放器实例 */
-  player: Player;
+  player: PlayerController;
 }
 
 /**

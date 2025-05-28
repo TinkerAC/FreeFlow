@@ -5,7 +5,7 @@ import ContextMenu from './ContextMenu';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 
 
@@ -86,7 +86,7 @@ export default function MusicLibrary({
               className="w-[4rem] h-[4rem] flex justify-center items-center rounded-lg hover:bg-item-bg-hover"
             >
               <img
-                src={item?.tracks?.[0]?.cover_src || '../assets/default-playlistContext-cover.png'}
+                src={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
                 alt={`${item.title} key:${item.playlist_id}`}
                 className="w-12 h-12 m-1 rounded-md cursor-pointer"
                 onClick={() => {
@@ -145,7 +145,7 @@ export default function MusicLibrary({
               playlists.map((item, index) => (
                 <Item
                   key={item.playlist_id}
-                  imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlistContext-cover.png'}
+                  imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
                   altText={`${item.title} key:${item.playlist_id}`}
                   title={item.title}
                   description={item.description}

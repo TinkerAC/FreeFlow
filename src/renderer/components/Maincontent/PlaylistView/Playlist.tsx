@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import ContextMenu from './ContextMenu';
 import Track from '@components/Maincontent/PlaylistView/Track';
-import Player from '@renderer/core/player/Player';
+import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import MusicLibraryController from '@renderer/core/MusicLibraryController';
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 
 interface PlaylistProps {
   filteredTracks: TrackEntity[];
-  player: Player;
+  player: PlayerController;
   musicLibraryController: MusicLibraryController;
 }
 
