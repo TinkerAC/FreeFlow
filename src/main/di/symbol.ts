@@ -26,4 +26,5 @@ export const DISymbol = {
   IpcController: Symbol.for('IpcController'),
   TrayManager: Symbol.for('TrayManager'),
   ShortcutManager: Symbol.for('ShortcutManager'),
+  SessionDataSource: Symbol.for('SessionDataSource'),
 };

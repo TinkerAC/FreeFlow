@@ -28,4 +28,6 @@ export default interface TrackRepository {
   ): Promise<string | null>;
 
 
+  increasePlayCount(track: TrackEntity): Promise<TrackEntity>;
+
 }

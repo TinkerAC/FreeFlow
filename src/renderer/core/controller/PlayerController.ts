@@ -5,6 +5,7 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
 import { AbstractController } from '@renderer/core/controller/AbstractController';
+import { libraryContext } from '@renderer/core/electronContextApi';
 
 /**
  * PlayerController 负责管理音频播放逻辑与状态。
@@ -495,6 +496,14 @@ export default class PlayerController extends AbstractController<[PlayerState]> 
   }
 
   private onAudioEndedHandler = () => {
+
+
+    //向主进程发送统计信息(play_count++)
+
+    libraryContext.increasePlayCount(this.playQueue.currentTrack).then(() => {
+      console.log('播放次数增加成功');
+    });
+
     if (!this.intendedAudioSrc || (this.audio.src !== this.intendedAudioSrc && !this.audio.src.endsWith(this.intendedAudioSrc))) {
       console.warn('PlayerController.onAudioEnded: 事件针对已过时或非预期音轨。');
       return;

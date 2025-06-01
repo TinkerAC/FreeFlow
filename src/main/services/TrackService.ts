@@ -130,4 +130,9 @@ export default class TrackService {
     return await this.trackRepository.bindLocalFileToTrack(trackId, filePath);
   }
 
+
+  public async increasePlayCount(track: TrackEntity): Promise<TrackEntity> {
+    return await this.trackRepository.increasePlayCount(track);
+  }
+
 }

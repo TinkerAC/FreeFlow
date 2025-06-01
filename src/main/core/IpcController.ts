@@ -182,6 +182,16 @@ export default class IpcController {
       console.log('IPC: 获取歌词:', track);
       return await this.lyricService.getLyrics(track);
     });
+
+
+    ipcMain.on('increase-play-count', async (_evt: IpcMainEvent, track: TrackEntity) => {
+      console.log('IPC: 增加播放次数:', track);
+      try {
+        await this.trackService.increasePlayCount(track);
+      } catch (error) {
+        console.error('增加播放次数失败:', error);
+      }
+    });
   }
 
   /* -------------------------- 搜索相关 --------------------------- */
@@ -301,4 +311,6 @@ export default class IpcController {
       shell.showItemInFolder(dbPath);
     });
   }
+
+
 }

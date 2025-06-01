@@ -36,6 +36,8 @@ import IpcController from '@main/core/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
 import chalk from 'chalk';
+import { SessionDataSourceImpl } from '@main/database/dataSource/impl/SessionDataSourceImpl';
+import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 
 
 const container = new Container();
@@ -135,6 +137,10 @@ container
 container
   .bind<TrackDataSource>(DISymbol.TrackDataSource)
   .to(TrackDataSourceImpl)
+  .inSingletonScope();
+container
+  .bind<SessionDataSource>(DISymbol.SessionDataSource)
+  .to(SessionDataSourceImpl)
   .inSingletonScope();
 
 // Repository

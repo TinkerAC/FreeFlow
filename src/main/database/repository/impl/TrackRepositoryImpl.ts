@@ -59,4 +59,16 @@ export class TrackRepositoryImpl implements TrackRepository {
   async findLocalFilePathByPlatformAndPlatformUniqueId(platform: string, platformUniqueId: string): Promise<string | null> {
     return this.ds.findLocalFilePathByPlatformAndPlatformUniqueId(platform, platformUniqueId);
   }
+
+  async increasePlayCount(track: TrackEntity): Promise<TrackEntity> {
+    const rec = await this.ds.findByPlatformAndPlatformUniqueId(track.platform, track.platform_unique_id);
+    if (!rec) {
+      throw new Error(`Track not found for platform: ${track.platform}, unique ID: ${track.platform_unique_id}`);
+    }
+    rec.played_count += 1; // 增加播放次数
+    const updatedRec = await this.ds.update(rec);
+    return updatedRec.toEntity();
+  }
+
+
 }

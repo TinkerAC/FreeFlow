@@ -15,6 +15,9 @@ import { DISymbol } from '@main/di/symbol';
 import IpcController from '@main/core/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
+import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
+import { getOperatingSystem } from '@src/utils/helpers';
+import chalk from 'chalk';
 
 let isQuitting = false;
 
@@ -48,6 +51,8 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   const ipcController = container.get<IpcController>(DISymbol.IpcController);
   const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
   const shortcutManager = container.get<ShortCutManager>(DISymbol.ShortcutManager);
+  const sessionDataSource = container.get<SessionDataSource>(DISymbol.SessionDataSource);
+
   // ─────────────────────────────────────────────────────────
   // READY 阶段
   // ─────────────────────────────────────────────────────────
@@ -80,8 +85,18 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
 
     // 注册全局快捷键
     shortcutManager.register();
-  });
 
+    //数据库记录启动信息
+
+    sessionDataSource.createSession(
+      new Date(),
+      getOperatingSystem(),
+      app.getVersion(), // 获取应用版本
+    ).then(() => {
+      console.info(chalk.green(`启动信息记录成功: ${new Date().toISOString()}${getOperatingSystem()} ${app.getVersion()}`));
+
+    });
+  });
   // ─────────────────────────────────────────────────────────
   // Dock / 任务栏 被点击激活
   // ─────────────────────────────────────────────────────────
