@@ -6,7 +6,6 @@ import './tailwind.css';
 import TopBar from '@components/TopBar/TopBar';
 import MusicLibrary from '@components/Musiclibrary/Musiclibrary';
 import MainContent from '@components/Maincontent/MainContent';
-import RightContent from '@components/RightContent/RightContent';
 import PlayerBar from '@components/Playerbar/PlayerBar';
 
 import { playerContext, shortcutContext } from '@renderer/core/electronContextApi';
@@ -18,6 +17,8 @@ import chalk from 'chalk';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import MainWindowController from '@renderer/core/controller/MainWindowController';
 import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
+import RightDrawer from '@components/RightContent/RightDrawer';
+import { AnimatePresence } from 'framer-motion';
 
 const Application: React.FC = () => {
   /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
@@ -195,14 +196,16 @@ const Application: React.FC = () => {
           setMainContentView={(v: View) => viewStackRef.current!.navigate(v)}
         />
 
-        {isRightContentVisible && (
-          <RightContent
-            className="h-full overflow-y-auto"
+        {/* ---------- 右侧抽屉 ---------- */}
+        <AnimatePresence>
+          <RightDrawer
+            key="right-drawer"
+            visible={isRightContentVisible}
             player={playerInstanceRef.current}
           />
-        )}
-      </div>
+        </AnimatePresence>
 
+      </div>
       <PlayerBar
         player={playerInstanceRef.current}
         onToggleRightContent={() => mainWindowServiceRef.current!.toggleRightContent()}

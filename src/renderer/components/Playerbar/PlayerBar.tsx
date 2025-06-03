@@ -22,7 +22,7 @@ export default function PlayerBar({
   const track = player.playQueue.currentTrack;
 
   return (
-    <div className="w-full flex items-center justify-between p-4 bg-black text-white">
+    <div className="w-full flex items-center justify-between p-4 bg-black text-white z-40">
       {/* ---------- 左侧：封面 + 曲目信息 ---------- */}
       <div className="flex items-center w-1/4">
         <img

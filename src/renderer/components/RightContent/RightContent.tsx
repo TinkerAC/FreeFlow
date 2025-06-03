@@ -4,7 +4,7 @@ import PlayQueue from '@components/RightContent/PlayQueue/PlayQueue';
 import ContentPanel from '@components/ContentPanel/ContentPenal';
 import PlayerController from '@renderer/core/controller/PlayerController';
 
-interface RightContentProps {
+export interface RightContentProps {
   className?: string;
   player: PlayerController;
 }
