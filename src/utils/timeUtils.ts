@@ -60,9 +60,5 @@ export function isSameUTCDay(date1: Date, date2: Date): boolean {
   );
 }
 
-// 获取当前时间戳的函数
-export const getCurrentTimestamp = () => new Date().toISOString();
-
-
 
 

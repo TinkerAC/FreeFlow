@@ -12,7 +12,7 @@ import { FileCacheManager } from '@main/core/FileCacheManager';
 import TrackRepository from '@main/database/repository/TrackRepository';
 import fs from 'fs';
 import path from 'path';
-import { music_Dir } from '@main/core/pathConfig';
+import { DataPath} from '@main/core/pathConfig';
 import { DISymbol } from '@main/di/symbol';
 import { BadRequestError } from '@main/core/exceptions/BadLoadAudio';
 import { castToPlatform, Platform } from '@main/core/enum/Platform';
@@ -35,6 +35,7 @@ class ProxyServerManager {
     @inject(DISymbol.Store) private readonly store: Store,
     @inject(DISymbol.FileCacheManager) private readonly cacheManager: FileCacheManager,
     @inject(DISymbol.TrackRepository) private readonly trackRepository: TrackRepository,
+    @inject(DISymbol.DataPath) private  readonly dataPath:DataPath,
   ) {
     this.app = express();
     this.port = 4399; // 默认端口
@@ -155,7 +156,7 @@ class ProxyServerManager {
     const relativePath: string = await this.trackRepository.findLocalFilePathByPlatformAndPlatformUniqueId(platform, platformUniqueId);
     if (!relativePath) return null;
 
-    const absolutePath = path.join(music_Dir, relativePath);
+    const absolutePath = path.join(this.dataPath.musicDir, relativePath);
     try {
       await fs.promises.access(absolutePath, fs.constants.R_OK);
       return absolutePath;

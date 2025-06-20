@@ -24,7 +24,8 @@ import crypto from 'node:crypto';
 import { DISymbol } from '@main/di/symbol';
 import { PreferenceService } from '@main/services/PreferenceService';
 import { AppIcon } from '@src/shared/hifiniCookies';
-import { dataPath, dbPath, music_Dir, playerStateDumpFile } from '@main/core/pathConfig';
+import { DataPath } from '@main/core/pathConfig';
+import { getOperatingSystem } from '@src/utils/helpers';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能切分成若干私有注册方法，
@@ -44,6 +45,7 @@ export default class IpcController {
     @inject(DISymbol.HifiniDownloader) private readonly downloader: HifiniDownloader,
     @inject(DISymbol.WindowManager) private readonly windowManager: WindowManager,
     @inject(DISymbol.PreferenceService) private readonly preferenceService: PreferenceService,
+    @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
   ) {
   }
 
@@ -64,7 +66,7 @@ export default class IpcController {
 
   /* -------------------------- 系统相关 --------------------------- */
   private registerSystemHandlers(): void {
-    ipcMain.handle('get-system', async () => process.platform);
+    ipcMain.handle('get-system', async () => getOperatingSystem());
 
     ipcMain.handle('get-app-version', () => {
       return app.getVersion();
@@ -144,11 +146,11 @@ export default class IpcController {
   /* -------------------------- 播放器相关 --------------------------- */
   private registerPlayerHandlers(): void {
     const mainWindow = this.windowManager.get(WindowKey.MAIN);
-    ipcMain.handle('load-player-state', async () => loadPlayer(playerStateDumpFile));
+    ipcMain.handle('load-player-state', async () => loadPlayer(this.dataPath.playerStateDumpFile));
     // 渲染进程回复的播放器状态，保存后退出应用
     ipcMain.once('reply-player-state', (_evt: IpcMainEvent, state: PlayerState) => {
       console.log('主进程已收到播放器状态:', state);
-      savePlayer(playerStateDumpFile, state);
+      savePlayer(this.dataPath.playerStateDumpFile, state);
       mainWindow && mainWindow.destroy();
       // 结束整个应用
       app.quit();
@@ -277,10 +279,10 @@ export default class IpcController {
           let finalFlac = '';
           try {
             if (fileName.toLowerCase().endsWith('.zip')) {
-              finalFlac = await this.downloader.extractFlacFile(savePath, music_Dir);
+              finalFlac = await this.downloader.extractFlacFile(savePath, this.dataPath.musicDir);
             } else if (fileName.toLowerCase().endsWith('.flac')) {
               finalFlac = fileName;
-              const dest = path.join(music_Dir, finalFlac);
+              const dest = path.join(this.dataPath.musicDir, finalFlac);
               fs.copyFileSync(savePath, dest);
               console.log(chalk.green(`[FLAC 拷贝完成] → ${dest}`));
             } else {
@@ -304,11 +306,11 @@ export default class IpcController {
 
   /* -------------------------- 其他杂项 --------------------------- */
   private registerMiscHandlers(): void {
-    ipcMain.handle('get-user-data-path', async () => dataPath);
+    ipcMain.handle('get-user-data-path', async () => this.dataPath.dbPath);
 
     ipcMain.on('reveal-database-in-file-system', async () => {
       const { shell } = require('electron');
-      shell.showItemInFolder(dbPath);
+      shell.showItemInFolder(this.dataPath.dbPath);
     });
   }
 

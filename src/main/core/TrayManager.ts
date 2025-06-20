@@ -1,6 +1,10 @@
-import { app, BrowserWindow, Menu, Tray } from 'electron';
+import { app, Menu, Tray } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { inject } from 'inversify';
+import { DISymbol } from '@main/di/symbol';
+import { OS } from '@main/core/enum/Platform';
+import { WindowKey, WindowManager } from '@main/window/windowManager';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,11 +16,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default class TrayManager {
   private tray: Tray | null = null;
 
-  constructor(private readonly mainWindow: BrowserWindow) {
+  constructor(@inject(DISymbol.RunningOS) private os: OS,
+              @inject(DISymbol.WindowManager) private windowManager: WindowManager,
+  ) {
+
   }
 
   /** 创建或返回已存在的托盘实例 */
-  public create(): Tray {
+  private createWindowsTray(): Tray {
     if (this.tray) return this.tray; // 保证单例
 
     const trayIconPath = path.join(__dirname, '..', '..', 'assets', 'appIcon.ico');
@@ -25,7 +32,7 @@ export default class TrayManager {
     const contextMenu = Menu.buildFromTemplate([
       {
         label: '显示窗口',
-        click: () => this.mainWindow.show(),
+        click: () => this.windowManager.show(WindowKey.MAIN),
       },
       {
         label: '退出',
@@ -36,10 +43,22 @@ export default class TrayManager {
     this.tray.setToolTip('FreeFlow');
     this.tray.setContextMenu(contextMenu);
 
-    this.tray.on('click', () => this.mainWindow.show());
+    this.tray.on('click', () => this.windowManager.show(WindowKey.MAIN));
 
     console.log('系统托盘已创建');
     return this.tray;
+  }
+
+
+  public createTray(): Tray {
+    switch (this.os) {
+      case OS.WINDOWS: {
+        return this.createWindowsTray();
+      }
+      default : {
+        console.log(`当前操作系统 ${this.os} 不支持托盘功能`);
+      }
+    }
   }
 
   /** 释放托盘资源（可在退出或热重载时调用） */
@@ -47,6 +66,7 @@ export default class TrayManager {
     this.tray?.destroy();
     this.tray = null;
   }
+
 
   /** 获取当前 Tray 实例（可能为 null） */
   public getTray(): Tray | null {

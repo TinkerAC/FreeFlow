@@ -27,4 +27,7 @@ export const DISymbol = {
   TrayManager: Symbol.for('TrayManager'),
   ShortcutManager: Symbol.for('ShortcutManager'),
   SessionDataSource: Symbol.for('SessionDataSource'),
+  RunningOS: Symbol.for('RunningOS'),
+  IsDevelopment: Symbol.for('IsDevelopment'),
+  DataPath:Symbol.for('DataPath')
 };

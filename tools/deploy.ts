@@ -134,7 +134,7 @@ async function main(): Promise<void> {
             [
                 '-NoProfile',
                 '-Command',
-                `Expand-Archive -Path \"${zipPath}\" -DestinationPath \"${tmpDir}\" -Force`,
+                `Expand-Archive -Path x\"${zipPath}\" -DestinationPath \"${tmpDir}\" -Force`,
             ],
             {stdio: 'inherit'},
         );

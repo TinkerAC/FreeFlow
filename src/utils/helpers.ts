@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import { OS} from '@main/core/enum/Platform';
+import { OS } from '@main/core/enum/Platform';
 
 /**
  * Checks if process NODE_ENV in 'development' mode
@@ -20,17 +20,18 @@ export const fileExists = async (filePath: string) => {
 };
 
 
-export function getOperatingSystem(): OS{
+export function getOperatingSystem(): OS {
   const platform = process.platform;
-
-  if (platform === 'win32') {
-    return OS.WINDOWS;
-  } else if (platform === 'darwin') {
-    return OS.MACOS;
-  } else if (platform === 'linux') {
-    return OS.LINUX;
-  } else {
-    return OS.UNKNOWN;
+  switch (platform) {
+    case 'win32':
+      return OS.WINDOWS;
+    case 'darwin':
+      return OS.MACOS;
+    case 'linux':
+      return OS.LINUX;
+    case 'android':
+      return OS.ANDROID;
+    default:
+      return OS.UNKNOWN;
   }
-
 }

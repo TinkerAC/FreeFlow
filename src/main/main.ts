@@ -18,6 +18,7 @@ import ShortCutManager from '@main/core/ShortCutManager';
 import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 import { getOperatingSystem } from '@src/utils/helpers';
 import chalk from 'chalk';
+import { OS } from '@main/core/enum/Platform';
 
 let isQuitting = false;
 
@@ -52,7 +53,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
   const shortcutManager = container.get<ShortCutManager>(DISymbol.ShortcutManager);
   const sessionDataSource = container.get<SessionDataSource>(DISymbol.SessionDataSource);
-
+  const os: OS = container.get<OS>(DISymbol.RunningOS);
   // ─────────────────────────────────────────────────────────
   // READY 阶段
   // ─────────────────────────────────────────────────────────
@@ -79,9 +80,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
     }
 
     // Windows 创建系统托盘
-    if (process.platform === 'win32') {
-      trayManager.create();
-    }
+    trayManager.createTray();
 
     // 注册全局快捷键
     shortcutManager.register();
@@ -117,7 +116,7 @@ if (!gotTheLock && process.env.NODE_ENV !== 'development') {
   // 所有窗口关闭
   // ─────────────────────────────────────────────────────────
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit();
+    if (os === OS.MACOS) app.quit();
   });
 
   // ─────────────────────────────────────────────────────────

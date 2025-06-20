@@ -29,7 +29,7 @@ import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import { PlaylistRepositoryImpl } from '@main/database/repository/impl/PlaylistRepositoryImpl';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
 import { HifiniThreadCacheRepositoryImpl } from '@main/database/repository/impl/HifiniThreadCacheRepositoryImpl';
-import { musicCacheDir } from '@main/core/pathConfig';
+import { AppDataPath, DataPath} from '@main/core/pathConfig';
 import { DISymbol } from '@main/di/symbol';
 import { PreferenceService } from '@main/services/PreferenceService';
 import IpcController from '@main/core/IpcController';
@@ -38,12 +38,19 @@ import ShortCutManager from '@main/core/ShortCutManager';
 import chalk from 'chalk';
 import { SessionDataSourceImpl } from '@main/database/dataSource/impl/SessionDataSourceImpl';
 import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
-
+import { getOperatingSystem } from '@src/utils/helpers';
+import { OS } from '@main/core/enum/Platform';
 
 const container = new Container();
 export { container };
 
+
+// ===== 关键路径 和常量 =====
+container.bind<DataPath>(DISymbol.DataPath).toConstantValue(AppDataPath);
+
 // ===== 常量/第三方库实例 =====
+container.bind<OS>(DISymbol.RunningOS).toConstantValue(getOperatingSystem());
+container.bind<boolean>(DISymbol.IsDevelopment).toConstantValue(process.env.NODE_ENV === 'development');
 container.bind<Store>(DISymbol.Store).toConstantValue(new Store({ watch: true }));
 container
   .bind<SequelizeInstance>(DISymbol.Sequelize)
@@ -59,7 +66,7 @@ container
   .bind<FileCacheManager>(DISymbol.FileCacheManager)
   .toConstantValue(
     new FileCacheManager({
-      diskCacheDir: musicCacheDir,
+      diskCacheDir: AppDataPath.musicCacheDir
     }));
 container
   .bind<WindowManager>(DISymbol.WindowManager)

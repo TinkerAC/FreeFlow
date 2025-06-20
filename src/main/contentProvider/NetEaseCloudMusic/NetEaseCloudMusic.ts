@@ -181,7 +181,7 @@ ${resultSongs
    * 判断歌曲是否可以免费播放
    * @param song 歌曲数据
    */
-  isFree(song:  any): boolean {
+  isFree(song: any): boolean {
     // fee 为 0 或 8 时，表示歌曲可以免费播放
     return song.fee === 0 || song.fee === 8;
   }
