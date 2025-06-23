@@ -79,11 +79,11 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
     if (!lyric) return null;
     const nowMs = player.currentTime * 1000;
     const idx =
-      lyric.lines.findIndex((line, i) => {
-        const next = lyric.lines[i + 1];
+      lyric.originLines.findIndex((line, i) => {
+        const next = lyric.originLines[i + 1];
         return nowMs >= line.time && (!next || nowMs < next.time);
       }) ?? -1;
-    return idx === -1 ? lyric.lines.length - 1 : idx;
+    return idx === -1 ? lyric.originLines.length - 1 : idx;
   }, [lyric, player.currentTime]);
 
   /* --------------------------- 自动滚动 --------------------------- */
@@ -118,7 +118,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
   /* --------------------------- 渲染行 --------------------------- */
   const renderLine = (line: { time: number; text: string }, i: number) => {
     const nowMs = player.currentTime * 1000;
-    const next = lyric?.lines[i + 1];
+    const next = lyric?.originLines[i + 1];
     const isActive = nowMs >= line.time && (!next || nowMs < next.time);
 
     const timeText = new Date(line.time)
@@ -210,7 +210,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player, viewStack }) => {
       >
         {loading || !lyric
           ? renderSkeleton()
-          : lyric.lines.map(renderLine)}
+          : lyric.originLines.map(renderLine)}
       </div>
     </div>
   );

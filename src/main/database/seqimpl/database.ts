@@ -1,6 +1,6 @@
 // src/main/database/database.ts
 import { Sequelize } from 'sequelize';
-import { db_Path } from '@main/core/pathConfig';
+import { db_Path } from '@main/core/PathConfig';
 import sqlite3 from 'sqlite3';
 
 export const sequelize = new Sequelize({

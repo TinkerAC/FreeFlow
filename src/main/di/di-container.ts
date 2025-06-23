@@ -29,7 +29,7 @@ import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import { PlaylistRepositoryImpl } from '@main/database/repository/impl/PlaylistRepositoryImpl';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
 import { HifiniThreadCacheRepositoryImpl } from '@main/database/repository/impl/HifiniThreadCacheRepositoryImpl';
-import { AppDataPath, DataPath} from '@main/core/pathConfig';
+import { AppDataPath, DataPath} from '@main/core/PathConfig';
 import { DISymbol } from '@main/di/symbol';
 import { PreferenceService } from '@main/services/PreferenceService';
 import IpcController from '@main/core/IpcController';

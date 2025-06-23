@@ -232,7 +232,7 @@ ${resultSongs
         lines.push({ time, text });
       }
     }
-    return { lines };
+    return { originLines: lines };
   }
 
 }

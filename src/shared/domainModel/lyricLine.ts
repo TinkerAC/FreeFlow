@@ -10,5 +10,7 @@ export interface LyricLine {
  * Lyric 接口：表示完整歌词，包含多行歌词
  */
 export interface Lyric {
-  lines: LyricLine[];
+  originLines: LyricLine[];
+  translationLines: LyricLine[];
+  pronunciationLines: LyricLine[];
 }

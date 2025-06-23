@@ -11,7 +11,7 @@ import { inject, injectable } from 'inversify';
 import ElectronStore from 'electron-store';
 import { HifiniCookies } from '@src/shared/hifiniCookies';
 import * as os from 'node:os';
-import { DataPath} from '@main/core/pathConfig';
+import { DataPath} from '@main/core/PathConfig';
 
 import { DISymbol } from '@main/di/symbol';
 

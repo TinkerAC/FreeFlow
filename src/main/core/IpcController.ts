@@ -24,7 +24,7 @@ import crypto from 'node:crypto';
 import { DISymbol } from '@main/di/symbol';
 import { PreferenceService } from '@main/services/PreferenceService';
 import { AppIcon } from '@src/shared/hifiniCookies';
-import { DataPath } from '@main/core/pathConfig';
+import { DataPath } from '@main/core/PathConfig';
 import { getOperatingSystem } from '@src/utils/helpers';
 
 /**
