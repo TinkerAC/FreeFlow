@@ -135,4 +135,8 @@ export default class TrackService {
     return await this.trackRepository.increasePlayCount(track);
   }
 
+  public async localSearch(term: string, limit: number = 20): Promise<TrackEntity[]> {
+    return await this.trackRepository.localSearch(term, limit);
+  }
+
 }

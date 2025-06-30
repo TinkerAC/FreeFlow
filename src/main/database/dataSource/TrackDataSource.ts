@@ -28,4 +28,8 @@ export interface TrackDataSource {
   findLocalFilePathByPlatformAndPlatformUniqueId(
     platform: string, platformUniqueId: string,
   ): Promise<string | null>;
+
+
+  search(keywords: string,limit:number): Promise<TrackRecord[]>;
+
 }

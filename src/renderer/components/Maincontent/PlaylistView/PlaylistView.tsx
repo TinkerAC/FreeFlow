@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-expect-error
+// @ts-expect-error
 import ColorThief from 'colorthief';
 import './PlaylistView.css';
 
@@ -19,94 +19,92 @@ interface PlaylistViewProps {
   player: PlayerController;
 }
 
+/** 全局内存缓存：key = `${platform}_${platuniqueid}` → value = 'rgb(r,g,b)' */
+const themeColorCache: Record<string, string> = {};
+
 export function PlaylistView({
                                musicLibraryController,
                                player,
                              }: PlaylistViewProps) {
-
   const [presentPlaylist, setPresentPlaylist] = useState<PlaylistEntity>(null);
+
+  /* 订阅歌单变化 */
   useEffect(() => {
-    const unsubscribe = musicLibraryController.subscribe(
-      () => {
-        setPresentPlaylist(musicLibraryController.activePlaylist);
-      },
-    );
-    return () => {
-      unsubscribe();
-    };
+    const unsubscribe = musicLibraryController.subscribe(() => {
+      setPresentPlaylist(musicLibraryController.activePlaylist);
+    });
+    return () => unsubscribe();
   }, []);
 
   const coverImage = presentPlaylist?.tracks?.[0]?.cover_src || DefaultCover;
   const [backgroundColor, setBackgroundColor] = useState('#333');
   const [modalVisible, setModalVisible] = useState(false);
-  const [filteredTracks, setFilteredTracks] = useState(presentPlaylist?.tracks || []);
+  const [filteredTracks, setFilteredTracks] = useState(
+    presentPlaylist?.tracks || []
+  );
   const [searchKeyword, setSearchKeyword] = useState('');
 
-
-  const openModalModifyPlaylist = () => {
-    setModalVisible(true);
-    console.log('打开修改歌单对话框');
-  };
-
-  const closeModalModifyPlaylist = () => {
-    setModalVisible(false);
-    console.log('关闭修改歌单对话框');
-  };
-
-  // 提取封面主色调
+  /* 计算或读取主题色（纯内存缓存） */
   useEffect(() => {
+    if (!presentPlaylist) return;
+
+    const { platform,  platform_unique_id } = presentPlaylist;
+    const cacheKey = `${platform}_${platform_unique_id}`;
+
+    // 命中内存缓存
+    if (themeColorCache[cacheKey]) {
+      setBackgroundColor(themeColorCache[cacheKey]);
+      return;
+    }
+
+    // 未命中时异步提取主色调
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.src = coverImage;
 
     img.onload = () => {
-      const colorThief = new ColorThief();
       try {
-        const result = colorThief.getColor(img);
-        setBackgroundColor(`rgb(${result[0]}, ${result[1]}, ${result[2]})`);
-      } catch (error) {
-        console.error('无法提取主色调', error);
+        const colorThief = new ColorThief();
+        const [r, g, b] = colorThief.getColor(img);
+        const rgb = `rgb(${r}, ${g}, ${b})`;
+
+        // 写入缓存并更新 UI
+        themeColorCache[cacheKey] = rgb;
+        setBackgroundColor(rgb);
+      } catch (e) {
+        console.error('提取主色调失败：', e);
       }
     };
 
-    img.onerror = () => {
-      console.error('图片加载失败');
-    };
-  }, [coverImage]);
+    img.onerror = () => console.error('封面图片加载失败：', img.src);
+  }, [coverImage, presentPlaylist]);
 
-  // 当 playListInfo 变化时更新过滤后的歌曲列表
+  /* 歌单切换时刷新列表 */
   useEffect(() => {
     setFilteredTracks(presentPlaylist?.tracks || []);
   }, [presentPlaylist]);
 
-  //保存前端搜索关键词
+  /* 根据关键词搜索 */
   useEffect(() => {
     search(searchKeyword);
   }, [searchKeyword]);
 
-  //实现了歌曲搜索功能
   const search = (keyword: string) => {
     if (!keyword) {
       setFilteredTracks(presentPlaylist?.tracks || []);
       return;
     }
-
-    const lowerCaseKeyword = keyword.toLowerCase();
-
-    const result = presentPlaylist?.tracks?.filter((track) => {
-      // 获取歌曲的标题、艺术家和专辑名称
-      const title = track.title || '';
-      const artist = track.artist || '';
-      const album = track.album || '';
-
-      // 检查关键词是否匹配中文、拼音全拼或拼音首字母
+    const lower = keyword.toLowerCase();
+    const result = presentPlaylist?.tracks?.filter((t) => {
+      const title = t.title || '';
+      const artist = t.artist || '';
+      const album = t.album || '';
       return (
-        title.toLowerCase().includes(lowerCaseKeyword) ||
-        artist.toLowerCase().includes(lowerCaseKeyword) ||
-        album.toLowerCase().includes(lowerCaseKeyword)
+        title.toLowerCase().includes(lower) ||
+        artist.toLowerCase().includes(lower) ||
+        album.toLowerCase().includes(lower)
       );
     });
-
     setFilteredTracks(result);
   };
 
@@ -118,6 +116,7 @@ export function PlaylistView({
         overflowY: 'auto',
       }}
     >
+      {/* 头部区域 */}
       <div className="relative z-10 flex flex-col md:flex-row items-center mb-6">
         <img
           src={coverImage}
@@ -128,7 +127,7 @@ export function PlaylistView({
           <h2 className="text-lg text-gray-300">歌单</h2>
           <h1
             className="text-4xl font-bold mt-2 cursor-pointer hover:underline"
-            onClick={openModalModifyPlaylist}
+            onClick={() => setModalVisible(true)}
           >
             {presentPlaylist?.title || '未知歌单'}
           </h1>
@@ -139,6 +138,7 @@ export function PlaylistView({
         </div>
       </div>
 
+      {/* 操作栏 */}
       <div className="flex items-center relative z-10 mb-4">
         <button
           className="bg-green-500 p-4 rounded-full text-2xl mr-4 hover:bg-green-600 focus:outline-none"
@@ -153,59 +153,61 @@ export function PlaylistView({
         >
           <i className="fas fa-random"></i>
         </button>
-
         <button
           className="text-2xl hover:text-gray-300 focus:outline-none"
           aria-label="下载歌单"
         >
           <i className="fas fa-download"></i>
         </button>
-        {/*是否已经被持久化(以红心显示), 未持久化的歌单可以添加到数据库*/}
+
+        {/* 收藏 / 取消收藏 */}
         <button>
           {presentPlaylist?.is_persistent ? (
-            <i className="fas fa-heart text-red-500 text-2xl ml-auto"
-               onClick={() => {
-                 playlistContext.removePlaylist(presentPlaylist?.playlist_id).then(() => {
-                   musicLibraryController.refreshPlaylists();
-                 });
-               }}
+            <i
+              className="fas fa-heart text-red-500 text-2xl ml-auto"
+              onClick={() =>
+                playlistContext
+                  .removePlaylist(presentPlaylist?.playlist_id)
+                  .then(() => musicLibraryController.refreshPlaylists())
+              }
             ></i>
           ) : (
-            <i className="far fa-heart text-2xl ml-auto"
-               onClick={() => {
-                 playlistContext.addPlaylist(presentPlaylist).then(() => {
-                     musicLibraryController.refreshPlaylists();
-                   },
-                 );
-               }}
+            <i
+              className="far fa-heart text-2xl ml-auto"
+              onClick={() =>
+                playlistContext
+                  .addPlaylist(presentPlaylist)
+                  .then(() => musicLibraryController.refreshPlaylists())
+              }
             ></i>
           )}
         </button>
 
-
-        {/* 歌曲搜索框 */}
+        {/* 搜索框 */}
         <input
           type="text"
           placeholder="搜索歌曲"
           className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500 ml-auto"
+          value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
           onContextMenu={(e) => {
             e.preventDefault();
             setSearchKeyword('');
           }}
-          value={searchKeyword}
         />
       </div>
 
+      {/* 歌曲列表 */}
       <Playlist
         filteredTracks={filteredTracks}
         player={player}
         musicLibraryController={musicLibraryController}
       />
 
+      {/* 修改歌单弹窗 */}
       {modalVisible && (
         <ModalModifyPlaylist
-          onClose={closeModalModifyPlaylist}
+          onClose={() => setModalVisible(false)}
           musicLibraryController={musicLibraryController}
         />
       )}

@@ -171,6 +171,7 @@ const Application: React.FC = () => {
       <TopBar
         setSearchResults={setSearchResults}
         mainContentViewStack={viewStackRef.current!}
+        player={playerInstanceRef.current}
       />
 
       <div

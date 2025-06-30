@@ -14,7 +14,7 @@ import fs from 'fs';
 import path from 'path';
 import { DataPath} from '@main/core/PathConfig';
 import { DISymbol } from '@main/di/symbol';
-import { BadRequestError } from '@main/core/exceptions/BadLoadAudio';
+import { BadRequestError } from '@main/core/exceptions/BadRequestError';
 import { castToPlatform, Platform } from '@main/core/enum/Platform';
 
 /**

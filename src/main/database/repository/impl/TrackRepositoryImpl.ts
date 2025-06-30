@@ -70,5 +70,8 @@ export class TrackRepositoryImpl implements TrackRepository {
     return updatedRec.toEntity();
   }
 
-
+  async localSearch(term: string, limit: number): Promise<TrackEntity[]> {
+    const recs = await this.ds.search(term, limit);
+    return recs.map(it => it.toEntity());
+  }
 }

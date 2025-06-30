@@ -117,7 +117,11 @@ ${resultSongs
         lines.push({ time, text });
       }
     }
-    return { originLines: lines };
+    return {
+      originLines: lines,
+      translationLines: [],
+      pronunciationLines: [],
+    };
   }
 }
 

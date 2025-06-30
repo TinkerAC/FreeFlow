@@ -1,7 +1,7 @@
 import { AbstractRecord } from '@main/database/record/AbstractRecord';
 import { OS } from '@main/core/enum/Platform';
 import { AbstractEntity } from '@src/shared/domainModel/AbstractEntity';
-import { NotImplementedError } from '@main/core/exceptions/exceptions';
+import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 
 /**
  * SessionRecordProps 定义了会话表的所有持久化字段。

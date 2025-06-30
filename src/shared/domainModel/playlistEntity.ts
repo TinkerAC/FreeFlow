@@ -3,7 +3,7 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { AbstractEntity } from '@src/shared/domainModel/AbstractEntity';
 
 /**
- * PlaylistRecord 类：表示一个歌单，包含多个 TrackRecord 实例
+ * PlaylistEntity 类：表示一个歌单，包含多个 TrackEntity 实例
  */
 export class PlaylistEntity extends AbstractEntity {
   playlist_id?: number;

@@ -219,6 +219,11 @@ export default class IpcController {
         return await this.netEaseCloudMusic.getFullPlaylist(playlistId);
       },
     );
+
+    ipcMain.handle('local-search', async (_evt: IpcMainInvokeEvent, keywords: string) => {
+      console.log('后端收到本地搜索请求:', keywords);
+      return await this.trackService.localSearch(keywords);
+    });
   }
 
   /* -------------------------- 设置 & 配置 --------------------------- */

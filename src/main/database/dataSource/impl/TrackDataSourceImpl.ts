@@ -2,6 +2,7 @@ import { TrackDataSource } from '@main/database/dataSource/TrackDataSource';
 import { TrackRecord } from '@main/database/record/TrackRecord';
 import { Track } from '@main/database/seqimpl/Track';
 import { injectable } from 'inversify';
+import { Op } from 'sequelize';
 
 @injectable()
 export class TrackDataSourceImpl implements TrackDataSource {
@@ -76,4 +77,26 @@ export class TrackDataSourceImpl implements TrackDataSource {
         return null;
       }).catch();
   }
+
+  /**
+   * 搜索曲目,返回符合关键词的曲目列表
+   * @param keywords
+   * @param limit
+   */
+  async search(keywords: string, limit: number): Promise<TrackRecord[]> {
+    const rows = await Track.findAll({
+      where: {
+        [Op.or]: [
+          { title: { [Op.like]: `%${keywords}%` } },
+          { artist: { [Op.like]: `%${keywords}%` } },
+          { album: { [Op.like]: `%${keywords}%` } },
+        ],
+      },
+      limit: limit,
+    });
+
+    return rows.map(r => Object.assign(new TrackRecord(), r.get({ plain: true })));
+  }
+
+
 }
