@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    // 关键！
+    "target": "es2020",
+    "esModuleInterop": true,
+    "strict": true
+  },
+  "include": [
+    "deploy.ts"
+  ]
+}

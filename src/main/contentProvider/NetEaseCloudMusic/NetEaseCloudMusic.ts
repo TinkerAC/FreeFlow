@@ -186,17 +186,6 @@ ${resultSongs
     return song.fee === 0 || song.fee === 8;
   }
 
-  async getLyrics(uniqueId: string): Promise<Lyric | void> {
-    const url = `${this.base_url}lyric?id=${uniqueId}`;
-    const response = await axios.get(url, { timeout: 10000 });
-    const data = response.data;
-    if (!data.lrc || typeof data.lrc.lyric !== 'string') {
-      throw new Error('无效的歌词数据: 缺少 lrc.lyric 字段');
-    }
-    console.log('获取歌词数据:', data);
-    return this.parseLyrics(data.lrc.lyric);
-  }
-
   /**
    * 检查音乐可用性
    * @param id 歌曲 ID
@@ -209,34 +198,89 @@ ${resultSongs
     return data.success;
   }
 
+
   /**
-   * 将原始歌词字符串解析为[Lyric]对象
-   * @param rawLyric 原始歌词字符串
-   * @returns 解析后的Lyric对象
+   * 将三种不同歌词解析为 Lyric 对象
+   * @param payload 可能包含 origin / translation / pronunciation 三段歌词
    */
-  private parseLyrics(rawLyric: string): Lyric {
-    const lines: LyricLine[] = [];
-    // 匹配形如 [mm:ss.mmm] 的时间标签和后面的文本
-    const regex = /^\[(\d{2}):(\d{2})\.(\d{2,3})](.*)$/;
-    for (const line of rawLyric.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      const match = trimmed.match(regex);
-      if (match) {
-        const minutes = parseInt(match[1], 10);
-        const seconds = parseInt(match[2], 10);
-        const milliseconds = parseInt(match[3], 10);
-        // 计算总时间（单位：毫秒）
-        const time = minutes * 60 * 1000 + seconds * 1000 + milliseconds;
-        const text = match[4].trim();
-        lines.push({ time, text });
+  private parseLyrics(payload: {
+    origin?: string;
+    translation?: string;
+    pronunciation?: string;
+  }): Lyric {
+    /** 解析单段 LRC 字符串为已排序的 LyricLine[] */
+    const parseLyricSegment = (raw?: string): LyricLine[] => {
+      if (typeof raw !== 'string' || !raw.trim()) return [];
+
+      const regex = /^\[(\d{1,2}):(\d{2})(?:\.(\d{2,3}))?](.*)$/;
+      const lines: LyricLine[] = [];
+
+      for (const row of raw.split('\n')) {
+        const trimmed = row.trim();
+        if (!trimmed) continue;
+
+        const match = trimmed.match(regex);
+        if (!match) continue;              // 无效行直接忽略
+
+        const [, mm, ss, ms = '0', textRaw] = match;
+        const time =
+          parseInt(mm, 10) * 60_000 +
+          parseInt(ss, 10) * 1_000 +
+          parseInt(ms.padEnd(3, '0'), 10);
+
+        lines.push({ time, text: textRaw.trim() });
       }
-    }
+
+      // 按时间升序；若存在同一时间戳的多行则合并文本
+      return lines
+        .sort((a, b) => a.time - b.time)
+        .reduce<LyricLine[]>((acc, cur) => {
+          const prev = acc.at(-1);
+          if (prev && prev.time === cur.time) {
+            prev.text += ` / ${cur.text}`;
+          } else {
+            acc.push(cur);
+          }
+          return acc;
+        }, []);
+    };
+
     return {
-      originLines: lines,
-      translationLines: [],
-      pronunciationLines: [],
+      originLines: parseLyricSegment(payload.origin),
+      translationLines: parseLyricSegment(payload.translation),
+      pronunciationLines: parseLyricSegment(payload.pronunciation),
     };
   }
+
+  /**
+   * 根据歌曲唯一 ID 获取并解析歌词
+   * @param uniqueId 歌曲 ID
+   * @throws 网络或数据格式错误
+   */
+  async getLyrics(uniqueId: string): Promise<Lyric> {
+    const url = `${this.base_url}lyric?id=${uniqueId}`;
+
+    // 1. 请求接口（10 s 超时）
+    let response;
+    try {
+      response = await axios.get(url, { timeout: 10_000 });
+    } catch (err) {
+      throw new Error(`网络请求失败: ${(err as Error).message}`);
+    }
+
+    // 2. 校验必要字段
+    const data = response?.data;
+    if (!data?.lrc?.lyric) {
+      throw new Error('无效的歌词数据: 缺少 lrc.lyric 字段');
+    }
+
+    // 3. 解析三段歌词
+    return this.parseLyrics({
+      origin: data.lrc?.lyric,
+      translation: data.tlyric?.lyric,
+      pronunciation: data.romalrc?.lyric,
+    });
+  }
+
 
 }

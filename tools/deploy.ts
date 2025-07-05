@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 
 /**
  * FreeFlow 自动部署脚本（跨平台 TypeScript 版）
@@ -86,7 +86,7 @@ function prompt(question: string): Promise<string> {
 async function main(): Promise<void> {
     const platform = process.platform === 'darwin' ? 'darwin' : 'win32';
     const arch = os.arch() === 'arm64' ? 'arm64' : 'x64';
-    const zipDir = join('..', 'out', 'make', 'zip', platform, arch);
+    const zipDir = join( 'out', 'make', 'zip', platform, arch);
 
     if (!existsSync(zipDir)) {
         console.error(`❌ 构建目录不存在：${zipDir}`);

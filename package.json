@@ -1,7 +1,7 @@
 {
   "name": "freeflow",
   "productName": "FreeFlow",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "一个基于ts-react-webpack-electron的复刻SpotifyUI的自由音乐播放器",
   "main": ".webpack/main",
   "scripts": {
@@ -42,7 +42,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^20.14.11",
+    "@types/node": "^20.17.47",
     "@types/ping": "^0.4.4",
     "@types/progress": "^2.0.7",
     "@types/prop-types": "^15.7.14",
@@ -73,7 +73,8 @@
     "style-loader": "^4.0.0",
     "tailwindcss": "^3.4.15",
     "ts-loader": "9.5.1",
-    "typescript": "^5.5.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
     "vitest": "^3.1.4",
     "webpack": "^5.93.0"
   },

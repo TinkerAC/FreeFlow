@@ -147,7 +147,6 @@ export default class PlaylistService {
   public async creatNewEmptyPlaylist() {
     return this.playlistRepository.create({
       playlist_cover: '',
-      playlist_id: 0,
       tracks: [],
       title: '新建歌单',
       description: '',
