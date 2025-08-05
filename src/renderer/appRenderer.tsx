@@ -12,8 +12,11 @@ console.log('[FreeFlow] : Renderer execution started');
 createRoot(document.getElementById('app')).render(
   <HashRouter>
     <Routes>
-      <Route path="/" element={<Application />} />
+      <Route path="/" element={
+          <Application />
+      } />
       <Route path="/settings" element={<PreferenceWindow />} />
     </Routes>
   </HashRouter>,
 );
+

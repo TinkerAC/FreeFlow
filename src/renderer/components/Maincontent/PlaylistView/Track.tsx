@@ -28,6 +28,7 @@ const Track: React.FC<TrackProps>
 
   return (
     <tr
+      id={`track-${track.id}`}
       className={`${
         index === 0 ? 'border-t border-gray-700' : ''
       } hover:bg-[#2A2A2A]`}

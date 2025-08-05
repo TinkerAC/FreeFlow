@@ -19,7 +19,10 @@ import { Platform } from '@main/core/enum/Platform';
 
 import { DISymbol } from '@main/di/symbol';
 
-
+/**
+ * @deprecated
+ * HifiniMusic 不再可用,因为 Hifini 已经停止服务。
+ */
 @injectable()
 export default class HifiniMusic implements ContentProvider {
   public readonly platformName: Platform;

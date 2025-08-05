@@ -10,3 +10,18 @@
     display: none;
 }
 
+
+/* 在你的主 CSS 文件中, e.g., PlaylistView.css or index.css */
+
+@keyframes highlight {
+    from {
+        background-color: rgba(59, 130, 246, 0.5); /* blue-500 with opacity */
+    }
+    to {
+        background-color: transparent;
+    }
+}
+
+.locating-highlight {
+    animation: highlight 2s ease-out;
+}

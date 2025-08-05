@@ -1,5 +1,5 @@
 // src/renderer/components/PlaylistView/PlaylistView.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
@@ -40,7 +40,7 @@ export function PlaylistView({
   const [backgroundColor, setBackgroundColor] = useState('#333');
   const [modalVisible, setModalVisible] = useState(false);
   const [filteredTracks, setFilteredTracks] = useState(
-    presentPlaylist?.tracks || []
+    presentPlaylist?.tracks || [],
   );
   const [searchKeyword, setSearchKeyword] = useState('');
 
@@ -48,7 +48,7 @@ export function PlaylistView({
   useEffect(() => {
     if (!presentPlaylist) return;
 
-    const { platform,  platform_unique_id } = presentPlaylist;
+    const { platform, platform_unique_id } = presentPlaylist;
     const cacheKey = `${platform}_${platform_unique_id}`;
 
     // 命中内存缓存
@@ -108,8 +108,12 @@ export function PlaylistView({
     setFilteredTracks(result);
   };
 
+  // 1. 创建一个 ref 用于引用滚动容器
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   return (
     <div
+      ref={scrollContainerRef}
       className="p-4 relative w-full h-full PlaylistView"
       style={{
         background: `linear-gradient(to bottom, ${backgroundColor}, #000)`,
@@ -202,6 +206,7 @@ export function PlaylistView({
         filteredTracks={filteredTracks}
         player={player}
         musicLibraryController={musicLibraryController}
+        scrollContainerRef={scrollContainerRef}
       />
 
       {/* 修改歌单弹窗 */}

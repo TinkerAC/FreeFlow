@@ -36,8 +36,7 @@ export default class MusicLibraryController extends AbstractController<MusicLibr
    */
   private async _fetchAndSetPlaylists(shouldNotify: boolean = true): Promise<void> {
     try {
-      const lists = await playlistContext.getPlaylists();
-      this.playlists = lists;
+      this.playlists = await playlistContext.getPlaylists();
 
       // 更新当前激活的歌单和选中项
       // 如果之前有激活的歌单，尝试在新的列表中找到它
@@ -166,6 +165,8 @@ export default class MusicLibraryController extends AbstractController<MusicLibr
       super.notify();
     }
   }
+
+
 
 
 }

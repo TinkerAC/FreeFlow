@@ -63,8 +63,6 @@ export default function MainContent({
           );
         }
         return <LyricView player={player}
-                          viewStack={viewStack}
-
         />;
 
       case View.DEBUG:
@@ -100,7 +98,7 @@ export default function MainContent({
 
   // ----------------------
   return (
-    <ContentPanel className="relative h-full w-full">
+    <ContentPanel className="relative h-full w-full ">
       {items.map((item, idx) => (
         <div
           key={idx}

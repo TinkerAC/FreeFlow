@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import './tailwind.css';
-
+import ReactPlayer from 'react-player'
 import TopBar from '@components/TopBar/TopBar';
 import MusicLibrary from '@components/Musiclibrary/Musiclibrary';
 import MainContent from '@components/Maincontent/MainContent';
@@ -167,7 +167,6 @@ const Application: React.FC = () => {
   return (
     <div className="App h-full w-full flex flex-col bg-black">
       <audio ref={audioRef} hidden />
-
       <TopBar
         setSearchResults={setSearchResults}
         mainContentViewStack={viewStackRef.current!}
