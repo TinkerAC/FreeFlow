@@ -3,6 +3,7 @@ import { formatTime, timeAgo } from '@src/utils/timeUtils';
 import { DefaultCover } from '@components/static';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import styles from './PlaylistView.module.css'; // 复用同一模块中的行/列样式
 
 interface TrackProps {
   track: TrackEntity;
@@ -11,17 +12,10 @@ interface TrackProps {
   player: PlayerController;
 }
 
-
-const Track: React.FC<TrackProps>
-  = ({
-       track,
-       index,
-       onRightClick,
-       player,
-     }: TrackProps) => {
+const Track: React.FC<TrackProps> = ({ track, index, onRightClick, player }) => {
   const [hovered, setHovered] = useState(false);
 
-  const handlePlayClick = (e: { stopPropagation: () => void; }) => {
+  const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     player.addTrackToNextAndPlay(track);
   };
@@ -29,63 +23,52 @@ const Track: React.FC<TrackProps>
   return (
     <tr
       id={`track-${track.id}`}
-      className={`${
-        index === 0 ? 'border-t border-gray-700' : ''
-      } hover:bg-[#2A2A2A]`}
+      className={styles.row}
       onContextMenu={(e) => onRightClick(e, track)}
       onDoubleClick={() => player.addTrackToNextAndPlay(track)}
-
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <td
-        className="py-2 cursor-pointer text-center"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {/*实现悬浮后显示播放按钮,点击播放按钮播放*/}
+      {/* 序号 / 播放 */}
+      <td className={styles.colIndex}>
         {hovered ? (
-          <i
-            className="fas fa-play cursor-pointer"
-            onClick={handlePlayClick}
-            aria-label="播放"
-          ></i>
+          <i className="fas fa-play cursor-pointer" onClick={handlePlayClick} aria-label="播放" />
         ) : (
           index + 1
         )}
       </td>
 
-      <td className="py-2 flex items-center overflow-hidden">
-        <img
-          src={track?.cover_src || DefaultCover}
-          alt="Album cover"
-          className="w-10 h-10 mr-4 object-cover rounded flex-shrink-0"
-          loading="lazy"
-        />
-        <div className="overflow-hidden">
-          <div className="font-semibold hover:underline overflow-hidden text-ellipsis whitespace-nowrap">
-            {track?.title || '未知标题'}
-          </div>
-          <div className="text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap">
-            {track?.artist || '未知艺术家'}
+      {/* 标题 + 艺术家（缩略图+两行文本） */}
+      <td className={styles.colTitle}>
+        <div className={styles.titleWrap}>
+          <img src={track?.cover_src || DefaultCover} alt="Album cover" className={styles.thumb} loading="lazy" />
+          <div style={{ minWidth: 0 }}>
+            <div className={styles.ttl} title={track?.title || '未知标题'}>
+              {track?.title || '未知标题'}
+            </div>
+            <div className={styles.art} title={track?.artist || '未知艺术家'}>
+              {track?.artist || '未知艺术家'}
+            </div>
           </div>
         </div>
       </td>
 
-      {/* 专辑列 */}
-      <td className="py-2 overflow-hidden text-ellipsis whitespace-nowrap hidden md:table-cell">
+      {/* 专辑 */}
+      <td className={`${styles.colAlbum} hidden md:table-cell`} title={track?.album || '未知专辑'}>
         {track?.album || '未知专辑'}
       </td>
 
-      {/* 添加日期列 */}
-      <td className="py-2 overflow-hidden text-ellipsis whitespace-nowrap hidden lg:table-cell">
+      {/* 添加日期 */}
+      <td className={`${styles.colDate} hidden lg:table-cell`}>
         {track?.created_at ? timeAgo(track.created_at) : '未知时间'}
       </td>
 
-      <td className="py-2 whitespace-nowrap text-right">
+      {/* 时长 */}
+      <td className={styles.colDur}>
         {track?.duration ? formatTime(track.duration) : '未知时长'}
       </td>
     </tr>
   );
 };
-
 
 export default Track;

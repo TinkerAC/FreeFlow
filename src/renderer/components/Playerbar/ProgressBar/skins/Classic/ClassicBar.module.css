@@ -1,0 +1,55 @@
+.root {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.time {
+    font-size: var(--font-ui-sm);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    white-space: nowrap;
+}
+
+.container {
+    position: relative;
+    flex: 1 1 auto;
+    height: var(--pg-height-md);
+    background: rgb(var(--pg-base));
+    border-radius: var(--pg-radius);
+    cursor: pointer;
+}
+
+.fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--pg-pct, 0%);
+    background: rgb(var(--pg-fill));
+    border-radius: inherit;
+    transition: width .06s linear;
+}
+
+.thumb {
+    position: absolute;
+    top: 50%;
+    left: var(--pg-pct, 0%);
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    background: rgb(var(--pg-thumb));
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
+}
+
+.root:focus-visible .thumb {
+    outline: 2px solid color-mix(in oklab, rgb(var(--pg-fill)) 50%, transparent);
+    outline-offset: 2px;
+}
+
+.size_sm .container {
+    height: var(--pg-height-sm);
+}
+
+.size_lg .container {
+    height: var(--pg-height-lg);
+}

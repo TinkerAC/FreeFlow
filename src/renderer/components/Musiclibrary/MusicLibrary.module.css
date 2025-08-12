@@ -1,0 +1,171 @@
+/* file: src/renderer/components/Musiclibrary/MusicLibrary.module.css */
+.root {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr; /* 头部固定 + 列表滚动 */
+    background: rgb(var(--md-sys-color-surface-container-low));
+    color: rgb(var(--md-sys-color-on-surface));
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: var(--radius-lg); /* ★ 圆角在容器上 */
+    overflow: hidden; /* ★ 子元素不会溢出圆角 */
+}
+
+/* 头部 */
+.header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.iconBtn {
+    -webkit-app-region: no-drag;
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: rgb(var(--md-sys-color-on-surface));
+    opacity: .9;
+    transition: background .15s, opacity .15s;
+}
+
+.iconBtn:hover {
+    opacity: 1;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+/* 分类与搜索（可选） */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 0 12px;
+}
+
+.chip {
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgb(var(--md-sys-color-surface-variant));
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    font-size: 12px;
+    cursor: pointer;
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.chipActive {
+    background: rgba(var(--md-sys-color-primary), .15);
+    border-color: rgb(var(--md-sys-color-primary));
+}
+
+/* 列表滚动容器（唯一滚动处） */
+.scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px;
+}
+
+.scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+    background: rgba(var(--md-sys-color-outline-variant), .9);
+    border-radius: 8px;
+}
+
+/* 展开态：纵向列表 */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 收缩态：图标网格（单列，居中），可上下滚动 */
+.collapsed .header {
+    padding: 8px;
+}
+
+.collapsed .title {
+    display: none;
+}
+
+.collapsed .toolbar {
+    display: none;
+}
+
+.grid {
+    display: none;
+}
+
+.collapsed .grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 左栏宽度窄，单列即可 */
+    gap: 8px;
+    justify-items: center;
+}
+
+.tile {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: rgb(var(--md-sys-color-surface-container));
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background .15s, transform .05s;
+    overflow: hidden;
+}
+
+.tile:hover {
+    background: rgb(var(--md-sys-color-surface-container-high));
+}
+
+.tile:active {
+    transform: translateY(1px);
+}
+
+.tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tileSelected {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+}
+
+/* 右键菜单（通用） */
+.menu {
+    position: fixed;
+    z-index: 10000;
+    min-width: 200px;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 88%, transparent);
+    backdrop-filter: blur(6px) saturate(1.1);
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), .9);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elev-2);
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.menuItem {
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.menuItem:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .5);
+}

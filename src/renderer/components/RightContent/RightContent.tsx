@@ -1,7 +1,6 @@
 // file: src/renderer/components/RightContent/RightContent.tsx
 import React from 'react';
 import PlayQueue from '@components/RightContent/PlayQueue/PlayQueue';
-import ContentPanel from '@components/ContentPanel/ContentPenal';
 import PlayerController from '@renderer/core/controller/PlayerController';
 
 export interface RightContentProps {
@@ -25,23 +24,20 @@ export default function RightContent({
 
   if (!currentTrack && !remainingTracks.length) {
     return (
-      <ContentPanel className="h-full">
-        <div className="empty-play-queue flex flex-col items-center justify-center h-full">
-          <i className="fas fa-music text-4xl text-gray-400"></i>
-          <p className="text-gray-400 whitespace-nowrap">暂无播放队列</p>
-        </div>
-      </ContentPanel>
+      <div className="empty-play-queue flex flex-col items-center justify-center h-full">
+        <i className="fas fa-music text-4xl text-gray-400"></i>
+        <p className="text-gray-400 whitespace-nowrap">暂无播放队列</p>
+      </div>
     );
   }
 
   return (
-    <ContentPanel className="h-full">
-      <PlayQueue
-        currentTrack={currentTrack}
-        nextTracks={remainingTracks}
-        clearQueue={() => player.clearQueue()}
-        addToNextAndPlay={(track) => player.addTrackToNextAndPlay(track)}
-      />
-    </ContentPanel>
+    <PlayQueue
+      currentTrack={currentTrack}
+      nextTracks={remainingTracks}
+      clearQueue={() => player.clearQueue()}
+      addToNextAndPlay={(track) => player.addTrackToNextAndPlay(track)}
+    />
+
   );
 }

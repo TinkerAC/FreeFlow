@@ -1,0 +1,36 @@
+.root {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.wrap {
+    position: relative;
+    flex: 1 1 auto;
+    height: 40px;
+    cursor: pointer;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    align-items: end;
+}
+
+.bar {
+    background: rgb(var(--pg-base));
+    border-radius: 2px;
+    transition: background .12s linear, transform .12s linear;
+}
+
+.barActive {
+    background: rgb(var(--pg-fill));
+    transform: translateY(-2px);
+    box-shadow: 0 2px 10px color-mix(in oklab, rgb(var(--pg-fill)) 35%, transparent);
+}
+
+.time {
+    font-size: var(--font-ui-sm);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    white-space: nowrap;
+}

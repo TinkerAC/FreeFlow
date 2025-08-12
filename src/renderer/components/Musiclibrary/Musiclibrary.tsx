@@ -1,154 +1,100 @@
-// file: src/renderer/components/MusicLibrary/MusicLibrary.tsx
-import React, { useEffect, useState } from 'react';
+// file: src/renderer/components/Musiclibrary/Musiclibrary.tsx
+import React, { useEffect, useState, useRef } from 'react';
 import Item from './Item';
 import ContextMenu from './ContextMenu';
-import ContentPanel from '@components/ContentPanel/ContentPenal';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
+import styles from './MusicLibrary.module.css';
 
+import clsx from 'clsx';
 
 interface MusicLibraryProps {
   musicLibraryController: MusicLibraryController;
   viewStack: MainContentViewStack;
 }
 
-export default function MusicLibrary({
-                                       musicLibraryController,
-                                       viewStack,
-                                     }: MusicLibraryProps) {
+export default function MusicLibrary({ musicLibraryController, viewStack }: MusicLibraryProps) {
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [eventPlaylist, setEventPlaylist] = useState<PlaylistEntity | null>(null);
 
-  const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState<boolean>(true);
+  const [collapsed, setCollapsed] = useState<boolean>(true);
   const [playlists, setPlaylists] = useState<PlaylistEntity[]>(musicLibraryController.playlists);
   const [selectedItem, setSelectedItem] = useState<number>(musicLibraryController.selectedLibraryItem || 0);
+
+  const rootRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const unsubscribe = musicLibraryController.subscribe(() => {
-      setIsMusicLibraryCollapsed(musicLibraryController.isMusicLibraryCollapsed);
+      setCollapsed(musicLibraryController.isMusicLibraryCollapsed);
       setPlaylists(musicLibraryController.playlists);
       setSelectedItem(musicLibraryController.selectedLibraryItem || 0);
     });
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [musicLibraryController]);
 
-
-  const handleRightClick = (
-    e: { preventDefault: () => void; clientX: number; clientY: number },
-    playlist_id: number,
-  ) => {
+  // 右键
+  const handleRightClick = (e: React.MouseEvent, playlist_id: number) => {
     e.preventDefault();
-    setEventPlaylist(
-      playlists.find(item => item.playlist_id === playlist_id) || null);
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    const p = playlists.find(p => p.playlist_id === playlist_id) || null;
+    setEventPlaylist(p);
+    setContextMenuPosition({ x: e.clientX, y: e.clientY }); // Portal 为 fixed，直接用 client 坐标
     setContextMenuVisible(true);
   };
-
   const handleCloseMenu = () => {
     setContextMenuVisible(false);
     setEventPlaylist(null);
   };
 
+  // 点击空白关闭
   useEffect(() => {
-    const handleClickOutside = () => {
-      if (contextMenuVisible) {
-        handleCloseMenu();
-      }
-    };
-    window.addEventListener('click', handleClickOutside);
-    return () => {
-      window.removeEventListener('click', handleClickOutside);
-    };
+    const close = () => contextMenuVisible && handleCloseMenu();
+    window.addEventListener('click', close);
+    return () => window.removeEventListener('click', close);
   }, [contextMenuVisible]);
 
-  if (isMusicLibraryCollapsed) {
-    // 折叠状态下：头部固定，列表区域滚动
-    return (
-      <ContentPanel className="w-full flex flex-col">
-        {/* 固定头部 */}
-        <div className="flex items-center w-full p-6">
-          <i
-            className="fas fa-bars cursor-pointer text-2xl"
-            onClick={() => {
-              musicLibraryController.toggleMusicLibraryCollapse();
-            }}
-          ></i>
-        </div>
-        {/* 歌单列表滚动区域 */}
-        <div className="flex-1 flex justify-start items-center flex-col overflow-y-auto no-scrollbar">
-          {playlists.map((item, index) => (
-            <div
-              key={item.playlist_id}
-              className="w-[4rem] h-[4rem] flex justify-center items-center rounded-lg hover:bg-item-bg-hover"
-            >
-              <img
-                src={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
-                alt={`${item.title} key:${item.playlist_id}`}
-                className="w-12 h-12 m-1 rounded-md cursor-pointer"
-                onClick={() => {
-                  musicLibraryController.selectItem(index);
-                  musicLibraryController.activePlaylist = item;
-                  viewStack.navigate(View.PLAY_LIST);
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      </ContentPanel>
-    );
-  } else {
-    // 展开状态下：头部固定，列表区域滚动
-    return (
-      <ContentPanel className="w-full flex flex-col h-full">
-        {/* 固定头部区域 */}
-        <div className="p-6">
-          <div className="flex items-center">
-            <i
-              className="fas fa-bars cursor-pointer text-2xl"
-              onClick={() => {
-                musicLibraryController.toggleMusicLibraryCollapse();
-              }}
-            ></i>
-            <h1 className="ml-2 text-lg whitespace-nowrap">音乐库</h1>
-            <div className="ml-auto flex items-center">
-              <i
-                className="fas fa-plus text-xl cursor-pointer"
-                onClick={() => playlistContext.createPlaylist().then(musicLibraryController.refreshPlaylists)}
-              ></i>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="flex mb-4">
-              <button className="bg-gray-700 text-white px-4 py-1 rounded-full mr-2 whitespace-nowrap">
-                歌单
-              </button>
-              <button className="bg-gray-700 text-white px-4 py-1 rounded-full whitespace-nowrap">
-                专辑
-              </button>
-            </div>
-            <div className="flex items-center">
-              <i className="fas fa-search text-xl"></i>
-              <span className="ml-auto whitespace-nowrap">
-                最近播放 <i className="fas fa-list text-xl"></i>
-              </span>
-            </div>
+  return (
+    <aside ref={rootRef} className={clsx(styles.root, collapsed && styles.collapsed)}>
+      {/* 头部 */}
+      <div className={styles.header}>
+        <button
+          className={styles.iconBtn}
+          title={collapsed ? '展开音乐库' : '收起音乐库'}
+          onClick={() => musicLibraryController.toggleMusicLibraryCollapse()}
+        >
+          <i className="fas fa-bars" />
+        </button>
+
+        <div className={styles.title}>音乐库</div>
+
+      </div>
+
+      {/* 可选工具行（展开态可见） */}
+      {!collapsed && (
+        <div className={styles.toolbar}>
+          <button className={clsx(styles.chip, styles.chipActive)}>歌单</button>
+          <button className={styles.chip}>专辑</button>
+          <div style={{ marginLeft: 'auto', opacity: .8 }}>
+            <i className="fas fa-list" title="最近播放" />
           </div>
         </div>
-        {/* 歌单列表滚动区域 */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4 no-scrollbar">
-          <div className="flex flex-col gap-2">
-            {playlists.length !== 0 ? (
+      )}
+
+      {/* 列表滚动区（唯一滚动） */}
+      <div className={styles.scroll}>
+        {/* 展开态：纵向列表 */}
+        {!collapsed && (
+          <div className={styles.list}>
+            {playlists.length ? (
               playlists.map((item, index) => (
                 <Item
                   key={item.playlist_id}
                   imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
                   altText={`${item.title} key:${item.playlist_id}`}
                   title={item.title}
-                  description={item.description}
+                  description={item.description || ''}
                   index={index}
                   isSelected={selectedItem === index}
                   onClick={() => {
@@ -156,26 +102,51 @@ export default function MusicLibrary({
                     musicLibraryController.activePlaylist = item;
                     viewStack.navigate(View.PLAY_LIST);
                   }}
-                  onRightClick={(e: { preventDefault: () => void; clientX: number; clientY: number }) =>
-                    handleRightClick(e, item.playlist_id)
-                  }
+                  onRightClick={(e) => handleRightClick(e, item.playlist_id)}
                 />
               ))
             ) : (
-              <div className="text-center text-gray-400">暂无歌单</div>
+              <div style={{ textAlign: 'center', color: 'rgb(var(--color-text-muted))' }}>暂无歌单</div>
             )}
           </div>
-        </div>
-        {contextMenuVisible && (
-          <ContextMenu
-            x={contextMenuPosition.x}
-            y={contextMenuPosition.y}
-            eventPlaylist={eventPlaylist}
-            handleCloseMenu={handleCloseMenu}
-            musicLibraryController={musicLibraryController}
-          />
         )}
-      </ContentPanel>
-    );
-  }
+
+        {/* 收缩态：单列图标网格（可上下滚动） */}
+        {collapsed && (
+          <div className={styles.grid}>
+            {playlists.map((item, index) => {
+              const selected = selectedItem === index;
+              return (
+                <div key={item.playlist_id}
+                     className={clsx(styles.tile, selected && styles.tileSelected)}
+                     onClick={() => {
+                       musicLibraryController.selectItem(index);
+                       musicLibraryController.activePlaylist = item;
+                       viewStack.navigate(View.PLAY_LIST);
+                     }}
+                     onContextMenu={(e) => handleRightClick(e, item.playlist_id)}
+                     title={item.title}>
+                  <img
+                    src={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
+                    alt={`${item.title} key:${item.playlist_id}`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 右键菜单 */}
+      {contextMenuVisible && eventPlaylist && (
+        <ContextMenu
+          x={contextMenuPosition.x}
+          y={contextMenuPosition.y}
+          eventPlaylist={eventPlaylist}
+          handleCloseMenu={handleCloseMenu}
+          musicLibraryController={musicLibraryController}
+        />
+      )}
+    </aside>
+  );
 }

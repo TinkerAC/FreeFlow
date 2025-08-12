@@ -13,7 +13,7 @@ createRoot(document.getElementById('app')).render(
   <HashRouter>
     <Routes>
       <Route path="/" element={
-          <Application />
+        <Application />
       } />
       <Route path="/settings" element={<PreferenceWindow />} />
     </Routes>

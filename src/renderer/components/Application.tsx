@@ -2,12 +2,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import './tailwind.css';
-import ReactPlayer from 'react-player'
 import TopBar from '@components/TopBar/TopBar';
 import MusicLibrary from '@components/Musiclibrary/Musiclibrary';
-import MainContent from '@components/Maincontent/MainContent';
 import PlayerBar from '@components/Playerbar/PlayerBar';
-
 import { playerContext, shortcutContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
@@ -18,7 +15,12 @@ import MusicLibraryController from '@renderer/core/controller/MusicLibraryContro
 import MainWindowController from '@renderer/core/controller/MainWindowController';
 import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
 import RightDrawer from '@components/RightContent/RightDrawer';
-import { AnimatePresence } from 'framer-motion';
+import MainContentSwitch from '@components/Maincontent/MainContentSwitch';
+import AppFrame from '@renderer/layout/AppFrame/AppFrame';
+import ContentGrid from '@renderer/layout/ContentGrid/ContentGrid';
+import RightDock from '@components/RightDock/RightDock';
+import { applyMaterialYou } from '@renderer/theme/MaterialYou';
+import './../styles/tokens.material.css';
 
 const Application: React.FC = () => {
   /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
@@ -80,9 +82,8 @@ const Application: React.FC = () => {
 
 
   useEffect(() => {
+    applyMaterialYou('#66ccff', 'dark');
     const initPlayer = async () => {
-
-
       const dump = await playerContext.getPlayerStateFromMain();
       if (audioRef.current && !playerInstanceRef.current) {
         const player = new PlayerController(audioRef.current);
@@ -167,52 +168,57 @@ const Application: React.FC = () => {
   return (
     <div className="App h-full w-full flex flex-col bg-black">
       <audio ref={audioRef} hidden />
-      <TopBar
-        setSearchResults={setSearchResults}
-        mainContentViewStack={viewStackRef.current!}
-        player={playerInstanceRef.current}
-      />
 
-      <div
-        className="flex-1 overflow-hidden grid"
-        style={{
-          gridTemplateColumns: `${
-            isMusicLibraryCollapsed ? '72px' : '250px'
-          } minmax(416.67px, 1fr) ${isRightContentVisible ? 'minmax(0, 300px)' : ''}`,
-          gap: '0.5rem',
-          padding: '0.5rem',
-          transition: 'grid-template-columns 0.3s ease',
-        }}
-      >
-        <MusicLibrary
-          viewStack={viewStackRef.current}
-          musicLibraryController={musicServiceRef.current!} />
-
-        <MainContent
-          viewStack={viewStackRef.current!}
-          player={playerInstanceRef.current}
-          musicLibraryController={musicServiceRef.current!}
-          searchResults={searchResults}
-          setMainContentView={(v: View) => viewStackRef.current!.navigate(v)}
-        />
-
-        {/* ---------- 右侧抽屉 ---------- */}
-        <AnimatePresence>
-          <RightDrawer
-            key="right-drawer"
-            visible={isRightContentVisible}
+      <AppFrame
+        top={
+          <TopBar
+            setSearchResults={setSearchResults}
+            mainContentViewStack={viewStackRef.current!}
             player={playerInstanceRef.current}
           />
-        </AnimatePresence>
-
-      </div>
-      <PlayerBar
-        player={playerInstanceRef.current}
-        onToggleRightContent={() => mainWindowServiceRef.current!.toggleRightContent()}
-        mainContentStack={viewStackRef.current!}
+        }
+        content={
+          <ContentGrid
+            sidebarCollapsed={isMusicLibraryCollapsed}
+            rightVisible={isRightContentVisible}
+            left={
+              <MusicLibrary
+                viewStack={viewStackRef.current}
+                musicLibraryController={musicServiceRef.current!}
+              />
+            }
+            main={
+              <div className="h-full">
+                <div className="h-full /* ContentGrid.module.css -> .mainScroll */">
+                  <MainContentSwitch
+                    viewStack={viewStackRef.current!}
+                    player={playerInstanceRef.current}
+                    musicLibraryController={musicServiceRef.current!}
+                    searchResults={searchResults}
+                    keepAlive={true}
+                  />
+                </div>
+              </div>
+            }
+            right={
+              <RightDock>
+                {/* 只有触发时，你再把 RightDrawer/播放列表面板放进来 */}
+                <RightDrawer visible={true} player={playerInstanceRef.current} />
+              </RightDock>
+            }
+          />
+        }
+        bottom={
+          <PlayerBar
+            player={playerInstanceRef.current}
+            onToggleRightContent={() => mainWindowServiceRef.current!.toggleRightContent()}
+            mainContentStack={viewStackRef.current!}
+          />
+        }
       />
     </div>
   );
-};
 
+
+};
 export default Application;

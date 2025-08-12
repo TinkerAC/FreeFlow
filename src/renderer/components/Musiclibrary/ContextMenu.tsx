@@ -1,57 +1,50 @@
-import React from 'react';
+// file: src/renderer/components/Musiclibrary/ContextMenu.tsx
+import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
+import styles from './MusicLibrary.module.css';
 
 interface ContextMenuProps {
-
   x: number;
   y: number;
   handleCloseMenu: () => void;
   eventPlaylist: PlaylistEntity;
   musicLibraryController: MusicLibraryController;
-
 }
 
 function ContextMenu({
-                       x,
-                       y,
-                       handleCloseMenu,
-                       eventPlaylist,
-                       musicLibraryController,
-
+                       x, y, handleCloseMenu, eventPlaylist, musicLibraryController,
                      }: ContextMenuProps) {
 
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && handleCloseMenu();
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, [handleCloseMenu]);
 
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        top: `${y}px`,
-        left: `${x}px`,
-        backgroundColor: '#333', // 统一为深灰色背景
-        border: '1px solid #666', // 边框为浅灰色
-        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-        zIndex: 1000,
-        color: '#fff', // 白色字体
-        width: '200px', // 菜单宽度统一
-      }}
-      className="p-2"
-    >
-      {/* 添加到下一首播放 */}
+  // 视口边界保护（避免超出可视区域）
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const left = Math.min(Math.max(8, x), vw - 208);
+  const top  = Math.min(Math.max(8, y), vh - 120);
+
+  return createPortal(
+    <div className={styles.menu} style={{ left, top }} onClick={(e)=>e.stopPropagation()}>
       <div
-        className="p-2 hover:bg-gray-700 cursor-pointer"
-        style={{ color: '#fff' }}
+        className={styles.menuItem}
         onClick={() => {
-          console.log(`前端正在删除歌单${eventPlaylist.playlist_id}`);
-          playlistContext.removePlaylist(eventPlaylist.playlist_id).then(()=>{musicLibraryController.refreshPlaylists();});
+          if (!eventPlaylist) return;
+          playlistContext.removePlaylist(eventPlaylist.playlist_id)
+            .then(() => musicLibraryController.refreshPlaylists());
           handleCloseMenu();
         }}
       >
         删除歌单
       </div>
-    </div>);
-
+    </div>,
+    document.body,
+  );
 }
 
 export default ContextMenu;

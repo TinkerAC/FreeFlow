@@ -3,7 +3,7 @@ html, body, #app, .App {
     margin: 0;
     display: flex;
     flex-direction: column;
-    overflow: auto;
+    overflow: hidden; /* 关键：页面不滚动 */
     background-color: black;
 }
 

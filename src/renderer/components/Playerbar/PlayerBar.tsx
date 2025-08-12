@@ -1,12 +1,39 @@
 import React from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { DefaultCover } from '@components/static';
-import ProgressBar from '@components/ProgressBar';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
+import styles from './PlayerBar.module.css';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { ClassicBar, NeonBar, WaveformBar } from '@components/Playerbar/ProgressBar';
+// 任选一个皮肤：
 
-interface PlayerBarProps {
-  player: PlayerController;
+const rootCva = cva(styles.root, {
+  variants: {
+    density: { compact: styles.density_compact, cozy: styles.density_cozy },
+    elevated: { true: styles.elevated_true, false: '' },
+  },
+  defaultVariants: { density: 'cozy', elevated: false },
+});
+
+interface PlayerBarStyleProps extends VariantProps<typeof rootCva> {
+  classNames?: Partial<{
+    root: string;
+    left: string;
+    middle: string;
+    right: string;
+    title: string;
+    artist: string;
+    cover: string;
+    icon: string;
+  }>;
+  unstyled?: boolean;
+  /** 可用来覆盖 CSS 变量，例如 --playerbar-bg、--icon-size */
+  styleVars?: React.CSSProperties & { ['--playerbar-bg']?: string; ['--icon-size']?: string };
+}
+
+export interface PlayerBarProps extends PlayerBarStyleProps {
+  player: PlayerController | null;
   mainContentStack: MainContentViewStack;
   onToggleRightContent: () => void;
 }
@@ -15,110 +42,87 @@ export default function PlayerBar({
                                     player,
                                     mainContentStack,
                                     onToggleRightContent,
+                                    styleVars,
                                   }: PlayerBarProps) {
-
   if (!player) return null;
-
   const track = player.playQueue.currentTrack;
 
   return (
-    <div className="w-full flex items-center justify-between p-4 bg-black text-white z-40">
-      {/* ---------- 左侧：封面 + 曲目信息 ---------- */}
-      <div className="flex items-center w-1/4">
-        <img
-          src={track?.cover_src || DefaultCover}
-          alt="album cover"
-          className="w-12 h-12 rounded-md"
-        />
-        <div className="ml-4 overflow-x-hidden">
-          <div className="text-sm font-semibold whitespace-nowrap">
-            {track?.title || '未知标题'}
-          </div>
-          <div className="text-sm text-gray-400 whitespace-nowrap">
-            {track?.artist || '未知艺术家'}
-          </div>
+    <div className={styles.root} style={styleVars}>
+      {/* 左：封面 + 曲目信息 */}
+      <div className={styles.left}>
+        <img src={track?.cover_src || DefaultCover} alt="album cover" className={styles.cover} />
+        <div className={styles.meta}>
+          <div className={styles.title}>{track?.title || '未知标题'}</div>
+          <div className={styles.artist}>{track?.artist || '未知艺术家'}</div>
         </div>
         {player.isLoading && (
-          <div className="ml-4">
-            <i className="fas fa-spinner fa-spin" />
-          </div>
+          <div className={styles.spinner}><i className="fas fa-spinner fa-spin" /></div>
         )}
       </div>
 
-      {/* ---------- 中间：播放控制 + 进度条 ---------- */}
-      <div className="flex items-center justify-center flex-grow">
-        <div className="w-full mx-4">
-          {/* 播放控制按钮 */}
-          <div className="flex items-center justify-center mb-2">
-            <i
-              className={`fas ${
-                player.playbackMode === 'loop'
-                  ? 'fa-redo'
-                  : player.playbackMode === 'shuffle'
-                    ? 'fa-random'
-                    : 'fa-sync'
-              } mx-3 cursor-pointer`}
-              onClick={() => player.cyclePlaybackMode()}
-            />
-            <i
-              className="fas fa-step-backward mx-3 cursor-pointer"
-              onClick={() => player.playPrevious()}
-            />
-            <i
-              className={`fas ${player.isPlaying ? 'fa-pause' : 'fa-play'} mx-3 cursor-pointer`}
-              onClick={() => player.togglePlayPause()}
-            />
-            <i
-              className="fas fa-step-forward mx-3 cursor-pointer"
-              onClick={() => player.playNext()}
-            />
+      {/* 中：控制 + 进度（对齐版） */}
+      <div className={styles.middle}>
+        <div className={styles.middleInner}>
+          <div className={styles.controls}>
+            <i className={styles.iconButton} title="循环/随机/顺序" onClick={() => player.cyclePlaybackMode()}>
+              <span
+                className={'fas ' + (player.playbackMode === 'loop' ? 'fa-redo' : player.playbackMode === 'shuffle' ? 'fa-random' : 'fa-sync')} />
+            </i>
+            <i className={styles.iconButton} onClick={() => player.playPrevious()} title="上一首">
+              <span className="fas fa-step-backward" />
+            </i>
+            <i className={styles.iconButton} onClick={() => player.togglePlayPause()}
+               title={player.isPlaying ? '暂停' : '播放'}>
+              <span className={'fas ' + (player.isPlaying ? 'fa-pause' : 'fa-play')} />
+            </i>
+            <i className={styles.iconButton} onClick={() => player.playNext()} title="下一首">
+              <span className="fas fa-step-forward" />
+            </i>
           </div>
+          <div className={styles.progress}>
+            {/*<ProgressBar*/}
+            {/*  skin="classic"                    // "classic" | "neon" | "waveform" | "knob"*/}
+            {/*  value={player.currentTime}*/}
+            {/*  min={0}*/}
+            {/*  max={track?.duration || 0}*/}
+            {/*  onChange={(val) => player.setCurrentTime(val)}*/}
 
-          {/* 进度条 */}
-          <ProgressBar
-            value={player.currentTime}
-            min={0}
-            max={track?.duration || 0}
-            onChange={(val) => player.setCurrentTime(val)}
-          />
+            {/*/>*/}
+
+            <WaveformBar value={
+              player.currentTime
+            } max={
+              track?.duration || 0
+            } onChange={
+              (val) => player.setCurrentTime(val)
+            }>
+
+            </WaveformBar>
+          </div>
         </div>
       </div>
 
-      {/* ---------- 右侧：列表 / 音量 / 其他 ---------- */}
-      <div className="flex items-center">
-        <i
-          className="fas fa-list mx-3 cursor-pointer"
-          onClick={onToggleRightContent}
-          title="播放列表"
-        />
-        <i className="fas fa-search mx-3 cursor-pointer" />
-        <i className="fas fa-filter mx-3 cursor-pointer" title="播放所有歌曲" />
-        <i
-          className="fas fa-align-center mx-3 cursor-pointer"
-          onClick={() => mainContentStack.navigate(View.LYRIC)}
-        />
-        <input
-          type="range"
-          className="mx-2 w-24 cursor-pointer"
-          min={0}
-          max={1}
-          step={0.01}
-          value={player.volume}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v)) player.setVolume(v);
-          }}
-        />
+      {/* 右：列表/搜索/过滤/歌词/音量/全屏 */}
+      <div className={styles.right}>
+        <i className={styles.iconButton} onClick={onToggleRightContent} title="播放列表"><span
+          className="fas fa-list" /></i>
+        <i className={styles.iconButton} title="搜索"><span className="fas fa-search" /></i>
+        <i className={styles.iconButton} title="播放所有歌曲"><span className="fas fa-filter" /></i>
+        <i className={styles.iconButton} onClick={() => mainContentStack.navigate(View.LYRIC)} title="歌词"><span
+          className="fas fa-align-center" /></i>
+        <input type="range" className={styles.volume} min={0} max={1} step={0.01} value={player.volume}
+               onChange={(e) => {
+                 const v = parseFloat(e.target.value);
+                 if (!isNaN(v)) player.setVolume(v);
+               }} />
         {document.fullscreenElement ? (
-          <i
-            className="fas fa-compress mx-3 cursor-pointer"
-            onClick={() => document.exitFullscreen()}
-          />
+          <i className={styles.iconButton} onClick={() => document.exitFullscreen?.()} title="退出全屏"><span
+            className="fas fa-compress" /></i>
         ) : (
-          <i
-            className="fas fa-expand mx-3 cursor-pointer"
-            onClick={() => document.documentElement.requestFullscreen()}
-          />
+          <i className={styles.iconButton} onClick={() => document.documentElement.requestFullscreen?.()}
+             title="进入全屏"><span
+            className="fas fa-expand" /></i>
         )}
       </div>
     </div>

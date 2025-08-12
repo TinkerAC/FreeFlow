@@ -1,0 +1,257 @@
+/* file: src/renderer/components/TopBar/TopBar.module.css */
+
+.root {
+    -webkit-app-region: drag;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+
+    height: 60px;
+    padding: 0 12px;
+
+    /* 顶栏作为表面容器，高层一点更清晰 */
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 92%, transparent);
+    backdrop-filter: blur(8px) saturate(1.15);
+    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.nodrag {
+    -webkit-app-region: no-drag;
+}
+
+.left, .center, .right {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+.left {
+    gap: 8px;
+}
+
+.center {
+    gap: 10px;
+}
+
+.right {
+    gap: 12px;
+}
+
+.iconBtn {
+    -webkit-app-region: no-drag;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    color: rgb(var(--md-sys-color-on-surface));
+    opacity: .9;
+    cursor: pointer;
+    transition: background .15s ease, opacity .15s ease, transform .05s ease;
+}
+
+.iconBtn:hover {
+    opacity: 1;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+.iconBtn:active {
+    transform: translateY(1px);
+}
+
+/* 搜索框（容器低阶表面 + 描边） */
+.search {
+    -webkit-app-region: no-drag;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(var(--md-sys-color-surface-container-low), .85);
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), .9);
+    border-radius: 999px;
+    padding: 6px 10px;
+    min-width: 200px;
+    max-width: 520px;
+}
+
+.search:focus-within {
+    background: rgba(var(--md-sys-color-surface-container), .9);
+    border-color: rgb(var(--md-sys-color-primary));
+    box-shadow: 0 0 0 3px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 25%, transparent);
+}
+
+.searchInput {
+    flex: 1 1 auto;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: rgb(var(--md-sys-color-on-surface));
+    font-size: 14px;
+}
+
+.searchInput::placeholder {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    opacity: .9;
+}
+
+/* 主要按钮（随主色/对比色） */
+.primaryBtn {
+    -webkit-app-region: no-drag;
+    height: 28px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    transition: filter .15s ease, transform .05s ease;
+}
+
+.primaryBtn:hover {
+    filter: brightness(1.05);
+}
+
+.primaryBtn:active {
+    transform: translateY(1px);
+}
+
+/* 用户徽标 */
+.userBadge {
+    -webkit-app-region: no-drag;
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+    font-weight: 700;
+    font-size: 12px;
+    padding: 0 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* macOS 交通灯（系统色保持不变） */
+.traffic {
+    -webkit-app-region: no-drag;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 6px;
+}
+
+.light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: default;
+    border: 0;
+    transition: filter .15s ease;
+}
+
+.light:hover {
+    filter: brightness(0.9);
+}
+
+.close {
+    background: #ff5f57;
+}
+
+.min {
+    background: #ffbd2e;
+}
+
+.max {
+    background: #28c940;
+}
+
+/* Windows 控件 */
+.winCtrl {
+    -webkit-app-region: no-drag;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 4px;
+}
+
+.winBtn {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.winBtn:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+/* 下拉：本地搜索建议 */
+.dropdown {
+    -webkit-app-region: no-drag;
+    position: fixed;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 88%, transparent);
+    backdrop-filter: blur(8px) saturate(1.1);
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), .9);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elev-2);
+    color: rgb(var(--md-sys-color-on-surface));
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.dropdownItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.dropdownItem:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .5);
+}
+
+.dropdownCover {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+
+.dropdownTitle {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdownSub {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.playBtn {
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.playBtn:hover {
+    color: rgb(var(--md-sys-color-primary));
+}

@@ -4,6 +4,7 @@ import Track from '@components/Maincontent/PlaylistView/Track';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
+import styles from './PlaylistView.module.css';
 
 // 接口定义：增加了从父组件接收滚动容器引用的 prop
 interface PlaylistProps {
@@ -128,23 +129,21 @@ export function Playlist({
 
   return (
     <div className="mt-6 Playlist">
-      <table className="w-full text-left table-fixed">
+      <table className={styles.table}>
         <colgroup>
-          <col className="w-8" />
-          <col className="w-1/2" />
-          <col className="hidden md:table-cell w-1/4" />
-          <col className="hidden lg:table-cell w-1/6" />
-          <col className="w-12" />
+          <col className={styles.colIndex} />
+          <col className={styles.colTitle} />
+          <col className={`hidden md:table-cell ${styles.colAlbum}`} />
+          <col className={`hidden lg:table-cell ${styles.colDate}`} />
+          <col className={styles.colDur} />
         </colgroup>
         <thead>
-        <tr className="border-b border-gray-700">
-          <th className="py-2 w-8 text-center">#</th>
-          <th className="py-2 w-1/2">标题</th>
-          <th className="py-2 w-1/4 hidden md:table-cell">专辑</th>
-          <th className="py-2 w-1/6 hidden lg:table-cell">添加日期</th>
-          <th className="py-2 w-12 content-center">
-            <i className="fas fa-clock" aria-label="时长"></i>
-          </th>
+        <tr>
+          <th className={styles.colIndex}>#</th>
+          <th className={styles.colTitle}>标题</th>
+          <th className={`hidden md:table-cell ${styles.colAlbum}`}>专辑</th>
+          <th className={`hidden lg:table-cell ${styles.colDate}`}>添加日期</th>
+          <th className={styles.colDur}><i className="fas fa-clock" aria-label="时长" /></th>
         </tr>
         </thead>
         <tbody>

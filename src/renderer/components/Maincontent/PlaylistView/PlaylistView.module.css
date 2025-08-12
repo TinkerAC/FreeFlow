@@ -1,0 +1,101 @@
+/* file: src/renderer/components/Maincontent/PlaylistView/PlaylistView.module.css */
+
+/* 视图根：只在这里滚动；文本色从 tokens 接管 */
+.root {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding: 16px;
+
+    /* 背景：封面主色（--accent）+ M3 表面叠加，默认用主色作强调 */
+    --accent: var(--md-sys-color-primary);
+
+    background:
+            linear-gradient(to bottom, rgba(var(--accent), .28), rgba(0,0,0,0) 40%),
+            linear-gradient(to bottom,
+            color-mix(in oklab, rgb(var(--md-sys-color-surface)) 85%, transparent),
+            color-mix(in oklab, rgb(var(--md-sys-color-surface)) 98%, transparent)
+            );
+
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+/* 头部 */
+.header {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.cover {
+    width: 192px; height: 192px;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.meta { min-width: 0; }
+.kicker { font-size: 14px; color: rgb(var(--md-sys-color-on-surface-variant)); }
+.title {
+    font-size: 32px; line-height: 1.2; font-weight: 800;
+    margin-top: 8px; cursor: pointer;
+}
+.title:hover { text-decoration: underline; }
+.sub {
+    margin-top: 8px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 操作栏 */
+.actions {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.pushRight { margin-left: auto; }
+
+/* 表格区域 */
+.table {
+    width: 100%;
+    table-layout: fixed; /* 防止列被内容撑爆 */
+    border-collapse: collapse;
+}
+thead th {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    font-weight: 600;
+    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+    padding: 8px 0;
+}
+tbody td {
+    padding: 8px 0;
+    border-top: 1px solid rgb(var(--md-sys-color-outline-variant));
+    vertical-align: middle;
+}
+
+/* 行样式 */
+.row { transition: background-color .12s ease; }
+.row:hover { background: rgba(var(--md-sys-color-surface-variant), .35); }
+
+/* 列宽 & 内容 */
+.colIndex   { width: 32px; text-align: center; }
+.colTitle   { width: 50%; min-width: 0; }
+.colAlbum   { width: 25%; min-width: 0; }
+.colDate    { width: 16.66%; min-width: 0; }
+.colDur     { width: 48px; text-align: right; }
+
+.titleWrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.thumb { width: 40px; height: 40px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; }
+.ttl { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.art { color: rgb(var(--md-sys-color-on-surface-variant)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* “定位到当前曲目”的临时高亮 */
+.locatingHighlight { animation: pulse .9s ease-in-out 2; }
+@keyframes pulse {
+    0%   { background: rgba(var(--md-sys-color-primary), .25); }
+    50%  { background: rgba(var(--md-sys-color-primary), .08); }
+    100% { background: transparent; }
+}

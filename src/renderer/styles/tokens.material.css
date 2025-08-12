@@ -1,0 +1,99 @@
+/* file: src/renderer/styles/tokens.material.css */
+
+/* 尺寸/圆角/阴影等与主题无关的基础 */
+:root {
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+
+    --z-base: 10;
+    --z-dock: 30;
+    --z-drawer: 40;
+    --z-modal: 50;
+    --z-toast: 60;
+
+    /* 状态层不透明度（M3 推荐） */
+    --state-hover: 0.08;
+    --state-focus: 0.12;
+    --state-press: 0.12;
+    --state-drag: 0.16;
+
+    /* 滚动用到的高度 */
+    --pg-height-sm: 4px;
+    --pg-height-md: 6px;
+    --pg-height-lg: 8px;
+    --pg-radius: var(--radius-md);
+}
+
+/* ========== M3 语义色（md-sys-color-xxx），值为 "R G B" 三通道 ========== */
+:root {
+    /* 这些仅为兜底默认，实际运行时由 JS 写入 */
+    --md-sys-color-primary:             99 102 241;
+    --md-sys-color-on-primary:          255 255 255;
+    --md-sys-color-primary-container:   218 222 255;
+    --md-sys-color-on-primary-container: 31 33 78;
+
+    --md-sys-color-secondary:           108 115 125;
+    --md-sys-color-on-secondary:        255 255 255;
+    --md-sys-color-secondary-container: 213 218 224;
+    --md-sys-color-on-secondary-container: 37 43 49;
+
+    --md-sys-color-tertiary:            140 98 183;
+    --md-sys-color-on-tertiary:         255 255 255;
+    --md-sys-color-tertiary-container:  235 221 247;
+    --md-sys-color-on-tertiary-container: 47 22 77;
+
+    --md-sys-color-error:               179 38 30;
+    --md-sys-color-on-error:            255 255 255;
+    --md-sys-color-error-container:     249 222 220;
+    --md-sys-color-on-error-container:  65 14 11;
+
+    --md-sys-color-background:          255 255 255;
+    --md-sys-color-on-background:       28 27 31;
+
+    --md-sys-color-surface:             255 255 255;
+    --md-sys-color-on-surface:          28 27 31;
+    --md-sys-color-surface-variant:     228 225 236;
+    --md-sys-color-on-surface-variant:  73 69 79;
+
+    --md-sys-color-outline:             121 116 126;
+    --md-sys-color-outline-variant:     200 196 208;
+
+    --md-sys-color-inverse-surface:     49 48 51;
+    --md-sys-color-inverse-on-surface:  244 239 244;
+    --md-sys-color-inverse-primary:     153 159 255;
+
+    /* M3 surface containers（层级表面） */
+    --md-sys-color-surface-dim:         238 238 242;
+    --md-sys-color-surface-bright:      251 247 255;
+    --md-sys-color-surface-container-lowest: 255 255 255;
+    --md-sys-color-surface-container-low:    246 246 250;
+    --md-sys-color-surface-container:        240 240 244;
+    --md-sys-color-surface-container-high:   234 234 238;
+    --md-sys-color-surface-container-highest:229 229 233;
+
+    /* 你已有组件会用到的几个专用变量（可被局部覆盖） */
+    /* 现代字号：clamp(最小, 首选, 最大) */
+    --font-ui-sm: clamp(12px, 1.1vw, 13px);
+    --font-ui:    clamp(13px, 1.2vw, 15px);
+    --font-ui-lg: clamp(16px, 1.6vw, 18px);
+
+    /* PlayerBar 与进度条默认皮肤变量（可被组件覆盖） */
+    --playerbar-bg: color-mix(in oklab, rgb(var(--md-sys-color-surface)) 92%, transparent);
+
+    --pg-height-sm: 4px;
+    --pg-height-md: 6px;
+    --pg-height-lg: 8px;
+    --pg-radius: var(--radius-md);
+
+    /* 进度条用色（未播放/已播放/拇指） */
+    --pg-base:  var(--md-sys-color-surface-variant); /* track 未播放 */
+    --pg-fill:  var(--md-sys-color-primary);         /* 已播放部分 */
+    --pg-thumb: var(--md-sys-color-primary);         /* 游标/拇指 */
+}
+
+/* 让整个应用跟随 token 渲染，避免“黑字” */
+html, body, #root, .App {
+    background: rgb(var(--md-sys-color-background));
+    color: rgb(var(--md-sys-color-on-background));
+}

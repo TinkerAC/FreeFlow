@@ -1,10 +1,6 @@
-// src/renderer/components/PlaylistView/PlaylistView.tsx
 import React, { useEffect, useRef, useState } from 'react';
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
 import ColorThief from 'colorthief';
-import './PlaylistView.css';
+import styles from './PlaylistView.module.css';
 
 import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
@@ -19,14 +15,11 @@ interface PlaylistViewProps {
   player: PlayerController;
 }
 
-/** 全局内存缓存：key = `${platform}_${platuniqueid}` → value = 'rgb(r,g,b)' */
+/** 全局内存缓存：key = `${platform}_${platuniqueid}` → value = 'r g b'（三通道） */
 const themeColorCache: Record<string, string> = {};
 
-export function PlaylistView({
-                               musicLibraryController,
-                               player,
-                             }: PlaylistViewProps) {
-  const [presentPlaylist, setPresentPlaylist] = useState<PlaylistEntity>(null);
+export function PlaylistView({ musicLibraryController, player }: PlaylistViewProps) {
+  const [presentPlaylist, setPresentPlaylist] = useState<PlaylistEntity | null>(null);
 
   /* 订阅歌单变化 */
   useEffect(() => {
@@ -34,48 +27,41 @@ export function PlaylistView({
       setPresentPlaylist(musicLibraryController.activePlaylist);
     });
     return () => unsubscribe();
-  }, []);
+  }, [musicLibraryController]);
 
   const coverImage = presentPlaylist?.tracks?.[0]?.cover_src || DefaultCover;
-  const [backgroundColor, setBackgroundColor] = useState('#333');
+
+  // 注意：这里用 "r g b" 存储，便于直接塞进 CSS var
+  const [accentRGB, setAccentRGB] = useState<string>('51 51 51'); // 默认 #333 => 51 51 51
   const [modalVisible, setModalVisible] = useState(false);
-  const [filteredTracks, setFilteredTracks] = useState(
-    presentPlaylist?.tracks || [],
-  );
+  const [filteredTracks, setFilteredTracks] = useState(presentPlaylist?.tracks || []);
   const [searchKeyword, setSearchKeyword] = useState('');
 
-  /* 计算或读取主题色（纯内存缓存） */
+  /* 计算或读取主题色 */
   useEffect(() => {
     if (!presentPlaylist) return;
-
     const { platform, platform_unique_id } = presentPlaylist;
     const cacheKey = `${platform}_${platform_unique_id}`;
 
-    // 命中内存缓存
     if (themeColorCache[cacheKey]) {
-      setBackgroundColor(themeColorCache[cacheKey]);
+      setAccentRGB(themeColorCache[cacheKey]);
       return;
     }
 
-    // 未命中时异步提取主色调
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.src = coverImage;
-
     img.onload = () => {
       try {
         const colorThief = new ColorThief();
         const [r, g, b] = colorThief.getColor(img);
-        const rgb = `rgb(${r}, ${g}, ${b})`;
-
-        // 写入缓存并更新 UI
-        themeColorCache[cacheKey] = rgb;
-        setBackgroundColor(rgb);
+        const triplet = `${r} ${g} ${b}`;           // ★ 三通道字符串
+        themeColorCache[cacheKey] = triplet;
+        setAccentRGB(triplet);
       } catch (e) {
         console.error('提取主色调失败：', e);
       }
     };
-
     img.onerror = () => console.error('封面图片加载失败：', img.src);
   }, [coverImage, presentPlaylist]);
 
@@ -86,104 +72,77 @@ export function PlaylistView({
 
   /* 根据关键词搜索 */
   useEffect(() => {
-    search(searchKeyword);
-  }, [searchKeyword]);
-
-  const search = (keyword: string) => {
-    if (!keyword) {
+    if (!searchKeyword) {
       setFilteredTracks(presentPlaylist?.tracks || []);
       return;
     }
-    const lower = keyword.toLowerCase();
-    const result = presentPlaylist?.tracks?.filter((t) => {
-      const title = t.title || '';
-      const artist = t.artist || '';
-      const album = t.album || '';
-      return (
-        title.toLowerCase().includes(lower) ||
-        artist.toLowerCase().includes(lower) ||
-        album.toLowerCase().includes(lower)
-      );
-    });
-    setFilteredTracks(result);
-  };
+    const lower = searchKeyword.toLowerCase();
+    setFilteredTracks(
+      (presentPlaylist?.tracks || []).filter((t) =>
+        (t.title || '').toLowerCase().includes(lower) ||
+        (t.artist || '').toLowerCase().includes(lower) ||
+        (t.album || '').toLowerCase().includes(lower),
+      ),
+    );
+  }, [searchKeyword, presentPlaylist]);
 
-  // 1. 创建一个 ref 用于引用滚动容器
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
       ref={scrollContainerRef}
-      className="p-4 relative w-full h-full PlaylistView"
-      style={{
-        background: `linear-gradient(to bottom, ${backgroundColor}, #000)`,
-        overflowY: 'auto',
-      }}
+      className={styles.root}
+      style={{ ['--accent' as any]: accentRGB }}  // ★ 仅设置背景用的主色，不影响文字颜色
     >
-      {/* 头部区域 */}
-      <div className="relative z-10 flex flex-col md:flex-row items-center mb-6">
-        <img
-          src={coverImage}
-          alt="Playlist cover"
-          className="w-48 h-48 rounded-lg object-cover"
-        />
-        <div className="ml-0 md:ml-6 mt-4 md:mt-0 text-center md:text-left">
-          <h2 className="text-lg text-gray-300">歌单</h2>
-          <h1
-            className="text-4xl font-bold mt-2 cursor-pointer hover:underline"
-            onClick={() => setModalVisible(true)}
-          >
+      {/* 头部 */}
+      <div className={styles.header}>
+        <img src={coverImage} alt="Playlist cover" className={styles.cover} />
+        <div className={styles.meta}>
+          <div className={styles.kicker}>歌单</div>
+          <h1 className={styles.title} onClick={() => setModalVisible(true)}>
             {presentPlaylist?.title || '未知歌单'}
           </h1>
-          <p className="mt-2 text-gray-400">
-            {presentPlaylist?.creator || '未知创建者'} •{' '}
-            {presentPlaylist?.tracks?.length || 0} 首歌曲
+          <p className={styles.sub}>
+            {presentPlaylist?.creator || '未知创建者'} • {(presentPlaylist?.tracks?.length || 0)} 首歌曲
           </p>
         </div>
       </div>
 
       {/* 操作栏 */}
-      <div className="flex items-center relative z-10 mb-4">
+      <div className={styles.actions}>
         <button
-          className="bg-green-500 p-4 rounded-full text-2xl mr-4 hover:bg-green-600 focus:outline-none"
+          className="bg-green-500 p-4 rounded-full text-2xl hover:bg-green-600 focus:outline-none"
           onClick={() => player.replacePlayQueue(presentPlaylist?.tracks || [])}
           aria-label="播放全部"
+          title="播放全部"
         >
-          <i className="fas fa-play"></i>
+          <i className="fas fa-play" />
         </button>
-        <button
-          className="text-2xl mr-4 hover:text-gray-300 focus:outline-none"
-          aria-label="随机播放"
-        >
-          <i className="fas fa-random"></i>
+        <button className="text-2xl hover:text-gray-300 focus:outline-none" aria-label="随机播放">
+          <i className="fas fa-random" />
         </button>
-        <button
-          className="text-2xl hover:text-gray-300 focus:outline-none"
-          aria-label="下载歌单"
-        >
-          <i className="fas fa-download"></i>
+        <button className="text-2xl hover:text-gray-300 focus:outline-none" aria-label="下载歌单">
+          <i className="fas fa-download" />
         </button>
 
         {/* 收藏 / 取消收藏 */}
-        <button>
+        <button className="text-2xl">
           {presentPlaylist?.is_persistent ? (
             <i
-              className="fas fa-heart text-red-500 text-2xl ml-auto"
+              className="fas fa-heart text-red-500"
               onClick={() =>
-                playlistContext
-                  .removePlaylist(presentPlaylist?.playlist_id)
+                playlistContext.removePlaylist(presentPlaylist?.playlist_id)
                   .then(() => musicLibraryController.refreshPlaylists())
               }
-            ></i>
+            />
           ) : (
             <i
-              className="far fa-heart text-2xl ml-auto"
+              className="far fa-heart"
               onClick={() =>
-                playlistContext
-                  .addPlaylist(presentPlaylist)
+                playlistContext.addPlaylist(presentPlaylist!)
                   .then(() => musicLibraryController.refreshPlaylists())
               }
-            ></i>
+            />
           )}
         </button>
 
@@ -191,13 +150,10 @@ export function PlaylistView({
         <input
           type="text"
           placeholder="搜索歌曲"
-          className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500 ml-auto"
+          className={`bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500 ${styles.pushRight}`}
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setSearchKeyword('');
-          }}
+          onContextMenu={(e) => { e.preventDefault(); setSearchKeyword(''); }}
         />
       </div>
 
