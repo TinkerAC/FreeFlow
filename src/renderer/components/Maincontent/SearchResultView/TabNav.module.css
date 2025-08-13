@@ -1,0 +1,24 @@
+/* file: src/renderer/components/Maincontent/SearchResultView/TabNav.module.css */
+.root {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+}
+.tab {
+    position: relative;
+    height: 32px; padding: 0 12px;
+    border-radius: 999px;
+    font-size: var(--font-ui, 14px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.tab:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+.active {
+    color: rgb(var(--md-sys-color-on-primary));
+    background: rgb(var(--md-sys-color-primary));
+    border-color: rgb(var(--md-sys-color-primary));
+}

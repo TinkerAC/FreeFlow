@@ -1,7 +1,7 @@
 import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 import { SessionRecord } from '@main/database/record/SessionRecord';
-import { OS } from '@main/core/enum/Platform';
 import { Session } from '@main/database/seqimpl/Session';
+import { OS } from '@src/shared/OS';
 
 export class SessionDataSourceImpl implements SessionDataSource {
   async createSession(startAt: Date, operating_system?: OS, appVersion?: string): Promise<SessionRecord> {

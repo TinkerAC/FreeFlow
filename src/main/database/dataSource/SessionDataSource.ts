@@ -1,5 +1,6 @@
 import { SessionRecord } from '@main/database/record/SessionRecord';
-import { OS } from '@main/core/enum/Platform';
+
+import { OS } from '@src/shared/OS';
 
 export interface SessionDataSource {
   createSession(

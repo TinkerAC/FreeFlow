@@ -1,22 +1,27 @@
-import { ConfigApi } from '@renderer/core/ipc/configApi';
-import { LibraryApi } from '@renderer/core/ipc/libraryApi';
-import { LyricsApi } from '@renderer/core/ipc/lyricsApi';
-import { SystemApi } from '@renderer/core/ipc/systemApi';
-import { PlayerApi } from '@renderer/core/ipc/playerApi';
-import { PlaylistApi } from '@renderer/core/ipc/playlistApi';
-import { SearchApi } from '@renderer/core/ipc/searchApi';
-import { ShortcutApi } from '@renderer/core/ipc/shortcutApi';
-import { WindowControlApi } from '@renderer/core/ipc/windowControlApi';
+import type {
+  ConfigApi,
+  LibraryApi,
+  LyricsApi,
+  MainApi,
+  PlayerApi,
+  PlaylistApi,
+  SearchApi,
+  ShortcutApi,
+  SystemApi,
+  WindowControlApi,
+} from '@src/shared/ipc/types';
 
-const configContext: ConfigApi = window.mainApi.configApi;
-const playerContext: PlayerApi = window.mainApi.playerApi;
-const playlistContext: PlaylistApi = window.mainApi.playlistApi;
-const searchContext: SearchApi = window.mainApi.searchApi;
-const shortcutContext: ShortcutApi = window.mainApi.shortcutApi;
-const windowControlContext: WindowControlApi = window.mainApi.windowControlApi;
-const libraryContext: LibraryApi = window.mainApi.libraryApi;
-const lyricsContext: LyricsApi = window.mainApi.lyricsApi;
-const systemContext: SystemApi = window.mainApi.systemApi;
+const mainApi = window.mainApi as MainApi;
+
+const configContext: ConfigApi = mainApi.configApi;
+const playerContext: PlayerApi = mainApi.playerApi;
+const playlistContext: PlaylistApi = mainApi.playlistApi;
+const searchContext: SearchApi = mainApi.searchApi;
+const shortcutContext: ShortcutApi = mainApi.shortcutApi;
+const windowControlContext: WindowControlApi = mainApi.windowControlApi;
+const libraryContext: LibraryApi = mainApi.libraryApi;
+const lyricsContext: LyricsApi = mainApi.lyricsApi;
+const systemContext: SystemApi = mainApi.systemApi;
 
 export {
   configContext,

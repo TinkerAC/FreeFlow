@@ -20,7 +20,6 @@ import AppFrame from '@renderer/layout/AppFrame/AppFrame';
 import ContentGrid from '@renderer/layout/ContentGrid/ContentGrid';
 import RightDock from '@components/RightDock/RightDock';
 import { applyMaterialYou } from '@renderer/theme/MaterialYou';
-import './../styles/tokens.material.css';
 
 const Application: React.FC = () => {
   /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
@@ -82,7 +81,6 @@ const Application: React.FC = () => {
 
 
   useEffect(() => {
-    applyMaterialYou('#66ccff', 'dark');
     const initPlayer = async () => {
       const dump = await playerContext.getPlayerStateFromMain();
       if (audioRef.current && !playerInstanceRef.current) {

@@ -1,36 +1,48 @@
+/* file: src/renderer/components/Playerbar/ProgressBar/skins/Waveform/WaveformBar.module.css */
 .root {
     display: flex;
-    align-items: center;
+    align-items: center; /* 与 PlayerBar 中线对齐 */
+    line-height: 1; /* 避免文本行高撑高容器 */
     gap: 8px;
     width: 100%;
+    --pg-wave-h: 12px; /* 默认高度，允许覆盖 */
 }
 
 .wrap {
     position: relative;
     flex: 1 1 auto;
-    height: 40px;
+
+    /* ★ 统一由变量控制高度；不会把 PlayerBar 撑高 */
+    height: var(--pg-wave-h);
+    padding-block: 2px; /* 轻微上下内边距，视觉更居中 */
+
     cursor: pointer;
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
     gap: 2px;
-    align-items: end;
+
+    /* ★ 居中对齐，不再“贴地” */
+    align-items: center;
 }
 
+/* 未播放的底色（使用 M3 表面变体），而非依赖自定义未定义变量 */
 .bar {
-    background: rgb(var(--pg-base));
+    background: rgb(var(--md-sys-color-surface-variant));
     border-radius: 2px;
     transition: background .12s linear, transform .12s linear;
 }
 
+/* 已播放部分 */
 .barActive {
-    background: rgb(var(--pg-fill));
-    transform: translateY(-2px);
-    box-shadow: 0 2px 10px color-mix(in oklab, rgb(var(--pg-fill)) 35%, transparent);
+    background: rgb(var(--md-sys-color-primary));
+    transform: translateY(-1px); /* 轻微上浮，避免抖动过大 */
+    box-shadow: 0 2px 10px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 35%, transparent);
 }
 
 .time {
-    font-size: var(--font-ui-sm);
+    font-size: var(--font-ui-sm, 12px);
     color: rgb(var(--md-sys-color-on-surface-variant));
     white-space: nowrap;
+    line-height: 1;
 }

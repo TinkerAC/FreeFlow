@@ -3,11 +3,12 @@ import { MainContentViewStack, StackItem, View } from './MainContentViewStack';
 import PlaylistView from './PlaylistView/PlaylistView';
 import ProfileView from './ProfileView/ProfileView';
 import LyricView from './LyricView/LyricView';
-import TabbedSearchResultView from './SearchResultView/TabbedSearchResultView';
+import SearchResultView from './SearchResultView/SearchResultView';
 import DebugView from './DebugView/DebugView';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+import SettingsView from '@components/Maincontent/SettingView/SettingsView';
 
 export default function MainContentSwitch({
                                             player, viewStack, searchResults, musicLibraryController, keepAlive = false,
@@ -22,7 +23,10 @@ export default function MainContentSwitch({
   const [pointer, setPointer] = useState(0);
 
   useEffect(() => {
-    const unsub = viewStack.subscribe((stack, p) => { setItems(stack); setPointer(p); });
+    const unsub = viewStack.subscribe((stack, p) => {
+      setItems(stack);
+      setPointer(p);
+    });
     return () => unsub();
   }, [viewStack]);
 
@@ -32,17 +36,24 @@ export default function MainContentSwitch({
         return <PlaylistView player={player!} musicLibraryController={musicLibraryController} />;
       case View.SEARCH_RESULTS:
         return (
-          <TabbedSearchResultView
+          <SearchResultView
             player={player}
             fusionSearchResult={searchResults}
             viewStack={viewStack}
             musicLibraryController={musicLibraryController}
           />
         );
-      case View.PROFILE: return <ProfileView />;
-      case View.LYRIC:   return player ? <LyricView player={player} /> : <div style={{padding:16,color:'#f87171'}}>播放器未就绪</div>;
-      case View.DEBUG:   return <DebugView player={player!} mainContentStack={viewStack} />;
-      default:           return <div style={{padding:16,opacity:.7}}>未知视图</div>;
+      case View.PROFILE:
+        return <ProfileView />;
+      case View.LYRIC:
+        return player ? <LyricView player={player} /> :
+          <div style={{ padding: 16, color: '#f87171' }}>播放器未就绪</div>;
+      case View.DEBUG:
+        return <DebugView player={player!} mainContentStack={viewStack} />;
+      case View.SETTINGS:
+        return <SettingsView />;
+      default:
+        return <div style={{ padding: 16, opacity: .7 }}>未知视图</div>;
     }
   };
 

@@ -499,10 +499,7 @@ export default class PlayerController extends AbstractController<[PlayerState]> 
 
 
     //向主进程发送统计信息(play_count++)
-
-    libraryContext.increasePlayCount(this.playQueue.currentTrack).then(() => {
-      console.log('播放次数增加成功');
-    });
+    libraryContext.increasePlayCount(this.playQueue.currentTrack);
 
     if (!this.intendedAudioSrc || (this.audio.src !== this.intendedAudioSrc && !this.audio.src.endsWith(this.intendedAudioSrc))) {
       console.warn('PlayerController.onAudioEnded: 事件针对已过时或非预期音轨。');

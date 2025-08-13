@@ -1,3 +1,4 @@
+// file: src/renderer/components/Playerbar/PlayerBar.tsx
 import React from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { DefaultCover } from '@components/static';
@@ -5,8 +6,13 @@ import PlayerController from '@renderer/core/controller/PlayerController';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import styles from './PlayerBar.module.css';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { ClassicBar, NeonBar, WaveformBar } from '@components/Playerbar/ProgressBar';
-// 任选一个皮肤：
+import { ProgressBar } from '@components/Playerbar/ProgressBar';
+
+// 从设置里读取
+import { useSetting } from '@components/Maincontent/SettingView/useSettings';
+
+type ProgressSkin = 'classic' | 'neon' | 'waveform' | 'knob';
+type UIDensity = 'compact' | 'cozy';
 
 const rootCva = cva(styles.root, {
   variants: {
@@ -47,8 +53,19 @@ export default function PlayerBar({
   if (!player) return null;
   const track = player.playQueue.currentTrack;
 
+  // ==== 从配置读取 ====
+  // 进度条皮肤（Settings -> audio.progressSkin）
+  const progressSkin = useSetting<ProgressSkin>('audio.progressSkin', 'neon');
+  // UI 密度（Settings -> ui.density）
+  const uiDensity = useSetting<UIDensity>('ui.density', 'cozy');
+  // 音量步长（百分比，需在 schema 中有 audio.volumeStep，否则用 1% 兜底）
+  const volumeStepPct = useSetting<number>('audio.volumeStep', 1);
+  const volumeStep = Math.max(0.001, (volumeStepPct.value || 1) / 100); // 0.01 = 1%
+
+  const rootCls = rootCva({ density: uiDensity.value, elevated: false });
+
   return (
-    <div className={styles.root} style={styleVars}>
+    <div className={rootCls} style={styleVars}>
       {/* 左：封面 + 曲目信息 */}
       <div className={styles.left}>
         <img src={track?.cover_src || DefaultCover} alt="album cover" className={styles.cover} />
@@ -66,8 +83,7 @@ export default function PlayerBar({
         <div className={styles.middleInner}>
           <div className={styles.controls}>
             <i className={styles.iconButton} title="循环/随机/顺序" onClick={() => player.cyclePlaybackMode()}>
-              <span
-                className={'fas ' + (player.playbackMode === 'loop' ? 'fa-redo' : player.playbackMode === 'shuffle' ? 'fa-random' : 'fa-sync')} />
+              <span className={'fas ' + (player.playbackMode === 'loop' ? 'fa-redo' : player.playbackMode === 'shuffle' ? 'fa-random' : 'fa-sync')} />
             </i>
             <i className={styles.iconButton} onClick={() => player.playPrevious()} title="上一首">
               <span className="fas fa-step-backward" />
@@ -80,49 +96,55 @@ export default function PlayerBar({
               <span className="fas fa-step-forward" />
             </i>
           </div>
+
           <div className={styles.progress}>
-            {/*<ProgressBar*/}
-            {/*  skin="classic"                    // "classic" | "neon" | "waveform" | "knob"*/}
-            {/*  value={player.currentTime}*/}
-            {/*  min={0}*/}
-            {/*  max={track?.duration || 0}*/}
-            {/*  onChange={(val) => player.setCurrentTime(val)}*/}
-
-            {/*/>*/}
-
-            <WaveformBar value={
-              player.currentTime
-            } max={
-              track?.duration || 0
-            } onChange={
-              (val) => player.setCurrentTime(val)
-            }>
-
-            </WaveformBar>
+            {/* 这里用配置中的皮肤；如果你在入口已经用 ProgressSkinProvider 提供了默认皮肤，也可以不传 skin */}
+            <ProgressBar
+              skin={progressSkin.value}
+              value={player.currentTime}
+              min={0}
+              max={track?.duration || 0}
+              onChange={(val: number) => player.setCurrentTime(val)}
+              styleVars={{
+                ['--pg-base' as any]: 'var(--md-sys-color-surface-variant)',
+                ['--pg-fill' as any]: 'var(--md-sys-color-primary)',
+                ['--pg-thumb' as any]: 'var(--md-sys-color-primary)',
+              }}
+            />
           </div>
         </div>
       </div>
 
       {/* 右：列表/搜索/过滤/歌词/音量/全屏 */}
       <div className={styles.right}>
-        <i className={styles.iconButton} onClick={onToggleRightContent} title="播放列表"><span
-          className="fas fa-list" /></i>
+        <i className={styles.iconButton} onClick={onToggleRightContent} title="播放列表">
+          <span className="fas fa-list" />
+        </i>
         <i className={styles.iconButton} title="搜索"><span className="fas fa-search" /></i>
         <i className={styles.iconButton} title="播放所有歌曲"><span className="fas fa-filter" /></i>
-        <i className={styles.iconButton} onClick={() => mainContentStack.navigate(View.LYRIC)} title="歌词"><span
-          className="fas fa-align-center" /></i>
-        <input type="range" className={styles.volume} min={0} max={1} step={0.01} value={player.volume}
-               onChange={(e) => {
-                 const v = parseFloat(e.target.value);
-                 if (!isNaN(v)) player.setVolume(v);
-               }} />
+        <i className={styles.iconButton} onClick={() => mainContentStack.navigate(View.LYRIC)} title="歌词">
+          <span className="fas fa-align-center" />
+        </i>
+        <input
+          type="range"
+          className={styles.volume}
+          min={0}
+          max={1}
+          step={volumeStep}
+          value={player.volume}
+          onChange={(e) => {
+            const v = parseFloat(e.target.value);
+            if (!isNaN(v)) player.setVolume(v);
+          }}
+        />
         {document.fullscreenElement ? (
-          <i className={styles.iconButton} onClick={() => document.exitFullscreen?.()} title="退出全屏"><span
-            className="fas fa-compress" /></i>
+          <i className={styles.iconButton} onClick={() => document.exitFullscreen?.()} title="退出全屏">
+            <span className="fas fa-compress" />
+          </i>
         ) : (
-          <i className={styles.iconButton} onClick={() => document.documentElement.requestFullscreen?.()}
-             title="进入全屏"><span
-            className="fas fa-expand" /></i>
+          <i className={styles.iconButton} onClick={() => document.documentElement.requestFullscreen?.()} title="进入全屏">
+            <span className="fas fa-expand" />
+          </i>
         )}
       </div>
     </div>

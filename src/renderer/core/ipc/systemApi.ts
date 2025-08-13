@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron';
 import { AppIcon } from '@src/shared/hifiniCookies';
-import { OS } from '@main/core/enum/Platform';
+
+import { OS } from '@src/shared/OS';
 
 export const systemApi = {
   getPlatform: (): Promise<OS> => ipcRenderer.invoke('get-system'),

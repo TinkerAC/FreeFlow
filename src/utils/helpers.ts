@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
-import { OS } from '@main/core/enum/Platform';
+
+import { OS } from '@src/shared/OS';
 
 /**
  * Checks if process NODE_ENV in 'development' mode

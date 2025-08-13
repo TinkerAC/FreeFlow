@@ -1,5 +1,5 @@
 // file: src/renderer/components/Musiclibrary/Musiclibrary.tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Item from './Item';
 import ContextMenu from './ContextMenu';
 import { playlistContext } from '@renderer/core/electronContextApi';
@@ -59,6 +59,7 @@ export default function MusicLibrary({ musicLibraryController, viewStack }: Musi
     <aside ref={rootRef} className={clsx(styles.root, collapsed && styles.collapsed)}>
       {/* 头部 */}
       <div className={styles.header}>
+        {/* 左：汉堡按钮（收起/展开） */}
         <button
           className={styles.iconBtn}
           title={collapsed ? '展开音乐库' : '收起音乐库'}
@@ -67,11 +68,20 @@ export default function MusicLibrary({ musicLibraryController, viewStack }: Musi
           <i className="fas fa-bars" />
         </button>
 
+        {/* 中：标题（收起态隐藏，展开态显示） */}
         <div className={styles.title}>音乐库</div>
 
+        {/* 右：新增（仅展开态可见，样式控制） */}
+        <button
+          className={clsx(styles.iconBtn, styles.addBtn)}
+          title="新建歌单"
+          onClick={() => playlistContext.createPlaylist().then(musicLibraryController.refreshPlaylists)}
+        >
+          <i className="fas fa-plus" />
+        </button>
       </div>
 
-      {/* 可选工具行（展开态可见） */}
+      {/* 工具行（仅展开态显示） */}
       {!collapsed && (
         <div className={styles.toolbar}>
           <button className={clsx(styles.chip, styles.chipActive)}>歌单</button>
@@ -111,21 +121,23 @@ export default function MusicLibrary({ musicLibraryController, viewStack }: Musi
           </div>
         )}
 
-        {/* 收缩态：单列图标网格（可上下滚动） */}
+        {/* 收起态：单列图标网格 */}
         {collapsed && (
           <div className={styles.grid}>
             {playlists.map((item, index) => {
               const selected = selectedItem === index;
               return (
-                <div key={item.playlist_id}
-                     className={clsx(styles.tile, selected && styles.tileSelected)}
-                     onClick={() => {
-                       musicLibraryController.selectItem(index);
-                       musicLibraryController.activePlaylist = item;
-                       viewStack.navigate(View.PLAY_LIST);
-                     }}
-                     onContextMenu={(e) => handleRightClick(e, item.playlist_id)}
-                     title={item.title}>
+                <div
+                  key={item.playlist_id}
+                  className={clsx(styles.tile, selected && styles.tileSelected)}
+                  onClick={() => {
+                    musicLibraryController.selectItem(index);
+                    musicLibraryController.activePlaylist = item;
+                    viewStack.navigate(View.PLAY_LIST);
+                  }}
+                  onContextMenu={(e) => handleRightClick(e, item.playlist_id)}
+                  title={item.title}
+                >
                   <img
                     src={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
                     alt={`${item.title} key:${item.playlist_id}`}

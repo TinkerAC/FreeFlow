@@ -1,4 +1,4 @@
-import '@renderer/core/windowPreload';
+import '@src/preload/mainApi'
 
 
 // Say something

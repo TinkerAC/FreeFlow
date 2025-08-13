@@ -3,16 +3,7 @@ export enum Platform {
   HIFINI = 'Hifini',
   LOCAL = 'Local',
   QQ_MUSIC = 'QQMusic',
-}
-
-
-export enum OS {
-  WINDOWS = 'Windows',
-  MACOS = 'MacOS',
-  LINUX = 'Linux',
-  ANDROID = 'Android',
-  IOS = 'iOS',
-  UNKNOWN = 'Unknown',
+  BILIBILI = 'Bilibili',
 }
 
 
@@ -26,24 +17,10 @@ export function castToPlatform(platform: string): Platform {
       return Platform.LOCAL;
     case Platform.QQ_MUSIC:
       return Platform.QQ_MUSIC;
+    case Platform.BILIBILI:
+      return Platform.BILIBILI;
     default:
       throw new Error(`Unknown platform: ${platform}`);
   }
 }
 
-export function castToOperationSystem(os: string): OS {
-  switch (os) {
-    case OS.WINDOWS:
-      return OS.WINDOWS;
-    case OS.MACOS:
-      return OS.MACOS;
-    case OS.LINUX:
-      return OS.LINUX;
-    case OS.ANDROID:
-      return OS.ANDROID;
-    case OS.IOS:
-      return OS.IOS;
-    default:
-      return OS.UNKNOWN;
-  }
-}

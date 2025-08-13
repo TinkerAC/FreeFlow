@@ -3,8 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { inject } from 'inversify';
 import { DISymbol } from '@main/di/symbol';
-import { OS } from '@main/core/enum/Platform';
 import { WindowKey, WindowManager } from '@main/window/windowManager';
+import { OS } from '@src/shared/OS';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

@@ -6,6 +6,7 @@ export enum View {
   PROFILE = 'profile',
   LYRIC = 'lyric',
   DEBUG = 'debug',
+  SETTINGS = 'settings',
 }
 
 export interface StackItem {

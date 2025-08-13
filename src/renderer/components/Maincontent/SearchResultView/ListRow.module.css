@@ -1,0 +1,63 @@
+/* file: src/renderer/components/Maincontent/SearchResultView/ListRow.module.css */
+.row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    transition: background .12s ease;
+    cursor: pointer;
+}
+
+.row:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .25);
+}
+
+.cover {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.title {
+    font-weight: 600;
+    font-size: var(--font-ui, 14px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sub {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    font-size: var(--font-ui-sm, 12px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meta {
+    text-align: right;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.big {
+    grid-template-columns: auto 1fr;
+}
+
+.big .cover {
+    width: 96px;
+    height: 96px;
+    border-radius: var(--radius-lg);
+}
+
+.big .title {
+    font-size: clamp(18px, 2vw, 24px);
+}
+
+.big .sub {
+    font-size: clamp(12px, 1.3vw, 14px);
+}

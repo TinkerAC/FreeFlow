@@ -31,7 +31,8 @@ export abstract class AbstractController<TSubscriberArgs extends any[]> {
   public subscribe(fn: (...args: TSubscriberArgs) => void): UnsubscribeFunction {
     if (typeof fn !== 'function') {
       console.warn('AbstractController: 尝试使用非函数对象进行订阅:', fn);
-      return () => {}; // 返回一个空操作的取消订阅函数
+      return () => {
+      }; // 返回一个空操作的取消订阅函数
     }
     this.subscribers.push(fn);
 

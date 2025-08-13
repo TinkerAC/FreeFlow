@@ -29,7 +29,7 @@ import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import { PlaylistRepositoryImpl } from '@main/database/repository/impl/PlaylistRepositoryImpl';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
 import { HifiniThreadCacheRepositoryImpl } from '@main/database/repository/impl/HifiniThreadCacheRepositoryImpl';
-import { AppDataPath, DataPath} from '@main/core/PathConfig';
+import { AppDataPath, DataPath } from '@main/core/PathConfig';
 import { DISymbol } from '@main/di/symbol';
 import { PreferenceService } from '@main/services/PreferenceService';
 import IpcController from '@main/core/IpcController';
@@ -39,7 +39,11 @@ import chalk from 'chalk';
 import { SessionDataSourceImpl } from '@main/database/dataSource/impl/SessionDataSourceImpl';
 import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 import { getOperatingSystem } from '@src/utils/helpers';
-import { OS } from '@main/core/enum/Platform';
+import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
+import { BilibiliService } from '@main/contentProvider/Bilibili/BilibiliService';
+import { Settings } from '@src/shared/settings/schema';
+import { ConfigService } from '@main/core/configService';
+import { OS } from '@src/shared/OS';
 
 const container = new Container();
 export { container };
@@ -51,6 +55,10 @@ container.bind<DataPath>(DISymbol.DataPath).toConstantValue(AppDataPath);
 // ===== 常量/第三方库实例 =====
 container.bind<OS>(DISymbol.RunningOS).toConstantValue(getOperatingSystem());
 container.bind<boolean>(DISymbol.IsDevelopment).toConstantValue(process.env.NODE_ENV === 'development');
+//===== 用于存储设置的 Store 实例（单例） =====
+const settingsStore = new Store<Settings>({ name: 'settings', watch: true });
+container.bind<Store<Settings>>(DISymbol.SettingsStore).toConstantValue(settingsStore);
+
 container.bind<Store>(DISymbol.Store).toConstantValue(new Store({ watch: true }));
 container
   .bind<SequelizeInstance>(DISymbol.Sequelize)
@@ -66,7 +74,7 @@ container
   .bind<FileCacheManager>(DISymbol.FileCacheManager)
   .toConstantValue(
     new FileCacheManager({
-      diskCacheDir: AppDataPath.musicCacheDir
+      diskCacheDir: AppDataPath.musicCacheDir,
     }));
 container
   .bind<WindowManager>(DISymbol.WindowManager)
@@ -91,6 +99,8 @@ container
   .inSingletonScope();
 
 // ===== 业务服务（单例） =====
+container.bind<ConfigService>(DISymbol.ConfigService).to(ConfigService).inSingletonScope();
+
 container
   .bind<LocalLibraryService>(DISymbol.LocalLibraryService)
   .to(LocalLibraryService)
@@ -125,6 +135,15 @@ container
 container
   .bind<QQMusic>(DISymbol.QQMusic)
   .to(QQMusic)
+  .inSingletonScope();
+container
+  .bind<Bilibili>(DISymbol.Bilibili)
+  .to(Bilibili)
+  .inSingletonScope();
+
+container
+  .bind<BilibiliService>(DISymbol.BilibiliService)
+  .to(BilibiliService)
   .inSingletonScope();
 
 // ===== 数据源 & 仓库（单例） =====

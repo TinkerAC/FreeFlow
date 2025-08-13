@@ -29,5 +29,9 @@ export const DISymbol = {
   SessionDataSource: Symbol.for('SessionDataSource'),
   RunningOS: Symbol.for('RunningOS'),
   IsDevelopment: Symbol.for('IsDevelopment'),
-  DataPath:Symbol.for('DataPath')
+  DataPath: Symbol.for('DataPath'),
+  Bilibili: Symbol.for('Bilibili'),
+  BilibiliService: Symbol.for('BilibiliService'),
+  SettingsStore: Symbol.for('SettingsStore'),
+  ConfigService: Symbol.for('ConfigService'),
 };

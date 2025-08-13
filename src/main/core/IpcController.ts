@@ -1,4 +1,4 @@
-import { app, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import { inject, injectable } from 'inversify';
 import PlaylistService from '@main/services/PlaylistService';
 import { loadPlayer, savePlayer } from '@main/services/PlayerService';
@@ -26,6 +26,9 @@ import { PreferenceService } from '@main/services/PreferenceService';
 import { AppIcon } from '@src/shared/hifiniCookies';
 import { DataPath } from '@main/core/PathConfig';
 import { getOperatingSystem } from '@src/utils/helpers';
+import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
+import { ConfigService } from '@main/core/configService';
+import { Settings } from '@src/shared/settings/schema';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能切分成若干私有注册方法，
@@ -37,6 +40,7 @@ export default class IpcController {
     @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
     @inject(DISymbol.PlaylistService) private readonly playlistService: PlaylistService,
     @inject(DISymbol.Store) private readonly store: Store,
+    @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
     @inject(DISymbol.TrackService) private readonly trackService: TrackService,
     @inject(DISymbol.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
     @inject(DISymbol.QQMusic) private readonly qqMusic: QQMusic,
@@ -46,6 +50,7 @@ export default class IpcController {
     @inject(DISymbol.WindowManager) private readonly windowManager: WindowManager,
     @inject(DISymbol.PreferenceService) private readonly preferenceService: PreferenceService,
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
+    @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
   ) {
   }
 
@@ -60,6 +65,7 @@ export default class IpcController {
     this.registerTrackHandlers();
     this.registerSearchHandlers();
     this.registerConfigHandlers();
+    this.registerConfigV2Handlers();
     this.registerDownloadHandlers();
     this.registerMiscHandlers();
   }
@@ -200,15 +206,16 @@ export default class IpcController {
   private registerSearchHandlers(): void {
     ipcMain.handle('get-search-result', async (_evt, keywords: string) => {
       console.log('后端收到搜索请求:', keywords);
-      const [hifini, neteaseTracks, neteasePlaylists, qqTracks] = await Promise.all([
+      const [hifini, neteaseTracks, neteasePlaylists, qqTracks, bilibiliTracks] = await Promise.all([
         this.hifiniMusic.searchTracks(keywords),
         this.netEaseCloudMusic.searchTracks(keywords),
         this.netEaseCloudMusic.cloudSearchPlaylist(keywords),
         this.qqMusic.searchTracks(keywords),
+        this.bilibili.searchTracks(keywords, false),
       ]);
 
       return {
-        track_result: [...hifini, ...neteaseTracks, ...qqTracks],
+        track_result: [...hifini, ...neteaseTracks, ...qqTracks, ...bilibiliTracks],
         playlist_result: neteasePlaylists,
       };
     });
@@ -228,12 +235,17 @@ export default class IpcController {
 
   /* -------------------------- 设置 & 配置 --------------------------- */
   private registerConfigHandlers(): void {
-    ipcMain.handle('get-config', (_evt: IpcMainInvokeEvent, key: string) => {
-      return this.store.get(key);
+    ipcMain.handle('get-config', (_evt, key: string) => {
+      // 支持 "theme.mode" 这类 path
+      return this.configService.get(key);
     });
 
-    ipcMain.handle('set-config', (_evt: IpcMainInvokeEvent, key: string, value: unknown) => {
-      this.store.set(key, value);
+    ipcMain.handle('set-config', (_evt, key: string, value: unknown) => {
+      this.configService.set(key, value);
+      // 可选：广播变更给所有窗口
+      BrowserWindow.getAllWindows().forEach(w =>
+        w.webContents.send('config:changed', key, value),
+      );
       return true;
     });
 
@@ -241,6 +253,33 @@ export default class IpcController {
       await this.preferenceService.setAppIcon(appIcon);
     });
   }
+
+  /** 新接口（Settings 全量/分支/patch） */
+  private registerConfigV2Handlers() {
+    ipcMain.handle('config:getAll', async () => {
+      return await this.configService.getAll();
+    });
+
+    ipcMain.handle('config:get', async (_evt, key: string) => {
+      return await this.configService.get(key);
+    });
+
+    ipcMain.handle('config:set', async (_evt, payload: { key: string; value: any }) => {
+      const next = await this.configService.set(payload.key, payload.value);
+      // this.broadcastConfigChanged(next);
+    });
+
+    ipcMain.handle('config:setByPath', async (_evt, payload: { path: string; value: any }) => {
+      const next = await this.configService.setByPath(payload.path, payload.value);
+      // this.broadcastConfigChanged(next);
+    });
+
+    ipcMain.handle('config:patch', async (_evt, partial: Partial<Settings>) => {
+      const next = await this.configService.patch(partial);
+      // this.broadcastConfigChanged(next);
+    });
+  }
+
 
   /* -------------------------- 下载相关 --------------------------- */
   private registerDownloadHandlers(): void {

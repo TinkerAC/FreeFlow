@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './database';
-import { OS, Platform } from '@main/core/enum/Platform';
+import { Platform } from '@main/core/enum/Platform';
+import { OS } from '@src/shared/OS';
 
 /**
  * SessionRecordProps 定义了 Session 表的所有字段。

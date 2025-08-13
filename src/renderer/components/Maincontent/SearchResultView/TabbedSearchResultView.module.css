@@ -1,0 +1,3 @@
+/* file: src/renderer/components/Maincontent/SearchResultView/TabbedSearchResultView.module.css */
+.root { height: 100%; width: 100%; }
+.content { display: grid; gap: 16px; }

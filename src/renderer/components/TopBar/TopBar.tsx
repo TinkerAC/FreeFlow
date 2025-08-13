@@ -8,10 +8,9 @@ import { MainContentViewStack, View } from '@components/Maincontent/MainContentV
 import { debug } from '@components/static';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { OS } from '@main/core/enum/Platform';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import clsx from 'clsx';
-import { applyMaterialYou } from '@renderer/theme/MaterialYou';
+import { OS } from '@src/shared/OS';
 
 async function getSearchResults(searchTerm: string) {
   return searchContext.getSearchResults(searchTerm);
@@ -42,6 +41,7 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
     configContext.getConfig('user_name').then((n: string) => setUserName(n));
   }, []);
 
+  // 本地即时搜索（去抖）
   useEffect(() => {
     const t = setTimeout(() => {
       const kw = searchTerm.trim();
@@ -51,6 +51,7 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
     return () => clearTimeout(t);
   }, [searchTerm]);
 
+  // 定位下拉
   useEffect(() => {
     if (!localResults.length) return;
     const update = () => inputRef.current && setDropdownRect(inputRef.current.getBoundingClientRect());
@@ -63,6 +64,7 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
     };
   }, [localResults.length]);
 
+  // 点击外部关闭
   useEffect(() => {
     if (!localResults.length) return;
     const handler = (e: MouseEvent) => {
@@ -98,8 +100,8 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
   return (
     <>
       <div className={styles.root}>
-        {/* macOS 交通灯 */}
-        {platform === OS.MACOS && (
+        {/* 左：返回/前进（含 macOS 交通灯） */}
+        {platform === OS.MACOS ? (
           <div className={clsx(styles.left, styles.nodrag)}>
             <div className={styles.traffic}>
               <button className={clsx(styles.light, styles.close)} onClick={windowControlContext.close} />
@@ -113,10 +115,7 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
               <i className="fa-solid fa-arrow-right" />
             </button>
           </div>
-        )}
-
-        {/* 左侧（Windows / 其他平台） */}
-        {platform !== OS.MACOS && (
+        ) : (
           <div className={styles.left}>
             <button className={styles.iconBtn} title="后退" onClick={mainContentViewStack.goBack}>
               <i className="fa-solid fa-arrow-left" />
@@ -127,10 +126,10 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
           </div>
         )}
 
-        {/* 中间：搜索 */}
+        {/* 中：搜索（更像“岛”） */}
         <div className={styles.center}>
           <div className={styles.search}>
-            <i className={`fa fa-home ${styles.nodrag}`} aria-hidden />
+            <i className={clsx('fa-solid fa-magnifying-glass', styles.searchIcon)} aria-hidden />
             <input
               ref={inputRef}
               type="text"
@@ -144,24 +143,30 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
           </div>
         </div>
 
-        {/* 右侧：操作区 */}
+        {/* 右：操作（Premium / 设置 / 调试 / 用户 / 窗口控件） */}
         <div className={clsx(styles.right, styles.nodrag)}>
           <button className={styles.primaryBtn} onClick={windowControlContext.openPreferenceWindow}>
             探索 Premium
           </button>
 
-          <input
-            type="color"
-            onChange={(e) => applyMaterialYou(e.target.value, document.documentElement.getAttribute('data-theme') as any || 'dark')}
-          />
-          <button className={styles.iconBtn} title="调试"
-                  onClick={() => mainContentViewStack.navigate(View.DEBUG)}>
+          {/* 新：齿轮按钮 -> SettingsView */}
+          <button
+            className={styles.iconBtn}
+            title="设置"
+            onClick={() => mainContentViewStack.navigate(View.SETTINGS)}
+          >
+            <i className="fa-solid fa-gear" />
+          </button>
+
+          <button className={styles.iconBtn} title="调试" onClick={() => mainContentViewStack.navigate(View.DEBUG)}>
             <img src={debug} alt="Debug" width={16} height={16} />
           </button>
 
-          <div className={styles.userBadge}
-               title={userName || '无'}
-               onClick={() => mainContentViewStack.currentView !== View.PROFILE && mainContentViewStack.navigate(View.PROFILE)}>
+          <div
+            className={styles.userBadge}
+            title={userName || '无'}
+            onClick={() => mainContentViewStack.currentView !== View.PROFILE && mainContentViewStack.navigate(View.PROFILE)}
+          >
             {userName ? userName[0]?.toUpperCase() : '无'}
           </div>
 
@@ -175,7 +180,7 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
         </div>
       </div>
 
-      {/* Dropdown：本地检索建议（Portal） */}
+      {/* 下拉建议（Portal） */}
       {createPortal(
         <AnimatePresence>
           {localResults.length > 0 && dropdownRect && (
@@ -194,19 +199,24 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
               }}
             >
               {localResults.map((track) => (
-                <li key={track.id}
-                    className={styles.dropdownItem}
-                    onClick={() => queueTrack(track)}>
+                <li
+                  key={track.id}
+                  className={styles.dropdownItem}
+                  onClick={() => queueTrack(track)}
+                >
                   <img src={track.cover_src} className={styles.dropdownCover} alt="cover" />
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <span className={styles.dropdownTitle} title={track.title}>{track.title}</span>
                     {track.artist && <span className={styles.dropdownSub} title={track.artist}>{track.artist}</span>}
                   </div>
-                  <button title="播放" className={clsx(styles.iconBtn, styles.playBtn)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            playTrack(track);
-                          }}>
+                  <button
+                    title="播放"
+                    className={clsx(styles.iconBtn, styles.playBtn)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playTrack(track);
+                    }}
+                  >
                     <i className="fa-solid fa-play" />
                   </button>
                 </li>

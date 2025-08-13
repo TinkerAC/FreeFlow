@@ -1,0 +1,28 @@
+/* file: src/renderer/components/Maincontent/SearchResultView/ContextMenu.module.css */
+.menu {
+    position: fixed; z-index: 10000;
+    min-width: 200px; max-width: 280px;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-2)) 88%, transparent);
+    backdrop-filter: blur(8px) saturate(1.05);
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), .9);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elev-2, 0 6px 24px rgba(0,0,0,.35));
+    color: rgb(var(--md-sys-color-on-surface));
+    overflow: hidden;
+}
+.item {
+    padding: 8px 12px; cursor: pointer;
+    transition: background .12s;
+}
+.item:hover { background: rgba(var(--md-sys-color-surface-variant), .35); }
+.sep { height:1px; background: rgb(var(--md-sys-color-outline-variant)); margin: 4px 0; }
+
+.subWrap { position: relative; }
+.sub {
+    position: absolute; top: 0; left: 100%;
+    min-width: 200px;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-2)) 88%, transparent);
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), .9);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elev-2, 0 6px 24px rgba(0,0,0,.35));
+}

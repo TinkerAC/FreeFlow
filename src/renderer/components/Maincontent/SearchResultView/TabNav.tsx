@@ -1,33 +1,22 @@
-//
-// ------------------------------
-// File: src/renderer/components/SearchResultView/TabNav.tsx
-// ------------------------------
 import React from 'react';
+import styles from './TabNav.module.css';
 
 export type TabKey = 'popular' | 'tracks' | 'playlists';
+const labels: Record<TabKey,string> = { popular:'热门', tracks:'歌曲', playlists:'歌单' };
 
-interface TabNavProps {
-  activeTab: TabKey;
-  onTabChange: (key: TabKey) => void;
-}
-
-const labels: Record<TabKey, string> = {
-  popular: '热门',
-  tracks: '歌曲',
-  playlists: '歌单',
-};
-
-function TabNav({ activeTab, onTabChange }: TabNavProps) {
+export default function TabNav({
+                                 activeTab, onTabChange,
+                               }: { activeTab: TabKey; onTabChange: (key: TabKey)=>void; }) {
   return (
-    <div className="flex space-x-4 border-b pb-2">
-      {Object.entries(labels).map(([key, label]) => {
-        const k = key as TabKey;
-        const isActive = k === activeTab;
+    <div className={styles.root}>
+      {Object.entries(labels).map(([k, label]) => {
+        const key = k as TabKey;
+        const active = key === activeTab;
         return (
           <button
-            key={k}
-            onClick={() => onTabChange(k)}
-            className={`px-3 py-1 text-lg transition-colors ${isActive ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:text-blue-400'}`}
+            key={key}
+            className={`${styles.tab} ${active ? styles.active : ''}`}
+            onClick={() => onTabChange(key)}
           >
             {label}
           </button>
@@ -36,5 +25,3 @@ function TabNav({ activeTab, onTabChange }: TabNavProps) {
     </div>
   );
 }
-
-export default TabNav;
