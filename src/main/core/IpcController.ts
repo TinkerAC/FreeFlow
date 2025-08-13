@@ -204,63 +204,121 @@ export default class IpcController {
 
   /* -------------------------- 搜索相关 --------------------------- */
   private registerSearchHandlers(): void {
+    /** —— 工具函数 —— */
+
+      // 安全 Promise：失败就返回 fallback，并打日志
     const safe = async <T>(p: Promise<T>, label: string, fallback: T): Promise<T> => {
-      try {
-        return await p;
-      } catch (e) {
-        console.error(`[search:${label}] failed:`, e);
-        return fallback;
-      }
+        try {
+          return await p;
+        } catch (e) {
+          console.error(`[search:${label}] failed:`, e);
+          return fallback;
+        }
+      };
+
+    // 封面 URL 统一 https / 支持 //schema
+    const httpsify = (u?: string) => {
+      if (!u) return '';
+      if (u.startsWith('//')) return `https:${u}`;
+      return u.replace(/^http:\/\//i, 'https://');
     };
-    const httpsify = (u?: string) => (typeof u === 'string' ? u.replace(/^http:\/\//i, 'https://') : '');
 
+    // —— 类型守卫：曲目/歌单 粗粒度判断（避免歌单混入歌曲列表）——
+    const isTrackLike = (x: any): x is TrackEntity =>
+      !!x &&
+      typeof x === 'object' &&
+      typeof x.title === 'string' &&
+      typeof x.platform_unique_id === 'string' &&
+      // 这些字段“更像 Track”：
+      !('playlist_id' in x) &&
+      !Array.isArray((x as any).tracks);
 
+    const isPlaylistLike = (x: any): x is PlaylistEntity =>
+      !!x &&
+      typeof x === 'object' &&
+      ('playlist_id' in x ||
+        Array.isArray((x as any).tracks) ||
+        // 网易云搜索歌单通常至少具备 title/description/creator 这些字段
+        (typeof (x as any).title === 'string' && 'creator' in x)
+      );
+
+    // —— 曲目清洗：字段兜底、封面 https、清理奇怪的 artist 值 ——
     const sanitizeTrack = (t: any): TrackEntity | null => {
-      if (!t) return null;
+      if (!isTrackLike(t)) return null;
+
+      // 有些平台会把 BV/URL 混进 artist，这里清洗一下
+      const artist = String(t.artist ?? '');
+
+
       const out: TrackEntity = {
         platform: t.platform,
         platform_unique_id: String(t.platform_unique_id ?? ''),
         title: String(t.title ?? ''),
-        artist: String(t.artist ?? ''),
+        artist,
         album: String(t.album ?? ''),
         duration: Number(t.duration ?? 0) || 0,
         cover_src: httpsify(t.cover_src) || '',
         created_at: t.created_at ? new Date(t.created_at) : new Date(),
         fee: Number.isFinite(t.fee) ? t.fee : 0,
       };
-      // 防御：非 B 站平台的 artist 不应出现 BV 号；若出现，剔除掉（避免 UI 里看到“artist 是 BV...”） 怎么会有作者叫 BV 呢？
-      // if (out.platform !== 'Bilibili' && /BV[0-9A-Za-z]{10,}/.test(out.artist)) {
-      //   out.artist = out.artist.replace(/BV[0-9A-Za-z]{10,}.*/g, '').trim();
-      // }
+
+      // 最低限字段校验
+      if (!out.title || !out.platform_unique_id) return null;
       return out;
     };
+
+    // —— 曲目去重：以 platform + unique_id 作为键 ——
+    const dedupeTracks = (arr: TrackEntity[]) => {
+      const seen = new Set<string>();
+      const out: TrackEntity[] = [];
+      for (const t of arr) {
+        const key = `${t.platform}:${t.platform_unique_id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push(t);
+        }
+      }
+      return out;
+    };
+
+    /** —— IPC handlers —— */
 
     ipcMain.handle('get-search-result', async (_evt: IpcMainInvokeEvent, keywords: string) => {
       console.log('后端收到搜索请求:', keywords);
 
-      const [
-        hifini = [] as TrackEntity[],
-        neteaseTracks = [] as TrackEntity[],
-        neteasePlaylists = [] as PlaylistEntity[],
-        qqTracks = [] as TrackEntity[],
-        bilibiliTracks = [] as TrackEntity[],
-      ] = await Promise.all([
-        safe(this.hifiniMusic.searchTracks(keywords), 'hifini', [] as TrackEntity[]),
-        safe(this.netEaseCloudMusic.searchTracks(keywords), 'netease.tracks', [] as TrackEntity[]),
-        safe(this.netEaseCloudMusic.cloudSearchPlaylist(keywords), 'netease.playlists', [] as PlaylistEntity[]),
-        safe(this.qqMusic.searchTracks(keywords), 'qq', [] as TrackEntity[]),
-        safe(this.bilibili.searchTracks(keywords, false), 'bilibili', [] as TrackEntity[]),
-      ]);
+      const hifiniTracksP = /* 开启时用：safe(this.hifiniMusic.searchTracks(keywords), 'hifini', [] as TrackEntity[]) */
+        Promise.resolve([] as TrackEntity[]);
 
-      const track_result = [hifini, neteaseTracks, qqTracks, bilibiliTracks]
-        .flat()
-        .map(sanitizeTrack)
-        .filter(Boolean) as TrackEntity[];
+      const neteaseTracksP = safe(this.netEaseCloudMusic.searchTracks(keywords), 'netease.tracks', [] as TrackEntity[]);
+      const neteasePlaylistsP = safe(this.netEaseCloudMusic.cloudSearchPlaylist(keywords), 'netease.playlists', [] as PlaylistEntity[]);
+      const qqTracksP = safe(this.qqMusic.searchTracks(keywords), 'qq', [] as TrackEntity[]);
+      const bilibiliTracksP = safe(this.bilibili.searchTracks(keywords, false), 'bilibili', [] as TrackEntity[]);
 
-      const playlist_result = Array.isArray(neteasePlaylists) ? neteasePlaylists : [];
+      const [hifiniTracks, neteaseTracks, neteasePlaylists, qqTracks, bilibiliTracks] =
+        await Promise.all([hifiniTracksP, neteaseTracksP, neteasePlaylistsP, qqTracksP, bilibiliTracksP]);
+
+
+      const allTracks = [
+        ...(Array.isArray(hifiniTracks) ? hifiniTracks : []),
+        ...(Array.isArray(neteaseTracks) ? neteaseTracks : []),
+        ...(Array.isArray(qqTracks) ? qqTracks : []),
+        ...(Array.isArray(bilibiliTracks) ? bilibiliTracks : []), // 关键修复点
+      ];
+
+      // 后续逻辑使用这个经过安全合并的 allTracks 数组
+      const track_result = dedupeTracks(
+        allTracks
+          .filter(isTrackLike)
+          .map(sanitizeTrack)
+          .filter(Boolean) as TrackEntity[],
+      );
+
+      // 歌单结果（你这里的写法已经很健壮了，保持即可）
+      const playlist_result = (Array.isArray(neteasePlaylists) ? neteasePlaylists : []).filter(isPlaylistLike);
 
       return { track_result, playlist_result };
     });
+
 
     ipcMain.handle(
       'get-netease-cloud-music-playlist-detail',

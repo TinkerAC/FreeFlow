@@ -93,7 +93,8 @@ if (!gotTheLock) {
     const cookies: { [key: string]: string } = store.get('hifini_cookie');
     console.log('cookies:', cookies);
     if (await is_hifini_cookies_expired(cookies)) {
-      mainWindow.webContents.send('notification', 'Hifini 登陆已过期，请重新登陆');
+      // mainWindow.webContents.send('notification', 'Hifini 登陆已过期，请重新登陆');
+      return console.warn('Hifini 已经死了.');
     }
 
     // Windows 托盘

@@ -11,11 +11,10 @@
     background: transparent;
     border: 1px solid transparent;
 
-    transition:
-            background .15s ease,
-            border-color .15s ease,
-            box-shadow .15s ease,
-            transform .05s ease;
+    transition: background .15s ease,
+    border-color .15s ease,
+    box-shadow .15s ease,
+    transform .05s ease;
 }
 
 /* 悬停：轻微提亮 + 出现轮廓 */
@@ -57,7 +56,9 @@
 }
 
 /* 文案区 */
-.texts { min-width: 0; }
+.texts {
+    min-width: 0;
+}
 
 .title {
     color: rgb(var(--md-sys-color-on-surface));

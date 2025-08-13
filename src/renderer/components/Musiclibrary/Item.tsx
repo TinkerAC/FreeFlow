@@ -2,6 +2,7 @@
 import React from 'react';
 import styles from './LibraryItem.module.css';
 import clsx from 'clsx';
+import { DefaultCover } from '@components/static';
 
 interface ItemProps {
   imgSrc: string;
@@ -17,6 +18,8 @@ interface ItemProps {
 export default function Item({
                                imgSrc, altText, title, description, isSelected, onClick, onRightClick,
                              }: ItemProps) {
+
+  imgSrc = imgSrc || DefaultCover;
   return (
     <div
       className={clsx(styles.root, isSelected && styles.selected)}
@@ -35,7 +38,11 @@ export default function Item({
       aria-label={title}
       title={title}
     >
-      <img src={imgSrc} alt={altText} className={styles.thumb} />
+      <img src={imgSrc} alt={altText}
+           referrerPolicy="no-referrer"
+           className={styles.thumb}
+
+      />
       <div className={styles.texts}>
         <p className={styles.title} title={title}>{title}</p>
         <p className={styles.desc} title={description}>{description}</p>

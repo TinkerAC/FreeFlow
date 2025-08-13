@@ -15,3 +15,12 @@ export interface PlayUrl {
   codecs?: string;
   expireAt: number; // epoch ms
 }
+
+/** 关键字视频搜索返回项（归一化） */
+export interface BiliSearchVideoItem {
+  bvid: string;
+  title: string;      // 已去掉<em>高亮
+  author: string;
+  duration: number;   // 秒
+  cover: string;      // https
+}

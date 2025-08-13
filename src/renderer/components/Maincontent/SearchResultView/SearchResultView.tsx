@@ -78,8 +78,12 @@ export default function SearchResultView({
             y={contextMenu.y}
             track={selectedTrackRef.current}
             player={player}
-            addToLibrary={(t) => libraryContext.addTrackToLibrary(t).then(musicLibraryController.refreshPlaylists)}
-            addTrackToPlaylist={(t, id) => playlistContext.addTrackToPlaylist(t, id).then(musicLibraryController.refreshPlaylists)}
+            addToLibrary={(t) => libraryContext.addTrackToLibrary(t).then(() => {
+              musicLibraryController.refreshPlaylists();
+            })}
+            addTrackToPlaylist={(t, id) => playlistContext.addTrackToPlaylist(t, id).then(() => {
+              musicLibraryController.refreshPlaylists();
+            })}
             playlists={musicLibraryController.playlists}
             handleCloseMenu={closeContextMenu}
           />

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import styles from './LyricView.module.css';
 
 import { lyricsContext } from '@renderer/core/electronContextApi';
@@ -68,9 +68,12 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
   const lines: LyricLine[] = useMemo(() => {
     if (!lyric) return [];
     switch (activeType) {
-      case 'pronunciation': return lyric.pronunciationLines;
-      case 'translation':   return lyric.translationLines;
-      default:              return lyric.originLines;
+      case 'pronunciation':
+        return lyric.pronunciationLines;
+      case 'translation':
+        return lyric.translationLines;
+      default:
+        return lyric.originLines;
     }
   }, [lyric, activeType]);
 
@@ -219,7 +222,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
           onScroll={() => (lastScrollRef.current = Date.now())}
         >
           <div className={styles.scrollInner}>
-            x{loading || !lyric ? (
+            {loading || !lyric ? (
               <Skeleton />
             ) : lines.length ? (
               <AnimatePresence initial={false}>

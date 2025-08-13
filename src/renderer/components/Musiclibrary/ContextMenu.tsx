@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
-import styles from './MusicLibrary.module.css';
+import styles from './ContextMenu.module.css'
 
 interface ContextMenuProps {
   x: number;
