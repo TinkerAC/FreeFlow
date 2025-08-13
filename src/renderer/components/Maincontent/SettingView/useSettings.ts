@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { configContext } from '@renderer/core/electronContextApi';
+import chalk from 'chalk';
 
 function useDebounced<T>(val:T, delay=200) {
   const [v, setV] = useState(val);
@@ -39,6 +40,7 @@ export function useSetting<T=any>(key: string, defaultValue: T) {
   useEffect(()=>{
     if (first.current) { first.current = false; return; }
     configContext.setConfig(key, debounced as any).catch(console.error);
+    // console.log(chalk.blue(`[useSetting] set ${key} to`, debounced));
   }, [key, debounced]);
 
   return { value, setValue, loading } as const;

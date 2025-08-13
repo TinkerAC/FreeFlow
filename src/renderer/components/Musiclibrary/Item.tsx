@@ -19,14 +19,26 @@ export default function Item({
                              }: ItemProps) {
   return (
     <div
+      className={clsx(styles.root, isSelected && styles.selected)}
       onClick={onClick}
       onContextMenu={onRightClick}
-      className={clsx(styles.root, isSelected && styles.selected)}
+      // 键盘可达性：Enter/Space 触发
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      aria-pressed={isSelected}
+      aria-label={title}
+      title={title}
     >
       <img src={imgSrc} alt={altText} className={styles.thumb} />
       <div className={styles.texts}>
         <p className={styles.title} title={title}>{title}</p>
-        <p className={styles.desc}  title={description}>{description}</p>
+        <p className={styles.desc} title={description}>{description}</p>
       </div>
     </div>
   );

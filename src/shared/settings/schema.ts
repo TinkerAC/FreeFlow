@@ -1,77 +1,75 @@
 import { z } from 'zod';
 
-/** 明暗模式 */
+/** ------- 主题 ------- */
 export const ThemeMode = z.enum(['light', 'dark', 'system']);
 export type ThemeMode = z.infer<typeof ThemeMode>;
 
-/** 主题来源（预设） */
-export const ThemeSource = z.enum(['material-you', 'spotify', 'netease']);
+/** 主题来源：Material You 或 预设 */
+export const ThemeSource = z.enum(['material-you', 'preset']);
 export type ThemeSource = z.infer<typeof ThemeSource>;
 
-/** 主题配置 */
+/** 预设主题名：你可以继续扩展 */
+export const ThemePreset = z.enum(['classic', 'spotify', 'netease']);
+export type ThemePreset = z.infer<typeof ThemePreset>;
+
 export const ThemeSettings = z.object({
   mode: ThemeMode.default('dark'),
-  /** 仅在 material-you 下生效 */
-  seed: z.string().default('#66ccff'),
-  /** 主题来源：动态配色 or 预设 */
   source: ThemeSource.default('material-you'),
+  seed: z.string().default('#66ccff'),    // 仅在 source === 'material-you' 时使用
+  preset: ThemePreset.default('classic'),  // 仅在 source === 'preset' 时使用
 });
 export type ThemeSettings = z.infer<typeof ThemeSettings>;
 
-/** UI 外观/密度等 */
+/** ------- UI ------- */
 export const UISettings = z.object({
   density: z.enum(['compact', 'cozy']).default('cozy'),
   sidebarCollapsed: z.boolean().default(true),
 });
 export type UISettings = z.infer<typeof UISettings>;
 
-/** 播放相关 */
+/** ------- 音频 ------- */
 export const AudioSettings = z.object({
   volume: z.number().min(0).max(1).default(0.8),
   progressSkin: z.enum(['classic', 'neon', 'waveform', 'knob']).default('classic'),
 });
 export type AudioSettings = z.infer<typeof AudioSettings>;
 
-/** 音乐库 */
+/** ------- 音乐库 ------- */
 export const LibrarySettings = z.object({
   scanPaths: z.array(z.string()).default([]),
-  supportedFormats: z
-    .array(z.string())
-    .default(['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'webm', 'opus', 'oga']),
+  supportedFormats: z.array(z.string()).default(['mp3','wav','flac','ogg','m4a','aac','webm','opus','oga']),
 });
 export type LibrarySettings = z.infer<typeof LibrarySettings>;
 
-/** 网络 */
+/** ------- 网络 ------- */
 export const NetworkSettings = z.object({
   port: z.number().int().default(3000),
 });
 export type NetworkSettings = z.infer<typeof NetworkSettings>;
 
-/** 外部服务 */
+/** ------- 服务 ------- */
 export const ServiceSettings = z.object({
-  hifiniCookie: z
-    .object({
-      bbs_sid: z.string().default(''),
-      bbs_token: z.string().default(''),
-    })
-    .default({ bbs_sid: '', bbs_token: '' }),
+  hifiniCookie: z.object({
+    bbs_sid: z.string().default(''),
+    bbs_token: z.string().default(''),
+  }).default({ bbs_sid: '', bbs_token: '' }),
 });
 export type ServiceSettings = z.infer<typeof ServiceSettings>;
 
-/** 用户 */
+/** ------- 用户 ------- */
 export const UserSettings = z.object({
   userName: z.string().default(''),
   avatarPath: z.string().default(''),
 });
 export type UserSettings = z.infer<typeof UserSettings>;
 
-/** 缓存 */
+/** ------- 缓存 ------- */
 export const CacheSettings = z.object({
   cacheTime: z.number().int().default(864000),
 });
 export type CacheSettings = z.infer<typeof CacheSettings>;
 
-/** 应用总配置 */
+/** ------- 总配置 ------- */
 export const Settings = z.object({
   version: z.number().int().default(1),
   theme: ThemeSettings.default({}),
@@ -85,5 +83,4 @@ export const Settings = z.object({
 });
 export type Settings = z.infer<typeof Settings>;
 
-/** 默认配置（确保旧数据或空数据能被“填充”为完整结构） */
 export const defaultSettings: Settings = Settings.parse({});

@@ -11,40 +11,61 @@
 }
 
 .cover {
-    width: 192px; height: 192px;
+    width: 192px;
+    height: 192px;
     border-radius: var(--radius-lg);
     object-fit: cover;
     flex-shrink: 0;
 }
 
-.meta { min-width: 0; }
-.kicker { font-size: 14px; color: rgba(var(--md-sys-color-on-surface), .7); }
+.meta {
+    min-width: 0;
+}
+
+.kicker {
+    font-size: 14px;
+    color: rgba(var(--md-sys-color-on-surface), .7);
+}
+
 .title {
-    font-size: 32px; line-height: 1.2; font-weight: 800;
-    margin-top: 8px; cursor: pointer;
+    font-size: 32px;
+    line-height: 1.2;
+    font-weight: 800;
+    margin-top: 8px;
+    cursor: pointer;
     color: rgb(var(--md-sys-color-on-surface));
 }
-.title:hover { text-decoration: underline; }
+
+.title:hover {
+    text-decoration: underline;
+}
+
 .sub {
     margin-top: 8px;
     color: rgba(var(--md-sys-color-on-surface), .7);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 主体内容（放在 ViewShell 的滚动区里） */
 .body {
     /* 背景：封面主色轻渐变 + 暗面，文本用 token 控制 */
     --accent: 51 51 51; /* 默认 #333 */
-    background:
-            linear-gradient(to bottom, rgba(var(--accent), .28), rgba(0,0,0,0) 40%),
-            linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,.9));
+    background: linear-gradient(to bottom, rgba(var(--accent), .28), rgba(0, 0, 0, 0) 40%),
+    linear-gradient(to bottom, rgba(0, 0, 0, .65), rgba(0, 0, 0, .9));
     padding: 16px;
     color: rgb(var(--md-sys-color-on-surface));
 }
 
 .actions {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
     margin: 8px 0 16px 0;
 }
 
-.pushRight { margin-left: auto; }
+.pushRight {
+    margin-left: auto;
+}

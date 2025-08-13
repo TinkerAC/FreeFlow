@@ -1,39 +1,23 @@
-import React, { useId, useState } from 'react';
+import React from 'react';
+import styles from './ColorSeed.module.css'; // 可选
 
+type Props = {
+  hex: string;
+  onChange: (hex: string) => void;
+};
 
-export default function ColorSeed({
-                                    hex, onChange,
-                                  }: { hex: string; onChange: (hex:string)=>void }) {
-  const id = useId();
-  const [val, setVal] = useState(hex);
-
-  const update = (next:string) => {
-    setVal(next);
-    if (/^#([0-9a-fA-F]{6})$/.test(next)) onChange(next.toUpperCase());
-  };
-
+/** 受控版本：完全由 props 驱动，不保留内部状态 */
+export default function ColorSeed({ hex, onChange }: Props) {
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+    <div className={styles?.root ?? undefined}>
       <input
-        id={id}
         type="color"
-        value={val}
-        onChange={(e)=>update(e.target.value)}
-        style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgb(var(--md-sys-color-outline-variant))', padding: 0 }}
-        title="选择种子色"
+        value={hex}
+        onChange={(e) => onChange(e.target.value)}
+        title={hex}
+        style={{ width: 36, height: 24, borderRadius: 6, border: '1px solid rgba(255,255,255,.15)', background: 'transparent' }}
       />
-      <input
-        value={val}
-        onChange={(e)=>update(e.target.value)}
-        placeholder="#RRGGBB"
-        style={{
-          height: 32, width: 120, borderRadius: 8,
-          background: 'rgba(var(--md-sys-color-surface-variant), .6)',
-          border: '1px solid rgb(var(--md-sys-color-outline-variant))',
-          color: 'rgb(var(--md-sys-color-on-surface))',
-          padding: '0 8px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-        }}
-      />
+      <span style={{ marginLeft: 8, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas', opacity: .85 }}>{hex}</span>
     </div>
   );
 }

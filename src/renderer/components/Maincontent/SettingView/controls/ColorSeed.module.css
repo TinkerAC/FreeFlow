@@ -1,0 +1,53 @@
+/* file: src/renderer/components/Maincontent/SettingView/controls/ColorSeed.module.css */
+
+.root {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 20%, transparent);
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+}
+
+.root:hover {
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 32%, transparent);
+}
+
+/* 颜色选择器本体（受控组件由父级传值） */
+.root input[type="color"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 36px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: box-shadow .15s ease, border-color .15s ease, filter .15s ease;
+}
+
+/* 去掉 WebKit/Mozilla 默认内边距与描边，并继承圆角 */
+.root input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: inherit; }
+.root input[type="color"]::-webkit-color-swatch { border: 0; border-radius: inherit; }
+.root input[type="color"]::-moz-color-swatch { border: 0; border-radius: inherit; }
+
+.root input[type="color"]:hover {
+    filter: brightness(1.02);
+}
+
+.root input[type="color"]:focus {
+    outline: none;
+    border-color: rgb(var(--md-sys-color-primary));
+    box-shadow: 0 0 0 3px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 25%, transparent);
+}
+
+/* 十六进制展示（如果你在组件里加了 <span> 显示 hex，可用这个类名） */
+.hex {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface));
+    opacity: .85;
+    user-select: text;
+}

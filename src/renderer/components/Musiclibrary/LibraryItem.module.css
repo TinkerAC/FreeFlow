@@ -1,34 +1,77 @@
 /* file: src/renderer/components/Musiclibrary/LibraryItem.module.css */
 .root {
-    display: flex; align-items: center; gap: 12px;
-    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background .15s;
-}
-.root:hover { background: rgba(var(--md-sys-color-surface-variant), .35); }
 
+    /* 默认透明背景 + 隐形边框，hover 时再显现 */
+    background: transparent;
+    border: 1px solid transparent;
+
+    transition:
+            background .15s ease,
+            border-color .15s ease,
+            box-shadow .15s ease,
+            transform .05s ease;
+}
+
+/* 悬停：轻微提亮 + 出现轮廓 */
+.root:hover {
+    background: color-mix(in oklab,
+    rgb(var(--md-sys-color-surface-variant)) 32%,
+    transparent
+    );
+    border-color: rgb(var(--md-sys-color-outline-variant));
+}
+
+/* 按下有一点物理感 */
+.root:active {
+    transform: translateY(1px);
+}
+
+/* 键盘导航可见的聚焦框 */
+.root:focus-visible {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+}
+
+/* 选中态：比 hover 更明确的底色 + 主色描边 */
 .selected {
-    background: rgba(var(--md-sys-color-primary), .12);
-    outline: 1px solid rgba(var(--md-sys-color-primary), .45);
+    background: color-mix(in oklab,
+    rgb(var(--md-sys-color-primary)) 14%,
+    transparent
+    );
+    border-color: rgb(var(--md-sys-color-primary));
 }
 
+/* 左侧封面 */
 .thumb {
-    width: 48px; height: 48px;
+    width: 48px;
+    height: 48px;
     border-radius: var(--radius-md);
-    object-fit: cover; flex-shrink: 0;
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
+/* 文案区 */
 .texts { min-width: 0; }
 
 .title {
     color: rgb(var(--md-sys-color-on-surface));
     font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .desc {
     color: rgb(var(--md-sys-color-on-surface-variant));
     font-size: 12px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

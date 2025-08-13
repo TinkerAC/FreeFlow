@@ -7,7 +7,6 @@ import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import styles from './MusicLibrary.module.css';
-
 import clsx from 'clsx';
 
 interface MusicLibraryProps {
@@ -61,15 +60,15 @@ export default function MusicLibrary({ musicLibraryController, viewStack }: Musi
       <div className={styles.header}>
         {/* 左：汉堡按钮（收起/展开） */}
         <button
-          className={styles.iconBtn}
+          className={clsx(styles.iconBtn, styles.menuBtn)}
           title={collapsed ? '展开音乐库' : '收起音乐库'}
           onClick={() => musicLibraryController.toggleMusicLibraryCollapse()}
         >
           <i className="fas fa-bars" />
         </button>
 
-        {/* 中：标题（收起态隐藏，展开态显示） */}
-        <div className={styles.title}>音乐库</div>
+        {/* 中：标题（收起态完全不渲染） */}
+        {!collapsed && <div className={styles.title}>音乐库</div>}
 
         {/* 右：新增（仅展开态可见，样式控制） */}
         <button
@@ -116,7 +115,7 @@ export default function MusicLibrary({ musicLibraryController, viewStack }: Musi
                 />
               ))
             ) : (
-              <div style={{ textAlign: 'center', color: 'rgb(var(--color-text-muted))' }}>暂无歌单</div>
+              <div style={{ textAlign: 'center', color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>暂无歌单</div>
             )}
           </div>
         )}
@@ -137,6 +136,7 @@ export default function MusicLibrary({ musicLibraryController, viewStack }: Musi
                   }}
                   onContextMenu={(e) => handleRightClick(e, item.playlist_id)}
                   title={item.title}
+                  tabIndex={0}
                 >
                   <img
                     src={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
