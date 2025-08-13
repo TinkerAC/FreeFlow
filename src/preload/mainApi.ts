@@ -69,8 +69,9 @@ const mainApi: MainApi = {
   searchApi: {
     getSearchResults: (term) => ipcRenderer.invoke('get-search-result', term),
     localSearch: (term) => ipcRenderer.invoke('local-search', term),
-    getNetEaseCloudMusicPlaylistDetail: (playlist_id: string) =>
-      ipcRenderer.invoke('get-netease-cloud-music-playlist-detail', playlist_id),
+    getPlaylistDetail: function(platform: string, platform_unique_id: string): Promise<PlaylistEntity> {
+      return ipcRenderer.invoke('get-playlist-detail', platform, platform_unique_id);
+    },
   },
 
   shortcutApi: {

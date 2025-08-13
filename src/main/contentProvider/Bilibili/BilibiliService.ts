@@ -99,7 +99,7 @@ export class BilibiliService {
     return { ...params, wts, w_rid };
   }
 
-  /** ============ 会话 & 工具 ============ */
+  /** ============ database.sqlit会话 & 工具 ============ */
 
   private static stripHtml(input: string): string {
     const noTags = input.replace(/<[^>]+>/g, '');
@@ -204,111 +204,6 @@ export class BilibiliService {
     return info.pages[0]?.cid ?? 0;
   }
 
-  /** ============ 关键字搜索（带 412 重试） ============ */
-  /** 关键字搜视频（解决 412：会话 + 节流 + 重试） */
-  async searchVideos(keyword: string, page = 1, pageSize = 20) {
-    const kw = (keyword || '').trim();
-    if (!kw) return [];
-
-    // 内部真正发请求的函数（便于重试复用）
-    const call = async () => {
-      await this.throttle(); // 每次发请求都先节流
-
-      // 先拿 WBI key（它依赖 nav，会话不对时也会 412）
-      const nav = await this.http.get('/x/web-interface/nav', {
-        headers: BilibiliService.DEFAULT_HEADERS,
-        withCredentials: true,
-      });
-
-      const img = nav.data?.data?.wbi_img?.img_url ?? '';
-      const sub = nav.data?.data?.wbi_img?.sub_url ?? '';
-      const imgKey = img.split('/').pop()?.split('.')[0] ?? '';
-      const subKey = sub.split('/').pop()?.split('.')[0] ?? '';
-      const mixin = BilibiliService.MIXIN_TAB.map((i) => (imgKey + subKey)[i]).join('').slice(0, 32);
-
-      const baseParams = {
-        search_type: 'video',
-        keyword: kw,
-        page,
-        page_size: pageSize,
-        order: 'totalrank',
-      };
-      // WBI 签名
-      const wts = Math.round(Date.now() / 1000);
-      const filtered: Record<string, string> = {};
-      for (const k of Object.keys(baseParams)) filtered[k] = String((baseParams as any)[k]).replace(/[!'()*]/g, '');
-      const sorted = Object.keys(filtered).sort().map(k => `${encodeURIComponent(k)}=${encodeURIComponent(filtered[k])}`).join('&');
-      const w_rid = md5(sorted + mixin);
-
-      await this.throttle();
-      const res = await this.http.get('/x/web-interface/wbi/search/type', {
-        params: { ...baseParams, wts, w_rid },
-        headers: BilibiliService.DEFAULT_HEADERS,
-        withCredentials: true,
-      });
-      return res;
-    };
-
-    // 先确保一遍会话
-    await this.ensureSession();
-
-    // 最多 3 次：首次 + 412 自愈重试 2 次
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await call();
-        if (res.data?.code === 0 && Array.isArray(res.data?.data?.result)) {
-          return (res.data.data.result as any[])
-            .map(it => {
-              const bvid = it?.bvid || it?.bv_id;
-              if (!bvid) return null;
-              const title = String(it?.title ?? '').replace(/<[^>]+>/g, '')
-                .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
-              const coverRaw = String(it?.pic ?? it?.cover ?? '');
-              const cover = coverRaw.startsWith('http://') ? coverRaw.replace(/^http:/, 'https:') :
-                coverRaw.startsWith('//') ? 'https:' + coverRaw : coverRaw;
-              const dur = (() => {
-                const v = it?.duration;
-                if (typeof v === 'number' && Number.isFinite(v)) return Math.max(0, Math.floor(v));
-                const s = String(v || '').trim();
-                if (!s) return 0;
-                return s.split(':').map(n => parseInt(n, 10)).reduce((acc, n) => acc * 60 + (Number.isNaN(n) ? 0 : n), 0);
-              })();
-
-              return {
-                bvid,
-                title,
-                author: String(it?.author ?? it?.owner ?? 'UP主'),
-                duration: dur,
-                cover,
-              };
-            })
-            .filter(Boolean);
-        }
-
-        // 不是 0 但也不是 412：直接空数组
-        if (res.data?.code !== 0) return [];
-        return [];
-      } catch (err: any) {
-        const status = err?.response?.status;
-        const code = err?.response?.data?.code;
-        // 命中 412：刷新会话 + 抖动后重试
-        if (status === 412 || code === -412) {
-          if (attempt < 3) {
-            await new Promise(r => setTimeout(r, 200 + Math.random() * 300));
-            await this.ensureSession(true);
-            continue;
-          }
-          return [];
-        }
-        // 其它错误：不抛出，返回空
-        return [];
-      }
-    }
-
-    return [];
-  }
-
   private sleep(ms: number) {
     return new Promise((r) => setTimeout(r, ms));
   }
@@ -389,92 +284,21 @@ export class BilibiliService {
     return Math.max(this.PLAY_URL_TTL * 0.8, 45 * 60 * 1000);
   }
 
-  /** ============ 合集/收藏/收藏夹 拉取（你原有的保持不变） ============ */
-  async getSeries(mid: string | number, sid: string | number): Promise<BiliVideoInfo[]> {
-    await this.ensureSession();
-    const url = `https://api.bilibili.com/x/series/archives?mid=${mid}&series_id=${sid}&only_normal=true&sort=desc&pn=0&ps=30`;
-    const rs = await this.http.get(url, { jar: this.jar, headers: { Referer: 'https://www.bilibili.com' } });
-    const archives: any[] = rs.data?.data?.archives ?? [];
-    return this.batchVideoInfos(archives.map((a) => a.bvid));
-  }
-
-  async getCollection(mid: string | number, sid: string | number, favList: string[] = []): Promise<BiliVideoInfo[]> {
-    await this.ensureSession();
-    const first = await this.http.get(
-      `https://api.bilibili.com/x/polymer/space/seasons_archives_list?mid=${mid}&season_id=${sid}&sort_reverse=false&page_num=1&page_size=30`,
-      { jar: this.jar, headers: { Referer: 'https://www.bilibili.com' } },
-    );
-    const meta = first.data?.data?.meta;
-    const page = first.data?.data?.page;
-    const total = Number(meta?.total ?? 0);
-    const size = Number(page?.page_size ?? 30);
-    const totalPages = Math.max(1, Math.ceil(total / size));
-
-    const pageReqs = Array.from({ length: totalPages - 1 }, (_, i) =>
-      this.http.get(
-        `https://api.bilibili.com/x/polymer/space/seasons_archives_list?mid=${mid}&season_id=${sid}&sort_reverse=false&page_num=${i + 2}&page_size=${size}`,
-        { jar: this.jar, headers: { Referer: 'https://www.bilibili.com' } },
-      ),
-    );
-
-    const bvids = new Set<string>();
-    const read = (json: any) => {
-      (json?.data?.archives ?? []).forEach((m: any) => {
-        if (!favList.includes(m.bvid)) bvids.add(m.bvid);
-      });
-    };
-
-    read(first.data);
-    const rest = await Promise.all(pageReqs);
-    rest.forEach((r) => read(r.data));
-
-    return this.batchVideoInfos([...bvids]);
-  }
-
-  async getFavList(mediaId: string | number): Promise<BiliVideoInfo[]> {
-    await this.ensureSession();
-    const first = await this.http.get(
-      `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${mediaId}&pn=1&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp`,
-      { jar: this.jar, headers: { Referer: 'https://www.bilibili.com' } },
-    );
-    const data = first.data?.data;
-    const count = Number(data?.info?.media_count ?? 0);
-    const totalPages = Math.max(1, Math.ceil(count / 20));
-
-    const bvids: string[] = (data?.medias ?? []).map((m: any) => m.bvid);
-    const pages = Array.from({ length: totalPages - 1 }, (_, i) =>
-      this.http.get(
-        `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${mediaId}&pn=${i + 2}&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp`,
-        { jar: this.jar, headers: { Referer: 'https://www.bilibili.com' } },
-      ),
-    );
-
-    const rest = await Promise.all(pages);
-    rest.forEach((r) => {
-      const js = r.data;
-      if (js?.data?.has_more) {
-        (js.data.medias ?? []).forEach((m: any) => bvids.push(m.bvid));
-      }
-    });
-
-    return this.batchVideoInfos(bvids);
-  }
-
-  private async batchVideoInfos(bvids: string[], concurrency = 6): Promise<BiliVideoInfo[]> {
-    const out: BiliVideoInfo[] = [];
-    let i = 0;
-    const next = async () => {
-      while (i < bvids.length) {
-        const cur = i++;
-        try {
-          const v = await this.getVideoInfo(bvids[cur]);
-          out.push(v);
-        } catch {
-          // ignore 404/失败
-        }
-      }
-    };
-    await Promise.all(Array.from({ length: Math.min(concurrency, bvids.length) }, () => next()));
-    return out;
-  }
 }
+
+
+/** 测试用例 */
+// if (require.main === module) {
+//   (async () => {
+//     const bili = new BilibiliService();
+//     try {
+//       await bili.ensureSession(true);
+//       const info = await bili.getVideoInfo('BV1nW411g7ab');
+//       console.log('Video Info:', info);
+//       const playUrl = await bili.getPlayUrl(info.bvid, info.pages[0].cid);
+//       console.log('Play URL:', playUrl);
+//     } catch (e) {
+//       console.error('Error:', e);
+//     }
+//   })();
+// }

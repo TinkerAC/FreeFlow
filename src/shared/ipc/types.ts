@@ -86,7 +86,7 @@ export interface SearchApi {
 
   localSearch(term: string): Promise<TrackEntity[]>;
 
-  getNetEaseCloudMusicPlaylistDetail(playlist_id: string): Promise<PlaylistEntity>;
+  getPlaylistDetail(platform: string, platform_unique_id: string): Promise<PlaylistEntity>;
 }
 
 /** Shortcut */

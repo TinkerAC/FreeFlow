@@ -18,6 +18,7 @@ const SettingsCtx = createContext<Ctx | null>(null);
 function getByPath(obj: any, path: string) {
   return path.split('.').reduce((o, k) => (o ? o[k] : undefined), obj);
 }
+
 function setByPathLocal(obj: any, path: string, value: any) {
   const keys = path.split('.');
   const last = keys.pop()!;
@@ -43,11 +44,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       });
     })();
 
-    return () => { unsub?.(); };
+    return () => {
+      unsub?.();
+    };
   }, []);
 
   // 乐观 setByPath：先改本地 & apply，再 IPC 持久化；失败则回滚
-  const setByPath = async <T,>(path: string, value: T) => {
+  const setByPath = async <T, >(path: string, value: T) => {
     if (!settings) return;
     const prev = settings;
     const next = structuredClone(prev);

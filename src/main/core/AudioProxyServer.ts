@@ -68,12 +68,11 @@ class ProxyServerManager {
 
   private configureMiddlewares(): void {
     this.app.disable('x-powered-by');
-
-    this.app.use((req, res, next) => {
+// CORS 中间件：明确不返回 Response；记得 next()
+    this.app.use((_req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Range');
-      if (req.method === 'OPTIONS') return res.status(204).end();
       next();
     });
   }
@@ -84,6 +83,7 @@ class ProxyServerManager {
       // 简单健康检查/预检
       res.status(204).end();
     });
+    // @ts-ignore
     this.app.get('/healthz', (_req, res) => res.status(200).send('ok'));
   }
 

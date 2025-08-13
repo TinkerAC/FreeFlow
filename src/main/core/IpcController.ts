@@ -29,6 +29,8 @@ import { getOperatingSystem } from '@src/utils/helpers';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { ConfigService } from '@main/core/configService';
 import { Settings } from '@src/shared/settings/schema';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能切分成若干私有注册方法，
@@ -229,16 +231,15 @@ export default class IpcController {
       typeof x === 'object' &&
       typeof x.title === 'string' &&
       typeof x.platform_unique_id === 'string' &&
-      // 这些字段“更像 Track”：
       !('playlist_id' in x) &&
       !Array.isArray((x as any).tracks);
 
     const isPlaylistLike = (x: any): x is PlaylistEntity =>
       !!x &&
       typeof x === 'object' &&
-      ('playlist_id' in x ||
+      (
+        'playlist_id' in x ||
         Array.isArray((x as any).tracks) ||
-        // 网易云搜索歌单通常至少具备 title/description/creator 这些字段
         (typeof (x as any).title === 'string' && 'creator' in x)
       );
 
@@ -246,9 +247,7 @@ export default class IpcController {
     const sanitizeTrack = (t: any): TrackEntity | null => {
       if (!isTrackLike(t)) return null;
 
-      // 有些平台会把 BV/URL 混进 artist，这里清洗一下
       const artist = String(t.artist ?? '');
-
 
       const out: TrackEntity = {
         platform: t.platform,
@@ -259,10 +258,9 @@ export default class IpcController {
         duration: Number(t.duration ?? 0) || 0,
         cover_src: httpsify(t.cover_src) || '',
         created_at: t.created_at ? new Date(t.created_at) : new Date(),
-        fee: Number.isFinite(t.fee) ? t.fee : 0,
+        // fee 字段已移除/可选时不再写入
       };
 
-      // 最低限字段校验
       if (!out.title || !out.platform_unique_id) return null;
       return out;
     };
@@ -281,55 +279,86 @@ export default class IpcController {
       return out;
     };
 
+    // —— 歌单去重：优先 platform+playlist_id，缺失则退化到 title+creator ——
+    const dedupePlaylists = (arr: PlaylistEntity[]) => {
+      const seen = new Set<string>();
+      const out: PlaylistEntity[] = [];
+      for (const p of arr) {
+        const platform = (p as any).platform ?? 'unknown';
+        const pid = (p as any).playlist_id ?? (p as any).id ?? '';
+        const fallback = `${(p as any).title ?? ''}|${(p as any).creator ?? ''}`;
+        const key = pid ? `${platform}:${pid}` : `${platform}:${fallback}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          // 如需：https 化封面，可在此统一处理 e.g. p.cover_src = httpsify((p as any).cover_src)
+          out.push(p);
+        }
+      }
+      return out;
+    };
+
     /** —— IPC handlers —— */
 
     ipcMain.handle('get-search-result', async (_evt: IpcMainInvokeEvent, keywords: string) => {
       console.log('后端收到搜索请求:', keywords);
 
-      const hifiniTracksP = /* 开启时用：safe(this.hifiniMusic.searchTracks(keywords), 'hifini', [] as TrackEntity[]) */
-        Promise.resolve([] as TrackEntity[]);
+      const EMPTY: FusionSearchResult = { track_result: [], playlist_result: [] };
 
-      const neteaseTracksP = safe(this.netEaseCloudMusic.searchTracks(keywords), 'netease.tracks', [] as TrackEntity[]);
-      const neteasePlaylistsP = safe(this.netEaseCloudMusic.cloudSearchPlaylist(keywords), 'netease.playlists', [] as PlaylistEntity[]);
-      const qqTracksP = safe(this.qqMusic.searchTracks(keywords), 'qq', [] as TrackEntity[]);
-      const bilibiliTracksP = safe(this.bilibili.searchTracks(keywords, false), 'bilibili', [] as TrackEntity[]);
+      // 统一走各平台的 search(keywords) → FusionSearchResult
+      const neteaseP = this.netEaseCloudMusic?.search
+        ? safe(this.netEaseCloudMusic.search(keywords), 'netease.search', EMPTY)
+        : Promise.resolve(EMPTY);
 
-      const [hifiniTracks, neteaseTracks, neteasePlaylists, qqTracks, bilibiliTracks] =
-        await Promise.all([hifiniTracksP, neteaseTracksP, neteasePlaylistsP, qqTracksP, bilibiliTracksP]);
+      const qqP = this.qqMusic?.search
+        ? safe(this.qqMusic.search(keywords), 'qq.search', EMPTY)
+        : Promise.resolve(EMPTY);
+
+      const bilibiliP = this.bilibili?.search
+        ? safe(this.bilibili.search(keywords), 'bilibili.search', EMPTY)
+        : Promise.resolve(EMPTY);
 
 
-      const allTracks = [
-        ...(Array.isArray(hifiniTracks) ? hifiniTracks : []),
-        ...(Array.isArray(neteaseTracks) ? neteaseTracks : []),
-        ...(Array.isArray(qqTracks) ? qqTracks : []),
-        ...(Array.isArray(bilibiliTracks) ? bilibiliTracks : []), // 关键修复点
-      ];
+      // 拉齐所有平台结果
+      const results = await Promise.all([neteaseP, qqP, bilibiliP]);
 
-      // 后续逻辑使用这个经过安全合并的 allTracks 数组
+      // 堆叠全结果
+      const allTracksRaw = results.flatMap(r => r?.track_result ?? []);
+      const allPlRaw = results.flatMap(r => r?.playlist_result ?? []);
+
+      // 清洗 + 去重
       const track_result = dedupeTracks(
-        allTracks
+        allTracksRaw
           .filter(isTrackLike)
           .map(sanitizeTrack)
           .filter(Boolean) as TrackEntity[],
       );
 
-      // 歌单结果（你这里的写法已经很健壮了，保持即可）
-      const playlist_result = (Array.isArray(neteasePlaylists) ? neteasePlaylists : []).filter(isPlaylistLike);
+      const playlist_result = dedupePlaylists(
+        allPlRaw.filter(isPlaylistLike),
+      );
 
-      return { track_result, playlist_result };
+      const fusion: FusionSearchResult = { track_result, playlist_result };
+      return fusion;
     });
-
-
-    ipcMain.handle(
-      'get-netease-cloud-music-playlist-detail',
-      async (_evt: IpcMainInvokeEvent, playlistId: string) => {
-        return await this.netEaseCloudMusic.getFullPlaylist(playlistId);
-      },
-    );
 
     ipcMain.handle('local-search', async (_evt: IpcMainInvokeEvent, keywords: string) => {
       console.log('后端收到本地搜索请求:', keywords);
       return await this.trackService.localSearch(keywords);
+    });
+
+
+    ipcMain.handle('get-playlist-detail', async (_evt: IpcMainInvokeEvent, platform: string, platform_unique_id: string) => {
+      console.log('后端收到获取歌单详情请求:', platform, platform_unique_id);
+      switch (platform) {
+        case Platform.NET_EASE_CLOUD_MUSIC:
+          return await this.netEaseCloudMusic.getFullPlaylist(platform_unique_id);
+        case Platform.QQ_MUSIC:
+          throw NotImplementedError;
+        case Platform.BILIBILI:
+          throw NotImplementedError;
+        default:
+          throw new Error(`不支持的平台: ${platform}`);
+      }
     });
   }
 

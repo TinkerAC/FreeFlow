@@ -6,6 +6,8 @@ import type { Lyric } from '@src/shared/domainModel/lyricLine';
 import { BilibiliService, BiliSearchVideoItem, BiliVideoInfo } from '@main/contentProvider/Bilibili/BilibiliService';
 import { DISymbol } from '@main/di/symbol';
 import chalk from 'chalk';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 
 @injectable()
 export default class Bilibili implements ContentProvider {
@@ -22,7 +24,7 @@ export default class Bilibili implements ContentProvider {
     return (info.pages ?? []).map((p, idx) => ({
       platform: Platform.BILIBILI,
       platform_unique_id: `${info.bvid}?p=${idx + 1}`,
-      title: p?.part || `${info.title} (P${idx + 1})`,
+      title: info.pages.length === 1 ? info.title : p?.part || `${info.title}(P${idx + 1})}`,
       artist,
       album: 'Bilibili',
       duration: Number(p?.duration ?? 0),
@@ -56,46 +58,24 @@ export default class Bilibili implements ContentProvider {
    *  - series/collection/fav（保留原注释的模式，后续需要可解开）
    *  - 其它：走关键字搜索（WBI），返回视频列表（每个视频先用 P1）
    */
-  async searchTracks(keyword: string, _filterPaid = false): Promise<TrackEntity[]> {
+  async searchTracks(keyword: string): Promise<TrackEntity[]> {
     try {
       const kw = (keyword || '').trim();
       if (!kw) return [];
 
       // 任何位置匹配 BV（更宽松）：例如 “xxx BV1xxabc yyy”
-      const mBV = kw.match(/BV[0-9A-Za-z]+/i);
-      if (mBV?.[0]) {
+      const BVID = kw.match(/BV[0-9A-Za-z]+/i);
+      if (BVID?.[0]) {
         try {
-          const v = await this.bilibili.getVideoInfo(mBV[0]);
-          const tracks = this.toTracksFromVideo(v);
-          console.log(chalk.rgb(102, 204, 255)(`[Bilibili BV] ${mBV[0]} -> ${tracks.length} track(s)`));
+          const videoInfo = await this.bilibili.getVideoInfo(BVID[0]);
+          const tracks = this.toTracksFromVideo(videoInfo);
+          console.log(chalk.rgb(102, 204, 255)(`[Bilibili BV] ${BVID[0]} -> ${tracks.length} track(s)`));
           return tracks;
         } catch (e) {
-          console.warn('[bilibili.searchTracks] getVideoInfo failed for', mBV[0], e);
+          console.warn('[bilibili.searchTracks] getVideoInfo failed for', BVID[0], e);
           // 不中断，继续尝试关键字搜索
         }
       }
-
-      // series / collection / fav —— 如需启用，解开注释并完善你的入口正则
-      // const mSeries = kw.match(/\/(\d+)\/channel\/seriesdetail\?sid=(\d+)/);
-      // if (mSeries) {
-      //   const infos = await this.bilibili.getSeries(mSeries[1], mSeries[2]);
-      //   return this.toTracksFromVideos(infos);
-      // }
-      // const mCollection = kw.match(/\/(\d+)\/channel\/collectiondetail\?sid=(\d+)/);
-      // if (mCollection) {
-      //   const infos = await this.bilibili.getCollection(mCollection[1], mCollection[2]);
-      //   return this.toTracksFromVideos(infos);
-      // }
-      // if (/^\d+$/.test(kw)) {
-      //   const infos = await this.bilibili.getFavList(kw);
-      //   return this.toTracksFromVideos(infos);
-      // }
-
-      // // 其它情况：关键字搜索视频
-      // const items = await this.bilibili.searchVideos(kw, 1, 20);
-      // const tracks = this.toTracksFromSearch(items);
-      // console.log(chalk.rgb(102, 204, 255)(`[Bilibili KW] "${kw}" -> ${tracks.length} track(s)`));
-      // return tracks;
     } catch (e) {
       console.warn('[bilibili.searchTracks] failed:', e);
       // 兜底不抛出，避免影响其它平台聚合
@@ -103,7 +83,45 @@ export default class Bilibili implements ContentProvider {
     }
   }
 
-  async getTrackLink(uniqueId: string): Promise<string | void> {
+  /** 新的统一接口：仅在命中 BV 时组装 FusionSearchResult，否则直接空结果 */
+  async search(keyword: string): Promise<FusionSearchResult> {
+    const EMPTY: FusionSearchResult = { track_result: [], playlist_result: [] };
+
+    try {
+      const kw = (keyword ?? '').trim();
+      if (!kw) return EMPTY;
+
+      const m = kw.match(/BV([0-9A-Za-z]+)/i);
+      if (!m) {
+        // 未命中 BV —— 不发任何请求
+        return EMPTY;
+      }
+
+      const bvid = m[1];
+      const videoInfo = await this.bilibili.getVideoInfo(bvid);
+      const tracks = this.toTracksFromVideo(videoInfo) ?? [];
+
+      const playlist_result =
+        Array.isArray(videoInfo?.pages) && videoInfo.pages.length > 1
+          ? [{
+            creator: videoInfo.owner?.name || 'UP主',
+            description: videoInfo.desc || '',
+            playlist_cover: videoInfo.cover,
+            platform: Platform.BILIBILI,
+            platform_unique_id: videoInfo.bvid,
+            title: videoInfo.title,
+            tracks,
+          } as PlaylistEntity]
+          : [];
+
+      return { track_result: tracks, playlist_result };
+    } catch (e) {
+      console.warn('[Bilibili.search] failed:', e);
+      return EMPTY;
+    }
+  }
+
+  async getTrackLink(uniqueId: string): Promise<string> {
     const { bvid, p } = this.parseUniqueId(uniqueId);
     const info = await this.bilibili.getVideoInfo(bvid);
     const page = info.pages[(p - 1) | 0];

@@ -12,10 +12,10 @@ export class PlaylistEntity extends AbstractEntity {
   title: string;
   is_persistent?: boolean = false;
   description: string;
-  created_at: Date;
+  created_at?: Date;
   tracks: TrackEntity[];
   creator: string;
-  modified_at: Date;
+  modified_at?: Date;
   playlist_cover: string;
   played_count?: number;
 

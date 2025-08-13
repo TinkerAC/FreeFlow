@@ -5,6 +5,7 @@ import { injectable } from 'inversify';
 import { QQMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/core/enum/Platform';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 
 
 @injectable()
@@ -55,6 +56,22 @@ ${resultSongs
     return resultSongs.map(song =>
       QQMusicTrackModel.buildFromResponse(song),
     );
+  }
+
+  /**
+   * 根据关键词搜索 QQ 音乐的歌曲和歌单
+   * @param keyword
+   * @param filterPaid
+   */
+  public async search(
+    keyword: string,
+    filterPaid: boolean = true,
+  ): Promise<FusionSearchResult> {
+    const tracks = await this.searchTracks(keyword, filterPaid);
+    return {
+      track_result: tracks,
+      playlist_result: [],
+    };
   }
 
   /**

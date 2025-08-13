@@ -35,6 +35,7 @@ export function useSkin<TProps = any>(family: SkinFamily, overrideSkin?: string)
   const Comp = fam[chosen];
   if (!Comp) {
     // 没有注册任何皮肤时兜底，返回空组件避免崩
+    // @ts-ignore
     return ((_: TProps) => null) as any;
   }
   return Comp as unknown as React.FC<TProps>;

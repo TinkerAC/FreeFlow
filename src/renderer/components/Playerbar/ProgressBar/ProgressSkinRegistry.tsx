@@ -20,6 +20,7 @@ export function ProgressBar(props: any) {
   const { skin: skinProp, styleVars, ...rest } = props;
   const def = useDefaultSkin();
   const skin = skinProp ?? def;
+  // @ts-ignore
   const Comp = REG[skin];
   if (!Comp) return null;
 

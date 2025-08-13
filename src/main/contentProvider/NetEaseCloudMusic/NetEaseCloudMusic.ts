@@ -12,6 +12,7 @@ import {
 import { NetEaseCloudMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 
 
 /**
@@ -123,6 +124,32 @@ ${resultSongs
         platform_unique_id: playlist.id.toString(),
       });
     });
+  }
+
+  /**
+   * 根据关键词搜索网易云音乐的歌曲和歌单
+   * @param keyword
+   * @param filterPaid
+   */
+  public async search(
+    keyword: string,
+    filterPaid: boolean = true,
+  ): Promise<FusionSearchResult> {
+    try {
+      const tracks = this.searchTracks(keyword, filterPaid);
+      const playlists = this.cloudSearchPlaylist(keyword);
+      //用promise.all 并发执行
+      const [trackResults, playlistResults] = await Promise.all([tracks, playlists]);
+      return {
+        track_result: trackResults,
+        playlist_result: playlistResults,
+      };
+    } catch (error) {
+      console.error('[NetEaseCloudMusic.search] failed:', error);
+      return { track_result: [], playlist_result: [] };
+    }
+
+
   }
 
   /**

@@ -70,16 +70,31 @@ export const CacheSettings = z.object({
 export type CacheSettings = z.infer<typeof CacheSettings>;
 
 /** ------- 总配置 ------- */
+
 export const Settings = z.object({
   version: z.number().int().default(1),
-  theme: ThemeSettings.default({}),
-  ui: UISettings.default({}),
-  audio: AudioSettings.default({}),
-  library: LibrarySettings.default({}),
-  network: NetworkSettings.default({}),
-  services: ServiceSettings.default({}),
-  user: UserSettings.default({}),
-  cache: CacheSettings.default({}),
+  theme: ThemeSettings.default({
+    mode: 'system',
+    source: 'preset',
+    seed: '#6750A4',
+    preset: 'classic',
+  }),
+  ui: UISettings.default({
+    density: 'cozy',
+    sidebarCollapsed: false,
+  }),
+  audio: AudioSettings.default({
+    volume: 0.8,
+    progressSkin: 'classic',
+  }),
+  library: LibrarySettings.default({
+    scanPaths: [],
+    supportedFormats: ['mp3','flac','wav','m4a','ogg','aac'],
+  }),
+  network: NetworkSettings.default({ port: 29321 }),
+  services: ServiceSettings.default({ hifiniCookie: { bbs_sid: '', bbs_token: '' } }),
+  user: UserSettings.default({ userName: '', avatarPath: '' }),
+  cache: CacheSettings.default({ cacheTime: 3600 }),
 });
 export type Settings = z.infer<typeof Settings>;
 
