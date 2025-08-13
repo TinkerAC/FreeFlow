@@ -59,9 +59,16 @@ export default function PlayerBar({
 
   useEffect(() => {
     if (!showVol) return;
-    const update = () => { const el = volBtnWrapRef.current; if (el) setAnchorRect(el.getBoundingClientRect()); };
-    const onDown = (e: MouseEvent) => { if (!volBtnWrapRef.current?.contains(e.target as Node)) setShowVol(false); };
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowVol(false); };
+    const update = () => {
+      const el = volBtnWrapRef.current;
+      if (el) setAnchorRect(el.getBoundingClientRect());
+    };
+    const onDown = (e: MouseEvent) => {
+      if (!volBtnWrapRef.current?.contains(e.target as Node)) setShowVol(false);
+    };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowVol(false);
+    };
     update();
     window.addEventListener('resize', update, { passive: true });
     window.addEventListener('scroll', update, true);
@@ -83,22 +90,24 @@ export default function PlayerBar({
     return 'fa-volume-high';
   }, [player.volume]);
 
-  const rootCls   = unstyled ? classNames?.root   : clsx(rootCva({ density, elevated }), classNames?.root);
-  const leftCls   = unstyled ? classNames?.left   : clsx(styles.left, classNames?.left);
+  const rootCls = unstyled ? classNames?.root : clsx(rootCva({ density, elevated }), classNames?.root);
+  const leftCls = unstyled ? classNames?.left : clsx(styles.left, classNames?.left);
   const middleCls = unstyled ? classNames?.middle : clsx(styles.middle, classNames?.middle);
-  const rightCls  = unstyled ? classNames?.right  : clsx(styles.right, classNames?.right);
+  const rightCls = unstyled ? classNames?.right : clsx(styles.right, classNames?.right);
 
-  const titleCls  = unstyled ? classNames?.title  : clsx(styles.title, classNames?.title);
+  const titleCls = unstyled ? classNames?.title : clsx(styles.title, classNames?.title);
   const artistCls = unstyled ? classNames?.artist : clsx(styles.artist, classNames?.artist);
-  const coverCls  = unstyled ? classNames?.cover  : clsx(styles.cover, classNames?.cover);
-  const iconCls   = unstyled ? classNames?.icon   : clsx(styles.iconButton, classNames?.icon);
+  const coverCls = unstyled ? classNames?.cover : clsx(styles.cover, classNames?.cover);
+  const iconCls = unstyled ? classNames?.icon : clsx(styles.iconButton, classNames?.icon);
 
   return (
     <>
       <div className={rootCls} style={styleVars}>
         {/* 左：封面 + 信息 */}
         <div className={leftCls}>
-          <img src={track?.cover_src || DefaultCover} alt="album cover" className={coverCls} />
+          <img src={track?.cover_src || DefaultCover}
+               referrerPolicy="no-referrer"
+               alt="album cover" className={coverCls} />
           <div className={styles.meta}>
             <div className={titleCls}>{track?.title || '未知标题'}</div>
             <div className={artistCls}>{track?.artist || '未知艺术家'}</div>
@@ -111,13 +120,17 @@ export default function PlayerBar({
           <div className={styles.middleInner}>
             <div className={styles.controls}>
               <i className={iconCls} title="循环/随机/顺序" onClick={() => player.cyclePlaybackMode()}>
-                <span className={'fas ' + (player.playbackMode === 'loop' ? 'fa-redo' : player.playbackMode === 'shuffle' ? 'fa-random' : 'fa-sync')} />
+                <span
+                  className={'fas ' + (player.playbackMode === 'loop' ? 'fa-redo' : player.playbackMode === 'shuffle' ? 'fa-random' : 'fa-sync')} />
               </i>
-              <i className={iconCls} onClick={() => player.playPrevious()} title="上一首"><span className="fas fa-step-backward" /></i>
-              <i className={iconCls} onClick={() => player.togglePlayPause()} title={player.isPlaying ? '暂停' : '播放'}>
+              <i className={iconCls} onClick={() => player.playPrevious()} title="上一首"><span
+                className="fas fa-step-backward" /></i>
+              <i className={iconCls} onClick={() => player.togglePlayPause()}
+                 title={player.isPlaying ? '暂停' : '播放'}>
                 <span className={'fas ' + (player.isPlaying ? 'fa-pause' : 'fa-play')} />
               </i>
-              <i className={iconCls} onClick={() => player.playNext()} title="下一首"><span className="fas fa-step-forward" /></i>
+              <i className={iconCls} onClick={() => player.playNext()} title="下一首"><span
+                className="fas fa-step-forward" /></i>
             </div>
 
             <div className={styles.progress}>
@@ -142,7 +155,8 @@ export default function PlayerBar({
           <i className={iconCls} onClick={onToggleRightContent} title="播放列表"><span className="fas fa-list" /></i>
           <i className={iconCls} title="搜索"><span className="fas fa-search" /></i>
           <i className={iconCls} title="播放所有歌曲"><span className="fas fa-filter" /></i>
-          <i className={iconCls} onClick={() => mainContentStack.navigate(View.LYRIC)} title="歌词"><span className="fas fa-align-center" /></i>
+          <i className={iconCls} onClick={() => mainContentStack.navigate(View.LYRIC)} title="歌词"><span
+            className="fas fa-align-center" /></i>
 
           {/* 音量按钮锚点 */}
           <div className={styles.volWrap} ref={volBtnWrapRef}>
@@ -163,9 +177,11 @@ export default function PlayerBar({
           </div>
 
           {document.fullscreenElement ? (
-            <i className={iconCls} onClick={() => document.exitFullscreen?.()} title="退出全屏"><span className="fas fa-compress" /></i>
+            <i className={iconCls} onClick={() => document.exitFullscreen?.()} title="退出全屏"><span
+              className="fas fa-compress" /></i>
           ) : (
-            <i className={iconCls} onClick={() => document.documentElement.requestFullscreen?.()} title="进入全屏"><span className="fas fa-expand" /></i>
+            <i className={iconCls} onClick={() => document.documentElement.requestFullscreen?.()} title="进入全屏"><span
+              className="fas fa-expand" /></i>
           )}
         </div>
       </div>
@@ -208,7 +224,7 @@ export default function PlayerBar({
             </div>
           );
         })(),
-        document.body
+        document.body,
       )}
     </>
   );

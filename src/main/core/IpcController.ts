@@ -204,20 +204,62 @@ export default class IpcController {
 
   /* -------------------------- 搜索相关 --------------------------- */
   private registerSearchHandlers(): void {
-    ipcMain.handle('get-search-result', async (_evt, keywords: string) => {
+    const safe = async <T>(p: Promise<T>, label: string, fallback: T): Promise<T> => {
+      try {
+        return await p;
+      } catch (e) {
+        console.error(`[search:${label}] failed:`, e);
+        return fallback;
+      }
+    };
+    const httpsify = (u?: string) => (typeof u === 'string' ? u.replace(/^http:\/\//i, 'https://') : '');
+
+
+    const sanitizeTrack = (t: any): TrackEntity | null => {
+      if (!t) return null;
+      const out: TrackEntity = {
+        platform: t.platform,
+        platform_unique_id: String(t.platform_unique_id ?? ''),
+        title: String(t.title ?? ''),
+        artist: String(t.artist ?? ''),
+        album: String(t.album ?? ''),
+        duration: Number(t.duration ?? 0) || 0,
+        cover_src: httpsify(t.cover_src) || '',
+        created_at: t.created_at ? new Date(t.created_at) : new Date(),
+        fee: Number.isFinite(t.fee) ? t.fee : 0,
+      };
+      // 防御：非 B 站平台的 artist 不应出现 BV 号；若出现，剔除掉（避免 UI 里看到“artist 是 BV...”） 怎么会有作者叫 BV 呢？
+      // if (out.platform !== 'Bilibili' && /BV[0-9A-Za-z]{10,}/.test(out.artist)) {
+      //   out.artist = out.artist.replace(/BV[0-9A-Za-z]{10,}.*/g, '').trim();
+      // }
+      return out;
+    };
+
+    ipcMain.handle('get-search-result', async (_evt: IpcMainInvokeEvent, keywords: string) => {
       console.log('后端收到搜索请求:', keywords);
-      const [hifini, neteaseTracks, neteasePlaylists, qqTracks, bilibiliTracks] = await Promise.all([
-        this.hifiniMusic.searchTracks(keywords),
-        this.netEaseCloudMusic.searchTracks(keywords),
-        this.netEaseCloudMusic.cloudSearchPlaylist(keywords),
-        this.qqMusic.searchTracks(keywords),
-        this.bilibili.searchTracks(keywords, false),
+
+      const [
+        hifini = [] as TrackEntity[],
+        neteaseTracks = [] as TrackEntity[],
+        neteasePlaylists = [] as PlaylistEntity[],
+        qqTracks = [] as TrackEntity[],
+        bilibiliTracks = [] as TrackEntity[],
+      ] = await Promise.all([
+        safe(this.hifiniMusic.searchTracks(keywords), 'hifini', [] as TrackEntity[]),
+        safe(this.netEaseCloudMusic.searchTracks(keywords), 'netease.tracks', [] as TrackEntity[]),
+        safe(this.netEaseCloudMusic.cloudSearchPlaylist(keywords), 'netease.playlists', [] as PlaylistEntity[]),
+        safe(this.qqMusic.searchTracks(keywords), 'qq', [] as TrackEntity[]),
+        safe(this.bilibili.searchTracks(keywords, false), 'bilibili', [] as TrackEntity[]),
       ]);
 
-      return {
-        track_result: [...hifini, ...neteaseTracks, ...qqTracks, ...bilibiliTracks],
-        playlist_result: neteasePlaylists,
-      };
+      const track_result = [hifini, neteaseTracks, qqTracks, bilibiliTracks]
+        .flat()
+        .map(sanitizeTrack)
+        .filter(Boolean) as TrackEntity[];
+
+      const playlist_result = Array.isArray(neteasePlaylists) ? neteasePlaylists : [];
+
+      return { track_result, playlist_result };
     });
 
     ipcMain.handle(

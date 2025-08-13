@@ -1,101 +1,319 @@
-/* file: src/renderer/components/Maincontent/PlaylistView/PlaylistView.module.css */
-
-/* 视图根：只在这里滚动；文本色从 tokens 接管 */
-.root {
-    height: 100%;
-    width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior: contain;
-    padding: 16px;
-
-    /* 背景：封面主色（--accent）+ M3 表面叠加，默认用主色作强调 */
-    --accent: var(--md-sys-color-primary);
-
-    background:
-            linear-gradient(to bottom, rgba(var(--accent), .28), rgba(0,0,0,0) 40%),
-            linear-gradient(to bottom,
-            color-mix(in oklab, rgb(var(--md-sys-color-surface)) 85%, transparent),
-            color-mix(in oklab, rgb(var(--md-sys-color-surface)) 98%, transparent)
-            );
-
-    color: rgb(var(--md-sys-color-on-surface));
+/* 背景：封面模糊（固定到视图内部） */
+.backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--cover);
+    background-size: cover;
+    background-position: center;
+    filter: blur(26px) saturate(1.15);
+    transform: scale(1.08);
+    opacity: .35;
 }
 
-/* 头部 */
-.header {
+/* 粘顶“简洁头”（只用淡入淡出） */
+.headerCompact {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface)) 85%, transparent);
+    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+    backdrop-filter: blur(6px) saturate(1.05);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease;
+}
+
+.headerCompact[data-show="true"] {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.compactThumb {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.compactActions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ✅ 完整头放在滚动内容中（与列表组成一个整体） */
+.headerFull {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 16px;
     align-items: center;
-    margin-bottom: 24px;
+    padding: 24px 28px;
+    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface)) 72%, transparent);
+    backdrop-filter: blur(6px) saturate(1.05);
+    margin-bottom: 8px;
 }
+
 .cover {
-    width: 192px; height: 192px;
+    width: 192px;
+    height: 192px;
     border-radius: var(--radius-lg);
     object-fit: cover;
     flex-shrink: 0;
 }
-.meta { min-width: 0; }
-.kicker { font-size: 14px; color: rgb(var(--md-sys-color-on-surface-variant)); }
-.title {
-    font-size: 32px; line-height: 1.2; font-weight: 800;
-    margin-top: 8px; cursor: pointer;
+
+.meta {
+    min-width: 0;
 }
-.title:hover { text-decoration: underline; }
+
+.kicker {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.title {
+    color: rgb(var(--md-sys-color-on-surface));
+    font-weight: 800;
+    line-height: 1.2;
+    margin-top: 6px;
+    font-size: 32px;
+    cursor: pointer;
+}
+
+.title:hover {
+    text-decoration: underline;
+}
+
 .sub {
     margin-top: 8px;
     color: rgb(var(--md-sys-color-on-surface-variant));
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* 操作栏 */
+/* 主体：留出更充裕的内边距 */
+.body {
+    position: relative;
+    z-index: 1;
+    padding: 28px 28px 32px;
+    color: rgb(var(--md-sys-color-on-surface));
+    background: linear-gradient(
+            to bottom,
+            color-mix(in oklab, rgb(var(--md-sys-color-surface)) 80%, transparent),
+            color-mix(in oklab, rgb(var(--md-sys-color-surface)) 96%, transparent)
+    );
+    border-radius: var(--radius-lg);
+}
+
+/* 操作区 */
 .actions {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 14px 0 12px 0;
 }
-.pushRight { margin-left: auto; }
 
-/* 表格区域 */
+.playBtn {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    cursor: pointer;
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+    box-shadow: 0 8px 24px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 35%, transparent);
+    transition: filter .12s ease, transform .05s ease;
+}
+
+.playBtn:hover {
+    filter: brightness(1.05);
+}
+
+.playBtn:active {
+    transform: translateY(1px);
+}
+
+.iconGhost {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    border: 0;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+    color: rgb(var(--md-sys-color-on-surface));
+    transition: background .15s ease, transform .05s ease;
+}
+
+.iconGhost:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .5);
+}
+
+.iconGhost:active {
+    transform: translateY(1px);
+}
+
+.search {
+    margin-left: auto;
+    width: 260px;
+    max-width: 40vw;
+    background: rgb(var(--md-sys-color-surface-container));
+    color: rgb(var(--md-sys-color-on-surface));
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 999px;
+    padding: 8px 12px;
+}
+
+.search:focus {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+}
+
+/* 表格（无分割线；表头居中；artist 更小且更淡） */
 .table {
     width: 100%;
-    table-layout: fixed; /* 防止列被内容撑爆 */
-    border-collapse: collapse;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 6px;
 }
+
 thead th {
     color: rgb(var(--md-sys-color-on-surface-variant));
-    font-weight: 600;
-    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
-    padding: 8px 0;
+    font-weight: 700;
+    padding: 10px 0;
+    text-align: center;
+    user-select: none;
+    border-bottom: none;
 }
+
 tbody td {
-    padding: 8px 0;
-    border-top: 1px solid rgb(var(--md-sys-color-outline-variant));
+    padding: 10px 8px;
+    border-top: none;
     vertical-align: middle;
 }
 
-/* 行样式 */
-.row { transition: background-color .12s ease; }
-.row:hover { background: rgba(var(--md-sys-color-surface-variant), .35); }
+tbody tr {
+    transition: background-color .12s ease, transform .05s ease;
+}
 
-/* 列宽 & 内容 */
-.colIndex   { width: 32px; text-align: center; }
-.colTitle   { width: 50%; min-width: 0; }
-.colAlbum   { width: 25%; min-width: 0; }
-.colDate    { width: 16.66%; min-width: 0; }
-.colDur     { width: 48px; text-align: right; }
+tbody tr:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
 
-.titleWrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.thumb { width: 40px; height: 40px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; }
-.ttl { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.art { color: rgb(var(--md-sys-color-on-surface-variant)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+tbody tr:active {
+    transform: translateY(1px);
+}
 
-/* “定位到当前曲目”的临时高亮 */
-.locatingHighlight { animation: pulse .9s ease-in-out 2; }
-@keyframes pulse {
-    0%   { background: rgba(var(--md-sys-color-primary), .25); }
-    50%  { background: rgba(var(--md-sys-color-primary), .08); }
-    100% { background: transparent; }
+tbody td:first-child {
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+tbody td:last-child {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+/* 列宽 */
+.colIndex {
+    width: 28px;
+    text-align: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+.colTitle {
+    width: 50%;
+    min-width: 0;
+    text-align: left;
+}
+
+.colAlbum {
+    width: 25%;
+    min-width: 0;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.colDate {
+    width: 16.66%;
+    min-width: 0;
+    text-align: center;
+}
+
+.colDur {
+    width: 52px;
+    text-align: right;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+.titleWrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* 跑马灯：仅在溢出时启用 */
+.ttlBox {
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.ttlStatic {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ttlMarquee {
+    display: inline-block;
+    font-weight: 700;
+    white-space: nowrap;
+    will-change: transform;
+    animation: marquee-pingpong 12s ease-in-out infinite alternate;
+}
+
+@keyframes marquee-pingpong {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-45%);
+    }
+}
+
+/* artist：比 title 小一号，但对比更清晰 */
+.art {
+    font-size: 12px;
+    color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface-variant)) 90%, transparent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

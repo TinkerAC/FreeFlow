@@ -2,23 +2,13 @@ import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 import md5 from 'md5';
 import { injectable } from 'inversify';
+import { BiliVideoInfo, PlayUrl } from '@main/contentProvider/Bilibili/BilibiliInterfaces';
 
-/** B 站 VideoInfo 抽象（最小集：只保留我们用得到的字段） */
-export interface BiliVideoInfo {
-  bvid: string;
-  title: string;
-  desc?: string;
-  cover: string; // pic
-  owner: { name: string; mid: number };
-  pages: Array<{ bvid: string; cid: number; part: string; duration: number }>;
-}
+/** ─────────────────────── 小工具 ─────────────────────── */
 
-export interface PlayUrl {
-  audioUrl: string;
-  mime: string;
-  qualityId: number;
-  codecs?: string;
-  expireAt: number; // epoch ms
+/** 强制 https，避免混合内容被拦截 */
+function ensureHttps(u?: string): string {
+  return u ? u.replace(/^http:\/\//i, 'https://') : '';
 }
 
 type PlayUrlCacheEntry = { value: PlayUrl; createdAt: number };
@@ -79,20 +69,28 @@ export class BilibiliService {
   /** BV → 视频信息（含全部分P） */
   async getVideoInfo(bvid: string): Promise<BiliVideoInfo> {
     const r = await this.http.get('/x/web-interface/view', { params: { bvid } });
+    // 更友好的日志输出（有颜色/层级）
+    console.dir({ tag: '[bili:view]', code: r.data?.code, title: r.data?.data?.title, bvid }, {
+      depth: null,
+      colors: true,
+    });
+
     if (r.data?.code !== 0) throw new Error(`view failed: ${r.data?.code}`);
     const d = r.data.data;
-    const pages = (d?.pages ?? []).map((p: any) => ({
+
+    const pages = (Array.isArray(d?.pages) ? d.pages : []).map((p: any) => ({
       bvid,
-      cid: p.cid as number,
-      part: p.part as string,
-      duration: Number(p.duration ?? 0),
+      cid: Number(p?.cid) || 0,
+      part: String(p?.part ?? ''),
+      duration: Number(p?.duration ?? 0) || 0,
     }));
+
     return {
       bvid,
-      title: d.title as string,
-      desc: d.desc as string,
-      cover: d.pic as string,
-      owner: { name: d.owner?.name as string, mid: Number(d.owner?.mid) || 0 },
+      title: String(d?.title ?? ''),
+      desc: String(d?.desc ?? ''),
+      cover: ensureHttps(String(d?.pic ?? '')),
+      owner: { name: String(d?.owner?.name ?? ''), mid: Number(d?.owner?.mid) || 0 },
       pages,
     };
   }
@@ -100,7 +98,7 @@ export class BilibiliService {
   /** 可选：只拿 CID（通常不单独调用） */
   async getCID(bvid: string): Promise<number> {
     const info = await this.getVideoInfo(bvid);
-    return info.pages[0]?.cid ?? 0;
+    return (Array.isArray(info.pages) && info.pages[0]) ? info.pages[0].cid : 0;
   }
 
   /** ============ 取音轨直链（含缓存 & 兜底） ============ */
@@ -134,22 +132,22 @@ export class BilibiliService {
       if (pr.data?.code === 0) {
         const audios: any[] = pr.data?.data?.dash?.audio ?? [];
         if (audios.length) {
+          // 质量优先：30280(320k) > 30232(192k) > 30216(64k)
           const prefer = [30280, 30232, 30216];
           const pick = prefer.map((id) => audios.find((a) => a.id === id)).find(Boolean) ?? audios[0];
-          const url: string = pick.baseUrl || pick.base_url;
-          const mime: string = (pick.mimeType || 'audio/mp4').split(';')[0];
-          const out: PlayUrl = {
+          const url: string = ensureHttps(pick.baseUrl || pick.base_url);
+          const mime: string = String(pick.mimeType || 'audio/mp4').split(';')[0];
+          play = {
             audioUrl: url,
             mime,
-            qualityId: pick.id,
+            qualityId: Number(pick.id) || 0,
             codecs: pick.codecs,
             expireAt: now + this.PLAY_URL_TTL,
           };
-          play = out;
         }
       }
-    } catch (e) {
-      // ignore -> fallback
+    } catch {
+      // ignore → 走兜底
     }
 
     // 兜底：旧接口（某些情况下仍可用）
@@ -160,12 +158,12 @@ export class BilibiliService {
       if (pr.data?.code !== 0) throw new Error(`playurl failed: ${pr.data?.code}`);
       const audioArr: any[] = pr.data?.data?.dash?.audio ?? [];
       if (!audioArr.length) throw new Error('no audio stream');
-      const url: string = audioArr[0].baseUrl || audioArr[0].base_url;
-      const mime: string = (audioArr[0].mimeType || 'audio/mp4').split(';')[0];
+      const url: string = ensureHttps(audioArr[0].baseUrl || audioArr[0].base_url);
+      const mime: string = String(audioArr[0].mimeType || 'audio/mp4').split(';')[0];
       play = {
         audioUrl: url,
         mime,
-        qualityId: audioArr[0].id ?? 0,
+        qualityId: Number(audioArr[0].id) || 0,
         codecs: audioArr[0].codecs,
         expireAt: now + this.PLAY_URL_TTL,
       };
@@ -179,11 +177,12 @@ export class BilibiliService {
 
   /** 合集（series）→ 多个 BVID → 批量拉 VideoInfo */
   async getSeries(mid: string | number, sid: string | number): Promise<BiliVideoInfo[]> {
-    // 这个接口页码 1 起；但“0”也会返回全部，这里按 0 取全（与原 DataProcess 一致）
+    // 这个接口页码 1 起；但“0”也会返回全部，这里按 0 取全
     const url = `https://api.bilibili.com/x/series/archives?mid=${mid}&series_id=${sid}&only_normal=true&sort=desc&pn=0&ps=30`;
     const rs = await axios.get(url, { headers: { Referer: 'https://www.bilibili.com' }, timeout: 15000 });
     const archives: any[] = rs.data?.data?.archives ?? [];
-    return this.batchVideoInfos(archives.map((a) => a.bvid));
+    const bvids = archives.map((a) => a?.bvid).filter(Boolean);
+    return this.batchVideoInfos(bvids);
   }
 
   /** 合集（collection/polymer） */
@@ -208,7 +207,7 @@ export class BilibiliService {
     const bvids = new Set<string>();
     const read = (json: any) => {
       (json?.data?.archives ?? []).forEach((m: any) => {
-        if (!favList.includes(m.bvid)) bvids.add(m.bvid);
+        if (m?.bvid && !favList.includes(m.bvid)) bvids.add(m.bvid);
       });
     };
 
@@ -229,7 +228,7 @@ export class BilibiliService {
     const count = Number(data?.info?.media_count ?? 0);
     const totalPages = Math.max(1, Math.ceil(count / 20));
 
-    const bvids: string[] = (data?.medias ?? []).map((m: any) => m.bvid);
+    const bvids: string[] = (data?.medias ?? []).map((m: any) => m?.bvid).filter(Boolean);
     const pages = Array.from({ length: totalPages - 1 }, (_, i) =>
       axios.get(
         `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${mediaId}&pn=${i + 2}&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp`,
@@ -240,8 +239,8 @@ export class BilibiliService {
     const rest = await Promise.all(pages);
     rest.forEach((r) => {
       const js = r.data;
-      if (js?.data?.has_more) {
-        (js.data.medias ?? []).forEach((m: any) => bvids.push(m.bvid));
+      if (js?.data) {
+        (js.data.medias ?? []).forEach((m: any) => m?.bvid && bvids.push(m.bvid));
       }
     });
 
@@ -250,20 +249,24 @@ export class BilibiliService {
 
   /** 批量拿 VideoInfo（含并发限制） */
   private async batchVideoInfos(bvids: string[], concurrency = 6): Promise<BiliVideoInfo[]> {
+    if (!Array.isArray(bvids) || bvids.length === 0) return [];
     const out: BiliVideoInfo[] = [];
     let i = 0;
-    const next = async () => {
-      while (i < bvids.length) {
+
+    const worker = async () => {
+      while (true) {
         const cur = i++;
+        if (cur >= bvids.length) break;
         try {
           const v = await this.getVideoInfo(bvids[cur]);
           out.push(v);
         } catch {
-          // ignore 404/失败
+          // 忽略单个失败
         }
       }
     };
-    await Promise.all(Array.from({ length: Math.min(concurrency, bvids.length) }, () => next()));
+
+    await Promise.all(Array.from({ length: Math.min(concurrency, bvids.length) }, () => worker()));
     return out;
   }
 }

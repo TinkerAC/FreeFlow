@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import useStateRef from 'react-usestateref';
 import PlayerController from '@renderer/core/controller/PlayerController';
-import styles from './TabbedSearchResultView.module.css';
+import styles from './SearchResultView.module.css';
 
 import TabNav, { TabKey } from './TabNav';
 import ContextMenu from './ContextMenu';

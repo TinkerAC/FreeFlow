@@ -1,13 +1,18 @@
-/* 容器 */
+/* file: src/renderer/components/RightContent/PlayQueue/PlayQueue.module.css */
+
+/* 容器：头部 + 主体 */
 .root {
     height: 100%;
     display: grid;
     grid-template-rows: auto 1fr;
     background: rgb(var(--md-sys-color-surface-container-low));
     color: rgb(var(--md-sys-color-on-surface));
+    overflow: hidden; /* 关键：把滚动交给 body */
+
+
 }
 
-/* 头部：tabs + actions */
+/* 头部 */
 .header {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -17,11 +22,7 @@
     border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
 }
 
-.tabs {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-}
+.tabs { display: inline-flex; align-items: center; gap: 12px; }
 
 .tab {
     position: relative;
@@ -57,9 +58,35 @@
     border: 0;
 }
 .iconBtn:hover { opacity: 1; background: rgba(var(--md-sys-color-surface-variant), .35); }
+.iconBtn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* 可滚动主体 */
+.body {
+    overflow-y: auto;            /* ★ 关键：这里滚动 */
+    padding: 10px 12px;
+    display: grid;
+    grid-auto-rows: min-content;
+    gap: 10px;
+}
+/* 隐藏滚动条（Chromium / Electron） */
+.body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+.body::-webkit-scrollbar-thumb { background: transparent; }
+.body::-webkit-scrollbar-track { background: transparent; }
+
+/* 整块空态 */
+.emptyWrap {
+    height: 100%;
+    display: grid;
+    place-items: center;
+}
+.emptyIcon { font-size: 32px; opacity: .6; }
+.emptyText { margin-top: 6px; color: rgb(var(--md-sys-color-on-surface-variant)); }
 
 /* 分段 */
-.section { padding: 10px 12px; display: grid; grid-auto-rows: min-content; gap: 10px; }
+.section { display: grid; grid-auto-rows: min-content; gap: 10px; }
 .sectionTitle {
     font-size: 12px; font-weight: 700; letter-spacing: .02em;
     color: rgb(var(--md-sys-color-on-surface-variant));
@@ -93,12 +120,7 @@
 }
 
 /* 封面与文案 */
-.cover {
-    width: 48px; height: 48px;
-    border-radius: var(--radius-md);
-    object-fit: cover;
-}
-
+.cover { width: 48px; height: 48px; border-radius: var(--radius-md); object-fit: cover; }
 .meta { min-width: 0; }
 .title {
     font-weight: 600; font-size: 13px;
@@ -121,10 +143,11 @@
 }
 .rowIcon:hover { background: rgba(var(--md-sys-color-surface-variant), .5); }
 
-/* 空状态 */
+/* 小块空态（分段内） */
 .empty {
     padding: 16px 8px;
     text-align: center;
     color: rgb(var(--md-sys-color-on-surface-variant));
     user-select: none;
 }
+

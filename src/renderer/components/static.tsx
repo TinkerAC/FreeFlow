@@ -10,6 +10,7 @@ import Hifini from '@assets/icons/Hifini.png';
 import Local from '@assets/appIcons/appIcon_default.png';
 import QQMusic from '@assets/icons/QQMusic.svg';
 import debug from '@assets/icons/debug.svg';
+import Bilibili from '@assets/icons/Bilibili.svg';
 
 import DefaultCover from '@assets/default-cover.png';
 
@@ -28,6 +29,7 @@ export {
   DefaultCover,
   QQMusic,
   debug,
+  Bilibili,
 };
 
 

@@ -14,12 +14,11 @@ import chalk from 'chalk';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import MainWindowController from '@renderer/core/controller/MainWindowController';
 import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
-import RightDrawer from '@components/RightContent/RightDrawer';
 import MainContentSwitch from '@components/Maincontent/MainContentSwitch';
 import AppFrame from '@renderer/layout/AppFrame/AppFrame';
 import ContentGrid from '@renderer/layout/ContentGrid/ContentGrid';
-import RightDock from '@components/RightDock/RightDock';
-import { applyMaterialYou } from '@renderer/theme/MaterialYou';
+import RightContent from '@components/RightContent/RightContent';
+import RightDock from '@components/RightContent/RightDock';
 
 const Application: React.FC = () => {
   /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
@@ -187,7 +186,7 @@ const Application: React.FC = () => {
             }
             main={
               <div className="h-full">
-                <div className="h-full /* ContentGrid.module.css -> .mainScroll */">
+                <div className="h-full">
                   <MainContentSwitch
                     viewStack={viewStackRef.current!}
                     player={playerInstanceRef.current}
@@ -199,9 +198,9 @@ const Application: React.FC = () => {
               </div>
             }
             right={
+              // ...
               <RightDock>
-                {/* 只有触发时，你再把 RightDrawer/播放列表面板放进来 */}
-                <RightDrawer visible={true} player={playerInstanceRef.current} />
+                <RightContent player={playerInstanceRef.current} />
               </RightDock>
             }
           />

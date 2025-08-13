@@ -2,14 +2,16 @@
 
 .root {
     -webkit-app-region: drag;
-    position: sticky; top: 0; z-index: 50;
+    position: sticky;
+    top: 0;
+    z-index: 50;
 
     display: grid;
     grid-template-columns: auto 1fr auto;
     gap: 12px;
     align-items: center;
 
-    height: 60px;
+    height: 64px;
     padding: 0 12px;
 
     /* 顶栏作为较高层表面 */
@@ -19,48 +21,75 @@
     color: rgb(var(--md-sys-color-on-surface));
 }
 
-.nodrag { -webkit-app-region: no-drag; }
+.nodrag {
+    -webkit-app-region: no-drag;
+}
 
-.left, .center, .right { min-width: 0; display: flex; align-items: center; }
-.left  { gap: 8px; }
-.center{ gap: 10px; }
-.right { gap: 12px; }
+.left, .center, .right {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+.left {
+    gap: 8px;
+}
+
+.center {
+    gap: 10px;
+}
+
+.right {
+    gap: 12px;
+}
 
 /* 通用图标按钮 */
 .iconBtn {
     -webkit-app-region: no-drag;
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
     border-radius: var(--radius-sm);
     color: rgb(var(--md-sys-color-on-surface));
-    opacity: .9; cursor: pointer;
+    opacity: .9;
+    cursor: pointer;
     transition: background .15s ease, opacity .15s ease, transform .05s ease;
 }
-.iconBtn:hover  { opacity: 1; background: rgba(var(--md-sys-color-surface-variant), .35); }
-.iconBtn:active { transform: translateY(1px); }
 
-/* 搜索框：与背景“拉开层级” */
+.iconBtn:hover {
+    opacity: 1;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+.iconBtn:active {
+    transform: translateY(1px);
+}
+
 .search {
     -webkit-app-region: no-drag;
     flex: 1 1 auto;
-    display: flex; align-items: center; gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
 
-    /* 更浅的容器色 + 明确描边 + 轻阴影（让它像一枚“岛”） */
-    background: rgba(var(--md-sys-color-surface-container-low), .96);
-    border: 1px solid rgba(var(--md-sys-color-outline-variant), .95);
+    /* 调整背景颜色以区分顶栏背景 */
+    background: rgb(var(--md-sys-color-secondary-container));
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.95);
     border-radius: 999px;
     padding: 6px 10px;
-    min-width: 240px; max-width: 560px;
+    min-width: 240px;
+    max-width: 560px;
 
-    box-shadow: var(--elev-1, 0 1px 2px rgba(0,0,0,.25));
 }
 
 .search:focus-within {
     background: rgba(var(--md-sys-color-surface-container), .98);
     border-color: rgb(var(--md-sys-color-primary));
-    box-shadow:
-            0 1px 2px rgba(0,0,0,.25),
-            0 0 0 3px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 25%, transparent);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .25),
+    0 0 0 3px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 25%, transparent);
 }
 
 .searchIcon {
@@ -70,10 +99,13 @@
 
 .searchInput {
     flex: 1 1 auto;
-    background: transparent; border: 0; outline: none;
+    background: transparent;
+    border: 0;
+    outline: none;
     color: rgb(var(--md-sys-color-on-surface));
     font-size: 14px;
 }
+
 .searchInput::placeholder {
     color: rgb(var(--md-sys-color-on-surface-variant));
     opacity: .95;
@@ -82,39 +114,100 @@
 /* 主要按钮（示例） */
 .primaryBtn {
     -webkit-app-region: no-drag;
-    height: 28px; padding: 0 12px;
-    border: 0; border-radius: 999px;
+    height: 28px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
     background: rgb(var(--md-sys-color-primary));
     color: rgb(var(--md-sys-color-on-primary));
-    font-weight: 700; font-size: 12px;
+    font-weight: 700;
+    font-size: 12px;
     cursor: pointer;
     transition: filter .15s ease, transform .05s ease;
 }
-.primaryBtn:hover { filter: brightness(1.05); }
-.primaryBtn:active { transform: translateY(1px); }
+
+.primaryBtn:hover {
+    filter: brightness(1.05);
+}
+
+.primaryBtn:active {
+    transform: translateY(1px);
+}
 
 /* 用户徽标 */
 .userBadge {
     -webkit-app-region: no-drag;
-    display: inline-grid; place-items: center;
-    width: 28px; height: 28px;
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
     border-radius: 999px;
     background: rgb(var(--md-sys-color-primary));
     color: rgb(var(--md-sys-color-on-primary));
-    font-weight: 700; font-size: 12px;
-    padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 0 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* macOS 交通灯 */
-.traffic { -webkit-app-region: no-drag; display: flex; align-items: center; gap: 8px; margin-right: 6px; }
-.light   { width: 12px; height: 12px; border-radius: 50%; cursor: default; border: 0; transition: filter .15s ease; }
-.light:hover { filter: brightness(0.9); }
-.close { background: #ff5f57; } .min { background: #ffbd2e; } .max { background: #28c940; }
+.traffic {
+    -webkit-app-region: no-drag;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 6px;
+}
+
+.light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: default;
+    border: 0;
+    transition: filter .15s ease;
+}
+
+.light:hover {
+    filter: brightness(0.9);
+}
+
+.close {
+    background: #ff5f57;
+}
+
+.min {
+    background: #ffbd2e;
+}
+
+.max {
+    background: #28c940;
+}
 
 /* Windows 控件 */
-.winCtrl { -webkit-app-region: no-drag; display: flex; align-items: center; gap: 6px; margin-left: 4px; }
-.winBtn  { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-sm); cursor: pointer; color: rgb(var(--md-sys-color-on-surface)); }
-.winBtn:hover { background: rgba(var(--md-sys-color-surface-variant), .35); }
+.winCtrl {
+    -webkit-app-region: no-drag;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 4px;
+}
+
+.winBtn {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.winBtn:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
 
 /* 本地搜索建议 */
 .dropdown {
@@ -124,14 +217,51 @@
     backdrop-filter: blur(8px) saturate(1.1);
     border: 1px solid rgba(var(--md-sys-color-outline-variant), .9);
     border-radius: var(--radius-md);
-    box-shadow: var(--elev-2, 0 6px 20px rgba(0,0,0,.35));
+    box-shadow: var(--elev-2, 0 6px 20px rgba(0, 0, 0, .35));
     color: rgb(var(--md-sys-color-on-surface));
-    max-height: 320px; overflow-y: auto;
+    max-height: 320px;
+    overflow-y: auto;
 }
-.dropdownItem { display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; }
-.dropdownItem:hover { background: rgba(var(--md-sys-color-surface-variant), .5); }
-.dropdownCover { width: 40px; height: 40px; border-radius: var(--radius-sm); object-fit: cover; }
-.dropdownTitle { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dropdownSub   { font-size: 12px; color: rgb(var(--md-sys-color-on-surface-variant)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.playBtn { color: rgb(var(--md-sys-color-on-surface)); }
-.playBtn:hover { color: rgb(var(--md-sys-color-primary)); }
+
+.dropdownItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.dropdownItem:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .5);
+}
+
+.dropdownCover {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+
+.dropdownTitle {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdownSub {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.playBtn {
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.playBtn:hover {
+    color: rgb(var(--md-sys-color-primary));
+}

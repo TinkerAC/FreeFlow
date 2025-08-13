@@ -1,18 +1,19 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { lyricsContext } from "@renderer/core/electronContextApi";
-import PlayerController from "@renderer/core/controller/PlayerController";
-import { Lyric, LyricLine } from "@src/shared/domainModel/lyricLine";
-import { ScrollArea } from '@components/CheckBox';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import styles from './LyricView.module.css';
+
+import { lyricsContext } from '@renderer/core/electronContextApi';
+import PlayerController from '@renderer/core/controller/PlayerController';
+import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
+import { DefaultCover } from '@components/static';
 
 interface LyricViewProps {
   player: PlayerController;
 }
 
-/** 快速定位当前行 */
+/** 二分定位当前行（nowMs 介于行[i] 与 行[i+1] 之间） */
 const findActiveIndex = (lines: { time: number }[], nowMs: number) => {
-  let l = 0,
-    r = lines.length - 1;
+  let l = 0, r = lines.length - 1;
   while (l <= r) {
     const m = (l + r) >>> 1;
     const next = lines[m + 1];
@@ -23,184 +24,212 @@ const findActiveIndex = (lines: { time: number }[], nowMs: number) => {
 };
 
 const LyricView: React.FC<LyricViewProps> = ({ player }) => {
-  /* --------------------------- 状态 --------------------------- */
+  /* ---------------- 状态 ---------------- */
   const [lyric, setLyric] = useState<Lyric | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<'origin' | 'pronunciation' | 'translation'>('origin');
 
-  const [activeType, setActiveType] = useState<"origin" | "pronunciation" | "translation">("origin");
+  /* ---------------- 引用 ---------------- */
+  const viewportRef = useRef<HTMLDivElement>(null);  // 真正滚动的容器
+  const lastScrollRef = useRef<number>(0);           // 最近手动滚动时间
+  const lastActiveRef = useRef<number | null>(null); // 上一次高亮行
 
-  /* --------------------------- 引用 --------------------------- */
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastScrollRef = useRef<number>(0);
-  const autoScrollRef = useRef(false);
-  const lastActiveRef = useRef<number | null>(null);
-
-  /* --------------------------- 获取歌词 --------------------------- */
+  /* ---------------- 载入歌词 ---------------- */
   useEffect(() => {
     (async () => {
       const track = player.playQueue.currentTrack;
-      if (!track) return;
+      if (!track) {
+        setLyric(null);
+        return;
+      }
       try {
         setLoading(true);
         setError(null);
         const data = await lyricsContext.getLyrics(track);
         setLyric(data);
-        // 设置默认展示顺序：原 -> 音 -> 译
-        if (data.originLines.length) setActiveType("origin");
-        else if (data.pronunciationLines.length) setActiveType("pronunciation");
-        else setActiveType("translation");
+        // 默认顺序：原 -> 音 -> 译
+        if (data.originLines.length) setActiveType('origin');
+        else if (data.pronunciationLines.length) setActiveType('pronunciation');
+        else setActiveType('translation');
       } catch (e: any) {
-        setError(e.message ?? "加载歌词失败");
+        setError(e?.message ?? '加载歌词失败');
       } finally {
         setLoading(false);
       }
     })();
   }, [player.playQueue.currentTrack]);
 
-  /* --------------------------- 可用类型 --------------------------- */
   const hasOrigin = !!lyric?.originLines.length;
   const hasPronunciation = !!lyric?.pronunciationLines.length;
   const hasTranslation = !!lyric?.translationLines.length;
 
-  /* --------------------------- 决定渲染行 --------------------------- */
+  /* ---------------- 当前渲染的行 ---------------- */
   const lines: LyricLine[] = useMemo(() => {
     if (!lyric) return [];
     switch (activeType) {
-      case "pronunciation":
-        return lyric.pronunciationLines;
-      case "translation":
-        return lyric.translationLines;
-      default:
-        return lyric.originLines;
+      case 'pronunciation': return lyric.pronunciationLines;
+      case 'translation':   return lyric.translationLines;
+      default:              return lyric.originLines;
     }
   }, [lyric, activeType]);
 
-  /* --------------------------- 当前行索引 --------------------------- */
+  /* ---------------- 当前行索引 ---------------- */
   const activeIndex = useMemo(() => {
     if (!lines.length) return null;
-    return findActiveIndex(lines, player.currentTime * 1000);
+    return findActiveIndex(lines, (player.currentTime || 0) * 1000);
   }, [lines, player.currentTime]);
 
-  /* --------------------------- 自动滚动 --------------------------- */
+  /* ---------------- 自动滚动到当前行 ---------------- */
   useEffect(() => {
-    if (activeIndex == null || !containerRef.current) return;
+    if (activeIndex == null || !viewportRef.current) return;
     if (lastActiveRef.current === activeIndex) return;
+    // 最近有手动滚动就暂缓（3.5s 冷却）
     if (Date.now() - lastScrollRef.current < 3500) return;
 
     lastActiveRef.current = activeIndex;
-    const target = containerRef.current.querySelector<HTMLDivElement>(
+    const target = viewportRef.current.querySelector<HTMLDivElement>(
       `[data-index='${activeIndex}']`,
     );
     if (!target) return;
 
-    autoScrollRef.current = true;
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(() => (autoScrollRef.current = false), 700);
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [activeIndex]);
 
-  /* --------------------------- Skeleton --------------------------- */
-  const renderSkeleton = () => (
+  /* ---------------- 骨架 ---------------- */
+  const Skeleton = () => (
     <>
-      <style>{`@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
       {Array.from({ length: 12 }).map((_, i) => (
-        <div
-          key={i}
-          className="my-3 h-4 w-2/3 rounded"
-          style={{
-            background:
-              "linear-gradient(90deg,#374151 25%,#4B5563 50%,#374151 75%)",
-            backgroundSize: "200% 100%",
-            animation: "shimmer 1.6s infinite",
-          }}
-        />
+        <div key={i} className={styles.skel} />
       ))}
+      <div className={styles.hint}>加载中…</div>
     </>
   );
 
-  /* --------------------------- 行渲染 --------------------------- */
+  /* ---------------- 行渲染 ---------------- */
   const renderLine = (line: LyricLine, i: number) => {
-    const active = activeIndex === i;
+    const ai = activeIndex ?? -1;
+    const dist = Math.abs(i - ai);
+    const cls =
+      ai === i ? styles.lineActive :
+        dist === 1 ? styles.lineNear1 :
+          dist === 2 ? styles.lineNear2 : styles.lineFar;
+
     return (
       <motion.p
         layout
         key={i}
         data-index={i}
-        className="my-2 cursor-pointer select-none text-center leading-7"
+        className={`${styles.line} ${cls}`}
         onClick={() => player.setCurrentTime(line.time / 1000)}
         initial={false}
-        animate={{ scale: active ? 1.1 : 1, opacity: active ? 1 : 0.65 }}
-        transition={{ type: "spring", stiffness: 260, damping: 26 }}
+        animate={{ scale: ai === i ? 1.06 : 1, opacity: ai === i ? 1 : 0.78 }}
+        transition={{ type: 'spring', stiffness: 240, damping: 22 }}
       >
         {line.text}
       </motion.p>
     );
   };
 
-  /* --------------------------- 顶部切换按钮 --------------------------- */
-  const SwitchButton: React.FC<{
-    type: "origin" | "pronunciation" | "translation";
+  /* ---------------- 顶部 chip ---------------- */
+  const Chip: React.FC<{
+    type: 'origin' | 'pronunciation' | 'translation';
     label: string;
-  }> = ({ type, label }) => {
+    disabled?: boolean;
+  }> = ({ type, label, disabled }) => {
     const active = activeType === type;
     return (
-      <span
-        onClick={() => setActiveType(type)}
-        className={`cursor-pointer text-xs font-bold transition-colors ${active ? "text-white" : "text-gray-400 hover:text-gray-200"}`}
+      <button
+        type="button"
+        className={`${styles.chip} ${active ? styles.chipActive : ''}`}
+        onClick={() => !disabled && setActiveType(type)}
+        disabled={disabled}
+        aria-pressed={active}
+        title={label}
       >
         {label}
-      </span>
+      </button>
     );
   };
 
-  /* --------------------------- 主 UI --------------------------- */
-  if (error) return <div className="p-4 text-red-400">{error}</div>;
+  /* ---------------- 左侧封面 src & 回退 ---------------- */
+  const coverSrc = player.playQueue.currentTrack?.cover_src || DefaultCover;
+  const onCoverError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.src !== DefaultCover) img.src = DefaultCover;
+  };
 
+  /* ---------------- 错误态 ---------------- */
+  if (error) {
+    return (
+      <div className={styles.root}>
+        <div className={styles.left}>
+          <img className={styles.cover} src={coverSrc} onError={onCoverError} alt="cover" />
+        </div>
+        <div className={styles.right}>
+          <div className={styles.topbar}>
+            <div className={styles.topTitle}>歌词</div>
+            <div className={styles.chips} />
+          </div>
+          <div className={styles.viewport}>
+            <div className={styles.scrollInner}>
+              <p className={styles.empty}>加载失败：{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------------- 正常 UI ---------------- */
   return (
-    <div className="flex h-full w-full bg-black/90">
-      {/* 左侧封面 */}
-      <div className="flex w-2/5 items-center justify-center bg-gray-800/50 p-4">
-        {player.playQueue.currentTrack && (
+    <div className={styles.root}>
+      {/* 左：封面 */}
+      <div className={styles.left}>
+        {coverSrc ? (
           <motion.img
-            key={player.playQueue.currentTrack.id}
-            src={player.playQueue.currentTrack.cover_src}
+            key={player.playQueue.currentTrack?.id ?? 'cover'}
+            src={coverSrc}
+            onError={onCoverError}
             alt="cover"
-            className="max-h-[95%] max-w-[95%] rounded-xl shadow-2xl"
-            initial={{ scale: 0.8, opacity: 0 }}
+            className={styles.cover}
+            initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.45 }}
           />
+        ) : (
+          <img className={styles.cover} src={DefaultCover} alt="cover" />
         )}
       </div>
 
-      {/* 右侧歌词区 */}
-      <div className="relative flex w-3/5 flex-col">
-        {/* 左上角切换按钮 */}
-        <div className="absolute left-3 top-2 z-10 flex gap-3">
-          {hasOrigin && <SwitchButton type="origin" label="原" />}
-          {hasPronunciation && <SwitchButton type="pronunciation" label="音" />}
-          {hasTranslation && <SwitchButton type="translation" label="译" />}
+      {/* 右：歌词 */}
+      <div className={styles.right}>
+        <div className={styles.topbar}>
+          <div className={styles.topTitle}>歌词</div>
+          <div className={styles.chips}>
+            <Chip type="origin" label="原" disabled={!hasOrigin} />
+            <Chip type="pronunciation" label="音" disabled={!hasPronunciation} />
+            <Chip type="translation" label="译" disabled={!hasTranslation} />
+          </div>
         </div>
 
-        {/* 歌词列表 */}
-        <ScrollArea
-          className="h-full"
-          viewportClassName="no-scrollbar"
+        <div
+          ref={viewportRef}
+          className={styles.viewport}
           onScroll={() => (lastScrollRef.current = Date.now())}
         >
-          <div
-            ref={containerRef}
-            className="flex flex-col items-center px-8 py-10"
-          >
-            {loading || !lyric ? (
-              renderSkeleton()
+          <div className={styles.scrollInner}>
+            x{loading || !lyric ? (
+              <Skeleton />
             ) : lines.length ? (
-              <AnimatePresence initial={false}>{lines.map(renderLine)}</AnimatePresence>
+              <AnimatePresence initial={false}>
+                {lines.map(renderLine)}
+              </AnimatePresence>
             ) : (
-              <p className="text-gray-400">无可显示的歌词</p>
+              <p className={styles.empty}>无可显示的歌词</p>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );

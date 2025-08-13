@@ -61,3 +61,16 @@
 .big .sub {
     font-size: clamp(12px, 1.3vw, 14px);
 }
+
+/* 让哪个元素滚动，就把这个类加到哪个元素上 */
+.noScrollbar {
+    overflow-y: auto;      /* or: overlay */
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: none;     /* Firefox */
+    -ms-overflow-style: none;  /* IE/旧 Edge */
+}
+.noScrollbar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
