@@ -80,9 +80,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /** 简洁头显隐（完整头滚出阈值后淡入；回到顶部淡出） */
-  const [compactTarget, setCompactTarget] = useState(false);   // 期望状态（来自 IO）
-  const [compactMounted, setCompactMounted] = useState(false); // 是否渲染到 DOM
-  const [compactShown, setCompactShown] = useState(false);     // 是否展示（用于过渡）
+  const [showCompact, setShowCompact] = useState(false);
   const fullRef = useRef<HTMLDivElement>(null);
   const fullHRef = useRef<number>(0);
 
@@ -108,10 +106,10 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
     if (!root || !target) return;
 
     // 可根据需要微调阈值；小于 0.15 认为“完整头基本滚没了”
-  const io = new IntersectionObserver(
+    const io = new IntersectionObserver(
       ([entry]) => {
         const r = entry.intersectionRatio ?? 0;
-    setCompactTarget(r < 0.15);
+        setShowCompact(r < 0.15);
       },
       {
         root,                // 在 ViewShell 的滚动容器内观察
@@ -123,59 +121,34 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
     return () => io.disconnect();
   }, [presentPlaylist]);
 
-  // 控制挂载/过渡：进入时先挂载再开 show；离开时先关 show，再延时卸载
-  useEffect(() => {
-    let timer: number | undefined;
-    if (compactTarget) {
-      if (!compactMounted) {
-        setCompactMounted(true);
-        // 下一帧再设置展示，触发过渡
-        requestAnimationFrame(() => setCompactShown(true));
-      } else {
-        setCompactShown(true);
-      }
-    } else {
-      if (compactMounted) {
-        setCompactShown(false);
-        timer = window.setTimeout(() => setCompactMounted(false), 260); // 匹配 CSS 过渡时长
-      }
-    }
-    return () => { if (timer) window.clearTimeout(timer); };
-  }, [compactTarget, compactMounted]);
-
   // 简洁头上的类型标签
   const compactKicker = (presentPlaylist as any)?.type === 'album' ? '专辑' : '歌单';
 
   return (
-    // 背景放入 ViewShell 的独立层：不随内容滚动，仍受圆角裁剪
-    <ViewShell
-      ref={scrollRef}
-      padded={false}
-      hideScrollbar
-      background={<div className={styles.backdrop} style={{ ['--cover' as any]: `url("${coverImage}")` }} />}
-    >
-      {/* 内容区域 */}
+    // ✅ 不再传 header，“完整头+列表”与背景一起放进 wrap，随内容滚动
+    <ViewShell ref={scrollRef} padded hideScrollbar>
+      {/* 用 wrap 承载圆角与裁剪，backdrop 会被裁剪 */}
       <div className={styles.wrap}>
+        {/* 背景：封面模糊（opacity 降低，便于看清模糊效果），受圆角裁剪 */}
+        <div className={styles.backdrop} style={{ ['--cover' as any]: `url("${coverImage}")` }} />
 
         {/* 粘顶的简洁头（封面更大 + 顶部有“歌单/专辑”标签） */}
-        {compactMounted && (
-          <div className={styles.headerCompact} data-show={compactShown ? 'true' : 'false'}>
-            <div className={styles.headerCompactInner}>
-              <img src={coverImage} alt="" className={styles.compactThumb} />
-              <div className={styles.compactText}>
-                <div className={styles.compactKicker}>{compactKicker}</div>
-                <TtlMarquee text={presentPlaylist?.title || '未知歌单'} />
-              </div>
-              <div className={styles.compactActions}>
-                <button
-                  className={styles.playBtn}
-                  onClick={() => player.replacePlayQueue(presentPlaylist?.tracks || [])}
-                  title="播放全部"
-                  aria-label="播放全部"
-                >
-                  <i className="fas fa-play" />
-                </button>
-              </div>
+        {showCompact && (
+          <div className={styles.headerCompact} data-show={showCompact ? 'true' : 'false'}>
+            <img src={coverImage} alt="" className={styles.compactThumb} />
+            <div className={styles.compactText}>
+              <div className={styles.compactKicker}>{compactKicker}</div>
+              <TtlMarquee text={presentPlaylist?.title || '未知歌单'} />
+            </div>
+            <div className={styles.compactActions}>
+              <button
+                className={styles.playBtn}
+                onClick={() => player.replacePlayQueue(presentPlaylist?.tracks || [])}
+                title="播放全部"
+                aria-label="播放全部"
+              >
+                <i className="fas fa-play" />
+              </button>
             </div>
           </div>
         )}

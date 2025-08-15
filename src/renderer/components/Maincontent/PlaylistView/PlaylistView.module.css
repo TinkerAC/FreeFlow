@@ -1,351 +1,319 @@
-/* 内容包裹：不再裁剪，圆角与裁剪交给 ViewShell */
-.wrap {
-  position: relative;
-  min-height: 100%; /* 至少与滚动容器同高，避免露出底部背景 */
-  display: flex; /* 让 body 吃掉剩余空间 */
-  flex-direction: column;
-}
-
+/* 背景：封面模糊（固定到视图内部） */
 .backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: var(--cover);
-  background-size: cover;
-  background-position: center;
-  filter: blur(26px) saturate(1.15);
-  transform: scale(1.08);
-  opacity: 0.35;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--cover);
+    background-size: cover;
+    background-position: center;
+    filter: blur(26px) saturate(1.15);
+    transform: scale(1.08);
+    opacity: .35;
 }
 
 /* 粘顶“简洁头”（只用淡入淡出） */
-/* 外层：粘顶占位为 0（不参与布局），避免隐藏时留下空白 */
 .headerCompact {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  height: 0;           /* 核心：不占据文档流空间 */
-  pointer-events: none; /* 事件交给内部可见层 */
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface)) 85%, transparent);
+    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+    backdrop-filter: blur(6px) saturate(1.05);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease;
 }
 
-/* 内层：真正的可见条，绝对定位在顶部覆盖内容 */
-.headerCompactInner {
-  position: absolute;
-  inset: 0 0 auto 0;   /* 贴合顶部，宽度铺满 */
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background: color-mix(
-    in oklab,
-    rgb(var(--md-sys-color-surface)) 85%,
-    transparent
-  );
-  border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
-  backdrop-filter: blur(6px) saturate(1.05);
-  opacity: 0;
-  transform: translateY(-8px);
-  pointer-events: none;
-  transition: opacity 0.24s ease, transform 0.24s ease;
-}
-
-.headerCompact[data-show='true'] .headerCompactInner {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+.headerCompact[data-show="true"] {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .compactThumb {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-md);
-  object-fit: cover;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
 }
 
 .compactActions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* ✅ 完整头放在滚动内容中（与列表组成一个整体） */
 .headerFull {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
-  padding: 16px 16px; /* 紧贴容器边缘，减少视觉间隔 */
-  border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
-  background: color-mix(
-    in oklab,
-    rgb(var(--md-sys-color-surface)) 72%,
-    transparent
-  );
-  backdrop-filter: blur(6px) saturate(1.05);
-  /*margin-bottom: 8px;*/
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    padding: 24px 28px;
+    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface)) 72%, transparent);
+    backdrop-filter: blur(6px) saturate(1.05);
+    /*margin-bottom: 8px;*/
 }
 
 .cover {
-  width: 192px;
-  height: 192px;
-  border-radius: var(--radius-lg);
-  object-fit: cover;
-  flex-shrink: 0;
+    width: 192px;
+    height: 192px;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
 .meta {
-  min-width: 0;
+    min-width: 0;
 }
 
 .kicker {
-  font-size: 12px;
-  color: rgb(var(--md-sys-color-on-surface-variant));
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
 }
 
 .title {
-  color: rgb(var(--md-sys-color-on-surface));
-  font-weight: 800;
-  line-height: 1.2;
-  margin-top: 6px;
-  font-size: 32px;
-  cursor: pointer;
+    color: rgb(var(--md-sys-color-on-surface));
+    font-weight: 800;
+    line-height: 1.2;
+    margin-top: 6px;
+    font-size: 32px;
+    cursor: pointer;
 }
 
 .title:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 .sub {
-  margin-top: 8px;
-  color: rgb(var(--md-sys-color-on-surface-variant));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    margin-top: 8px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 主体：留出更充裕的内边距 */
 .body {
-  position: relative;
-  z-index: 1;
-  padding: 16px; /* 与 header 对齐，去除多余留白 */
-  color: rgb(var(--md-sys-color-on-surface));
-  background: linear-gradient(
-    to bottom,
-    color-mix(in oklab, rgb(var(--md-sys-color-surface)) 80%, transparent),
-    color-mix(in oklab, rgb(var(--md-sys-color-surface)) 96%, transparent)
-  );
-  flex: 1 0 auto; /* 占据剩余空间，保证内容区至少一屏高 */
-  min-height: 0; /* 允许内部内容在需要时收缩，避免溢出计算问题 */
+    position: relative;
+    z-index: 1;
+    padding: 28px 28px 32px;
+    color: rgb(var(--md-sys-color-on-surface));
+    background: linear-gradient(
+            to bottom,
+            color-mix(in oklab, rgb(var(--md-sys-color-surface)) 80%, transparent),
+            color-mix(in oklab, rgb(var(--md-sys-color-surface)) 96%, transparent)
+    );
+    border-radius: var(--radius-lg);
 }
 
 /* 操作区 */
 .actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 14px 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 14px 0 12px 0;
 }
 
 .playBtn {
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  cursor: pointer;
-  background: rgb(var(--md-sys-color-primary));
-  color: rgb(var(--md-sys-color-on-primary));
-  box-shadow: 0 8px 24px
-    color-mix(in oklab, rgb(var(--md-sys-color-primary)) 35%, transparent);
-  transition: filter 0.12s ease, transform 0.05s ease;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    cursor: pointer;
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+    box-shadow: 0 8px 24px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 35%, transparent);
+    transition: filter .12s ease, transform .05s ease;
 }
 
 .playBtn:hover {
-  filter: brightness(1.05);
+    filter: brightness(1.05);
 }
 
 .playBtn:active {
-  transform: translateY(1px);
+    transform: translateY(1px);
 }
 
 .iconGhost {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  border: 0;
-  background: rgba(var(--md-sys-color-surface-variant), 0.35);
-  color: rgb(var(--md-sys-color-on-surface));
-  transition: background 0.15s ease, transform 0.05s ease;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    border: 0;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+    color: rgb(var(--md-sys-color-on-surface));
+    transition: background .15s ease, transform .05s ease;
 }
 
 .iconGhost:hover {
-  background: rgba(var(--md-sys-color-surface-variant), 0.5);
+    background: rgba(var(--md-sys-color-surface-variant), .5);
 }
 
 .iconGhost:active {
-  transform: translateY(1px);
+    transform: translateY(1px);
 }
 
 .search {
-  margin-left: auto;
-  width: 260px;
-  max-width: 40vw;
-  background: rgb(var(--md-sys-color-surface-container));
-  color: rgb(var(--md-sys-color-on-surface));
-  border: 1px solid rgb(var(--md-sys-color-outline-variant));
-  border-radius: 999px;
-  padding: 8px 12px;
+    margin-left: auto;
+    width: 260px;
+    max-width: 40vw;
+    background: rgb(var(--md-sys-color-surface-container));
+    color: rgb(var(--md-sys-color-on-surface));
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 999px;
+    padding: 8px 12px;
 }
 
 .search:focus {
-  outline: 2px solid rgb(var(--md-sys-color-primary));
-  outline-offset: 2px;
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
 }
 
 /* 表格（无分割线；表头居中；artist 更小且更淡） */
 .table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: separate;
-  border-spacing: 0 6px;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 6px;
 }
 
 thead th {
-  color: rgb(var(--md-sys-color-on-surface-variant));
-  font-weight: 700;
-  padding: 10px 0;
-  text-align: center;
-  user-select: none;
-  border-bottom: none;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    font-weight: 700;
+    padding: 10px 0;
+    text-align: center;
+    user-select: none;
+    border-bottom: none;
 }
 
 tbody td {
-  padding: 10px 8px;
-  border-top: none;
-  vertical-align: middle;
+    padding: 10px 8px;
+    border-top: none;
+    vertical-align: middle;
 }
 
 tbody tr {
-  transition: background-color 0.12s ease, transform 0.05s ease;
+    transition: background-color .12s ease, transform .05s ease;
 }
 
 tbody tr:hover {
-  background: rgba(var(--md-sys-color-surface-variant), 0.35);
+    background: rgba(var(--md-sys-color-surface-variant), .35);
 }
 
 tbody tr:active {
-  transform: translateY(1px);
+    transform: translateY(1px);
 }
 
 tbody td:first-child {
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
 tbody td:last-child {
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 /* 列宽 */
 .colIndex {
-  width: 28px;
-  text-align: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    'Liberation Mono', 'Courier New', monospace;
-  font-variant-numeric: tabular-nums;
+    width: 28px;
+    text-align: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
 }
 
 .colTitle {
-  width: 50%;
-  min-width: 0;
-  text-align: left;
+    width: 50%;
+    min-width: 0;
+    text-align: left;
 }
 
 .colAlbum {
-  width: 25%;
-  min-width: 0;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    width: 25%;
+    min-width: 0;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .colDate {
-  width: 16.66%;
-  min-width: 0;
-  text-align: center;
+    width: 16.66%;
+    min-width: 0;
+    text-align: center;
 }
 
 .colDur {
-  width: 52px;
-  text-align: right;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-variant-numeric: tabular-nums;
+    width: 52px;
+    text-align: right;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
 }
 
 .titleWrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
 }
 
 .thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  object-fit: cover;
-  flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
 /* 跑马灯：仅在溢出时启用 */
 .ttlBox {
-  position: relative;
-  overflow: hidden;
-  min-width: 0;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
 }
 
 .ttlStatic {
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .ttlMarquee {
-  display: inline-block;
-  font-weight: 700;
-  white-space: nowrap;
-  will-change: transform;
-  animation: marquee-pingpong 12s ease-in-out infinite alternate;
+    display: inline-block;
+    font-weight: 700;
+    white-space: nowrap;
+    will-change: transform;
+    animation: marquee-pingpong 12s ease-in-out infinite alternate;
 }
 
 @keyframes marquee-pingpong {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-45%);
-  }
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-45%);
+    }
 }
 
 /* artist：比 title 小一号，但对比更清晰 */
 .art {
-  font-size: 12px;
-  color: color-mix(
-    in oklab,
-    rgb(var(--md-sys-color-on-surface-variant)) 90%,
-    transparent
-  );
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-size: 12px;
+    color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface-variant)) 90%, transparent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

@@ -1,7 +1,7 @@
 // file: src/renderer/components/Maincontent/PlaylistView/Track.tsx
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
-import { DefaultCover } from '@components/static';
+import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import styles from './PlaylistView.module.css';
@@ -81,9 +81,20 @@ const Track: React.FC<TrackProps> = ({ track, index, onRightClick, player }) => 
         </div>
       </td>
 
-      {/* 专辑（省略号） */}
-      <td className={`${styles.colAlbum} hidden md:table-cell`} title={track?.album || '未知专辑'}>
-        {track?.album || '未知专辑'}
+      {/* 平台（图标渲染） */}
+      <td className={`${styles.colAlbum} hidden md:table-cell`} title={track?.platform as any}>
+        {track?.platform === 'NetEaseCloudMusic' && (
+          <img src={NetEaseCloudMusic} alt="NetEaseCloudMusic" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+        )}
+        {track?.platform === 'Hifini' && (
+          <img src={Hifini} alt="Hifini" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+        )}
+        {track?.platform === 'QQMusic' && (
+          <img src={QQMusic} alt="QQMusic" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+        )}
+        {track?.platform === 'Bilibili' && (
+          <img src={Bilibili} alt="Bilibili" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+        )}
       </td>
 
       {/* 添加日期（居中） */}
