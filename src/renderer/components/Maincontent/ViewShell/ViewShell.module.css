@@ -1,8 +1,9 @@
-.root {
+    .root {
     height: 100%;
     width: 100%;
     display: grid;
     grid-template-rows: auto 1fr; /* 头部（可选） + 滚动区 */
+    position: relative;           /* 允许放置独立的背景层 */
 
     /* 与 MusicLibrary 统一的卡片外观 */
     background: rgb(var(--md-sys-color-surface));
@@ -10,6 +11,14 @@
     border: 1px solid rgb(var(--md-sys-color-outline-variant));
     border-radius: var(--radius-lg);
     overflow: hidden; /* 圆角裁切 */
+}
+
+/* 独立背景层：覆盖整个容器，不随滚动内容移动 */
+.bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
 }
 
 /* 头部不滚动：放封面/标题/Tab等 */
@@ -28,6 +37,7 @@
     scrollbar-gutter: stable both-edges;  /* 避免闪烁抖动 */
     scrollbar-width: thin;                /* Firefox */
     scrollbar-color: rgba(var(--md-sys-color-outline-variant), .7) transparent;
+    position: relative; z-index: 1; /* 叠在背景层之上 */
 }
 
 /* WebKit/Electron */
@@ -40,11 +50,12 @@
 
 /* 变体：隐藏滚动条（仍可滚动） */
 .scrollHidden {
-    composes: scroll;
+    /* 基础滚动样式由组件叠加 .scroll 一并提供 */
     scrollbar-width: none;
     -ms-overflow-style: none;
+    scrollbar-gutter: auto; /* 隐藏滚动条时不保留沟槽，避免假性内边距 */
 }
 .scrollHidden::-webkit-scrollbar { display: none; }
 
 /* 可选：带内边距的滚动区 */
-.scrollPadded { composes: scroll; padding: 16px; }
+.scrollPadded { padding: 16px; }
