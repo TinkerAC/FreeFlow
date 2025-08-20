@@ -3,7 +3,7 @@ import styles from './PlaylistView.module.css';
 
 import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
-import { DefaultCover } from '@components/static';
+import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic, Local } from '@components/static';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
@@ -121,43 +121,62 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
     return () => io.disconnect();
   }, [presentPlaylist]);
 
-  // 简洁头上的类型标签
-  const compactKicker = (presentPlaylist as any)?.type === 'album' ? '专辑' : '歌单';
+  // 简洁头上的“平台”标签，使用图标
+  function PlatformIcon({ platform }: { platform?: string }) {
+    const size = 16;
+    const common = { width: size, height: size, objectFit: 'contain' } as const;
+    if (platform === 'NetEaseCloudMusic') return <img src={NetEaseCloudMusic} alt={platform} style={common} />;
+    if (platform === 'Hifini') return <img src={Hifini} alt={platform} style={common} />;
+    if (platform === 'QQMusic') return <img src={QQMusic} alt={platform} style={common} />;
+    if (platform === 'Bilibili') return <img src={Bilibili} alt={platform} style={common} />;
+  if (platform === 'Local') return <img src={Local} alt={platform} style={common} />;
+    return null;
+  }
 
   return (
     // ✅ 不再传 header，“完整头+列表”与背景一起放进 wrap，随内容滚动
     <ViewShell ref={scrollRef} padded hideScrollbar>
+      {/* 粘顶的简洁头（放在滚动容器最前，保证始终从顶部淡入/淡出） */}
+      <div className={styles.headerCompact} data-show={showCompact ? 'true' : 'false'}>
+        <div className={styles.headerCompactInner}>
+          <img src={coverImage} alt="" className={styles.compactThumb} />
+          <div className={styles.compactText}>
+            <div className={styles.compactKicker} title="平台">
+              平台
+              <span style={{ display: 'inline-flex', marginLeft: 6, verticalAlign: 'middle' }}>
+                <PlatformIcon platform={presentPlaylist?.platform as any} />
+              </span>
+            </div>
+            <TtlMarquee text={presentPlaylist?.title || '未知歌单'} />
+          </div>
+          <div className={styles.compactActions}>
+            <button
+              className={styles.playBtn}
+              onClick={() => player.replacePlayQueue(presentPlaylist?.tracks || [])}
+              title="播放全部"
+              aria-label="播放全部"
+            >
+              <i className="fas fa-play" />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* 用 wrap 承载圆角与裁剪，backdrop 会被裁剪 */}
       <div className={styles.wrap}>
-        {/* 背景：封面模糊（opacity 降低，便于看清模糊效果），受圆角裁剪 */}
+        {/* 背景：封面模糊（opacity 降低，便于看清模糊效果），受圆角裁剪且不随滚动 */}
         <div className={styles.backdrop} style={{ ['--cover' as any]: `url("${coverImage}")` }} />
-
-        {/* 粘顶的简洁头（封面更大 + 顶部有“歌单/专辑”标签） */}
-        {showCompact && (
-          <div className={styles.headerCompact} data-show={showCompact ? 'true' : 'false'}>
-            <img src={coverImage} alt="" className={styles.compactThumb} />
-            <div className={styles.compactText}>
-              <div className={styles.compactKicker}>{compactKicker}</div>
-              <TtlMarquee text={presentPlaylist?.title || '未知歌单'} />
-            </div>
-            <div className={styles.compactActions}>
-              <button
-                className={styles.playBtn}
-                onClick={() => player.replacePlayQueue(presentPlaylist?.tracks || [])}
-                title="播放全部"
-                aria-label="播放全部"
-              >
-                <i className="fas fa-play" />
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* ✅ 完整头吸到容器顶部：紧贴上边，不留额外空隙 */}
         <div className={styles.headerFull} ref={fullRef}>
           <img src={coverImage} alt="Playlist cover" className={styles.cover} />
           <div className={styles.meta}>
-            <div className={styles.kicker}>歌单</div>
+            <div className={styles.kicker} title="平台">
+              平台
+              <span style={{ display: 'inline-flex', marginLeft: 8, verticalAlign: 'middle' }}>
+                <PlatformIcon platform={presentPlaylist?.platform as any} />
+              </span>
+            </div>
             <h1 className={styles.title} onClick={() => setModalVisible(true)}>
               {presentPlaylist?.title || '未知歌单'}
             </h1>
@@ -221,12 +240,14 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
             />
           </div>
 
-          <Playlist
-            filteredTracks={filteredTracks}
-            player={player}
-            musicLibraryController={musicLibraryController}
-            scrollContainerRef={scrollRef}
-          />
+          <div className={styles.list}>
+            <Playlist
+              filteredTracks={filteredTracks}
+              player={player}
+              musicLibraryController={musicLibraryController}
+              scrollContainerRef={scrollRef}
+            />
+          </div>
 
           {modalVisible && (
             <ModalModifyPlaylist

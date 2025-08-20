@@ -105,28 +105,22 @@ export function Playlist({
 
       {/* 浮动按钮 */}
       {showFloatingButtons && (
-        <div className="fixed bottom-24 right-8 z-50 flex flex-col items-center">
+        <div className={styles.fabs}>
           <button
-            className="w-12 h-12 mb-3 flex items-center justify-center rounded-full shadow-lg transition-transform transform hover:scale-110 focus:outline-none"
-            style={{ background: 'rgb(var(--md-sys-color-primary))', color: 'rgb(var(--md-sys-color-on-primary))' }}
+            className={`${styles.fab} ${styles.fabPrimary}`}
             onClick={locatePlayingTrack}
             aria-label="定位到正在播放的曲目"
             title="定位到正在播放的曲目"
           >
-            <i className="fas fa-music"></i>
+            <i className={`fas fa-crosshairs ${styles.fabIcon}`}></i>
           </button>
           <button
-            className="w-12 h-12 flex items-center justify-center rounded-full shadow-lg transition-transform transform hover:scale-110 focus:outline-none"
-            style={{
-              background: 'rgb(var(--md-sys-color-surface-container-high))',
-              color: 'rgb(var(--md-sys-color-on-surface))',
-              border: '1px solid rgb(var(--md-sys-color-outline-variant))',
-            }}
+            className={`${styles.fab} ${styles.fabSecondary}`}
             onClick={scrollToTop}
             aria-label="返回顶部"
             title="返回顶部"
           >
-            <i className="fas fa-arrow-up"></i>
+            <i className={`fas fa-arrow-up ${styles.fabIcon}`}></i>
           </button>
         </div>
       )}
