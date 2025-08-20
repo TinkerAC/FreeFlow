@@ -18,13 +18,16 @@ const Turntable: React.FC<TurntableProps> = ({ coverSrc, isPlaying, onCoverError
             onError={onCoverError}
             alt="cover label"
           />
-          <span className={styles.spindle} />
+          {/* 中心小圆 spindle 已移除 */}
         </div>
       </div>
       <div className={styles.tonearm}>
         <div className={styles.armBar} />
         <div className={styles.headshell} />
-        <div className={styles.pivot} />
+        {/* 枢轴底座 + 枢纽帽 */}
+        <div className={styles.pivotBase}>
+          <div className={styles.pivot} />
+        </div>
       </div>
     </div>
   );

@@ -73,7 +73,7 @@ export function Playlist({
         <tr>
           <th className={styles.colIndex}>#</th>
           <th className={styles.colTitle}>标题</th>
-          <th className={`hidden md:table-cell ${styles.colAlbum}`}>专辑</th>
+          <th className={`hidden md:table-cell ${styles.colAlbum}`}>平台</th>
           <th className={`hidden lg:table-cell ${styles.colDate}`}>添加日期</th>
           <th className={styles.colDur}><i className="fas fa-clock" aria-label="时长" /></th>
         </tr>
