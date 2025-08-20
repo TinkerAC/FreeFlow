@@ -187,22 +187,26 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
   /* ---------------- 正常 UI ---------------- */
   return (
     <div className={styles.root}>
-      {/* 左：封面 */}
+      {/* 左：黑胶唱机（根据播放状态旋转/落针） */}
       <div className={styles.left}>
-        {coverSrc ? (
-          <motion.img
-            key={player.playQueue.currentTrack?.id ?? 'cover'}
-            src={coverSrc}
-            onError={onCoverError}
-            alt="cover"
-            className={styles.cover}
-            initial={{ scale: 0.92, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.45 }}
-          />
-        ) : (
-          <img className={styles.cover} src={DefaultCover} alt="cover" />
-        )}
+        <div className={`${styles.deck} ${player.isPlaying ? styles.isPlaying : ''}`}>
+          <div className={styles.turntable}>
+            <div className={styles.disc}>
+              <img
+                className={styles.label}
+                src={coverSrc}
+                onError={onCoverError}
+                alt="cover label"
+              />
+              <span className={styles.spindle} />
+            </div>
+          </div>
+          <div className={styles.tonearm}>
+            <div className={styles.armBar} />
+            <div className={styles.headshell} />
+            <div className={styles.pivot} />
+          </div>
+        </div>
       </div>
 
       {/* 右：歌词 */}

@@ -19,11 +19,26 @@
     min-height: 0; /* 关键：允许内部收缩 */
 }
 
+/* 封面图片 */
+.cover {
+    width: min(72vh, 88%);
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: var(--radius-xl, 18px);
+    box-shadow: 0 16px 40px rgba(0,0,0,.35);
+    background: rgb(var(--md-sys-color-surface-variant));
+}
+
 /* 整个唱机的容器：负责叠放顺序与定位 */
 .deck {
     position: relative;
     width: min(64vh, 88%);
     aspect-ratio: 1/1;
+}
+
+/* 状态类：仅作为选择器组合使用（不改变视觉），用于触发 .deck.isPlaying */
+.isPlaying {
+    --deck-playing: 1; /* no-op 自定义变量，避免空规则被 lint 报错 */
 }
 
 /* 黑胶唱机 */
@@ -187,6 +202,8 @@
     height: 100%;
     overflow-y: auto;
     overscroll-behavior: contain;
+    scroll-behavior: smooth; /* 整体更顺滑 */
+    scroll-snap-type: y proximity; /* 轻微吸附到中心附近 */
 }
 
 /* 隐藏滚动条（按需保留/移除） */
@@ -199,7 +216,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 28px 18px 40px;
+    padding: 36px 18px 48px; /* 上下多一些留白 */
     gap: 6px;
 }
 
@@ -219,15 +236,20 @@
 .line {
     width: clamp(260px, 70%, 860px);
     text-align: center;
-    line-height: 1.9;
+    line-height: 2.05; /* 行距略大一点，更灵动 */
     letter-spacing: .02em;
     cursor: pointer;
     user-select: none;
+    /* 保持单行，防止切换样式时换行抖动 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transition: color .15s, filter .15s;
+    scroll-snap-align: center; /* 吸附到中线 */
 }
 
 .lineActive {
-    font-size: 24px; /* 稍微小一点 */
+    font-size: 26px; /* 更大一些 */
     font-weight: 800;
     color: rgb(var(--md-sys-color-on-surface));
     filter: none;
