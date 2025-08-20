@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import styles from './LyricView.module.css';
+import Turntable from './Turntable';
 
 import { lyricsContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
@@ -13,7 +14,8 @@ interface LyricViewProps {
 
 /** 二分定位当前行（nowMs 介于行[i] 与 行[i+1] 之间） */
 const findActiveIndex = (lines: { time: number }[], nowMs: number) => {
-  let l = 0, r = lines.length - 1;
+  let l = 0,
+    r = lines.length - 1;
   while (l <= r) {
     const m = (l + r) >>> 1;
     const next = lines[m + 1];
@@ -28,11 +30,13 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
   const [lyric, setLyric] = useState<Lyric | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeType, setActiveType] = useState<'origin' | 'pronunciation' | 'translation'>('origin');
+  const [activeType, setActiveType] = useState<
+    'origin' | 'pronunciation' | 'translation'
+  >('origin');
 
   /* ---------------- 引用 ---------------- */
-  const viewportRef = useRef<HTMLDivElement>(null);  // 真正滚动的容器
-  const lastScrollRef = useRef<number>(0);           // 最近手动滚动时间
+  const viewportRef = useRef<HTMLDivElement>(null); // 真正滚动的容器
+  const lastScrollRef = useRef<number>(0); // 最近手动滚动时间
   const lastActiveRef = useRef<number | null>(null); // 上一次高亮行
 
   /* ---------------- 载入歌词 ---------------- */
@@ -114,9 +118,13 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     const ai = activeIndex ?? -1;
     const dist = Math.abs(i - ai);
     const cls =
-      ai === i ? styles.lineActive :
-        dist === 1 ? styles.lineNear1 :
-          dist === 2 ? styles.lineNear2 : styles.lineFar;
+      ai === i
+        ? styles.lineActive
+        : dist === 1
+        ? styles.lineNear1
+        : dist === 2
+        ? styles.lineNear2
+        : styles.lineFar;
 
     return (
       <motion.p
@@ -143,7 +151,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     const active = activeType === type;
     return (
       <button
-        type="button"
+        type='button'
         className={`${styles.chip} ${active ? styles.chipActive : ''}`}
         onClick={() => !disabled && setActiveType(type)}
         disabled={disabled}
@@ -167,7 +175,12 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     return (
       <div className={styles.root}>
         <div className={styles.left}>
-          <img className={styles.cover} src={coverSrc} onError={onCoverError} alt="cover" />
+          <img
+            className={styles.cover}
+            src={coverSrc}
+            onError={onCoverError}
+            alt='cover'
+          />
         </div>
         <div className={styles.right}>
           <div className={styles.topbar}>
@@ -187,26 +200,13 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
   /* ---------------- 正常 UI ---------------- */
   return (
     <div className={styles.root}>
-      {/* 左：黑胶唱机（根据播放状态旋转/落针） */}
+      {/* 左：黑胶唱机（独立组件） */}
       <div className={styles.left}>
-        <div className={`${styles.deck} ${player.isPlaying ? styles.isPlaying : ''}`}>
-          <div className={styles.turntable}>
-            <div className={styles.disc}>
-              <img
-                className={styles.label}
-                src={coverSrc}
-                onError={onCoverError}
-                alt="cover label"
-              />
-              <span className={styles.spindle} />
-            </div>
-          </div>
-          <div className={styles.tonearm}>
-            <div className={styles.armBar} />
-            <div className={styles.headshell} />
-            <div className={styles.pivot} />
-          </div>
-        </div>
+        <Turntable
+          coverSrc={coverSrc}
+          isPlaying={player.isPlaying}
+          onCoverError={onCoverError}
+        />
       </div>
 
       {/* 右：歌词 */}
@@ -214,9 +214,13 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
         <div className={styles.topbar}>
           <div className={styles.topTitle}>歌词</div>
           <div className={styles.chips}>
-            <Chip type="origin" label="原" disabled={!hasOrigin} />
-            <Chip type="pronunciation" label="音" disabled={!hasPronunciation} />
-            <Chip type="translation" label="译" disabled={!hasTranslation} />
+            <Chip type='origin' label='原' disabled={!hasOrigin} />
+            <Chip
+              type='pronunciation'
+              label='音'
+              disabled={!hasPronunciation}
+            />
+            <Chip type='translation' label='译' disabled={!hasTranslation} />
           </div>
         </div>
 
