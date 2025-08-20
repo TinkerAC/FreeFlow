@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './LyricView.module.css';
 import Turntable from './Turntable';
+import LyricScroller from './LyricScroller';
 
 import { lyricsContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
@@ -35,9 +35,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
   >('origin');
 
   /* ---------------- 引用 ---------------- */
-  const viewportRef = useRef<HTMLDivElement>(null); // 真正滚动的容器
-  const lastScrollRef = useRef<number>(0); // 最近手动滚动时间
-  const lastActiveRef = useRef<number | null>(null); // 上一次高亮行
+  // 由子组件内部管理滚动与冷却
 
   /* ---------------- 载入歌词 ---------------- */
   useEffect(() => {
@@ -87,21 +85,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     return findActiveIndex(lines, (player.currentTime || 0) * 1000);
   }, [lines, player.currentTime]);
 
-  /* ---------------- 自动滚动到当前行 ---------------- */
-  useEffect(() => {
-    if (activeIndex == null || !viewportRef.current) return;
-    if (lastActiveRef.current === activeIndex) return;
-    // 最近有手动滚动就暂缓（3.5s 冷却）
-    if (Date.now() - lastScrollRef.current < 3500) return;
-
-    lastActiveRef.current = activeIndex;
-    const target = viewportRef.current.querySelector<HTMLDivElement>(
-      `[data-index='${activeIndex}']`,
-    );
-    if (!target) return;
-
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [activeIndex]);
+  // 自动滚动逻辑已迁移至 LyricScroller 内部
 
   /* ---------------- 骨架 ---------------- */
   const Skeleton = () => (
@@ -113,55 +97,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     </>
   );
 
-  /* ---------------- 行渲染 ---------------- */
-  const renderLine = (line: LyricLine, i: number) => {
-    const ai = activeIndex ?? -1;
-    const dist = Math.abs(i - ai);
-    const cls =
-      ai === i
-        ? styles.lineActive
-        : dist === 1
-        ? styles.lineNear1
-        : dist === 2
-        ? styles.lineNear2
-        : styles.lineFar;
-
-    return (
-      <motion.p
-        layout
-        key={i}
-        data-index={i}
-        className={`${styles.line} ${cls}`}
-        onClick={() => player.setCurrentTime(line.time / 1000)}
-        initial={false}
-        animate={{ scale: ai === i ? 1.06 : 1, opacity: ai === i ? 1 : 0.78 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 22 }}
-      >
-        {line.text}
-      </motion.p>
-    );
-  };
-
-  /* ---------------- 顶部 chip ---------------- */
-  const Chip: React.FC<{
-    type: 'origin' | 'pronunciation' | 'translation';
-    label: string;
-    disabled?: boolean;
-  }> = ({ type, label, disabled }) => {
-    const active = activeType === type;
-    return (
-      <button
-        type='button'
-        className={`${styles.chip} ${active ? styles.chipActive : ''}`}
-        onClick={() => !disabled && setActiveType(type)}
-        disabled={disabled}
-        aria-pressed={active}
-        title={label}
-      >
-        {label}
-      </button>
-    );
-  };
+  // 行渲染与顶部切换已抽取到 LyricScroller
 
   /* ---------------- 左侧封面 src & 回退 ---------------- */
   const coverSrc = player.playQueue.currentTrack?.cover_src || DefaultCover;
@@ -170,32 +106,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     if (img.src !== DefaultCover) img.src = DefaultCover;
   };
 
-  /* ---------------- 错误态 ---------------- */
-  if (error) {
-    return (
-      <div className={styles.root}>
-        <div className={styles.left}>
-          <img
-            className={styles.cover}
-            src={coverSrc}
-            onError={onCoverError}
-            alt='cover'
-          />
-        </div>
-        <div className={styles.right}>
-          <div className={styles.topbar}>
-            <div className={styles.topTitle}>歌词</div>
-            <div className={styles.chips} />
-          </div>
-          <div className={styles.viewport}>
-            <div className={styles.scrollInner}>
-              <p className={styles.empty}>加载失败：{error}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  /* ---------------- 错误态交由子组件展示 ---------------- */
 
   /* ---------------- 正常 UI ---------------- */
   return (
@@ -209,39 +120,20 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
         />
       </div>
 
-      {/* 右：歌词 */}
-      <div className={styles.right}>
-        <div className={styles.topbar}>
-          <div className={styles.topTitle}>歌词</div>
-          <div className={styles.chips}>
-            <Chip type='origin' label='原' disabled={!hasOrigin} />
-            <Chip
-              type='pronunciation'
-              label='音'
-              disabled={!hasPronunciation}
-            />
-            <Chip type='translation' label='译' disabled={!hasTranslation} />
-          </div>
-        </div>
-
-        <div
-          ref={viewportRef}
-          className={styles.viewport}
-          onScroll={() => (lastScrollRef.current = Date.now())}
-        >
-          <div className={styles.scrollInner}>
-            {loading || !lyric ? (
-              <Skeleton />
-            ) : lines.length ? (
-              <AnimatePresence initial={false}>
-                {lines.map(renderLine)}
-              </AnimatePresence>
-            ) : (
-              <p className={styles.empty}>无可显示的歌词</p>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* 右：歌词（独立组件） */}
+      <LyricScroller
+        title='歌词'
+        lines={lines}
+        loading={loading || !lyric}
+        error={error}
+        activeIndex={activeIndex}
+        activeType={activeType}
+        onTypeChange={setActiveType}
+        hasOrigin={hasOrigin}
+        hasPronunciation={hasPronunciation}
+        hasTranslation={hasTranslation}
+        onLineClick={(timeMs) => player.setCurrentTime(timeMs / 1000)}
+      />
     </div>
   );
 };

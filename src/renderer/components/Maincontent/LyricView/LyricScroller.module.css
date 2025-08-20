@@ -1,0 +1,140 @@
+/* 右侧歌词区：上信息条 + 下滚动区 */
+.right {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-width: 0;
+    min-height: 0; /* 关键：让 viewport 真正滚动 */
+}
+
+/* 顶部信息/切换条 */
+.topbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface)) 82%, transparent);
+    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+    backdrop-filter: blur(6px) saturate(1.05);
+}
+
+.topTitle {
+    font-size: 13px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    user-select: none;
+}
+
+.chips {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chip {
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    background: rgb(var(--md-sys-color-surface-variant));
+    color: rgb(var(--md-sys-color-on-surface));
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s, transform .05s;
+}
+.chip:hover { background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 80%, transparent); }
+.chip:active { transform: translateY(1px); }
+.chipActive {
+    background: rgba(var(--md-sys-color-primary), .18);
+    border-color: rgb(var(--md-sys-color-primary));
+}
+
+/* 真正滚动的视口 */
+.viewport {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth; /* 整体更顺滑 */
+    scroll-snap-type: y proximity; /* 轻微吸附到中心附近 */
+}
+
+/* 隐藏滚动条（按需保留/移除） */
+.viewport::-webkit-scrollbar { width: 0; height: 0; }
+.viewport { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* 滚动内容容器 */
+.scrollInner {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 36px 18px 48px; /* 上下多一些留白 */
+    gap: 6px;
+}
+
+/* 骨架条 */
+.skel {
+    width: clamp(240px, 66%, 720px);
+    height: 14px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #374151 25%, #4B5563 50%, #374151 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite;
+    opacity: .9;
+}
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* 行样式层级：越靠近当前越突出 */
+.line {
+    width: clamp(260px, 70%, 860px);
+    text-align: center;
+    line-height: 2.05; /* 行距略大一点，更灵动 */
+    letter-spacing: .02em;
+    cursor: pointer;
+    user-select: none;
+    /* 保持单行，防止切换样式时换行抖动 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color .15s, filter .15s;
+    scroll-snap-align: center; /* 吸附到中线 */
+}
+
+.lineActive {
+    font-size: 26px; /* 更大一些 */
+    font-weight: 800;
+    color: rgb(var(--md-sys-color-on-surface));
+    filter: none;
+    text-shadow: 0 2px 16px rgba(0,0,0,.18); /* 轻微高光，更聚焦 */
+}
+
+.lineNear1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 70%, transparent); /* 更淡 */
+}
+
+.lineNear2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 52%, transparent); /* 更淡 */
+}
+
+.lineFar {
+    font-size: 15px;
+    font-weight: 500;
+    color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 40%, transparent); /* 更淡 */
+}
+
+/* 空状态 */
+.empty {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    margin-top: 20px;
+}
+
+/* 小提示 */
+.hint {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    margin-top: 8px;
+}
