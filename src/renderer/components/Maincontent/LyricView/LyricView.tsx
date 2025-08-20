@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import styles from './LyricView.module.css';
 import Turntable from './Turntable';
 import LyricScroller from './LyricScroller';
@@ -38,29 +38,31 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
   // 由子组件内部管理滚动与冷却
 
   /* ---------------- 载入歌词 ---------------- */
-  useEffect(() => {
-    (async () => {
-      const track = player.playQueue.currentTrack;
-      if (!track) {
-        setLyric(null);
-        return;
-      }
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await lyricsContext.getLyrics(track);
-        setLyric(data);
-        // 默认顺序：原 -> 音 -> 译
-        if (data.originLines.length) setActiveType('origin');
-        else if (data.pronunciationLines.length) setActiveType('pronunciation');
-        else setActiveType('translation');
-      } catch (e: any) {
-        setError(e?.message ?? '加载歌词失败');
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const loadLyrics = useCallback(async () => {
+    const track = player.playQueue.currentTrack;
+    if (!track) {
+      setLyric(null);
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await lyricsContext.getLyrics(track);
+      setLyric(data);
+      // 默认顺序：原 -> 音 -> 译
+      if (data.originLines.length) setActiveType('origin');
+      else if (data.pronunciationLines.length) setActiveType('pronunciation');
+      else setActiveType('translation');
+    } catch (e: any) {
+      setError(e?.message ?? '加载歌词失败');
+    } finally {
+      setLoading(false);
+    }
   }, [player.playQueue.currentTrack]);
+
+  useEffect(() => {
+    loadLyrics();
+  }, [loadLyrics]);
 
   const hasOrigin = !!lyric?.originLines.length;
   const hasPronunciation = !!lyric?.pronunciationLines.length;
@@ -86,18 +88,6 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
   }, [lines, player.currentTime]);
 
   // 自动滚动逻辑已迁移至 LyricScroller 内部
-
-  /* ---------------- 骨架 ---------------- */
-  const Skeleton = () => (
-    <>
-      {Array.from({ length: 12 }).map((_, i) => (
-        <div key={i} className={styles.skel} />
-      ))}
-      <div className={styles.hint}>加载中…</div>
-    </>
-  );
-
-  // 行渲染与顶部切换已抽取到 LyricScroller
 
   /* ---------------- 左侧封面 src & 回退 ---------------- */
   const coverSrc = player.playQueue.currentTrack?.cover_src || DefaultCover;
@@ -133,6 +123,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
         hasPronunciation={hasPronunciation}
         hasTranslation={hasTranslation}
         onLineClick={(timeMs) => player.setCurrentTime(timeMs / 1000)}
+        onRetry={loadLyrics}
       />
     </div>
   );

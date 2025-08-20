@@ -55,7 +55,8 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     scroll-behavior: smooth; /* 整体更顺滑 */
-    scroll-snap-type: y proximity; /* 轻微吸附到中心附近 */
+    /* scroll-snap-type: y mandatory; 更强的吸附，居中更稳定 */
+    -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
 }
 
 /* 隐藏滚动条（按需保留/移除） */
@@ -65,17 +66,18 @@
 /* 滚动内容容器 */
 .scrollInner {
     min-height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 36px 18px 48px; /* 上下多一些留白 */
-    gap: 6px;
+    display: grid;
+    grid-auto-rows: max-content;
+    justify-items: center;
+    align-content: center; /* 核心：让内容围绕中线分布，当前行更易居中 */
+    padding: 48px 20px 64px; /* 增大整体留白 */
+    row-gap: 14px; /* 增大行间距 */
 }
 
 /* 骨架条 */
 .skel {
-    width: clamp(240px, 66%, 720px);
-    height: 14px;
+    width: clamp(280px, 66%, 760px);
+    height: 16px; /* 与更大行高匹配 */
     border-radius: 8px;
     background: linear-gradient(90deg, #374151 25%, #4B5563 50%, #374151 75%);
     background-size: 200% 100%;
@@ -86,22 +88,23 @@
 
 /* 行样式层级：越靠近当前越突出 */
 .line {
-    width: clamp(260px, 70%, 860px);
+    width: min(94%, 980px);
     text-align: center;
-    line-height: 2.05; /* 行距略大一点，更灵动 */
+    line-height: 2.2; /* 更舒展的行高 */
     letter-spacing: .02em;
     cursor: pointer;
     user-select: none;
-    /* 保持单行，防止切换样式时换行抖动 */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: color .15s, filter .15s;
+    /* 允许多行换行，避免过度截断 */
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    transition: color .15s, filter .15s, transform .15s;
     scroll-snap-align: center; /* 吸附到中线 */
+    scroll-snap-stop: always; /* 强制吸附停靠 */
 }
 
 .lineActive {
-    font-size: 26px; /* 更大一些 */
+    font-size: clamp(24px, 3vh, 36px); /* 更大的当前行 */
     font-weight: 800;
     color: rgb(var(--md-sys-color-on-surface));
     filter: none;
@@ -109,19 +112,19 @@
 }
 
 .lineNear1 {
-    font-size: 18px;
+    font-size: clamp(20px, 2.4vh, 28px);
     font-weight: 700;
     color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 70%, transparent); /* 更淡 */
 }
 
 .lineNear2 {
-    font-size: 16px;
+    font-size: clamp(18px, 2.1vh, 24px);
     font-weight: 600;
     color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 52%, transparent); /* 更淡 */
 }
 
 .lineFar {
-    font-size: 15px;
+    font-size: clamp(16px, 1.8vh, 20px);
     font-weight: 500;
     color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 40%, transparent); /* 更淡 */
 }
@@ -137,4 +140,42 @@
     font-size: 12px;
     color: rgb(var(--md-sys-color-on-surface-variant));
     margin-top: 8px;
+}
+
+/* 滚动状态指示器 */
+.scrollIndicator {
+    font-size: 10px;
+    color: rgb(var(--md-sys-color-primary));
+    opacity: 0.8;
+    margin-left: 8px;
+}
+
+/* 错误容器 */
+.errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 40px;
+}
+
+/* 重试按钮 */
+.retryButton {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--md-sys-color-primary));
+    background: rgba(var(--md-sys-color-primary), .1);
+    color: rgb(var(--md-sys-color-primary));
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.retryButton:hover {
+    background: rgba(var(--md-sys-color-primary), .2);
+    transform: translateY(-1px);
+}
+
+.retryButton:active {
+    transform: translateY(0);
 }
