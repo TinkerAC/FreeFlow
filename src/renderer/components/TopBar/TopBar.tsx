@@ -4,13 +4,13 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import styles from './TopBar.module.css';
 import { configContext, searchContext, systemContext, windowControlContext } from '@renderer/core/electronContextApi';
-import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
 import { debug } from '@components/static';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import clsx from 'clsx';
 import { OS } from '@src/shared/OS';
+import { useNavigate } from 'react-router-dom';
 
 async function getSearchResults(searchTerm: string) {
   return searchContext.getSearchResults(searchTerm);
@@ -22,11 +22,11 @@ async function getLocalSearchResults(searchTerm: string) {
 
 interface TopBarProps {
   setSearchResults: (results: FusionSearchResult) => void;
-  mainContentViewStack: MainContentViewStack;
-  player: PlayerController;
+  player: PlayerController | null;
 }
 
-export default function TopBar({ setSearchResults, mainContentViewStack, player }: TopBarProps) {
+export default function TopBar({ setSearchResults, player }: TopBarProps) {
+  const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLUListElement>(null);
 
@@ -80,18 +80,18 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
     const kw = term.trim();
     if (!kw) return;
     setLocalResults([]);
-    if (mainContentViewStack.currentView !== View.SEARCH_RESULTS) {
-      mainContentViewStack.navigate(View.SEARCH_RESULTS);
-    }
+    navigate('/search');
     getSearchResults(kw).then(setSearchResults);
   };
 
   const queueTrack = (t: TrackEntity) => {
+    if (!player) return;
     player.addTrackToNext(t);
     setSearchTerm('');
     setLocalResults([]);
   };
   const playTrack = (t: TrackEntity) => {
+    if (!player) return;
     player.addTrackToNextAndPlay(t);
     setSearchTerm('');
     setLocalResults([]);
@@ -108,19 +108,19 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
               <button className={clsx(styles.light, styles.min)} onClick={windowControlContext.minimize} />
               <button className={clsx(styles.light, styles.max)} onClick={windowControlContext.maximize} />
             </div>
-            <button className={styles.iconBtn} title="后退" onClick={mainContentViewStack.goBack}>
+            <button className={styles.iconBtn} title="后退" onClick={() => navigate(-1)}>
               <i className="fa-solid fa-arrow-left" />
             </button>
-            <button className={styles.iconBtn} title="前进" onClick={mainContentViewStack.goForward}>
+            <button className={styles.iconBtn} title="前进" onClick={() => navigate(1)}>
               <i className="fa-solid fa-arrow-right" />
             </button>
           </div>
         ) : (
           <div className={styles.left}>
-            <button className={styles.iconBtn} title="后退" onClick={mainContentViewStack.goBack}>
+            <button className={styles.iconBtn} title="后退" onClick={() => navigate(-1)}>
               <i className="fa-solid fa-arrow-left" />
             </button>
-            <button className={styles.iconBtn} title="前进" onClick={mainContentViewStack.goForward}>
+            <button className={styles.iconBtn} title="前进" onClick={() => navigate(1)}>
               <i className="fa-solid fa-arrow-right" />
             </button>
           </div>
@@ -137,7 +137,7 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && performNetworkSearch(searchTerm)}
-              onFocus={() => mainContentViewStack.currentView !== View.SEARCH_RESULTS && mainContentViewStack.navigate(View.SEARCH_RESULTS)}
+              onFocus={() => navigate('/search')}
               className={styles.searchInput}
             />
           </div>
@@ -153,19 +153,19 @@ export default function TopBar({ setSearchResults, mainContentViewStack, player 
           <button
             className={styles.iconBtn}
             title="设置"
-            onClick={() => mainContentViewStack.navigate(View.SETTINGS)}
+            onClick={() => navigate('/settings-app')}
           >
             <i className="fa-solid fa-gear" />
           </button>
 
-          <button className={styles.iconBtn} title="调试" onClick={() => mainContentViewStack.navigate(View.DEBUG)}>
+          <button className={styles.iconBtn} title="调试" onClick={() => navigate('/debug')}>
             <img src={debug} alt="Debug" width={16} height={16} />
           </button>
 
           <div
             className={styles.userBadge}
             title={userName || '无'}
-            onClick={() => mainContentViewStack.currentView !== View.PROFILE && mainContentViewStack.navigate(View.PROFILE)}
+            onClick={() => navigate('/profile')}
           >
             {userName ? userName[0]?.toUpperCase() : '无'}
           </div>

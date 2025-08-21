@@ -132,10 +132,12 @@ export default class Bilibili implements ContentProvider {
 
   /** B 站没有标准“歌词” */
   async getLyrics(_uniqueId: string): Promise<Lyric | void> {
+    void _uniqueId; // 防止未使用参数 lint 报错
     return;
   }
 
-  isFree(_song: any): boolean {
+  isFree(_song: unknown): boolean {
+    void _song;
     return true;
   }
 

@@ -1,106 +1,117 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+// eslint-disable-next-line import/no-unresolved
 import PlayerController from '@renderer/core/controller/PlayerController';
-import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
+import { useLocation } from 'react-router-dom';
+import ViewShell from '@components/Maincontent/ViewShell/ViewShell';
+import styles from './DebugView.module.css';
 
 interface DebugViewProps {
   player: PlayerController;
-  mainContentStack: MainContentViewStack;
 }
 
-/**
- * DebugView – A dark‑theme debug panel for PlayerController and MainContentViewStack.
- *
- * • Subscribes to `change` events (if exposed) to keep the UI in sync.
- * • Falls back to shallow‑copy snapshots when event bus isn’t available.
- * • Exposes richer runtime diagnostics: bitrate, sampleRate, ready/network state …
- */
-const DebugView: React.FC<DebugViewProps> = ({ player, mainContentStack }) => {
-  // Snapshots used to trigger React re‑renders
-  const [playerSnapshot, setPlayerSnapshot] = useState(() => ({ ...player }));
-  const [stackSnapshot, setStackSnapshot] = useState(() => ({ ...mainContentStack }));
+/* 小工具：安全 JSON 序列化 */
+function safeStringify(obj: unknown, space = 2) {
+  try { return JSON.stringify(obj, (k, v) => (typeof v === 'function' ? '[fn]' : v), space); } catch { return '[unserializable]'; }
+}
 
-  /* PlayerController event → snapshot */
+interface PlayerLike {
+  on?(evt: string, handler: () => void): void;
+  off?(evt: string, handler: () => void): void;
+  audio?: HTMLAudioElement;
+  playQueue?: { currentTrack?: { title?: string } };
+}
+
+const DebugView: React.FC<DebugViewProps> = ({ player }) => {
+  const location = useLocation();
+  const [playerSnapshot, setPlayerSnapshot] = useState(() => ({ ...player }));
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({ audio: true, playerRaw: false, route: true });
+
+  const toggle = useCallback((k: string) => setExpanded(s => ({ ...s, [k]: !s[k] })), []);
+
+  /* 订阅 Player 变化 */
   useEffect(() => {
-    const handlePlayerChange = () => setPlayerSnapshot({ ...player });
-    if (typeof (player as any).on === 'function') {
-      (player as any).on('change', handlePlayerChange);
-      return () => (player as any).off('change', handlePlayerChange);
+    const handle = () => setPlayerSnapshot({ ...player });
+    const p = player as unknown as PlayerLike;
+    if (typeof p.on === 'function' && typeof p.off === 'function') {
+      p.on('change', handle);
+      return () => p.off && p.off('change', handle);
     }
-    setPlayerSnapshot({ ...player });
+    const id = window.setInterval(handle, 500);
+    return () => clearInterval(id);
   }, [player]);
 
-  /* Stack event → snapshot */
-  useEffect(() => {
-    const handleStackChange = () => setStackSnapshot({ ...mainContentStack });
-    if (typeof (mainContentStack as any).on === 'function') {
-      (mainContentStack as any).on('change', handleStackChange);
-      return () => (mainContentStack as any).off('change', handleStackChange);
-    }
-    setStackSnapshot({ ...mainContentStack });
-  }, [mainContentStack]);
+  const audio = (playerSnapshot as unknown as PlayerLike).audio as HTMLAudioElement | undefined;
+  const audioDiag = audio ? {
+    src: audio.currentSrc,
+    currentTime: audio.currentTime,
+    duration: audio.duration,
+    paused: audio.paused,
+    volume: audio.volume,
+    networkState: audio.networkState,
+    readyState: audio.readyState,
+    buffered: (() => { try { return audio.buffered?.length ? audio.buffered.end(0) : 0; } catch { return 0; } })(),
+    played: (() => { try { return audio.played?.length ? audio.played.end(0) : 0; } catch { return 0; } })(),
+  } : null;
 
-  // Helper for audio‑related diagnostics
-  const audio = playerSnapshot.audio as HTMLAudioElement | undefined;
-  const audioDiagnostics = audio
-    ? {
-      bitrate: (audio as any).bitrate ?? 'N/A',
-      sampleRate: (audio as any).sampleRate ?? 'N/A',
-      networkState: audio.networkState,
-      readyState: audio.readyState,
-      buffered: audio.buffered?.length ? `${Math.round(audio.buffered.end(0) * 1000)} ms` : '0',
-      played: audio.played?.length ? `${Math.round(audio.played.end(0) * 1000)} ms` : '0',
-    }
-    : {};
+  const header = (
+    <div className={styles.headerBar}>
+      <div className={styles.headerTitle}>调试信息 (Debug)</div>
+      <div className={styles.headerHint}>当前路径: {location.pathname}</div>
+    </div>
+  );
 
   return (
-    <div className="w-full h-full overflow-y-auto p-6 bg-gray-900 text-gray-100 font-mono">
-      {/* PlayerController Debug Block */}
-      <section
-        className="w-full lg:w-3/4 xl:w-1/2 mx-auto mb-8 bg-gray-800/80 backdrop-blur rounded-xl shadow-lg p-6 space-y-3">
-        <h2 className="text-2xl font-semibold text-purple-400">Player Snapshot</h2>
-        <div className="space-y-1">
-          <div>
-            <span className="text-purple-300">Current Track:</span>{' '}
-            {playerSnapshot.playQueue.currentTrack?.title ?? 'None'}
+    <ViewShell header={header} padded hideScrollbar>
+      <div className={styles.grid}>
+        <section className={styles.card} aria-label="播放状态">
+          <div className={styles.cardHead}>
+            <h3 className={styles.cardTitle}>播放概览</h3>
+            <div className={styles.metaLine}>
+              <span>当前曲目:</span>
+              <strong>{playerSnapshot.playQueue?.currentTrack?.title || '无'}</strong>
+            </div>
+            <div className={styles.metaLine}>
+              <span>进度:</span>
+              <strong>{audio ? `${audio.currentTime.toFixed(2)} / ${isFinite(audio.duration) ? audio.duration.toFixed(2) : '∞'} s` : '—'}</strong>
+            </div>
+            <div className={styles.metaLine}>
+              <span>状态:</span>
+              <strong>{!audio ? '无 Audio 元素' : audio.paused ? '暂停' : '播放中'}</strong>
+            </div>
+            <button className={styles.toggleBtn} onClick={() => toggle('audio')}>
+              {expanded.audio ? '折叠音频细节' : '展开音频细节'}
+            </button>
           </div>
-          <div>
-            <span className="text-purple-300">Position:</span>{' '}
-            {audio ? `${audio.currentTime.toFixed(2)} / ${audio.duration.toFixed(2)} s` : '—'}
-          </div>
-          <div>
-            <span className="text-purple-300">State:</span>{' '}
-            {audio?.paused ? 'Paused' : 'Playing'}
-          </div>
-        </div>
+          {expanded.audio && audioDiag && (
+            <pre className={styles.codeBlock}>{safeStringify(audioDiag)}</pre>
+          )}
+        </section>
 
-        {/* Audio element metadata */}
-        <details className="mt-4 open:text-purple-400">
-          <summary className="cursor-pointer select-none">Raw audio element metadata</summary>
-          <pre className="mt-2 whitespace-pre-wrap text-xs">
-            {JSON.stringify(
-              {
-                src: audio?.currentSrc,
-                duration: audio?.duration,
-                currentTime: audio?.currentTime,
-                paused: audio?.paused,
-                volume: audio?.volume,
-                ...audioDiagnostics,
-              },
-              null,
-              2,
-            )}
-          </pre>
-        </details>
-      </section>
+        <section className={styles.card} aria-label="Player 原始快照">
+          <div className={styles.cardHead}>
+            <h3 className={styles.cardTitle}>Player Snapshot Raw</h3>
+            <button className={styles.toggleBtn} onClick={() => toggle('playerRaw')}>
+              {expanded.playerRaw ? '折叠' : '展开'}
+            </button>
+          </div>
+          {expanded.playerRaw && (
+            <pre className={styles.codeBlock}>{safeStringify(playerSnapshot)}</pre>
+          )}
+        </section>
 
-      {/* MainContentViewStack Debug Block */}
-      <section className="w-full lg:w-3/4 xl:w-1/2 mx-auto bg-gray-800/80 backdrop-blur rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-semibold text-teal-400 mb-2">MainContentViewStack Snapshot</h2>
-        <pre className="whitespace-pre-wrap text-xs">
-          {JSON.stringify(stackSnapshot, null, 2)}
-        </pre>
-      </section>
-    </div>
+        <section className={styles.card} aria-label="路由信息">
+          <div className={styles.cardHead}>
+            <h3 className={styles.cardTitle}>Route Info</h3>
+            <button className={styles.toggleBtn} onClick={() => toggle('route')}>
+              {expanded.route ? '折叠' : '展开'}
+            </button>
+          </div>
+          {expanded.route && (
+            <pre className={styles.codeBlock}>{safeStringify({ pathname: location.pathname, search: location.search, hash: location.hash, historyLength: window.history.length })}</pre>
+          )}
+        </section>
+      </div>
+    </ViewShell>
   );
 };
 

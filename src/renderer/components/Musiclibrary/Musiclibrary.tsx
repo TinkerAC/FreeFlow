@@ -5,16 +5,16 @@ import ContextMenu from './ContextMenu';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
-import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
+import { useNavigate } from 'react-router-dom';
 import styles from './MusicLibrary.module.css';
 import clsx from 'clsx';
 
 interface MusicLibraryProps {
   musicLibraryController: MusicLibraryController;
-  viewStack: MainContentViewStack;
 }
 
-export default function MusicLibrary({ musicLibraryController, viewStack }: MusicLibraryProps) {
+export default function MusicLibrary({ musicLibraryController }: MusicLibraryProps) {
+  const navigate = useNavigate();
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [eventPlaylist, setEventPlaylist] = useState<PlaylistEntity | null>(null);
@@ -109,7 +109,7 @@ export default function MusicLibrary({ musicLibraryController, viewStack }: Musi
                   onClick={() => {
                     musicLibraryController.selectItem(index);
                     musicLibraryController.activePlaylist = item;
-                    viewStack.navigate(View.PLAY_LIST);
+                    navigate('/playlist');
                   }}
                   onRightClick={(e) => handleRightClick(e, item.playlist_id)}
                 />
@@ -132,7 +132,7 @@ export default function MusicLibrary({ musicLibraryController, viewStack }: Musi
                   onClick={() => {
                     musicLibraryController.selectItem(index);
                     musicLibraryController.activePlaylist = item;
-                    viewStack.navigate(View.PLAY_LIST);
+                    navigate('/playlist');
                   }}
                   onContextMenu={(e) => handleRightClick(e, item.playlist_id)}
                   title={item.title}

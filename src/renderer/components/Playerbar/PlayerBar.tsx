@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { DefaultCover } from '@components/static';
 import PlayerController from '@renderer/core/controller/PlayerController';
-import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
+import { useNavigate } from 'react-router-dom';
 import styles from './PlayerBar.module.css';
 import clsx from 'clsx';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -17,6 +17,8 @@ import '@components/Playerbar/ProgressBar/skins/Waveform/WaveformBar';
 import '@components/Playerbar/ProgressBar/skins/Knob/Knob';
 
 type ProgressSkin = 'classic' | 'neon' | 'waveform' | 'knob';
+
+const VALID_SKINS: ReadonlyArray<ProgressSkin> = ['classic', 'neon', 'waveform', 'knob'];
 
 const rootCva = cva(styles.root, {
   variants: {
@@ -37,12 +39,11 @@ interface PlayerBarStyleProps extends VariantProps<typeof rootCva> {
 
 export interface PlayerBarProps extends PlayerBarStyleProps {
   player: PlayerController | null;
-  mainContentStack: MainContentViewStack;
   onToggleRightContent: () => void;
 }
 
 export default function PlayerBar({
-                                    player, mainContentStack, onToggleRightContent,
+                                    player, onToggleRightContent,
                                     density, elevated, classNames, unstyled = false, styleVars,
                                   }: PlayerBarProps) {
   if (!player) return null;
@@ -50,7 +51,7 @@ export default function PlayerBar({
 
   // 进度条皮肤（实时）
   const { value: skinPref } = useSetting<ProgressSkin>('audio.progressSkin', 'classic');
-  const skin: ProgressSkin = (['classic', 'neon', 'waveform', 'knob'] as const).includes(skinPref as any) ? skinPref : 'classic';
+  const skin: ProgressSkin = VALID_SKINS.includes(skinPref as ProgressSkin) ? (skinPref as ProgressSkin) : 'classic';
 
   // ── 音量弹层 ──────────────────────────────────────────────────
   const [showVol, setShowVol] = useState(false);
@@ -100,6 +101,8 @@ export default function PlayerBar({
   const coverCls = unstyled ? classNames?.cover : clsx(styles.cover, classNames?.cover);
   const iconCls = unstyled ? classNames?.icon : clsx(styles.iconButton, classNames?.icon);
 
+  const navigate = useNavigate();
+
   return (
     <>
       <div className={rootCls} style={styleVars}>
@@ -141,9 +144,9 @@ export default function PlayerBar({
                 max={track?.duration || 0}
                 onChange={(v: number) => player.setCurrentTime(v)}
                 styleVars={{
-                  ['--pg-base' as any]: 'var(--md-sys-color-surface-variant)',
-                  ['--pg-fill' as any]: 'var(--md-sys-color-primary)',
-                  ['--pg-thumb' as any]: 'var(--md-sys-color-primary)',
+                  ['--pg-base' as unknown as string]: 'var(--md-sys-color-surface-variant)',
+                  ['--pg-fill' as unknown as string]: 'var(--md-sys-color-primary)',
+                  ['--pg-thumb' as unknown as string]: 'var(--md-sys-color-primary)',
                 }}
               />
             </div>
@@ -155,7 +158,7 @@ export default function PlayerBar({
           <i className={iconCls} onClick={onToggleRightContent} title="播放列表"><span className="fas fa-list" /></i>
           <i className={iconCls} title="搜索"><span className="fas fa-search" /></i>
           <i className={iconCls} title="播放所有歌曲"><span className="fas fa-filter" /></i>
-          <i className={iconCls} onClick={() => mainContentStack.navigate(View.LYRIC)} title="歌词"><span
+          <i className={iconCls} onClick={() => navigate('/lyric')} title="歌词"><span
             className="fas fa-align-center" /></i>
 
           {/* 音量按钮锚点 */}

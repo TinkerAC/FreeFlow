@@ -11,26 +11,25 @@ import TracksTab from './TrackTab';
 import PopularTab from './PopularTab';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
-import { MainContentViewStack } from '@components/Maincontent/MainContentViewStack';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import ViewShell from '@components/Maincontent/ViewShell/ViewShell';
+import { useNavigate } from 'react-router-dom';
 
 export default function SearchResultView({
                                            initialTab = 'popular',
                                            fusionSearchResult,
                                            player,
-                                           viewStack,
                                            musicLibraryController,
                                          }: {
   initialTab?: TabKey;
   fusionSearchResult: FusionSearchResult | null;
-  viewStack: MainContentViewStack;
   musicLibraryController: MusicLibraryController;
   player: PlayerController;
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [contextMenu, setContextMenu] = useStateRef<{ x: number; y: number } | null>(null);
   const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackEntity | null>(null);
+  const navigate = useNavigate();
 
   if (!fusionSearchResult) {
     return (
@@ -65,8 +64,7 @@ export default function SearchResultView({
           <TracksTab tracks={track_result} player={player} onContextMenu={openContextMenu} />
         )}
         {activeTab === 'playlists' && (
-          <PlaylistsTab playlists={playlist_result} musicLibraryController={musicLibraryController}
-                        viewStack={viewStack} />
+          <PlaylistsTab playlists={playlist_result} musicLibraryController={musicLibraryController} />
         )}
       </div>
 

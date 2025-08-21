@@ -7,18 +7,23 @@ import MusicLibrary from '@components/Musiclibrary/Musiclibrary';
 import PlayerBar from '@components/Playerbar/PlayerBar';
 import { playerContext, shortcutContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
-import { MainContentViewStack, View } from '@components/Maincontent/MainContentViewStack';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import chalk from 'chalk';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import MainWindowController from '@renderer/core/controller/MainWindowController';
 import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
-import MainContentSwitch from '@components/Maincontent/MainContentSwitch';
 import AppFrame from '@renderer/layout/AppFrame/AppFrame';
 import ContentGrid from '@renderer/layout/ContentGrid/ContentGrid';
 import RightContent from '@components/RightContent/RightContent';
 import RightDock from '@components/RightContent/RightDock';
+import PlaylistView from '@components/Maincontent/PlaylistView/PlaylistView';
+import SearchResultView from '@components/Maincontent/SearchResultView/SearchResultView';
+import ProfileView from '@components/Maincontent/ProfileView/ProfileView';
+import LyricView from '@components/Maincontent/LyricView/LyricView';
+import DebugView from '@components/Maincontent/DebugView/DebugView';
+import SettingsView from '@components/Maincontent/SettingView/SettingsView';
 
 const Application: React.FC = () => {
   /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
@@ -30,11 +35,6 @@ const Application: React.FC = () => {
   const mainWindowServiceRef = useRef<MainWindowController | null>(null);
   if (mainWindowServiceRef.current === null) {
     mainWindowServiceRef.current = new MainWindowController();
-  }
-
-  const viewStackRef = useRef<MainContentViewStack | null>(null);
-  if (viewStackRef.current === null) {
-    viewStackRef.current = new MainContentViewStack({ view: 'playlist' as View });
   }
 
   /* ---------- 3. 绑定 MainWindowController 状态 ---------- */
@@ -170,7 +170,6 @@ const Application: React.FC = () => {
         top={
           <TopBar
             setSearchResults={setSearchResults}
-            mainContentViewStack={viewStackRef.current!}
             player={playerInstanceRef.current}
           />
         }
@@ -180,25 +179,26 @@ const Application: React.FC = () => {
             rightVisible={isRightContentVisible}
             left={
               <MusicLibrary
-                viewStack={viewStackRef.current}
                 musicLibraryController={musicServiceRef.current!}
               />
             }
             main={
               <div className="h-full">
                 <div className="h-full">
-                  <MainContentSwitch
-                    viewStack={viewStackRef.current!}
-                    player={playerInstanceRef.current}
-                    musicLibraryController={musicServiceRef.current!}
-                    searchResults={searchResults}
-                    keepAlive={true}
-                  />
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/playlist" replace />} />
+                    <Route path="/playlist" element={<PlaylistView player={playerInstanceRef.current!} musicLibraryController={musicServiceRef.current!} />} />
+                    <Route path="/search" element={<SearchResultView player={playerInstanceRef.current!} fusionSearchResult={searchResults} musicLibraryController={musicServiceRef.current!} />} />
+                    <Route path="/profile" element={<ProfileView />} />
+                    <Route path="/lyric" element={playerInstanceRef.current ? <LyricView player={playerInstanceRef.current} /> : <div style={{ padding: 16, color: '#f87171' }}>播放器未就绪</div>} />
+                    <Route path="/debug" element={<DebugView player={playerInstanceRef.current!} />} />
+                    <Route path="/settings-app" element={<SettingsView />} />
+                    <Route path="*" element={<div style={{ padding: 16 }}>未找到页面</div>} />
+                  </Routes>
                 </div>
               </div>
             }
             right={
-              // ...
               <RightDock>
                 <RightContent player={playerInstanceRef.current} />
               </RightDock>
@@ -209,7 +209,6 @@ const Application: React.FC = () => {
           <PlayerBar
             player={playerInstanceRef.current}
             onToggleRightContent={() => mainWindowServiceRef.current!.toggleRightContent()}
-            mainContentStack={viewStackRef.current!}
           />
         }
       />
@@ -219,3 +218,4 @@ const Application: React.FC = () => {
 
 };
 export default Application;
+

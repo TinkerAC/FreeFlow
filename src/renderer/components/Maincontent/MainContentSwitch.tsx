@@ -39,7 +39,6 @@ export default function MainContentSwitch({
           <SearchResultView
             player={player}
             fusionSearchResult={searchResults}
-            viewStack={viewStack}
             musicLibraryController={musicLibraryController}
           />
         );
@@ -49,7 +48,7 @@ export default function MainContentSwitch({
         return player ? <LyricView player={player} /> :
           <div style={{ padding: 16, color: '#f87171' }}>播放器未就绪</div>;
       case View.DEBUG:
-        return <DebugView player={player!} mainContentStack={viewStack} />;
+        return <DebugView player={player!}  />;
       case View.SETTINGS:
         return <SettingsView />;
       default:
