@@ -7,7 +7,7 @@ import MusicLibrary from '@components/Musiclibrary/Musiclibrary';
 import PlayerBar from '@components/Playerbar/PlayerBar';
 import { playerContext, shortcutContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import chalk from 'chalk';
@@ -24,6 +24,7 @@ import ProfileView from '@components/Maincontent/ProfileView/ProfileView';
 import LyricView from '@components/Maincontent/LyricView/LyricView';
 import DebugView from '@components/Maincontent/DebugView/DebugView';
 import SettingsView from '@components/Maincontent/SettingView/SettingsView';
+import MiniPlayer from '@components/MiniPlayer/MiniPlayer';
 
 const Application: React.FC = () => {
   /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
@@ -162,9 +163,19 @@ const Application: React.FC = () => {
   });
 
   /* ---------- 7. UI ---------- */
+  const location = useLocation();
+  if (location.pathname === '/mini') {
+    return (
+      <div className="App h-full w-full flex flex-col bg-transparent">
+        <audio ref={audioRef} hidden preload="auto" />
+        <MiniPlayer player={playerInstanceRef.current} />
+      </div>
+    );
+  }
+
   return (
     <div className="App h-full w-full flex flex-col bg-black">
-      <audio ref={audioRef} hidden />
+      <audio ref={audioRef} hidden preload="auto" />
 
       <AppFrame
         top={
@@ -192,9 +203,10 @@ const Application: React.FC = () => {
                     <Route path="/profile" element={<ProfileView />} />
                     <Route path="/lyric" element={playerInstanceRef.current ? <LyricView player={playerInstanceRef.current} /> : <div style={{ padding: 16, color: '#f87171' }}>播放器未就绪</div>} />
                     <Route path="/debug" element={<DebugView player={playerInstanceRef.current!} />} />
-                    <Route path="/settings-app" element={<SettingsView />} />
-                    <Route path="*" element={<div style={{ padding: 16 }}>未找到页面</div>} />
-                  </Routes>
+                  <Route path="/settings-app" element={<SettingsView />} />
+                  <Route path="/mini" element={<MiniPlayer player={playerInstanceRef.current} />} />
+                  <Route path="*" element={<div style={{ padding: 16 }}>未找到页面</div>} />
+                </Routes>
                 </div>
               </div>
             }
@@ -218,4 +230,3 @@ const Application: React.FC = () => {
 
 };
 export default Application;
-

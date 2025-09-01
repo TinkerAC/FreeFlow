@@ -3,44 +3,12 @@
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Platform } from '@main/core/enum/Platform';
 
-export default async function getAudioSrc(
-  track: TrackEntity,
-): Promise<string> {
-
-  if (track === null || track === undefined) {
+export default async function getAudioSrc(track: TrackEntity): Promise<string> {
+  if (!track) {
     console.error('传入track 为空,无法获取音源链接!');
   }
 
-  switch (track.platform) {
-    case Platform.LOCAL: {
-      return track.platform_unique_id;
-    }
-    default: {
-      const proxyUrl = `http://localhost:4399/proxy?platform=${track.platform}&platformUniqueId=${track.platform_unique_id}`;
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', proxyUrl, true);
-        xhr.responseType = 'blob';
-        xhr.onload = function() {
-          if (xhr.status === 200 || xhr.status === 206) {
-
-            const blob = xhr.response;
-            const blobUrl = URL.createObjectURL(blob);
-            resolve(blobUrl); // 返回生成的 blob URL
-          } else {
-            reject(new Error(`Failed to load audio from data_href via proxy: ${xhr.status} ${xhr.statusText}`));
-          }
-        };
-
-        xhr.onerror = function() {
-          console.error(`Network error while trying to load audio via proxy. Proxy URL: ${proxyUrl}`);
-          reject(new Error('Network error while trying to load audio via proxy.'));
-        };
-
-        xhr.send();
-      });
-    }
-  }
+  // 所有平台统一走本地代理（包括 Local），以获得统一的 Range/缓存/鉴权策略
+  const proxyUrl = `http://localhost:4399/proxy?platform=${track.platform}&platformUniqueId=${track.platform_unique_id}`;
+  return proxyUrl;
 }
-
-

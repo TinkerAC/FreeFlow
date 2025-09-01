@@ -21,6 +21,11 @@ interface MainApi {
   searchApi: SearchApi;
   shortcutApi: ShortcutApi;
   windowControlApi: WindowControlApi;
+  miniPlayerApi: {
+    toggle(): Promise<void>;
+    show(): Promise<void>;
+    hide(): Promise<void>;
+  };
 }
 
 declare global {
@@ -44,5 +49,4 @@ declare module '@mui/material/styles' {
     };
   }
 }
-
 

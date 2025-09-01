@@ -110,6 +110,14 @@ export interface WindowControlApi {
   close(): void;
 }
 
+/** Mini Player */
+export interface MiniPlayerApi {
+  toggle(): Promise<void>;
+  show(): Promise<void>;
+  hide(): Promise<void>;
+  setExpanded(expanded: boolean): Promise<void>;
+}
+
 /** 主聚合 */
 export interface MainApi {
   configApi: ConfigApi;
@@ -121,4 +129,5 @@ export interface MainApi {
   shortcutApi: ShortcutApi;
   systemApi: SystemApi;
   windowControlApi: WindowControlApi;
+  miniPlayerApi: MiniPlayerApi;
 }

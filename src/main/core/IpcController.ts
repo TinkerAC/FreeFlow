@@ -110,6 +110,32 @@ export default class IpcController {
           console.error('Unknown window action:', action);
       }
     });
+
+    // 迷你播放器窗口控制
+    ipcMain.handle('mini-player:toggle', async () => {
+      // 若 Mini 可见则回到 Main；否则显示 Mini（primary 分组互斥）
+      if (this.windowManager.isVisible(WindowKey.MINI)) {
+        this.windowManager.activate(WindowKey.MAIN);
+      } else {
+        this.windowManager.activate(WindowKey.MINI);
+      }
+    });
+    ipcMain.handle('mini-player:show', async () => {
+      this.windowManager.activate(WindowKey.MINI);
+    });
+    ipcMain.handle('mini-player:hide', async () => {
+      this.windowManager.hide(WindowKey.MINI);
+      this.windowManager.activate(WindowKey.MAIN);
+    });
+
+    // 固定高度展开/收起歌词：通过调整窗口高度实现
+    ipcMain.handle('mini-player:set-expanded', async (_evt, payload: { expanded: boolean }) => {
+      const mini = this.windowManager.ensure(WindowKey.MINI);
+      const [w] = mini.getSize();
+      const collapsedH = 120; // 与默认高度保持一致
+      const expandedH = 240;  // 展开后固定高度
+      mini.setSize(w, payload?.expanded ? expandedH : collapsedH, true);
+    });
   }
 
 

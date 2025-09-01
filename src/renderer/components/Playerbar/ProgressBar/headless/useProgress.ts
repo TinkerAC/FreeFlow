@@ -14,10 +14,14 @@ export interface UseProgressOptions {
 export function useProgress({ value, min = 0, max, onChange, step = 1, bigStep = 10 }: UseProgressOptions) {
   const range = Math.max(0, max - min) || 1;
   const clamp = useCallback((v: number) => Math.min(Math.max(v, min), max), [min, max]);
+  const toPct = useCallback((v: number) => {
+    const c = clamp(v);
+    return Math.min(Math.max((c - min) / range, 0), 1);
+  }, [clamp, min, range]);
   const pct = useMemo(() => {
     if (!Number.isFinite(value)) return 0;
-    return Math.min(Math.max((value - min) / range, 0), 1);
-  }, [value, min, range]);
+    return toPct(value);
+  }, [value, toPct]);
 
   const setByPct = useCallback((p: number) => {
     const clampedP = Math.min(Math.max(p, 0), 1);
@@ -69,5 +73,5 @@ export function useProgress({ value, min = 0, max, onChange, step = 1, bigStep =
     'aria-valuenow': value,
   }), [min, max, value]);
 
-  return { pct, setByPct, onKeyDown, aria, clamp };
+  return { pct, setByPct, onKeyDown, aria, clamp, toPct };
 }

@@ -91,6 +91,13 @@ const mainApi: MainApi = {
     maximize: () => ipcRenderer.send('window-controls', 'maximize'),
     close: () => ipcRenderer.send('window-controls', 'close'),
   },
+
+  miniPlayerApi: {
+    toggle: () => ipcRenderer.invoke('mini-player:toggle'),
+    show: () => ipcRenderer.invoke('mini-player:show'),
+    hide: () => ipcRenderer.invoke('mini-player:hide'),
+    setExpanded: (expanded: boolean) => ipcRenderer.invoke('mini-player:set-expanded', { expanded }),
+  },
 };
 
 contextBridge.exposeInMainWorld('mainApi', mainApi);

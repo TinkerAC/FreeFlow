@@ -143,10 +143,28 @@ export default function PlayerBar({
                 min={0}
                 max={track?.duration || 0}
                 onChange={(v: number) => player.setCurrentTime(v)}
+                buffered={((): Array<{ start: number; end: number }> => {
+                  try {
+                    const a = player.audio as HTMLAudioElement;
+                    const dur = track?.duration || a.duration || 0;
+                    const out: Array<{ start: number; end: number }> = [];
+                    const br = a?.buffered;
+                    if (!br || !dur || !Number.isFinite(dur)) return out;
+                    for (let i = 0; i < br.length; i++) {
+                      const s = Math.max(0, br.start(i));
+                      const e = Math.min(dur, br.end(i));
+                      if (e > s) out.push({ start: s, end: e });
+                    }
+                    return out;
+                  } catch {
+                    return [];
+                  }
+                })()}
                 styleVars={{
                   ['--pg-base' as unknown as string]: 'var(--md-sys-color-surface-variant)',
                   ['--pg-fill' as unknown as string]: 'var(--md-sys-color-primary)',
                   ['--pg-thumb' as unknown as string]: 'var(--md-sys-color-primary)',
+                  ['--pg-buffer' as unknown as string]: 'var(--md-sys-color-primary)',
                 }}
               />
             </div>
@@ -179,13 +197,14 @@ export default function PlayerBar({
             </i>
           </div>
 
-          {document.fullscreenElement ? (
-            <i className={iconCls} onClick={() => document.exitFullscreen?.()} title="退出全屏"><span
-              className="fas fa-compress" /></i>
-          ) : (
-            <i className={iconCls} onClick={() => document.documentElement.requestFullscreen?.()} title="进入全屏"><span
-              className="fas fa-expand" /></i>
-          )}
+          <i
+            className={iconCls}
+            onClick={() => window.mainApi.miniPlayerApi.toggle()}
+            title="迷你播放器开关"
+            aria-label="迷你播放器开关"
+          >
+            <span className="fas fa-window-restore" />
+          </i>
         </div>
       </div>
 

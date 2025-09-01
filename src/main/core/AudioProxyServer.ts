@@ -25,6 +25,10 @@ const DEFAULT_AUDIO_MIME = 'audio/mpeg';
 class ProxyServerManager {
   private readonly app: Application;
   private port: number;
+  // 缓存直链，避免同一首歌反复获取直链元数据（例如网易云 expi 内有效）
+  private linkCache: Map<string, { url: string; expireAt: number }>; // key: platform-uniqueId
+  // 并发去抖：同一首歌同时多个请求时只发起一次上游直链获取
+  private pendingLinkPromises: Map<string, Promise<string>>;
 
   constructor(
     @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
@@ -38,6 +42,8 @@ class ProxyServerManager {
   ) {
     this.app = express();
     this.port = 4399;
+    this.linkCache = new Map();
+    this.pendingLinkPromises = new Map();
 
     this.configureMiddlewares();
     this.setupRoutes();
@@ -148,19 +154,33 @@ class ProxyServerManager {
   }
 
   private async findLocalFile(platform: string, platformUniqueId: string): Promise<string | null> {
+    // 优先通过数据库映射的相对路径
     const relativePath: string = await this.trackRepository.findLocalFilePathByPlatformAndPlatformUniqueId(
       platform,
       platformUniqueId,
     );
-    if (!relativePath) return null;
-
-    const absolutePath = path.join(this.dataPath.musicDir, relativePath);
-    try {
-      await fs.promises.access(absolutePath, fs.constants.R_OK);
-      return absolutePath;
-    } catch {
-      return null;
+    if (relativePath) {
+      const absolutePath = path.join(this.dataPath.musicDir, relativePath);
+      try {
+        await fs.promises.access(absolutePath, fs.constants.R_OK);
+        return absolutePath;
+      } catch {
+        // fall through to other checks
+      }
     }
+
+    // 兼容：若为 Local 平台且 platformUniqueId 本身是有效的绝对文件路径，则直接使用
+    if (castToPlatform(platform) === Platform.LOCAL) {
+      try {
+        const maybeAbs = platformUniqueId;
+        await fs.promises.access(maybeAbs, fs.constants.R_OK);
+        return maybeAbs;
+      } catch {
+        // not an accessible path
+      }
+    }
+
+    return null;
   }
 
   private async streamLocalFile(res: Response, absolutePath: string, req: Request): Promise<void> {
@@ -237,14 +257,14 @@ class ProxyServerManager {
     const isRange = Boolean(req.headers.range);
 
     // 拉取直链
-    const getUpstream = async (): Promise<{ url: string; headers: Record<string, string> }> => {
-      const musicLink = await this.getMusicLink(platform, platformUniqueId, false);
+    const getUpstream = async (forceReload = false): Promise<{ url: string; headers: Record<string, string> }> => {
+      const musicLink = await this.getMusicLinkCached(platform, platformUniqueId, forceReload);
       if (!musicLink) throw new Error('Music link not found.');
       return { url: musicLink, headers: this.buildUpstreamHeaders(musicLink, req) };
     };
 
     // 第一次尝试
-    let upstream = await getUpstream();
+    let upstream = await getUpstream(false);
     let response: AxiosResponse<PassThrough>;
     try {
       response = await axios.get(upstream.url, {
@@ -258,7 +278,8 @@ class ProxyServerManager {
       const status = e?.response?.status;
       if (status === 403) {
         console.warn('上游 403，尝试刷新直链后重试一次...');
-        upstream = await getUpstream(); // 再取一次直链（若 Provider 内部带缓存，仍可能相同，但 Referer/UA 已修复基本不会再 403）
+        // 刷新直链：强制绕过缓存
+        upstream = await getUpstream(true);
         response = await axios.get(upstream.url, {
           responseType: 'stream',
           headers: upstream.headers,
@@ -267,7 +288,7 @@ class ProxyServerManager {
       } else if (String(e?.message || '').includes('-1')) {
         // 兼容 Hifini 的特殊返回码：-1，按你的原逻辑重取一次
         console.log('检测到 -1，重试直链获取...');
-        upstream = await getUpstream();
+        upstream = await getUpstream(true);
         response = await axios.get(upstream.url, {
           responseType: 'stream',
           headers: upstream.headers,
@@ -345,8 +366,52 @@ class ProxyServerManager {
   }
 
   /**
+   * 带缓存的直链获取：避免同曲目多次向 Provider 获取直链
+   */
+  private async getMusicLinkCached(
+    platform: Platform,
+    platformUniqueId: string,
+    forceReload = false,
+  ): Promise<string> {
+    const key = `${platform}-${platformUniqueId}`;
+
+    // 命中有效缓存
+    if (!forceReload) {
+      const cached = this.linkCache.get(key);
+      if (cached && cached.expireAt > Date.now()) {
+        return cached.url;
+      }
+    }
+
+    // 并发去抖
+    const pending = this.pendingLinkPromises.get(key);
+    if (pending && !forceReload) {
+      return pending;
+    }
+
+    const promise = (async () => {
+      // 实际取直链
+      const url = await this.getMusicLink(platform, platformUniqueId, true);
+      // 默认 TTL：5 分钟（部分平台直链有效期更长/更短，403 时有额外刷新）
+      const ttlMs = 5 * 60 * 1000;
+      this.linkCache.set(key, { url, expireAt: Date.now() + ttlMs });
+      // 完成后移除 pending
+      this.pendingLinkPromises.delete(key);
+      return url;
+    })();
+
+    this.pendingLinkPromises.set(key, promise);
+    try {
+      return await promise;
+    } catch (err) {
+      this.pendingLinkPromises.delete(key);
+      this.linkCache.delete(key);
+      throw err;
+    }
+  }
+
+  /**
    * 根据平台获取可用的直链。
-   * 注意：这里暂不引入 forceReload 参数签名，重试策略在 fetchStreamAndMaybeCache 中实现。
    */
   private async getMusicLink(
     platform: Platform,

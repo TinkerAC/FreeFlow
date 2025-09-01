@@ -46,7 +46,11 @@ if (!gotTheLock) {
 
   // 若用户再次启动应用，将唤起已有主窗口
   app.on('second-instance', () => {
-    windowManager.focus(WindowKey.MAIN);
+    if (windowManager.isVisible(WindowKey.MINI)) {
+      windowManager.activate(WindowKey.MINI);
+    } else {
+      windowManager.activate(WindowKey.MAIN);
+    }
   });
 
   // 依赖注入获取服务实例
@@ -79,11 +83,11 @@ if (!gotTheLock) {
     await proxyServerManager.start();
 
     // 3) 创建窗口
-    const mainWindow = windowManager.createMainWindow();
+    windowManager.activate(WindowKey.MAIN);
 
     // 4) 其余注册
     ipcController.register();
-    windowManager.createWorkerWindow();
+    windowManager.ensure(WindowKey.WORKER);
 
     // 检查 hifini Cookie 过期状态
     const cookies = (configService.get('services.hifiniCookie') as { [key: string]: string }) ?? {};
@@ -113,14 +117,12 @@ if (!gotTheLock) {
 
   // Dock / 任务栏 被点击激活
   app.on('activate', () => {
-    const mainWin = windowManager.get(WindowKey.MAIN);
-    if (mainWin) {
-      if (mainWin.isMinimized()) mainWin.restore();
-      if (!mainWin.isVisible()) mainWin.show();
-      mainWin.focus();
-    } else {
-      windowManager.activate(WindowKey.MAIN);
+    // 若 Mini 正在使用，点击 Dock 应该恢复 Mini 而不是主界面
+    if (windowManager.isVisible(WindowKey.MINI)) {
+      windowManager.activate(WindowKey.MINI);
+      return;
     }
+    windowManager.activate(WindowKey.MAIN);
   });
 
   // 所有窗口关闭：macOS 常驻，其它平台退出
