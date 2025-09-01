@@ -1,0 +1,26 @@
+{
+  // VS Code Tasks for FreeFlow
+  // 运行部署脚本 tools/deploy.ts（跨平台）
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Deploy: Run tools/deploy.ts",
+      "type": "shell",
+      "command": "npx ts-node tools/deploy.ts",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      },
+      "problemMatcher": []
+    }
+  ]
+}
+

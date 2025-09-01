@@ -88,6 +88,7 @@ export const Settings = z.object({
     source: 'preset',
     seed: '#6750A4',
     preset: 'classic',
+    autoDailySeed: false,
   }),
   ui: UISettings.default({
     density: 'cozy',

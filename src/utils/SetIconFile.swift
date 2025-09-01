@@ -17,7 +17,9 @@ if iconArg == "--clear" {
 
 let iconPath = (iconArg as NSString).expandingTildeInPath
 let url = URL(fileURLWithPath: iconPath)
-guard let image = NSImage(contentsOf: url) ?? NSImage(byReferencing: url) else {
+// 优先尝试立即加载（返回可选）；失败则按引用方式加载（返回非可选，懒加载）
+let image = NSImage(contentsOf: url) ?? NSImage(byReferencing: url)
+guard image.isValid else {
     fputs("error: cannot load icon at \(iconPath)\n", stderr)
     exit(66) // EX_NOINPUT
 }

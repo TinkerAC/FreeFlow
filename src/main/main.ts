@@ -4,6 +4,7 @@ import { WindowKey, WindowManager } from './window/windowManager';
 import electronSquirrelStartup from 'electron-squirrel-startup';
 
 import ProxyServerManager from '@main/core/AudioProxyServer';
+import { ConfigService } from '@main/core/configService';
 
 import LocalLibraryService from '@main/services/localLibraryService';
 import { sequelize } from '@main/database/seqimpl';
@@ -50,7 +51,7 @@ if (!gotTheLock) {
 
   // 依赖注入获取服务实例
   const localLibraryService = container.get<LocalLibraryService>(DISymbol.LocalLibraryService);
-  const configService = container.get(DISymbol.ConfigService);
+  const configService: ConfigService = container.get<ConfigService>(DISymbol.ConfigService);
   const proxyServerManager = container.get<ProxyServerManager>(DISymbol.ProxyServerManager);
   const ipcController = container.get<IpcController>(DISymbol.IpcController);
   const trayManager = container.get<TrayManager>(DISymbol.TrayManager);

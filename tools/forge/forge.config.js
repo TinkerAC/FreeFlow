@@ -17,7 +17,7 @@ module.exports = {
     icon: path.resolve('assets/appIcons/icon.icns'),
 
     // ⬇️ 新增，把可切换图标文件夹带进最终应用包
-    extraResource: ['assets/appIcons'],
+    extraResource: ['assets/appIcons', 'assets/macTools'],
   },
   // Forge Makers
   makers: [
@@ -78,6 +78,7 @@ module.exports = {
         devServer: {
           liveReload: false,
         },
+        // 移除构建阶段钩子；Swift 工具不再由主构建流程生成
       },
     },
   ],

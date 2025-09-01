@@ -73,7 +73,7 @@ export default class IpcController {
     this.configService.onChanged((s) => {
       const icon = (s as any)?.app?.icon as AppIcon | undefined;
       if (icon) {
-        this.preferenceService.applyIcon(icon).catch(() => void 0);
+        this.preferenceService.applyIcon(icon).catch((_e: unknown): void => { /* noop */ });
       }
     });
   }

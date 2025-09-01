@@ -81,7 +81,10 @@ export class PreferenceService {
       const tool = this.findMacSetIconTool();
       if (tool) {
         try {
-          await this.runMacSetIconTool(tool, primary);
+          const appBundle = path.resolve(process.resourcesPath, '..', '..');
+          await this.runMacSetIconTool(tool, primary, appBundle);
+          // 同步覆盖 electron.icns，确保重启后持久
+          this.overwriteAppIconWithIcns(primary);
           // 同步 Dock 以立刻可见
           const img = nativeImage.createFromPath(fallbackPng);
           if (!img.isEmpty()) app.dock.setIcon(img);
@@ -170,9 +173,9 @@ export class PreferenceService {
   }
 
   /** 调用外部 Swift 小工具设置 App 图标 */
-  private runMacSetIconTool(toolPath: string, icnsPath: string): Promise<void> {
+  private runMacSetIconTool(toolPath: string, icnsPath: string, targetPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const child = spawn(toolPath, [icnsPath], { stdio: 'inherit' });
+      const child = spawn(toolPath, [icnsPath, targetPath], { stdio: 'inherit' });
       child.once('error', reject);
       child.once('exit', (code) => {
         if (code === 0) resolve(); else reject(new Error(`exit ${code}`));
