@@ -71,7 +71,7 @@ export default function MiniPlayer({
       setDisplayTime(appliedCt);
       lastTrackKeyRef.current = key;
     });
-    window.mainApi.playerApi.requestLiveState();
+    // 仅依赖广播，不再主动请求状态
     return () => { off?.(); };
   }, []);
 
@@ -96,24 +96,6 @@ export default function MiniPlayer({
     };
   }, [state.isPlaying, state.duration, state.currentTime]);
 
-  // 关键时刻拉取：窗口聚焦/可见切回时，主动请求一次最新状态
-  useEffect(() => {
-    const onFocus = () => { try { window.mainApi.playerApi.requestLiveState(); } catch {} };
-    const onVis = () => { if (document.visibilityState === 'visible') onFocus(); };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVis);
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVis);
-    };
-  }, []);
-
-  // 控制后“脉冲式拉取”：立刻 + 150ms + 800ms，对齐封面/时长/进度
-  const pulsePull = () => {
-    try { window.mainApi.playerApi.requestLiveState(); } catch {}
-    setTimeout(() => { try { window.mainApi.playerApi.requestLiveState(); } catch {} }, 150);
-    setTimeout(() => { try { window.mainApi.playerApi.requestLiveState(); } catch {} }, 800);
-  };
 
   // 曲目变化时，重置“结束触发过拉取”标记
   useEffect(() => {
@@ -125,16 +107,7 @@ export default function MiniPlayer({
 
   // 当本地进度条“走到头”时，补一次状态更新（对齐主播放状态/切歌）
   useEffect(() => {
-    if (!state.isPlaying) return;
-    const dur = state.duration || 0;
-    if (dur <= 0) return;
-    const nearEnd = displayTime >= dur - 0.15; // 150ms 内视为到达末尾
-    if (!nearEnd) return;
-    const t = state.track;
-    const key = t ? `${t.platform}:${t.platform_unique_id}` : `__no_track__`;
-    if (endPullKeyRef.current === key) return; // 已触发过，忽略
-    endPullKeyRef.current = key;
-    pulsePull();
+    // 不再在进度接近末尾时触发状态补拉
   }, [displayTime, state.duration, state.isPlaying, state.track?.platform, state.track?.platform_unique_id]);
 
   // 加载歌词（展开时或曲目变化时）
@@ -178,76 +151,69 @@ export default function MiniPlayer({
 
   return (
     <div className={styles.root}>
-      {/* 顶部可拖动区域 */}
-      <div className={styles.topbar}>
-        <div className={styles.title} title={state.title}>
-          {state.title}
-        </div>
-        <div className={styles.actions}>
-          <button
-            className={styles.icon}
-            onClick={() => { window.mainApi.playerApi.control('prev'); pulsePull(); }}
-            title='上一首'
-          >
-            <i className='fas fa-step-backward' />
-          </button>
-          <button
-            className={styles.icon}
-            onClick={() => { window.mainApi.playerApi.control('toggle'); pulsePull(); }}
-            title={state.isPlaying ? '暂停' : '播放'}
-          >
-            <i className={`fas ${state.isPlaying ? 'fa-pause' : 'fa-play'}`} />
-          </button>
-          <button
-            className={styles.icon}
-            onClick={() => { window.mainApi.playerApi.control('next'); pulsePull(); }}
-            title='下一首'
-          >
-            <i className='fas fa-step-forward' />
-          </button>
-          <button
-            className={styles.icon}
-            onClick={() => window.mainApi.miniPlayerApi.hide()}
-            title='返回主界面'
-          >
-            <i className='fas fa-window-restore' />
-          </button>
-        </div>
-      </div>
-
       <div className={styles.body}>
-        <img
-          className={styles.cover}
-          src={state.cover}
-          alt='cover'
-          referrerPolicy='no-referrer'
-        />
+        <div className={styles.coverWrap}>
+          <img
+            className={styles.cover}
+            src={state.cover}
+            alt='cover'
+            referrerPolicy='no-referrer'
+          />
+          <div className={styles.controlsOverlay}>
+            <button
+              className={styles.icon}
+              onClick={() => { window.mainApi.playerApi.control('prev'); }}
+              title='上一首'
+            >
+              <i className='fas fa-step-backward' />
+            </button>
+            <button
+              className={styles.icon}
+              onClick={() => { window.mainApi.playerApi.control('toggle'); }}
+              title={state.isPlaying ? '暂停' : '播放'}
+            >
+              <i className={`fas ${state.isPlaying ? 'fa-pause' : 'fa-play'}`} />
+            </button>
+            <button
+              className={styles.icon}
+              onClick={() => { window.mainApi.playerApi.control('next'); }}
+              title='下一首'
+            >
+              <i className='fas fa-step-forward' />
+            </button>
+          </div>
+        </div>
         <div className={styles.meta}>
-          <div className={styles.artist} title={state.artist}>
-            {state.artist}
-          </div>
-          <div className={styles.times}>
-            {formatTime(displayTime)} / {formatTime(state.duration)}
-          </div>
+          <div className={styles.title} title={state.title}>{state.title}</div>
+          <div className={styles.artist} title={state.artist}>{state.artist}</div>
           <div className={styles.progress}>
             <div className={styles.progressRow}>
               <div className={styles.bar}>
                 <div className={styles.fill} style={{ width: `${pct * 100}%` }} />
               </div>
-              <button
-                className={styles.tinyIcon}
-                onClick={async () => {
-                  const next = !showLyrics;
-                  setShowLyrics(next);
-                  try { await window.mainApi.miniPlayerApi.setExpanded(next); } catch {}
-                }}
-                title={showLyrics ? '收起歌词' : '展开歌词'}
-                aria-pressed={showLyrics}
-              >
-                <i className={`fas ${showLyrics ? 'fa-chevron-down' : 'fa-align-center'}`} />
-              </button>
             </div>
           </div>
+        </div>
+        <div className={styles.side}>
+          <button
+            className={styles.sideBtn}
+            onClick={() => window.mainApi.miniPlayerApi.hide()}
+            title='返回主界面'
+          >
+            <i className='fas fa-window-restore' />
+          </button>
+          <button
+            className={styles.sideBtn}
+            onClick={async () => {
+              const next = !showLyrics;
+              setShowLyrics(next);
+              try { await window.mainApi.miniPlayerApi.setExpanded(next); } catch {}
+            }}
+            title={showLyrics ? '收起歌词' : '展开歌词'}
+            aria-pressed={showLyrics}
+          >
+            <i className={`fas ${showLyrics ? 'fa-chevron-up' : 'fa-chevron-down'}`} />
+          </button>
         </div>
       </div>
 

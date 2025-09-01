@@ -1,4 +1,5 @@
 import { BrowserWindow, globalShortcut } from 'electron';
+import { Channels } from '@src/shared/ipc/channels';
 
 interface Shortcut {
   key: string;
@@ -30,7 +31,7 @@ export default class ShortCutManager {
     this.shortcuts.forEach(({ key, action }) => {
       const ok = globalShortcut.register(key, () => {
         console.log(`${key} 按下`);
-        this.mainWindow.webContents.send('global-shortcut', action);
+        this.mainWindow.webContents.send(Channels.Shortcut.Global, action);
       });
 
       if (!ok) {
@@ -45,4 +46,3 @@ export default class ShortCutManager {
     console.log('所有全局快捷键已注销');
   }
 }
-

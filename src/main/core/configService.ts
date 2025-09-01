@@ -6,6 +6,7 @@ import { EventEmitter } from 'node:events';
 import { DISymbol } from '@main/di/symbol';
 
 import { defaultSettings, Settings } from '@src/shared/settings/schema';
+import { Channels } from '@src/shared/ipc/channels';
 
 // ------- 小工具：按点路径读取/写入 -------
 function getByPath(obj: any, path: string) {
@@ -93,7 +94,7 @@ export class ConfigService {
   private broadcast() {
     const payload = this.store.store;
     BrowserWindow.getAllWindows().forEach((bw) => {
-      bw.webContents.send('config:changed', payload);
+      bw.webContents.send(Channels.Config.Changed, payload);
     });
     this.ee.emit('changed', payload);
   }

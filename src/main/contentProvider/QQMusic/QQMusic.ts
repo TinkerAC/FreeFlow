@@ -6,6 +6,7 @@ import { QQMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEnt
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/core/enum/Platform';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+// import { da } from 'zod/v4/locales/index.cjs'; // unused
 
 
 @injectable()
@@ -98,12 +99,25 @@ ${resultSongs
   public async getLyrics(uniqueId: string): Promise<Lyric | void> {
     const url = `${this.base_url}getLyric?songmid=${uniqueId}`;
     try {
-      const response = await axios.get(url);
-      const data = response.data;
-      if (data.code !== 0) {
-        console.error('无效的歌词数据');
-      }
-      return this.parseLyrics(data.response.lyric);
+      const response = await axios.get(url, { timeout: 10_000 });
+      const data = response?.data ?? {};
+      const payload = data?.response ?? data;
+
+      const rawOrigin: string = payload?.lyric ?? '';
+      const rawTrans: string = payload?.trans ?? '';
+
+      // 一些 QQ 接口会返回 base64 编码的歌词；若检测不到 LRC 标记，则尝试解码
+      const decodeIfNeeded = (s: string): string => {
+        if (typeof s !== 'string') return '';
+        const hasLRC = s.includes('[') && s.includes(']');
+        if (hasLRC) return s;
+        try { return Buffer.from(s, 'base64').toString('utf8'); } catch { return s; }
+      };
+
+      const origin = decodeIfNeeded(rawOrigin);
+      const translation = decodeIfNeeded(rawTrans);
+
+      return this.parseLyrics(origin, translation);
     } catch (error) {
       console.error('获取歌词失败:', error);
       throw error;
@@ -115,28 +129,34 @@ ${resultSongs
    * 这里每行歌词格式为: [mm:ss.xx]歌词文本
    * 例如: [00:13.91]忘掉种过的花 重新的出发 放弃理想吧
    */
-  private parseLyrics(lyricString: string): Lyric {
-    const lines: LyricLine[] = [];
-    // 匹配时间标签和后面的歌词文本，格式：[mm:ss.xx]文本
-    const regex = /^\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)$/;
+  private parseLyrics(originRaw: string, translationRaw?: string): Lyric {
+    const normalize = (s?: string) => (typeof s === 'string' ? s.replace(/\r\n?|\n/g, '\n') : '');
+    const origin = normalize(originRaw);
+    const trans = normalize(translationRaw);
 
-    // 将传入的歌词字符串按行分割
-    const lyricLines = lyricString.split('\n');
-    for (const line of lyricLines) {
-      const match = regex.exec(line);
-      if (match) {
-        // 提取分钟、秒钟和文本内容
-        const minutes = parseInt(match[1], 10);
-        const seconds = parseFloat(match[2]);
-        const text = match[3].trim();
-        // 将分钟和秒钟转换为毫秒时间
-        const time = minutes * 60 * 1000 + seconds * 1000;
-        lines.push({ time, text });
+    const parseSegment = (raw: string): LyricLine[] => {
+      if (!raw.trim()) return [];
+      const regex = /^\[(\d{1,2}):(\d{2})(?:\.(\d{2,3}))?](.*)$/;
+      const out: LyricLine[] = [];
+      for (const row of raw.split('\n')) {
+        const trimmed = row.trim();
+        if (!trimmed) continue;
+        const m = trimmed.match(regex);
+        if (!m) continue;
+        const [, mm, ss, ms = '0', textRaw] = m;
+        const t = parseInt(mm, 10) * 60_000 + parseInt(ss, 10) * 1_000 + parseInt(ms.padEnd(3, '0'), 10);
+        out.push({ time: t, text: (textRaw ?? '').trim() });
       }
-    }
+      return out.sort((a, b) => a.time - b.time).reduce<LyricLine[]>((acc, cur) => {
+        const last = acc.at(-1);
+        if (last && last.time === cur.time) last.text += ` / ${cur.text}`; else acc.push(cur);
+        return acc;
+      }, []);
+    };
+
     return {
-      originLines: lines,
-      translationLines: [],
+      originLines: parseSegment(origin),
+      translationLines: parseSegment(trans),
       pronunciationLines: [],
     };
   }

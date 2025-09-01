@@ -9,9 +9,9 @@ export default class MiniPlayerWindow extends AbstractWindow {
   constructor() {
     super({
       width: 360,
-      height: 140,
+      height: 100,
       minWidth: 220,
-      minHeight: 140,
+      minHeight: 100,
       frame: false,
       show: false,
       transparent: false,

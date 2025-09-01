@@ -21,6 +21,7 @@ import chalk from 'chalk';
 // 新增：B站 Referer 注入（在创建任何窗口前）
 import { installBilibiliHeaders, installBilibiliHeadersForNewSessions } from '@main/core/network/bilibiliHeaders';
 import { OS } from '@src/shared/OS';
+import { Channels } from '@src/shared/ipc/channels';
 
 let isQuitting = false;
 
@@ -144,7 +145,7 @@ if (!gotTheLock) {
           console.error('移除窗口关闭事件失败', e);
         }
         // 向主渲染进程请求一次“保存用”的播放器状态（与常规 request-state 区分开）
-        mainWin.webContents.send('player:request-dump');
+        mainWin.webContents.send(Channels.Player.RequestDump);
       }
 
       // 兜底强退

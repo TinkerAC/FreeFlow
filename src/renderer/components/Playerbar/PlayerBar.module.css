@@ -91,10 +91,10 @@
     display: flex;
     align-items: center;
     gap: 10px;           /* 优化间距 */
-    justify-self: center;
+    justify-self: center;   /* 右侧区水平居中 */
     overflow: hidden;
     min-width: 0;
-    padding-left: 12px;
+    padding-left: 12px;  /* 与中部留出间距，避免贴太近 */
 }
 
 /* ─── 垂直音量弹出层（Portal 渲染，不受 overflow 裁剪） ───────────── */

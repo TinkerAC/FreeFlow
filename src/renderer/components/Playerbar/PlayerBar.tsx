@@ -175,8 +175,6 @@ export default function PlayerBar({
         {/* 右：工具 */}
         <div className={rightCls}>
           <i className={iconCls} onClick={onToggleRightContent} title="播放列表"><span className="fas fa-list" /></i>
-          <i className={iconCls} title="搜索"><span className="fas fa-search" /></i>
-          <i className={iconCls} title="播放所有歌曲"><span className="fas fa-filter" /></i>
           <i className={iconCls} onClick={() => navigate('/lyric')} title="歌词"><span
             className="fas fa-align-center" /></i>
 

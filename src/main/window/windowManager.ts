@@ -62,6 +62,7 @@ export class WindowManager {
   /** 绑定窗口并管理生命周期 */
   private attach(key: WindowKey, win: BrowserWindow): void {
     this.windows.set(key, win);
+    // 调试输出已移除
     win.on('closed', () => this.windows.delete(key));
   }
 

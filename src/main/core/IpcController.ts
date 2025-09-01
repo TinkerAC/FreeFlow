@@ -30,6 +30,7 @@ import { PreferenceService } from '@main/services/PreferenceService';
 import { AppIcon } from '@src/shared/hifiniCookies';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
+import { Channels } from '@src/shared/ipc/channels';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能切分成若干私有注册方法，
@@ -39,6 +40,8 @@ import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 export default class IpcController {
   // 跟踪已绑定事件的 Mini 窗口，避免重复绑定
   private miniBoundSet = new WeakSet<BrowserWindow>();
+  // 记录最近一次应用的图标，避免无关配置变更触发重复覆盖图标
+  private lastAppliedIcon: AppIcon | null = null;
   constructor(
     @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
     @inject(DISymbol.PlaylistService) private readonly playlistService: PlaylistService,
@@ -74,24 +77,25 @@ export default class IpcController {
     this.registerDownloadHandlers();
     this.registerMiscHandlers();
 
-    // 监听设置变化以应用 App 图标
+    // 监听设置变化以应用 App 图标（仅在 icon 变更时执行）
     this.configService.onChanged((s) => {
       const icon = (s as any)?.app?.icon as AppIcon | undefined;
-      if (icon) {
-        this.preferenceService.applyIcon(icon).catch((_e: unknown): void => { /* noop */ });
-      }
+      if (!icon) return;
+      if (this.lastAppliedIcon === icon) return; // 无变化，跳过
+      this.lastAppliedIcon = icon;
+      this.preferenceService.applyIcon(icon).catch((_e: unknown): void => { /* noop */ });
     });
   }
 
   /* -------------------------- 系统相关 --------------------------- */
   private registerSystemHandlers(): void {
-    ipcMain.handle('get-system', async () => getOperatingSystem());
+    ipcMain.handle(Channels.System.GetPlatform, async () => getOperatingSystem());
 
-    ipcMain.handle('get-app-version', () => {
+    ipcMain.handle(Channels.System.GetAppVersion, () => {
       return app.getVersion();
     });
 
-    ipcMain.handle('get-app-author', () => {
+    ipcMain.handle(Channels.System.GetAppAuthor, () => {
       return 'Tinker';
     });
   }
@@ -100,7 +104,7 @@ export default class IpcController {
   /* -------------------------- 窗口相关 --------------------------- */
   private registerWindowHandlers(): void {
     const mainWindow = this.windowManager.get(WindowKey.MAIN)!;
-    ipcMain.on('window-controls', (_evt: IpcMainEvent, action: string) => {
+    ipcMain.on(Channels.Window.Controls, (_evt: IpcMainEvent, action: string) => {
       switch (action) {
         case 'minimize':
           mainWindow.minimize();
@@ -117,39 +121,50 @@ export default class IpcController {
     });
 
     // 迷你播放器窗口控制
-    ipcMain.handle('mini-player:toggle', async () => {
+    ipcMain.handle(Channels.MiniPlayer.Toggle, async () => {
       if (this.windowManager.isVisible(WindowKey.MINI)) {
         this.windowManager.activate(WindowKey.MAIN);
       } else {
         const mini = this.windowManager.ensure(WindowKey.MINI);
+        // 调试日志已禁用
         this.applyMiniPlayerBounds(mini);
         this.attachMiniPlayerPersistence(mini);
         this.windowManager.showExclusive(WindowKey.MINI, true);
-        // 切换到 Mini 后，主动向主渲染进程请求一次实时状态，确保 Mini 立刻刷新封面/进度
+        // 切到 Mini 后，请在 Mini 页面加载完成后再请求一次状态，避免竞态导致 Mini 丢失首帧状态
         const main = this.windowManager.get(WindowKey.MAIN);
-        main?.webContents.send('player:request-state');
+        const ask = () => main?.webContents.send(Channels.Player.RequestState);
+        const wc = mini.webContents;
+        if (wc.isLoadingMainFrame()) wc.once('did-finish-load', ask); else setTimeout(ask, 0);
       }
     });
-    ipcMain.handle('mini-player:show', async () => {
+    ipcMain.handle(Channels.MiniPlayer.Show, async () => {
       const mini = this.windowManager.ensure(WindowKey.MINI);
       this.applyMiniPlayerBounds(mini);
       this.attachMiniPlayerPersistence(mini);
       this.windowManager.showExclusive(WindowKey.MINI, true);
       // 显示 Mini 时立即触发一次状态同步
       const main = this.windowManager.get(WindowKey.MAIN);
-      main?.webContents.send('player:request-state');
+      if (main) {
+        const ask = () => main.webContents.send(Channels.Player.RequestState);
+        const wc = mini.webContents;
+        if (wc.isLoadingMainFrame()) wc.once('did-finish-load', ask); else setTimeout(ask, 0);
+      }
     });
-    ipcMain.handle('mini-player:hide', async () => {
+    ipcMain.handle(Channels.MiniPlayer.Hide, async () => {
       this.windowManager.hide(WindowKey.MINI);
       this.windowManager.activate(WindowKey.MAIN);
     });
 
     // 固定高度展开/收起歌词：通过调整窗口高度实现
-    ipcMain.handle('mini-player:set-expanded', async (_evt, payload: { expanded: boolean }) => {
+    ipcMain.handle(Channels.MiniPlayer.SetExpanded, async (_evt, payload: { expanded: boolean }) => {
+      if (!payload || typeof payload.expanded !== 'boolean') {
+        console.warn('[mini-player:set-expanded] invalid payload');
+        return;
+      }
       const mini = this.windowManager.ensure(WindowKey.MINI);
       const [w] = mini.getSize();
-      const collapsedH = 120; // 与默认高度保持一致
-      const expandedH = 240;  // 展开后固定高度
+      const collapsedH = 100; // 与窗口默认高度保持一致
+      const expandedH = collapsedH + 120;  // 展开后固定高度（歌词区约 +120）
       mini.setSize(w, payload?.expanded ? expandedH : collapsedH, true);
     });
   }
@@ -187,13 +202,18 @@ export default class IpcController {
     if (this.miniBoundSet.has(mini)) return;
     this.miniBoundSet.add(mini);
 
+    // 简单防抖，避免频繁写入配置（导致无关 onChanged 回调触发）
+    let saveTimer: ReturnType<typeof setTimeout> | null = null;
     const save = () => {
-      try {
-        const b = mini.getBounds();
-        this.configService.setByPath('ui.miniPlayer', { x: b.x, y: b.y, width: b.width, height: b.height });
-      } catch (e) {
-        console.warn('保存 MiniPlayer 窗口位置/大小失败:', e);
-      }
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try {
+          const b = mini.getBounds();
+          this.configService.setByPath('ui.miniPlayer', { x: b.x, y: b.y, width: b.width, height: b.height });
+        } catch (e) {
+          console.warn('保存 MiniPlayer 窗口位置/大小失败:', e);
+        }
+      }, 150);
     };
 
     mini.on('move', save);
@@ -204,16 +224,16 @@ export default class IpcController {
 
   /* -------------------------- 歌单相关 --------------------------- */
   private registerPlaylistHandlers(): void {
-    ipcMain.handle('create-playlist', async () => {
+    ipcMain.handle(Channels.Playlist.Create, async () => {
       return await this.playlistService.creatNewEmptyPlaylist();
     });
 
-    ipcMain.handle('get-playlist', async () => {
+    ipcMain.handle(Channels.Playlist.GetAll, async () => {
       return await this.playlistService.getPlaylists();
     });
 
     ipcMain.handle(
-      'add-track-to-playlist',
+      Channels.Playlist.AddTrack,
       async (_evt: IpcMainInvokeEvent, track: TrackEntity, playlistId: number) => {
         console.dir(track, { depth: null });
         return await this.playlistService.addTrackToPlaylist(playlistId, track);
@@ -221,24 +241,24 @@ export default class IpcController {
     );
 
     ipcMain.handle(
-      'remove-track-from-playlist',
+      Channels.Playlist.RemoveTrack,
       async (_evt: IpcMainInvokeEvent, playlistId: number, track: TrackEntity) => {
         return await this.playlistService.removeTrackFromPlaylist(playlistId, track);
       },
     );
 
     ipcMain.handle(
-      'modify-playlist',
+      Channels.Playlist.Modify,
       async (_evt: IpcMainInvokeEvent, playlist: PlaylistEntity) => {
         return await this.playlistService.modifyPlaylist(playlist);
       },
     );
 
-    ipcMain.handle('remove-playlist', async (_evt: IpcMainInvokeEvent, playlistId: number) => {
+    ipcMain.handle(Channels.Playlist.Remove, async (_evt: IpcMainInvokeEvent, playlistId: number) => {
       return await this.playlistService.removePlaylist(playlistId);
     });
 
-    ipcMain.handle('add-playlist', async (_evt: IpcMainInvokeEvent, playlist: PlaylistEntity) => {
+    ipcMain.handle(Channels.Playlist.Add, async (_evt: IpcMainInvokeEvent, playlist: PlaylistEntity) => {
       return await this.playlistService.addPlaylist(playlist);
     });
   }
@@ -246,9 +266,9 @@ export default class IpcController {
   /* -------------------------- 播放器相关 --------------------------- */
   private registerPlayerHandlers(): void {
     const mainWindow = this.windowManager.get(WindowKey.MAIN);
-    ipcMain.handle('load-player-state', async () => loadPlayer(this.dataPath.playerStateDumpFile));
+    ipcMain.handle(Channels.Player.LoadState, async () => loadPlayer(this.dataPath.playerStateDumpFile));
     // 渲染进程回复的播放器状态，保存后退出应用
-    ipcMain.once('reply-player-state', (_evt: IpcMainEvent, state: PlayerState) => {
+    ipcMain.once(Channels.Player.ReplyState, (_evt: IpcMainEvent, state: PlayerState) => {
       console.log('主进程已收到播放器状态:', state);
       savePlayer(this.dataPath.playerStateDumpFile, state);
       mainWindow && mainWindow.destroy();
@@ -257,61 +277,78 @@ export default class IpcController {
     });
 
     // Single-owner: proxy player controls to MAIN renderer
-    ipcMain.on('player:control', (evt, cmd: string, payload: any) => {
+    ipcMain.on(Channels.Player.Control, (evt, cmd: string, payload: any) => {
+      const allowed = new Set(['play', 'pause', 'toggle', 'next', 'prev', 'seek', 'setVolume']);
+      if (!allowed.has(String(cmd))) {
+        console.warn('[player:control] invalid cmd:', cmd);
+        return;
+      }
       const main = this.windowManager.get(WindowKey.MAIN);
-      main?.webContents.send('player:control', cmd, payload);
+      main?.webContents.send(Channels.Player.Control, cmd, payload);
     });
     // Single-owner: broadcast live state to other windows
-    ipcMain.on('player:state', (evt, state: PlayerState) => {
+    ipcMain.on(Channels.Player.State, (evt, state: PlayerState) => {
       this.lastPlayerState = state;
-      const all = BrowserWindow.getAllWindows();
-      for (const w of all) {
-        if (w.webContents.id === evt.sender.id) continue; // avoid echo
-        try { w.webContents.send('player:state', state); } catch {}
+      // Prefer WindowManager registry to avoid platform anomalies of BrowserWindow.getAllWindows()
+      const candidates: (BrowserWindow | null)[] = [
+        this.windowManager.get(WindowKey.MAIN),
+        this.windowManager.get(WindowKey.MINI),
+        this.windowManager.get(WindowKey.WORKER),
+      ];
+      const targets = candidates
+        .filter((w): w is BrowserWindow => !!w && !w.isDestroyed())
+        .filter((w) => w.webContents.id !== evt.sender.id);
+
+      // 调试输出已移除
+
+      let delivered = 0;
+      for (const w of targets) {
+        try { w.webContents.send(Channels.Player.State, state); delivered++; } catch {}
       }
+      // 调试输出已移除
     });
     // Request current state from owner (main) and rely on broadcast back
-    ipcMain.on('player:request-state', (evt) => {
+    ipcMain.on(Channels.Player.RequestState, (evt) => {
       // 先用缓存立即响应，以提升新窗口首屏体验
       if (this.lastPlayerState) {
-        try { evt.sender.send('player:state', this.lastPlayerState); } catch {}
+        try { evt.sender.send(Channels.Player.State, this.lastPlayerState); } catch {}
       }
       // 再请求 MAIN 渲染进程广播最新状态，确保一致性
       const main = this.windowManager.get(WindowKey.MAIN);
-      main?.webContents.send('player:request-state');
+      main?.webContents.send(Channels.Player.RequestState);
     });
   }
 
   /* -------------------------- 曲目相关 --------------------------- */
   private registerTrackHandlers(): void {
     ipcMain.handle(
-      'get-track-info',
+      Channels.Track.GetInfo,
       async (_evt: IpcMainInvokeEvent, platform: Platform, platform_unique_id: string) => {
         return await this.trackService.getTrackInfo(platform, platform_unique_id);
       },
     );
 
     ipcMain.handle(
-      'add-track-to-library',
+      Channels.Library.AddTrackToLibrary,
       async (_evt: IpcMainInvokeEvent, track: TrackEntity) => {
         return await this.trackService.addTrackToLibrary(track);
       },
     );
 
     ipcMain.handle(
-      'remove-track-from-library',
+      Channels.Library.RemoveTrackFromLibrary,
       async (_evt: IpcMainInvokeEvent, track: TrackEntity) => {
         return await this.trackService.removeTrackFromLibrary(track);
       },
     );
 
-    ipcMain.handle('get-lyrics', async (_evt: IpcMainInvokeEvent, track: TrackEntity) => {
+    ipcMain.handle(Channels.Lyrics.Get, async (_evt: IpcMainInvokeEvent, track: TrackEntity) => {
       console.log('IPC: 获取歌词:', track);
       return await this.lyricService.getLyrics(track);
     });
 
 
-    ipcMain.on('increase-play-count', async (_evt: IpcMainEvent, track: TrackEntity) => {
+    ipcMain.on(Channels.Library.IncreasePlayCount, async (_evt: IpcMainEvent, track: TrackEntity) => {
       console.log('IPC: 增加播放次数:', track);
       try {
         await this.trackService.increasePlayCount(track);
@@ -416,7 +453,7 @@ export default class IpcController {
 
     /** —— IPC handlers —— */
 
-    ipcMain.handle('get-search-result', async (_evt: IpcMainInvokeEvent, keywords: string) => {
+    ipcMain.handle(Channels.Search.GetResults, async (_evt: IpcMainInvokeEvent, keywords: string) => {
       console.log('后端收到搜索请求:', keywords);
 
       const EMPTY: FusionSearchResult = { track_result: [], playlist_result: [] };
@@ -458,13 +495,13 @@ export default class IpcController {
       return fusion;
     });
 
-    ipcMain.handle('local-search', async (_evt: IpcMainInvokeEvent, keywords: string) => {
+    ipcMain.handle(Channels.Search.LocalSearch, async (_evt: IpcMainInvokeEvent, keywords: string) => {
       console.log('后端收到本地搜索请求:', keywords);
       return await this.trackService.localSearch(keywords);
     });
 
 
-    ipcMain.handle('get-playlist-detail', async (_evt: IpcMainInvokeEvent, platform: string, platform_unique_id: string) => {
+    ipcMain.handle(Channels.Search.GetPlaylistDetail, async (_evt: IpcMainInvokeEvent, platform: string, platform_unique_id: string) => {
       console.log('后端收到获取歌单详情请求:', platform, platform_unique_id);
       switch (platform) {
         case Platform.NET_EASE_CLOUD_MUSIC:
@@ -484,25 +521,33 @@ export default class IpcController {
 
   /** 新接口（Settings 全量/分支/patch） */
   private registerConfigV2Handlers() {
-    ipcMain.handle('config:getAll', async () => {
+    ipcMain.handle(Channels.Config.GetAll, async () => {
       return await this.configService.getAll();
     });
 
-    ipcMain.handle('config:get', async (_evt, key: string) => {
+    ipcMain.handle(Channels.Config.Get, async (_evt, key: string) => {
       return await this.configService.get(key);
     });
 
-    ipcMain.handle('config:set', async (_evt, payload: { key: string; value: any }) => {
+    ipcMain.handle(Channels.Config.Set, async (_evt, payload: { key: string; value: any }) => {
+      if (!payload || typeof payload.key !== 'string') {
+        console.warn('[config:set] invalid payload');
+        return;
+      }
       const next = await this.configService.set(payload.key, payload.value);
       // this.broadcastConfigChanged(next);
     });
 
-    ipcMain.handle('config:setByPath', async (_evt, payload: { path: string; value: any }) => {
+    ipcMain.handle(Channels.Config.SetByPath, async (_evt, payload: { path: string; value: any }) => {
+      if (!payload || typeof payload.path !== 'string') {
+        console.warn('[config:setByPath] invalid payload');
+        return;
+      }
       const next = await this.configService.setByPath(payload.path, payload.value);
       // this.broadcastConfigChanged(next);
     });
 
-    ipcMain.handle('config:patch', async (_evt, partial: Partial<Settings>) => {
+    ipcMain.handle(Channels.Config.Patch, async (_evt, partial: Partial<Settings>) => {
       const next = await this.configService.patch(partial);
       // this.broadcastConfigChanged(next);
     });
@@ -511,11 +556,11 @@ export default class IpcController {
 
   /* -------------------------- 下载相关 --------------------------- */
   private registerDownloadHandlers(): void {
-    ipcMain.handle('calculate-file-cache-disk-usage', async () => {
+    ipcMain.handle(Channels.System.CalcFileCacheDiskUsage, async () => {
       return await this.fileCacheManager.getDiskUsage();
     });
 
-    ipcMain.on('down-from-hifini', async (_evt, track: TrackEntity) => {
+    ipcMain.on(Channels.Library.DownloadFromHifini, async (_evt, track: TrackEntity) => {
       const [rawLink] = await this.downloader.getLanzouDirectLink(track.platform_unique_id);
       if (!rawLink) return;
 
@@ -535,7 +580,7 @@ export default class IpcController {
           if (state === 'progressing') {
             const received = item.getReceivedBytes();
             // TODO: 若需要进度通知，可在此发送给渲染进程
-            // mainWindow.webContents.send('download-progress', { token, received, total });
+            // 可选：mainWindow?.webContents.send('download-progress', { token, received, total });
           }
         });
 
@@ -578,9 +623,9 @@ export default class IpcController {
 
   /* -------------------------- 其他杂项 --------------------------- */
   private registerMiscHandlers(): void {
-    ipcMain.handle('get-user-data-path', async () => this.dataPath.dbPath);
+    ipcMain.handle(Channels.System.GetUserDataPath, async () => this.dataPath.dbPath);
 
-    ipcMain.on('reveal-database-in-file-system', async () => {
+    ipcMain.on(Channels.System.RevealDB, async () => {
       const { shell } = require('electron');
       shell.showItemInFolder(this.dataPath.dbPath);
     });

@@ -115,7 +115,7 @@ const Application: React.FC = () => {
     if (isMini) return;
     const handleReqState = () => {
       const player = playerInstanceRef.current;
-      if (player) playerContext.broadcastState(player.dumpPlayerState());
+      if (player) { playerContext.broadcastState(player.dumpPlayerState()); }
     };
     const handleDumpReq = () => {
       const player = playerInstanceRef.current;
