@@ -91,6 +91,7 @@
     --pg-base: var(--md-sys-color-surface-variant); /* track 未播放 */
     --pg-fill: var(--md-sys-color-primary); /* 已播放部分 */
     --pg-thumb: var(--md-sys-color-primary); /* 游标/拇指 */
+    --pg-buffer: var(--md-sys-color-outline-variant); /* 缓冲部分（默认更浅的中性色） */
 }
 
 /* 让整个应用跟随 token 渲染，避免“黑字” */

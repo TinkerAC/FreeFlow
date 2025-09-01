@@ -34,7 +34,9 @@
     left: 0;
     width: 0;
     background: rgb(var(--pg-buffer, var(--pg-fill)));
-    opacity: .35;
+    /* 更高可见度且与已播放区分：颜色更浅 + 略高不透明度 */
+    opacity: .5;
+    transition: width .3s ease, left .3s ease, opacity .2s ease, background-color .2s ease;
 }
 
 .fill {

@@ -164,7 +164,8 @@ export default function PlayerBar({
                   ['--pg-base' as unknown as string]: 'var(--md-sys-color-surface-variant)',
                   ['--pg-fill' as unknown as string]: 'var(--md-sys-color-primary)',
                   ['--pg-thumb' as unknown as string]: 'var(--md-sys-color-primary)',
-                  ['--pg-buffer' as unknown as string]: 'var(--md-sys-color-primary)',
+                  // 使用更浅的中性颜色，以与已播放部分形成明显对比
+                  ['--pg-buffer' as unknown as string]: 'var(--md-sys-color-outline-variant)',
                 }}
               />
             </div>

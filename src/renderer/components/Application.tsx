@@ -117,6 +117,23 @@ const Application: React.FC = () => {
       const player = playerInstanceRef.current;
       if (player) playerContext.broadcastState(player.dumpPlayerState());
     };
+    const handleDumpReq = () => {
+      const player = playerInstanceRef.current;
+      if (player) {
+        try { playerContext.sendPlayerState(player.dumpPlayerState()); } catch {}
+      } else {
+        // 即使播放器未初始化，仍回一个空状态，避免主进程卡住
+        try { playerContext.sendPlayerState({
+          queue: { queue: [], indexList: [], currentIndex: 0 },
+          volume: 0.5,
+          playbackMode: PlaybackMode.LOOP,
+          audioSrc: '',
+          isPlaying: false,
+          isLoading: false,
+          currentTime: 0,
+        }); } catch {}
+      }
+    };
     const handleShortcut = (data: string) => {
       const player = playerInstanceRef.current;
       if (!player) return;
@@ -141,10 +158,13 @@ const Application: React.FC = () => {
     const handleNotif = (msg: string) => alert(msg);
 
     playerContext.onRequestPlayerState(handleReqState);
+    // 单独监听“退出保存”请求
+    const offDump = (playerContext as any).onDumpRequest?.(handleDumpReq);
     shortcutContext.onShortcut(handleShortcut);
     playerContext.onNotification(handleNotif);
     return () => {
       playerContext.removeRequestPlayerStateListener();
+      try { offDump?.(); } catch {}
       shortcutContext.removeShortcutListener();
       playerContext.removeRequestPlayerStateListener();
     };
@@ -172,17 +192,8 @@ const Application: React.FC = () => {
     return () => { offControl?.(); };
   }, [isMini]);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const onLoaded = () => {
-      playerInstanceRef.current?.setCurrentTime(audio.duration);
-    };
-    audio.addEventListener('loadedmetadata', onLoaded);
-    return () => {
-      audio.removeEventListener('loadedmetadata', onLoaded);
-    };
-  }, [playerState.audioSrc]);
+  // 注意：不要在 loadedmetadata 时强行设置 currentTime = duration，
+  // 这会覆盖从 dump 恢复的进度。保留由 PlayerController 自行恢复/管理。
 
   /* ---------- 6. 搜索结果 ---------- */
   const [searchResults, setSearchResults] = useState<FusionSearchResult>({

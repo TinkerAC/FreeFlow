@@ -24,9 +24,18 @@ export const ThemeSettings = z.object({
 export type ThemeSettings = z.infer<typeof ThemeSettings>;
 
 /** ------- UI ------- */
+const MiniPlayerBounds = z.object({
+  x: z.number().int().optional(),
+  y: z.number().int().optional(),
+  width: z.number().int().default(360),
+  height: z.number().int().default(140),
+});
+
 export const UISettings = z.object({
   density: z.enum(['compact', 'cozy']).default('cozy'),
   sidebarCollapsed: z.boolean().default(true),
+  /** 迷你播放器窗口的上次位置与尺寸 */
+  miniPlayer: MiniPlayerBounds.default({ width: 360, height: 140 }),
 });
 export type UISettings = z.infer<typeof UISettings>;
 
@@ -93,6 +102,7 @@ export const Settings = z.object({
   ui: UISettings.default({
     density: 'cozy',
     sidebarCollapsed: false,
+    miniPlayer: { width: 360, height: 140 },
   }),
   audio: AudioSettings.default({
     volume: 0.8,

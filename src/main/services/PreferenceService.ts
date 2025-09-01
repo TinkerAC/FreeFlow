@@ -34,13 +34,15 @@ export class PreferenceService {
 
   /** 仅应用图标（不写入配置，避免循环） */
   public async applyIcon(icon: AppIcon): Promise<void> {
-    this.updateAppIcon(icon);
+    // 切换时：立即应用并持久化（允许覆盖 electron.icns）
+    this.updateAppIcon(icon, { persist: true });
   }
 
 
   /** Apply saved icon on core startup */
   private applySavedDockIcon() {
-    this.updateAppIcon(this.getCurrentIcon());
+    // 启动时只运行时应用，不再尝试覆盖 electron.icns
+    this.updateAppIcon(this.getCurrentIcon(), { persist: false });
   }
 
   /** 返回打包/开发时的 appIcons 目录 */
@@ -75,7 +77,7 @@ export class PreferenceService {
    * - Windows: 更新所有窗口的图标（.ico 优先，退化到 png）。
    * - Linux: 更新所有窗口的图标（png）。
    */
-  private async updateAppIcon(icon: AppIcon) {
+  private async updateAppIcon(icon: AppIcon, opts: { persist: boolean } = { persist: true }) {
     const { primary, fallbackPng } = this.resolveIconFile(icon);
     if (process.platform === 'darwin') {
       const tool = this.findMacSetIconTool();
@@ -83,8 +85,10 @@ export class PreferenceService {
         try {
           const appBundle = path.resolve(process.resourcesPath, '..', '..');
           await this.runMacSetIconTool(tool, primary, appBundle);
-          // 同步覆盖 electron.icns，确保重启后持久
-          this.overwriteAppIconWithIcns(primary);
+          // 仅在需要持久化时覆盖 electron.icns
+          if (opts.persist) {
+            this.overwriteAppIconWithIcns(primary);
+          }
           // 同步 Dock 以立刻可见
           const img = nativeImage.createFromPath(fallbackPng);
           if (!img.isEmpty()) app.dock.setIcon(img);
@@ -94,8 +98,10 @@ export class PreferenceService {
           console.warn('[ICON] 调用 Swift 工具失败，回退到覆盖 electron.icns：', e);
         }
       }
-      // 回退：覆盖主 icns 并刷新 Dock
-      this.overwriteAppIconWithIcns(primary);
+      // 回退：如需持久化则覆盖主 icns；无论如何刷新 Dock
+      if (opts.persist) {
+        this.overwriteAppIconWithIcns(primary);
+      }
       const img = nativeImage.createFromPath(fallbackPng);
       if (!img.isEmpty()) app.dock.setIcon(img);
       this.refreshAllWindowIcons(img);

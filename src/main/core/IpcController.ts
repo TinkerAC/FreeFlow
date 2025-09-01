@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent, screen } from 'electron';
 import { inject, injectable } from 'inversify';
 import PlaylistService from '@main/services/PlaylistService';
 import { loadPlayer, savePlayer } from '@main/services/PlayerService';
@@ -37,6 +37,8 @@ import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
  */
 @injectable()
 export default class IpcController {
+  // 跟踪已绑定事件的 Mini 窗口，避免重复绑定
+  private miniBoundSet = new WeakSet<BrowserWindow>();
   constructor(
     @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
     @inject(DISymbol.PlaylistService) private readonly playlistService: PlaylistService,
@@ -116,18 +118,23 @@ export default class IpcController {
 
     // 迷你播放器窗口控制
     ipcMain.handle('mini-player:toggle', async () => {
-      // 若 Mini 可见则回到 Main；否则显示 Mini（primary 分组互斥）
       if (this.windowManager.isVisible(WindowKey.MINI)) {
         this.windowManager.activate(WindowKey.MAIN);
       } else {
-        this.windowManager.activate(WindowKey.MINI);
+        const mini = this.windowManager.ensure(WindowKey.MINI);
+        this.applyMiniPlayerBounds(mini);
+        this.attachMiniPlayerPersistence(mini);
+        this.windowManager.showExclusive(WindowKey.MINI, true);
         // 切换到 Mini 后，主动向主渲染进程请求一次实时状态，确保 Mini 立刻刷新封面/进度
         const main = this.windowManager.get(WindowKey.MAIN);
         main?.webContents.send('player:request-state');
       }
     });
     ipcMain.handle('mini-player:show', async () => {
-      this.windowManager.activate(WindowKey.MINI);
+      const mini = this.windowManager.ensure(WindowKey.MINI);
+      this.applyMiniPlayerBounds(mini);
+      this.attachMiniPlayerPersistence(mini);
+      this.windowManager.showExclusive(WindowKey.MINI, true);
       // 显示 Mini 时立即触发一次状态同步
       const main = this.windowManager.get(WindowKey.MAIN);
       main?.webContents.send('player:request-state');
@@ -145,6 +152,53 @@ export default class IpcController {
       const expandedH = 240;  // 展开后固定高度
       mini.setSize(w, payload?.expanded ? expandedH : collapsedH, true);
     });
+  }
+
+  /** 将上次保存的迷你播放器窗口位置/大小应用到窗口上 */
+  private applyMiniPlayerBounds(mini: BrowserWindow): void {
+    try {
+      const saved = this.configService.get('ui.miniPlayer');
+      if (!saved) return;
+      const { x, y, width, height } = saved as { x?: number; y?: number; width?: number; height?: number };
+      const next: Electron.Rectangle = {
+        x: typeof x === 'number' ? x : mini.getBounds().x,
+        y: typeof y === 'number' ? y : mini.getBounds().y,
+        width: typeof width === 'number' ? Math.max(mini.getMinimumSize()[0], width) : mini.getBounds().width,
+        height: typeof height === 'number' ? Math.max(mini.getMinimumSize()[1], height) : mini.getBounds().height,
+      };
+
+      // 保证在任意显示器可见区域内
+      const display = screen.getDisplayMatching(next);
+      const { x: dx, y: dy, width: dw, height: dh } = display.workArea;
+      // 若超出则夹取到工作区内
+      next.x = Math.max(dx, Math.min(next.x, dx + dw - 50));
+      next.y = Math.max(dy, Math.min(next.y, dy + dh - 50));
+      next.width = Math.min(next.width, dw);
+      next.height = Math.min(next.height, dh);
+
+      mini.setBounds(next, false);
+    } catch (e) {
+      console.warn('应用 MiniPlayer 窗口位置/大小失败:', e);
+    }
+  }
+
+  /** 绑定 MiniPlayer 窗口的位置/大小持久化 */
+  private attachMiniPlayerPersistence(mini: BrowserWindow): void {
+    if (this.miniBoundSet.has(mini)) return;
+    this.miniBoundSet.add(mini);
+
+    const save = () => {
+      try {
+        const b = mini.getBounds();
+        this.configService.setByPath('ui.miniPlayer', { x: b.x, y: b.y, width: b.width, height: b.height });
+      } catch (e) {
+        console.warn('保存 MiniPlayer 窗口位置/大小失败:', e);
+      }
+    };
+
+    mini.on('move', save);
+    mini.on('resize', save);
+    mini.on('close', save);
   }
 
 

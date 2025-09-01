@@ -143,7 +143,8 @@ if (!gotTheLock) {
         } catch (e) {
           console.error('移除窗口关闭事件失败', e);
         }
-        mainWin.webContents.send('player:request-state');
+        // 向主渲染进程请求一次“保存用”的播放器状态（与常规 request-state 区分开）
+        mainWin.webContents.send('player:request-dump');
       }
 
       // 兜底强退

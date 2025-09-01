@@ -57,6 +57,7 @@ export interface PlayerApi {
   requestLiveState(): void;
   broadcastState(state: PlayerState): void;
   onLiveStateRequest(cb: () => void): () => void;
+  onDumpRequest?(cb: () => void): () => void;
   onControl(cb: (cmd: string, payload: any) => void): () => void;
 }
 

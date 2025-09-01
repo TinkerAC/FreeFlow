@@ -66,6 +66,12 @@ const mainApi: MainApi = {
       ipcRenderer.on('player:request-state', handler);
       return () => ipcRenderer.removeListener('player:request-state', handler);
     },
+    // 专用于应用退出：请求一次用于保存到磁盘的 dump
+    onDumpRequest: (cb: () => void) => {
+      const handler = () => cb();
+      ipcRenderer.on('player:request-dump', handler);
+      return () => ipcRenderer.removeListener('player:request-dump', handler);
+    },
     onControl: (cb: (cmd: string, payload: any) => void) => {
       const handler = (_: Electron.IpcRendererEvent, cmd: string, payload: any) => cb(cmd, payload);
       ipcRenderer.on('player:control', handler);
