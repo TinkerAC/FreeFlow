@@ -220,7 +220,15 @@
     box-shadow: var(--elev-2, 0 6px 20px rgba(0, 0, 0, .35));
     color: rgb(var(--md-sys-color-on-surface));
     max-height: 320px;
-    overflow-y: auto;
+    overflow-y: auto;   /* 允许纵向滚动 */
+    overflow-x: hidden; /* 禁止横向滚动 */
+    scrollbar-width: none; /* Firefox 隐藏滚动条 */
+}
+
+/* WebKit 内核隐藏滚动条，但仍可滚动 */
+.dropdown::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .dropdownItem {
@@ -243,6 +251,7 @@
 }
 
 .dropdownTitle {
+    display: block;             /* 确保省略号生效 */
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
@@ -251,6 +260,7 @@
 }
 
 .dropdownSub {
+    display: block;             /* 与标题一致，避免换行 */
     font-size: 12px;
     color: rgb(var(--md-sys-color-on-surface-variant));
     white-space: nowrap;

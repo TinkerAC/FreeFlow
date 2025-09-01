@@ -103,9 +103,38 @@ export default function ContextMenu({
 
   if (!track) return null;
 
-  // --- Handlers (保持不变) ---
-  const removeFromCurrent = async () => { /* ... */ };
-  const addToTarget = async (playlistId: number) => { /* ... */ };
+  // --- Handlers ---
+  const removeFromCurrent = async () => {
+    try {
+      const activePlaylistId = musicLibraryController.activePlaylist?.playlist_id ?? null;
+      if (activePlaylistId === null) return;
+
+      // 特殊处理“音乐库”（id: 0）
+      if (activePlaylistId === 0) {
+        await libraryContext.removeTrackFromLibrary(track);
+      } else {
+        await playlistContext.removeTrackFromPlaylist(activePlaylistId, track);
+      }
+
+      await musicLibraryController.refreshPlaylists();
+    } finally {
+      handleCloseMenu();
+    }
+  };
+
+  const addToTarget = async (playlistId: number) => {
+    try {
+      if (playlistId === 0) {
+        await libraryContext.addTrackToLibrary(track);
+      } else {
+        await playlistContext.addTrackToPlaylist(track, playlistId);
+      }
+      // 刷新以反映变化（无论是否为当前激活歌单）
+      await musicLibraryController.refreshPlaylists();
+    } finally {
+      handleCloseMenu();
+    }
+  };
   const candidatePlaylists = useMemo(() => playlists.filter(p => p.playlist_id !== activeId), [playlists, activeId]);
 
   // --- Render ---
