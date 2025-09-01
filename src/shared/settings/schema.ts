@@ -31,11 +31,23 @@ const MiniPlayerBounds = z.object({
   height: z.number().int().default(140),
 });
 
+export const TurntableSettings = z.object({
+  /** 唱片转速模式：预设 或 自定义 */
+  speedMode: z.enum(['preset', 'custom']).default('preset'),
+  /** 预设档位：慢/中/快 */
+  preset: z.enum(['slow', 'medium', 'fast']).default('medium'),
+  /** 自定义转速，rad/s */
+  customAngularVelocityRadPerSec: z.number().min(0.01).max(20).default(0.4488),
+});
+export type TurntableSettings = z.infer<typeof TurntableSettings>;
+
 export const UISettings = z.object({
   density: z.enum(['compact', 'cozy']).default('cozy'),
   sidebarCollapsed: z.boolean().default(true),
   /** 迷你播放器窗口的上次位置与尺寸 */
   miniPlayer: MiniPlayerBounds.default({ width: 360, height: 140 }),
+  /** 唱机设置 */
+  turntable: TurntableSettings.default({ speedMode: 'preset', preset: 'medium', customAngularVelocityRadPerSec: 0.4488 }),
 });
 export type UISettings = z.infer<typeof UISettings>;
 
@@ -87,6 +99,7 @@ export const AppSettings = z.object({
 });
 export type AppSettings = z.infer<typeof AppSettings>;
 
+/** ------- 唱机（Turntable） ------- */
 /** ------- 总配置 ------- */
 
 export const Settings = z.object({

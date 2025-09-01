@@ -3,6 +3,8 @@
     position: relative;
     width: min(64vh, 88%);
     aspect-ratio: 1/1;
+    /* 以 vmin 为基准设定局部字体大小，后续尺寸用 em 适配缩放比例 */
+    font-size: clamp(6px, 1.2vmin, 12px);
 }
 
 /* 状态类：仅作为选择器组合使用（不改变视觉），用于触发 .deck.isPlaying */
@@ -21,6 +23,19 @@
     overflow: hidden;
 }
 
+/* 静态主轴盖（不随唱片旋转） */
+.spindleStatic {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.9em; height: 0.9em;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #eef1f6 0%, #c5cad3 55%, #9aa1ab 100%);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.45), 0 2px 4px rgba(0,0,0,.25);
+    z-index: 2; /* 位于唱片之上，以显示“盖帽”不转效果；若想更隐蔽可降至 0 并增大边缘高光 */
+    pointer-events: none;
+}
+
 /* 唱片（旋转层） */
 .disc {
     position: absolute;
@@ -29,7 +44,7 @@
     background:
       radial-gradient(circle at 50% 50%, rgba(0,0,0,.7) 0, rgba(0,0,0,.85) 60%, rgba(0,0,0,.92) 100%),
       repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.05) 0 2px, rgba(0,0,0,0) 2px 4px);
-    animation: disc-rotate 14s linear infinite;
+    animation: disc-rotate var(--disc-rotate-period, 14s) linear infinite;
     transform-origin: 50% 50%;
 }
 
@@ -54,8 +69,8 @@
 .tonearm {
     position: absolute;
     /* 枢轴放在方形机身的右上角内缩一定距离（避免贴边） */
-    top: 12px;
-    right: 12px;
+    top: 1em;
+    right: 1em;
     width: 58%; /* 臂长，能到达唱片外圈 */
     height: 0;
     pointer-events: none;
@@ -67,7 +82,7 @@
 .armBar {
     position: absolute;
     right: 0; top: 0;           /* 从枢轴（右上角）向左延伸 */
-    width: 100%; height: 6px;
+    width: 100%; height: 0.6em;
     background: linear-gradient(90deg, #f1f3f6, #d1d6e0); /* 更浅的银色金属质感 */
     border-radius: 6px;
     box-shadow: 0 2px 6px rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,.35);
@@ -75,8 +90,8 @@
 }
 .headshell {
     position: absolute;
-    left: -12px; top: -8px;    /* 头部位于臂的最左端，靠近唱片 */
-    width: 26px; height: 36px;
+    left: -1.2em; top: -0.8em;    /* 头部位于臂的最左端，靠近唱片 */
+    width: 2.2em; height: 3.0em;
     background: linear-gradient(180deg, #f5f7fb, #d7dbe6); /* 浅色外壳 */
     border-radius: 6px;
     box-shadow: 0 4px 10px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.6);
@@ -88,18 +103,19 @@
 .headshell::after {
     content: "";
     position: absolute;
-    left: -4px; top: 8px;
-    width: 6px; height: 6px;
+    left: -0.4em; top: 0.8em;
+    width: 0.55em; height: 0.55em;
     border-radius: 50%;
     background: #fafbff;
     box-shadow: 0 0 0 1px rgba(0,0,0,.15);
 }
 /* 新增：枢轴底座（圆柱基座视觉） */
-.pivotBase {
+.pivotBaseStatic {
     position: absolute;
-    right: 0; top: 0; /* 移到唱臂枢轴这一端（tonearm transform-origin 100% 0%） */
-    width: 34px; height: 34px;
-    transform: translate(9px, -9px); /* 向外/上微伸出，制造独立底座感 */
+    top: 1em;
+    right: 1em; /* 与 tonearm 的定位对齐，确保枢轴位置一致 */
+    width: 3.0em; height: 3.0em;
+    transform: translate(0.8em, -0.8em); /* 向外/上微伸出，制造独立底座感 */
     border-radius: 50%;
     background:
       radial-gradient(circle at 32% 30%, #f4f6f9 0%, #d7dce3 45%, #a7adb6 70%, #80868f 100%);
@@ -111,10 +127,10 @@
     pointer-events: none;
     z-index: 0; /* 位于 arm 下方 */
 }
-.pivotBase::after {
+.pivotBaseStatic::after {
     content: "";
     position: absolute;
-    left: 6px; right: 6px; bottom: 4px;
+    left: 0.5em; right: 0.5em; bottom: 0.35em;
     height: 42%;
     border-radius: 50%;
     background: radial-gradient(ellipse at 50% 90%, rgba(0,0,0,.35), rgba(0,0,0,0));
@@ -125,7 +141,7 @@
 .pivot {
     position: absolute;
     left: 50%; top: 50%;
-    width: 16px; height: 16px;
+    width: 1.35em; height: 1.35em;
     transform: translate(-50%, -54%);
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #fafafa, #c9ced6 60%, #b3b9c2 100%);

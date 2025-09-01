@@ -268,8 +268,10 @@ const LyricScroller: React.FC<LyricScrollerProps> = ({
     </motion.div>
   ), [error, onRetry]);
 
+  const [size, setSize] = useState<'small'|'medium'|'large'>('medium');
+
   return (
-    <div className={styles.right}>
+    <div className={ `${styles.right} ${size==='small'?styles.sizeSmall: size==='large'?styles.sizeLarge: styles.sizeMedium}` }>
       <div className={styles.topbar}>
         <div className={styles.topTitle}>
           {title}
@@ -284,15 +286,23 @@ const LyricScroller: React.FC<LyricScrollerProps> = ({
             </motion.span>
           )}
         </div>
-        {showChips ? (
-          <div className={styles.chips}>
-            <Chip type="origin" label="原" disabled={!hasOrigin} />
-            <Chip type="pronunciation" label="音" disabled={!hasPronunciation} />
-            <Chip type="translation" label="译" disabled={!hasTranslation} />
+        <div style={{ display:'flex', alignItems:'center', gap: 12 }}>
+          {showChips ? (
+            <div className={styles.chips}>
+              <Chip type="origin" label="原" disabled={!hasOrigin} />
+              <Chip type="pronunciation" label="音" disabled={!hasPronunciation} />
+              <Chip type="translation" label="译" disabled={!hasTranslation} />
+            </div>
+          ) : (
+            <div className={styles.chips} />
+          )}
+          {/* 尺寸控制：小/中/大（Apple Music 风） */}
+          <div className={styles.sizeCtrl} aria-label="歌词大小">
+            <button className={`${styles.sizeBtn} ${size==='small'?styles.sizeActive:''}`} onClick={() => setSize('small')} title="小">A</button>
+            <button className={`${styles.sizeBtn} ${size==='medium'?styles.sizeActive:''}`} onClick={() => setSize('medium')} title="中" style={{ fontSize: '110%' }}>A</button>
+            <button className={`${styles.sizeBtn} ${size==='large'?styles.sizeActive:''}`} onClick={() => setSize('large')} title="大" style={{ fontSize: '125%' }}>A</button>
           </div>
-        ) : (
-          <div className={styles.chips} />
-        )}
+        </div>
       </div>
 
       <div

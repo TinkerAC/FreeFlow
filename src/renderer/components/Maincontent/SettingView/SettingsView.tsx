@@ -32,6 +32,11 @@ export default function SettingsView() {
   const sidebarCollapsed = useSetting<boolean>('ui.sidebarCollapsed', true);
   const appIcon = useSetting<AppIcon>('app.icon', AppIcon.Default);
 
+  // 唱机（转速）设置：预设/自定义
+  const ttMode = useSetting<'preset'|'custom'>('ui.turntable.speedMode', 'preset');
+  const ttPreset = useSetting<'slow'|'medium'|'fast'>('ui.turntable.preset', 'medium');
+  const ttCustom = useSetting<number>('ui.turntable.customAngularVelocityRadPerSec', 0.4488);
+
   // 新增：用户、服务、音乐库、网络、缓存
   const userName = useSetting<string>('user.userName', '');
   const avatarPath = useSetting<string>('user.avatarPath', '');
@@ -132,6 +137,46 @@ export default function SettingsView() {
               />
             }
           />
+        </SettingsGroup>
+
+        <SettingsGroup title="唱机" desc="唱片转速（rad/s）">
+          <SettingRow
+            label="速度模式"
+            sub="选择预设或自定义速度"
+            control={
+              <Segmented<'preset'|'custom'>
+                value={ttMode.value}
+                onChange={ttMode.setValue}
+                options={[{ label: '预设', value: 'preset' }, { label: '自定义', value: 'custom' }]}
+              />
+            }
+          />
+          {ttMode.value === 'preset' ? (
+            <SettingRow
+              label="预设档位"
+              sub="慢 / 中 / 快"
+              control={
+                <Segmented<'slow'|'medium'|'fast'>
+                  value={ttPreset.value}
+                  onChange={ttPreset.setValue}
+                  options={[{ label: '慢', value: 'slow' }, { label: '中', value: 'medium' }, { label: '快', value: 'fast' }]}
+                />
+              }
+            />
+          ) : (
+            <SettingRow
+              label="自定义速度"
+              sub="rad/s（范围 0.01 - 20）"
+              control={
+                <input
+                  type="number" min={0.01} max={20} step={0.01}
+                  value={ttCustom.value}
+                  onChange={(e) => ttCustom.setValue(Math.max(0.01, Math.min(20, Number(e.target.value))))}
+                  style={{ height: 28, borderRadius: 999, background: 'rgba(var(--md-sys-color-surface-variant), .35)', border: '1px solid rgb(var(--md-sys-color-outline-variant))', color: 'rgb(var(--md-sys-color-on-surface))', padding: '0 10px', width: 180 }}
+                />
+              }
+            />
+          )}
         </SettingsGroup>
 
         <SettingsGroup title="播放" desc="默认音量">

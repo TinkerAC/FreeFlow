@@ -83,11 +83,16 @@ export default function PlayerBar({
     };
   }, [showVol]);
 
-  // ★ 修正：Font Awesome v6 没有 'fa-volume'，只用三档图标
+  // 更细分的音量图标：静音 / 极低 / 低-中 / 高
+  // v === 0            → xmark（静音）
+  // 0 < v ≤ 0.2        → off（无声波，表示极低但非静音）
+  // 0.2 < v ≤ 0.6      → low（单声波）
+  // v > 0.6            → high（双声波）
   const volIcon = useMemo(() => {
     const v = player.volume ?? 0;
     if (v === 0) return 'fa-volume-xmark';
-    if (v <= 0.5) return 'fa-volume-low';
+    if (v <= 0.2) return 'fa-volume-off';
+    if (v <= 0.6) return 'fa-volume-low';
     return 'fa-volume-high';
   }, [player.volume]);
 
@@ -122,10 +127,6 @@ export default function PlayerBar({
         <div className={middleCls}>
           <div className={styles.middleInner}>
             <div className={styles.controls}>
-              <i className={iconCls} title="循环/随机/顺序" onClick={() => player.cyclePlaybackMode()}>
-                <span
-                  className={'fas ' + (player.playbackMode === 'loop' ? 'fa-redo' : player.playbackMode === 'shuffle' ? 'fa-random' : 'fa-sync')} />
-              </i>
               <i className={iconCls} onClick={() => player.playPrevious()} title="上一首"><span
                 className="fas fa-step-backward" /></i>
               <i className={iconCls} onClick={() => player.togglePlayPause()}
@@ -174,6 +175,14 @@ export default function PlayerBar({
 
         {/* 右：工具 */}
         <div className={rightCls}>
+          {/* 播放模式优先显示在右侧第一个 */}
+          <i className={iconCls} title="播放模式：循环/单曲/随机" onClick={() => player.cyclePlaybackMode()}>
+            <span className={clsx('fas',
+              player.playbackMode === 'shuffle' ? 'fa-shuffle' :
+              player.playbackMode === 'repeat'  ? 'fa-repeat'  :
+              'fa-rotate-right' /* 循环 */
+            )} />
+          </i>
           <i className={iconCls} onClick={onToggleRightContent} title="播放列表"><span className="fas fa-list" /></i>
           <i className={iconCls} onClick={() => navigate('/lyric')} title="歌词"><span
             className="fas fa-align-center" /></i>

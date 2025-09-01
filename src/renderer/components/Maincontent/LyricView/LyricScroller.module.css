@@ -5,7 +5,18 @@
     grid-template-rows: auto 1fr;
     min-width: 0;
     min-height: 0; /* 关键：让 viewport 真正滚动 */
+    /* 默认（中号）变量 */
+    --lyric-base: clamp(18px, 2.1vh, 24px);
+    --f-active: 1.18; /* 当前行：保持突出 */
+    --f-near1: 0.98;  /* 邻近一行：略小于 1 */
+    --f-near2: 0.94;  /* 邻近二行：更小 */
+    --f-far: 0.88;    /* 更远行：明显缩小 */
 }
+
+/* 尺寸档位：小 / 中（默认） / 大 */
+.sizeSmall { --lyric-base: clamp(16px, 1.9vh, 22px); --f-active: 1.12; --f-near1: 0.97; --f-near2: 0.93; --f-far: .88; }
+.sizeMedium { /* 复用默认变量 */ }
+.sizeLarge { --lyric-base: clamp(19px, 2.3vh, 26px); --f-active: 1.22; --f-near1: 0.99; --f-near2: 0.95; --f-far: .90; }
 
 /* 顶部信息/切换条 */
 .topbar {
@@ -89,7 +100,7 @@
 /* 行样式层级：越靠近当前越突出 */
 .line {
     /* 统一基础字号，避免切换时重新排版换行 */
-    font-size: clamp(18px, 2.1vh, 24px);
+    font-size: var(--lyric-base);
     width: 100%;
     /* max-width: 90ch; 可按需启用 */
     text-align: center;
@@ -114,37 +125,34 @@
     color: rgb(var(--md-sys-color-on-surface));
     filter: none;
     text-shadow: 0 2px 16px rgba(0,0,0,.18);
-    transform: scale(1.18);
+    transform: scale(var(--f-active));
     z-index: 3;
 }
 
 .lineNear1 {
     font-weight: 700;
     color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 72%, transparent);
-    transform: scale(1.08);
+    transform: scale(var(--f-near1));
     z-index: 2;
 }
 
 .lineNear2 {
     font-weight: 600;
     color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 55%, transparent);
-    transform: scale(1.02);
+    transform: scale(var(--f-near2));
     z-index: 1;
 }
 
 .lineFar {
     font-weight: 500;
     color: color-mix(in oklab, rgb(var(--md-sys-color-on-surface)) 40%, transparent);
-    transform: scale(.95);
+    transform: scale(var(--f-far));
     opacity: .85;
 }
 
-/* 小屏减少放大倍数，避免重叠 */
+/* 小屏减少放大倍数，避免重叠：通过覆盖变量实现 */
 @media (max-width: 640px) {
-  .lineActive { transform: scale(1.10); }
-  .lineNear1 { transform: scale(1.05); }
-  .lineNear2 { transform: scale(1.01); }
-  .lineFar { transform: scale(.96); }
+  .right { --f-active: 1.10; --f-near1: 0.97; --f-near2: 0.93; --f-far: .90; }
 }
 
 /* 空状态 */
@@ -167,6 +175,16 @@
     opacity: 0.8;
     margin-left: 8px;
 }
+
+/* 尺寸控制按钮 */
+.sizeCtrl { display: inline-flex; align-items: center; gap: 8px; margin-left: 8px; }
+.sizeBtn {
+  height: 24px; min-width: 28px; padding: 0 8px; border-radius: 999px; border: 1px solid rgb(var(--md-sys-color-outline-variant));
+  background: rgb(var(--md-sys-color-surface-variant)); color: rgb(var(--md-sys-color-on-surface)); cursor: pointer;
+  transition: background .15s, transform .05s; font-weight: 700;
+}
+.sizeBtn:hover { background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 80%, transparent); }
+.sizeActive { background: rgba(var(--md-sys-color-primary), .18); border-color: rgb(var(--md-sys-color-primary)); }
 
 /* 错误容器 */
 .errorContainer {

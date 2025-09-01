@@ -92,7 +92,10 @@ export default function PlayQueue({
                       </div>
                     </div>
                   ) : (
-                    <div className={styles.empty}>暂无播放曲目</div>
+                    <div className={styles.empty}>
+                      <i className={clsx('fas fa-music', styles.emptyIcon)} />
+                      <div className={styles.emptyText}>暂无播放曲目</div>
+                    </div>
                   )}
                 </div>
 
@@ -100,7 +103,10 @@ export default function PlayQueue({
                 <div className={styles.section}>
                   <div className={styles.sectionTitle}>接下来</div>
                   {nextTracks.length === 0 ? (
-                    <div className={styles.empty}>队列为空</div>
+                    <div className={styles.empty}>
+                      <i className={clsx('fas fa-music', styles.emptyIcon)} />
+                      <div className={styles.emptyText}>队列为空</div>
+                    </div>
                   ) : (
                     <div className={styles.list}>
                       {nextTracks.map((track, idx) => (
@@ -142,7 +148,10 @@ export default function PlayQueue({
                 <div className={styles.section}>
                   <div className={styles.sectionTitle}>最近播放</div>
                   {recentList.length === 0 ? (
-                    <div className={styles.empty}>暂无最近播放</div>
+                    <div className={styles.empty}>
+                      <i className={clsx('fas fa-music', styles.emptyIcon)} />
+                      <div className={styles.emptyText}>暂无最近播放</div>
+                    </div>
                   ) : (
                     <div className={styles.list}>
                       {recentList.map((track, idx) => (

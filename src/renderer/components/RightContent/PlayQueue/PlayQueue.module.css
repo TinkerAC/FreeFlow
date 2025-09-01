@@ -151,3 +151,32 @@
     user-select: none;
 }
 
+/* 骨架屏样式 */
+.skeletonRow {
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 18%, transparent);
+    border-color: rgb(var(--md-sys-color-outline-variant));
+}
+.skCover {
+    width: 48px; height: 48px; border-radius: var(--radius-md);
+    background: linear-gradient(90deg,
+      rgba(var(--md-sys-color-surface-variant), .45) 0%,
+      rgba(var(--md-sys-color-surface-variant), .65) 20%,
+      rgba(var(--md-sys-color-surface-variant), .45) 40%)
+      no-repeat;
+    background-size: 200% 100%;
+    animation: sk-shimmer 1.2s linear infinite;
+}
+.skTitle { height: 12px; width: 72%; border-radius: 6px; margin: 6px 0 8px;
+  background: linear-gradient(90deg,
+    rgba(var(--md-sys-color-surface-variant), .45) 0%,
+    rgba(var(--md-sys-color-surface-variant), .65) 20%,
+    rgba(var(--md-sys-color-surface-variant), .45) 40%)
+    no-repeat; background-size: 200% 100%; animation: sk-shimmer 1.2s linear infinite; }
+.skArtist { height: 10px; width: 48%; border-radius: 6px;
+  background: linear-gradient(90deg,
+    rgba(var(--md-sys-color-surface-variant), .45) 0%,
+    rgba(var(--md-sys-color-surface-variant), .65) 20%,
+    rgba(var(--md-sys-color-surface-variant), .45) 40%)
+    no-repeat; background-size: 200% 100%; animation: sk-shimmer 1.2s linear infinite; }
+
+@keyframes sk-shimmer { to { background-position: -200% 0; } }
