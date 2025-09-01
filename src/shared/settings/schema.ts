@@ -116,6 +116,7 @@ export const Settings = z.object({
     density: 'cozy',
     sidebarCollapsed: false,
     miniPlayer: { width: 360, height: 140 },
+    turntable: { speedMode: 'preset', preset: 'medium', customAngularVelocityRadPerSec: 0.4488 },
   }),
   audio: AudioSettings.default({
     volume: 0.8,
