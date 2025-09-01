@@ -31,26 +31,45 @@ export default function MiniPlayer({
   const anchorTimeRef = useRef(0); // 秒
   const anchorTsRef = useRef(0);   // performance.now()
   const rafIdRef = useRef<number | null>(null);
+  // 记录已在“本地进度结束”触发过拉取的曲目，避免连续触发
+  const endPullKeyRef = useRef<string | null>(null);
+  // 记录最近一次曲目 key，用于判定是否切歌（切歌时允许时间回退到 0）
+  const lastTrackKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const off = window.mainApi.playerApi.onStateUpdate((st: PlayerState) => {
       const ci = st?.queue?.currentIndex ?? 0;
       const libIdx = st?.queue?.indexList?.[ci] ?? 0;
       const cur = st?.queue?.queue?.[libIdx];
+
+      // 判定曲目 key
+      const key = cur ? `${cur.platform}:${cur.platform_unique_id}` : '__no_track__';
+      const changed = key !== lastTrackKeyRef.current;
+
+      // 计算基于当前锚点的本地预测时间
+      const now = performance.now();
+      const projected = anchorTimeRef.current + Math.max(0, (now - anchorTsRef.current) / 1000);
+      const incoming = st?.currentTime || 0;
+      const tolerance = 0.35; // 允许的抖动
+
+      // 若非切歌且后到的状态让时间大幅回退，则进行夹持，避免 1 -> 0 -> 继续 的跳变
+      const appliedCt = (!changed && incoming + tolerance < projected) ? projected : incoming;
+
       setState({
         title: cur?.title || '未播放',
         artist: cur?.artist || '',
         cover: cur?.cover_src || DefaultCover,
-        currentTime: st?.currentTime || 0,
+        currentTime: appliedCt,
         duration: cur?.duration || 0,
         isPlaying: !!st?.isPlaying,
         track: cur || null,
       });
-      // 更新插值锚点并立即对齐显示
-      const ct = st?.currentTime || 0;
-      anchorTimeRef.current = ct;
-      anchorTsRef.current = performance.now();
-      setDisplayTime(ct);
+
+      // 更新插值锚点并立即对齐显示（对齐到 appliedCt）
+      anchorTimeRef.current = appliedCt;
+      anchorTsRef.current = now;
+      setDisplayTime(appliedCt);
+      lastTrackKeyRef.current = key;
     });
     window.mainApi.playerApi.requestLiveState();
     return () => { off?.(); };
@@ -95,6 +114,28 @@ export default function MiniPlayer({
     setTimeout(() => { try { window.mainApi.playerApi.requestLiveState(); } catch {} }, 150);
     setTimeout(() => { try { window.mainApi.playerApi.requestLiveState(); } catch {} }, 800);
   };
+
+  // 曲目变化时，重置“结束触发过拉取”标记
+  useEffect(() => {
+    const t = state.track;
+    if (t) {
+      endPullKeyRef.current = null;
+    }
+  }, [state.track?.platform, state.track?.platform_unique_id]);
+
+  // 当本地进度条“走到头”时，补一次状态更新（对齐主播放状态/切歌）
+  useEffect(() => {
+    if (!state.isPlaying) return;
+    const dur = state.duration || 0;
+    if (dur <= 0) return;
+    const nearEnd = displayTime >= dur - 0.15; // 150ms 内视为到达末尾
+    if (!nearEnd) return;
+    const t = state.track;
+    const key = t ? `${t.platform}:${t.platform_unique_id}` : `__no_track__`;
+    if (endPullKeyRef.current === key) return; // 已触发过，忽略
+    endPullKeyRef.current = key;
+    pulsePull();
+  }, [displayTime, state.duration, state.isPlaying, state.track?.platform, state.track?.platform_unique_id]);
 
   // 加载歌词（展开时或曲目变化时）
   useEffect(() => {
