@@ -7,7 +7,6 @@ import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import TrackService from '@main/services/TrackService';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { Platform } from '@main/core/enum/Platform';
-import Store from 'electron-store';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import { LyricService } from '@main/services/LyricService';
 import { FileCacheManager } from '@main/core/FileCacheManager';
@@ -22,13 +21,13 @@ import chalk from 'chalk';
 import fs from 'fs';
 import crypto from 'node:crypto';
 import { DISymbol } from '@main/di/symbol';
-import { PreferenceService } from '@main/services/PreferenceService';
-import { AppIcon } from '@src/shared/hifiniCookies';
 import { DataPath } from '@main/core/PathConfig';
 import { getOperatingSystem } from '@src/utils/helpers';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { ConfigService } from '@main/core/configService';
 import { Settings } from '@src/shared/settings/schema';
+import { PreferenceService } from '@main/services/PreferenceService';
+import { AppIcon } from '@src/shared/hifiniCookies';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 
@@ -41,7 +40,6 @@ export default class IpcController {
   constructor(
     @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
     @inject(DISymbol.PlaylistService) private readonly playlistService: PlaylistService,
-    @inject(DISymbol.Store) private readonly store: Store,
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
     @inject(DISymbol.TrackService) private readonly trackService: TrackService,
     @inject(DISymbol.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
@@ -50,8 +48,8 @@ export default class IpcController {
     @inject(DISymbol.FileCacheManager) private readonly fileCacheManager: FileCacheManager,
     @inject(DISymbol.HifiniDownloader) private readonly downloader: HifiniDownloader,
     @inject(DISymbol.WindowManager) private readonly windowManager: WindowManager,
-    @inject(DISymbol.PreferenceService) private readonly preferenceService: PreferenceService,
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
+    @inject(DISymbol.PreferenceService) private readonly preferenceService: PreferenceService,
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
   ) {
   }
@@ -66,10 +64,18 @@ export default class IpcController {
     this.registerPlayerHandlers();
     this.registerTrackHandlers();
     this.registerSearchHandlers();
-    this.registerConfigHandlers();
+    // 旧 Config API 已移除，统一使用 V2 Settings API
     this.registerConfigV2Handlers();
     this.registerDownloadHandlers();
     this.registerMiscHandlers();
+
+    // 监听设置变化以应用 App 图标
+    this.configService.onChanged((s) => {
+      const icon = (s as any)?.app?.icon as AppIcon | undefined;
+      if (icon) {
+        this.preferenceService.applyIcon(icon).catch(() => void 0);
+      }
+    });
   }
 
   /* -------------------------- 系统相关 --------------------------- */
@@ -99,9 +105,6 @@ export default class IpcController {
           break;
         case 'close':
           mainWindow.hide();
-          break;
-        case 'open-preference-window':
-          this.windowManager.show(WindowKey.Preference);
           break;
         default:
           console.error('Unknown window action:', action);
@@ -363,25 +366,7 @@ export default class IpcController {
   }
 
   /* -------------------------- 设置 & 配置 --------------------------- */
-  private registerConfigHandlers(): void {
-    ipcMain.handle('get-config', (_evt, key: string) => {
-      // 支持 "theme.mode" 这类 path
-      return this.configService.get(key);
-    });
-
-    ipcMain.handle('set-config', (_evt, key: string, value: unknown) => {
-      this.configService.set(key, value);
-      // 可选：广播变更给所有窗口
-      BrowserWindow.getAllWindows().forEach(w =>
-        w.webContents.send('config:changed', key, value),
-      );
-      return true;
-    });
-
-    ipcMain.on('set-appIcon', async (_evt, appIcon: AppIcon) => {
-      await this.preferenceService.setAppIcon(appIcon);
-    });
-  }
+  // 旧 get-config/set-config & PreferenceService 已移除
 
   /** 新接口（Settings 全量/分支/patch） */
   private registerConfigV2Handlers() {

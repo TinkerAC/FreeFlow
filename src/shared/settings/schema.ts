@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AppIcon } from '@src/shared/hifiniCookies';
 
 /** ------- 主题 ------- */
 export const ThemeMode = z.enum(['light', 'dark', 'system']);
@@ -71,10 +72,17 @@ export const CacheSettings = z.object({
 });
 export type CacheSettings = z.infer<typeof CacheSettings>;
 
+/** ------- 应用 ------- */
+export const AppSettings = z.object({
+  icon: z.nativeEnum(AppIcon).default(AppIcon.Default),
+});
+export type AppSettings = z.infer<typeof AppSettings>;
+
 /** ------- 总配置 ------- */
 
 export const Settings = z.object({
   version: z.number().int().default(1),
+  app: AppSettings.default({ icon: AppIcon.Default }),
   theme: ThemeSettings.default({
     mode: 'system',
     source: 'preset',

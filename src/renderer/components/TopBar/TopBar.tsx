@@ -38,7 +38,8 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
 
   useEffect(() => {
     systemContext.getPlatform().then(setPlatform);
-    configContext.getConfig('user_name').then((n: string) => setUserName(n));
+    // 新设置系统：从 Settings 读取 user.userName
+    configContext.get('user.userName').then((n: string) => setUserName(n as string));
   }, []);
 
   // 本地即时搜索（去抖）
@@ -145,8 +146,8 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
 
         {/* 右：操作（Premium / 设置 / 调试 / 用户 / 窗口控件） */}
         <div className={clsx(styles.right, styles.nodrag)}>
-          <button className={styles.primaryBtn} onClick={windowControlContext.openPreferenceWindow}>
-            探索 Premium
+          <button className={styles.primaryBtn} onClick={() => { /* no-op: explore Fremium */ }}>
+            探索Fremium
           </button>
 
           {/* 新：齿轮按钮 -> SettingsView */}

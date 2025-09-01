@@ -3,16 +3,10 @@ import type { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import type { Lyric } from '@src/shared/domainModel/lyricLine';
 import type { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import type { PlayerState } from '@src/shared/domainModel/playerState';
-import type { AppIcon } from '@src/shared/hifiniCookies';
 import { OS } from '@src/shared/OS';
 
 /** Config */
 export interface ConfigApi {
-  // 旧接口（兼容）
-  getConfig<T>(key: string): Promise<T>;
-
-  setConfig<T>(key: string, value: T): Promise<void>;
-
   // 新接口
   getAll(): Promise<Settings>;
 
@@ -104,8 +98,6 @@ export interface SystemApi {
 
   calculateFileCacheDiskUsage(): Promise<number>;
 
-  setAppIcon(appIcon: AppIcon): void;
-
   getAppVersion(): Promise<string>;
 }
 
@@ -116,8 +108,6 @@ export interface WindowControlApi {
   maximize(): void;
 
   close(): void;
-
-  openPreferenceWindow(): void;
 }
 
 /** 主聚合 */

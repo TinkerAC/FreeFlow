@@ -9,6 +9,7 @@ import Select from './controls/Select';
 import Slider from './controls/Slider';
 import Segmented from './controls/Segmented';
 import ColorSeed from './controls/ColorSeed';
+import { AppIcon, getIconOptions } from '@src/shared/hifiniCookies';
 
 import { useSetting } from '@renderer/core/config/SettingsContext'; // ← 关键：用新的 useSetting
 
@@ -29,6 +30,17 @@ export default function SettingsView() {
   const volume = useSetting<number>('audio.volume', 0.8);
 
   const sidebarCollapsed = useSetting<boolean>('ui.sidebarCollapsed', true);
+  const appIcon = useSetting<AppIcon>('app.icon', AppIcon.Default);
+
+  // 新增：用户、服务、音乐库、网络、缓存
+  const userName = useSetting<string>('user.userName', '');
+  const avatarPath = useSetting<string>('user.avatarPath', '');
+  const bbsSid = useSetting<string>('services.hifiniCookie.bbs_sid', '');
+  const bbsToken = useSetting<string>('services.hifiniCookie.bbs_token', '');
+  const scanPaths = useSetting<string[]>('library.scanPaths', []);
+  const supportedFormats = useSetting<string[]>('library.supportedFormats', ['mp3','flac','wav','m4a','ogg','aac']);
+  const networkPort = useSetting<number>('network.port', 29321);
+  const cacheTime = useSetting<number>('cache.cacheTime', 3600);
 
   const header = (
     <div style={{
@@ -134,6 +146,208 @@ export default function SettingsView() {
           <SettingRow
             label="默认收起左侧音乐库"
             control={<Switch checked={sidebarCollapsed.value} onChange={sidebarCollapsed.setValue} />}
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="应用" desc="图标与外观">
+          <SettingRow
+            label="应用图标"
+            sub="切换 Dock/任务栏图标（macOS 需要）"
+            control={
+              <Select<AppIcon>
+                value={appIcon.value}
+                onChange={appIcon.setValue}
+                options={getIconOptions() as any}
+              />
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="用户" desc="基础资料">
+          <SettingRow
+            label="用户名"
+            control={
+              <input
+                type="text"
+                value={userName.value}
+                onChange={(e) => userName.setValue(e.target.value)}
+                placeholder="输入昵称"
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  minWidth: 200,
+                }}
+              />
+            }
+          />
+          <SettingRow
+            label="头像路径"
+            sub="可在个人中心中上传头像；此处为只读预览"
+            control={
+              <input
+                type="text"
+                value={avatarPath.value}
+                readOnly
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .25)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  minWidth: 320,
+                  opacity: .8,
+                }}
+              />
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="服务" desc="HiFiNi Cookie">
+          <SettingRow
+            label="bbs_sid"
+            control={
+              <input
+                type="text"
+                value={bbsSid.value}
+                onChange={(e) => bbsSid.setValue(e.target.value)}
+                placeholder="粘贴 bbs_sid"
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  minWidth: 320,
+                }}
+              />
+            }
+          />
+          <SettingRow
+            label="bbs_token"
+            control={
+              <input
+                type="text"
+                value={bbsToken.value}
+                onChange={(e) => bbsToken.setValue(e.target.value)}
+                placeholder="粘贴 bbs_token"
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  minWidth: 320,
+                }}
+              />
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="音乐库" desc="扫描路径与支持格式">
+          <SettingRow
+            label="扫描路径（每行一个）"
+            control={
+              <textarea
+                value={(scanPaths.value || []).join('\n')}
+                onChange={(e) => {
+                  const list = e.target.value
+                    .split(/\n|,|;+/)
+                    .map(s => s.trim())
+                    .filter(Boolean);
+                  scanPaths.setValue(list);
+                }}
+                placeholder="/Users/you/Music\n/D:/Music"
+                rows={4}
+                style={{
+                  width: 420,
+                  borderRadius: 12,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '8px 10px',
+                  resize: 'vertical',
+                }}
+              />
+            }
+          />
+          <SettingRow
+            label="支持格式（逗号分隔）"
+            control={
+              <input
+                type="text"
+                value={(supportedFormats.value || []).join(',')}
+                onChange={(e) => {
+                  const arr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                  supportedFormats.setValue(arr);
+                }}
+                placeholder="mp3,flac,wav,m4a,ogg,aac"
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  minWidth: 320,
+                }}
+              />
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="网络" desc="本地端口">
+          <SettingRow
+            label="服务端口"
+            sub="重启后生效"
+            control={
+              <input
+                type="number"
+                min={1}
+                max={65535}
+                value={networkPort.value}
+                onChange={(e) => networkPort.setValue(Number(e.target.value))}
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  width: 120,
+                }}
+              />
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="缓存" desc="磁盘缓存时间（秒）">
+          <SettingRow
+            label="缓存时间"
+            control={
+              <input
+                type="number"
+                min={0}
+                step={60}
+                value={cacheTime.value}
+                onChange={(e) => cacheTime.setValue(Number(e.target.value))}
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  width: 160,
+                }}
+              />
+            }
           />
         </SettingsGroup>
       </div>

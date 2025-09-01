@@ -59,15 +59,15 @@ function ProfileView() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const fetchConfig = useCallback(async () => {
-    const avatar = await configContext.getConfig<string>('avatar_path');
+    const avatar = (await configContext.get('user.avatarPath')) as string | undefined;
     setAvatarPath(avatar || '');
-    const name = await configContext.getConfig<string>('user_name');
+    const name = (await configContext.get('user.userName')) as string | undefined;
     setUsername(name || '');
-    const token = await configContext.getConfig<string>('hifini_cookie.bbs_token');
+    const token = (await configContext.get('services.hifiniCookie.bbs_token')) as string | undefined;
     setBbsToken(token || '');
-    const sid = await configContext.getConfig<string>('hifini_cookie.bbs_sid');
+    const sid = (await configContext.get('services.hifiniCookie.bbs_sid')) as string | undefined;
     setBbsSid(sid || '');
-    const paths = await configContext.getConfig<string[]>('scan_paths');
+    const paths = (await configContext.get('library.scanPaths')) as string[] | undefined;
     setScanPaths(Array.isArray(paths) ? paths : []);
     const byteUsage = await systemContext.calculateFileCacheDiskUsage();
     setDiskByteUsage(byteUsage || 0);
@@ -84,11 +84,11 @@ function ProfileView() {
     setIsSaving(true);
     setMessage('');
     try {
-      await configContext.setConfig('avatar_path', avatarPath);
-      await configContext.setConfig('user_name', username);
-      await configContext.setConfig('hifini_cookie.bbs_token', bbsToken);
-      await configContext.setConfig('hifini_cookie.bbs_sid', bbsSid);
-      await configContext.setConfig<string[]>('scan_paths', scanPaths);
+      await configContext.setByPath('user.avatarPath', avatarPath);
+      await configContext.setByPath('user.userName', username);
+      await configContext.setByPath('services.hifiniCookie.bbs_token', bbsToken);
+      await configContext.setByPath('services.hifiniCookie.bbs_sid', bbsSid);
+      await configContext.setByPath('library.scanPaths', scanPaths);
       setMessage('设置已成功保存！');
       setTimeout(() => setMessage(''), 3000);
     } catch (e) {

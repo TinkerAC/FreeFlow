@@ -3,10 +3,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { inject, injectable } from 'inversify';
-import { getConfig } from '@main/services/ConfigService';
+import { ConfigService } from '@main/core/configService';
 import { fileExists } from '@src/utils/helpers';
 import TrackRepository from '@main/database/repository/TrackRepository';
-import Store from 'electron-store';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 import { DISymbol } from '@main/di/symbol';
@@ -15,20 +14,20 @@ import { DISymbol } from '@main/di/symbol';
 class LocalLibraryService {
   constructor(
     @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
-    @inject(DISymbol.Store) private store: Store,
+    @inject(DISymbol.ConfigService) private configService: ConfigService,
     // 注入其他需要的依赖
   ) {
   }
 
   public async updateLocalLibrary(): Promise<void> {
-    const scanPaths: string[]
-      = getConfig(this.store, 'scan_paths');
+    const scanPaths = (this.configService.get('library.scanPaths') as string[]) ?? [];
     if (!scanPaths || scanPaths.length === 0) {
       console.warn('没有配置扫描路径，将跳过更新音乐库');
       return;
     }
 
-    const supportedFormats = getConfig<string[]>(this.store, 'supported_formats').map((ext: string) => ext.toLowerCase());
+    const supportedFormats = ((this.configService.get('library.supportedFormats') as string[]) ?? [])
+      .map((ext: string) => ext.toLowerCase());
     console.log('scanPaths:', scanPaths);
     console.log('supportedFormats:', supportedFormats);
 

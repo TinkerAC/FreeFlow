@@ -4,12 +4,10 @@ import { WindowKey, WindowManager } from './window/windowManager';
 import electronSquirrelStartup from 'electron-squirrel-startup';
 
 import ProxyServerManager from '@main/core/AudioProxyServer';
-import { initConfig } from '@main/core/configInit';
 
 import LocalLibraryService from '@main/services/localLibraryService';
 import { sequelize } from '@main/database/seqimpl';
 import { is_hifini_cookies_expired } from '@main/services/AuthService';
-import Store from 'electron-store';
 import { container } from '@main/di/di-container';
 import { DISymbol } from '@main/di/symbol';
 import IpcController from '@main/core/IpcController';
@@ -52,7 +50,7 @@ if (!gotTheLock) {
 
   // 依赖注入获取服务实例
   const localLibraryService = container.get<LocalLibraryService>(DISymbol.LocalLibraryService);
-  const store: Store = container.get(DISymbol.Store);
+  const configService = container.get(DISymbol.ConfigService);
   const proxyServerManager = container.get<ProxyServerManager>(DISymbol.ProxyServerManager);
   const ipcController = container.get<IpcController>(DISymbol.IpcController);
   const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
@@ -76,7 +74,6 @@ if (!gotTheLock) {
 
     // 2) 初始化
     await sequelize.sync();
-    await initConfig(store);
     await localLibraryService.updateLocalLibrary();
     await proxyServerManager.start();
 
@@ -88,9 +85,7 @@ if (!gotTheLock) {
     windowManager.createWorkerWindow();
 
     // 检查 hifini Cookie 过期状态
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    const cookies: { [key: string]: string } = store.get('hifini_cookie');
+    const cookies = (configService.get('services.hifiniCookie') as { [key: string]: string }) ?? {};
     console.log('cookies:', cookies);
     if (await is_hifini_cookies_expired(cookies)) {
       // mainWindow.webContents.send('notification', 'Hifini 登陆已过期，请重新登陆');

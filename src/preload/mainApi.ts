@@ -5,14 +5,10 @@ import type { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import type { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import type { PlayerState } from '@src/shared/domainModel/playerState';
 import type { Lyric } from '@src/shared/domainModel/lyricLine';
-import type { AppIcon } from '@src/shared/hifiniCookies';
 import { OS } from '@src/shared/OS';
 
 const mainApi: MainApi = {
   configApi: {
-    getConfig: <T, >(key: string) => ipcRenderer.invoke('get-config', key) as Promise<T>,
-    setConfig: <T, >(key: string, value: T) => ipcRenderer.invoke('set-config', key, value),
-
     getAll: () => ipcRenderer.invoke('config:getAll') as Promise<Settings>,
     get: (key: string) => ipcRenderer.invoke('config:get', key),
     set: (key: string, value: any) => ipcRenderer.invoke('config:set', { key, value }),
@@ -87,7 +83,6 @@ const mainApi: MainApi = {
     getPlatform: () => ipcRenderer.invoke('get-system') as Promise<OS>,
     revealDataBaseInFileSystem: () => ipcRenderer.send('reveal-database-in-file-system'),
     calculateFileCacheDiskUsage: () => ipcRenderer.invoke('calculate-file-cache-disk-usage') as Promise<number>,
-    setAppIcon: (appIcon: AppIcon) => ipcRenderer.send('set-appIcon', appIcon),
     getAppVersion: () => ipcRenderer.invoke('get-app-version') as Promise<string>,
   },
 
@@ -95,7 +90,6 @@ const mainApi: MainApi = {
     minimize: () => ipcRenderer.send('window-controls', 'minimize'),
     maximize: () => ipcRenderer.send('window-controls', 'maximize'),
     close: () => ipcRenderer.send('window-controls', 'close'),
-    openPreferenceWindow: () => ipcRenderer.send('window-controls', 'open-preference-window'),
   },
 };
 

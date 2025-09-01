@@ -2,12 +2,10 @@
 import { BrowserWindow } from 'electron';
 import AppWindow from '@main/window/AppWindow';
 import WorkerWindow from '@main/window/WorkerWindow';
-import { PreferenceWindow } from '@main/window/PreferenceWindow';
 
 export enum WindowKey {
   MAIN = 'MAIN',      // 主 UI 窗口
   WORKER = 'WORKER',    // 后台下载 / 解析窗口
-  Preference = 'PREFERENCE', // 设置窗口
 }
 
 export class WindowManager {
@@ -30,11 +28,7 @@ export class WindowManager {
   }
 
 
-  public createPreferenceWindow(): BrowserWindow {
-    const preferenceWindow = new PreferenceWindow();
-    this.set(WindowKey.Preference, preferenceWindow);
-    return preferenceWindow;
-  }
+  
 
 
   get(key: WindowKey): BrowserWindow | null {
@@ -63,9 +57,7 @@ export class WindowManager {
         case WindowKey.WORKER:
           this.createWorkerWindow();
           break;
-        case WindowKey.Preference:
-          this.createPreferenceWindow();
-          break;
+        
         default:
           console.warn(`未知窗口类型: ${key}`);
           return;
@@ -105,6 +97,5 @@ export class WindowManager {
   }
 
 }
-
 
 

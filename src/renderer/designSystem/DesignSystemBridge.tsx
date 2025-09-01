@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { DesignSystemProvider } from './SkinSystem';
-import { useSetting } from '@components/Maincontent/SettingView/useSettings';
+import { useSetting } from '@renderer/core/config/SettingsContext';
 
 /** 把 Settings 里的选择 -> 映射到各家族默认皮肤 */
 export default function DesignSystemBridge({ children }: { children: React.ReactNode }) {

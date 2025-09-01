@@ -6,10 +6,9 @@ import { getRandom } from 'random-useragent';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { inject, injectable } from 'inversify';
-import { getConfig } from '@main/services/ConfigService';
+import { ConfigService } from '@main/core/configService';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
 import { isSameUTCDay } from '@src/utils/timeUtils';
-import ElectronStore from 'electron-store';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
 import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/HifiniInterfaces';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
@@ -31,7 +30,7 @@ export default class HifiniMusic implements ContentProvider {
   private readonly __dirname: string;
 
   constructor(
-    @inject(DISymbol.Store) private store: ElectronStore,
+    @inject(DISymbol.ConfigService) private configService: ConfigService,
     @inject(DISymbol.HifiniThreadCacheRepository) private hifiniThreadCacheRepository: HifiniThreadCacheRepository,
   ) {
     this.__filename = fileURLToPath(import.meta.url);
@@ -244,10 +243,10 @@ export default class HifiniMusic implements ContentProvider {
 
   /**
    * 私有方法：获取 hifini 请求所需的 cookie 字符串
-   * 从 store 中获取 hifini_cookie 配置，并构造标准的 cookie 字符串
+   * 从 Settings 中获取 services.hifiniCookie，并构造标准的 cookie 字符串
    */
   private getCookieString(): string {
-    const cookies: HifiniCookie = getConfig<HifiniCookie>(this.store, 'hifini_cookie');
+    const cookies: HifiniCookie = (this.configService.get('services.hifiniCookie') as any) || { bbs_sid: '', bbs_token: '' };
     if (!cookies || !cookies.bbs_sid || !cookies.bbs_token) {
       throw new Error('未找到 hifini_cookie');
     }

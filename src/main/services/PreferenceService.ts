@@ -1,18 +1,17 @@
 import { inject, injectable } from 'inversify';
-import ElectronStore from 'electron-store';
 import { app, BrowserWindow, nativeImage } from 'electron';
 
 import path from 'path';
 import { DISymbol } from '@main/di/symbol';
 import { AppIcon } from '@src/shared/hifiniCookies';
 import fs from 'fs';
+import { spawn } from 'node:child_process';
+import { ConfigService } from '@main/core/configService';
 
 @injectable()
 export class PreferenceService {
-  private readonly KEY_APP_ICON = 'appIcon';
-
   constructor(
-    @inject(DISymbol.Store) private store: ElectronStore,
+    @inject(DISymbol.ConfigService) private configService: ConfigService,
   ) {
     // Apply saved icon on startup
     if (app.isReady()) {
@@ -24,67 +23,94 @@ export class PreferenceService {
 
   /** Get current selected icon (default if none) */
   public getCurrentIcon(): AppIcon {
-    return (this.store.get(this.KEY_APP_ICON) as AppIcon) ?? AppIcon.Default;
+    return (this.configService.get('app.icon') as AppIcon) ?? AppIcon.Default;
   }
 
   /** Set and persist a new Dock/core icon */
   public async setAppIcon(icon: AppIcon): Promise<void> {
-    this.updateDockIcon(icon);
-    this.store.set(this.KEY_APP_ICON, icon);
+    // 仅写入设置；由订阅者/构造器负责应用，避免循环
+    this.configService.setByPath('app.icon', icon);
+  }
+
+  /** 仅应用图标（不写入配置，避免循环） */
+  public async applyIcon(icon: AppIcon): Promise<void> {
+    this.updateAppIcon(icon);
   }
 
 
   /** Apply saved icon on core startup */
   private applySavedDockIcon() {
-    this.updateDockIcon(this.getCurrentIcon());
+    this.updateAppIcon(this.getCurrentIcon());
+  }
+
+  /** 返回打包/开发时的 appIcons 目录 */
+  private getAppIconsBaseDir(): string {
+    return app.isPackaged
+      ? path.join(process.resourcesPath, 'appIcons')
+      : path.join(__dirname, '..', '..', 'assets', 'appIcons');
   }
 
   /**
-   * 组合图标文件物理路径
-   * - 打包后：<resources>/assets/appIcons/appIcon_*.{icns|png}
-   * - 开发时：<repo_root>/assets/appIcons/appIcon_*.{icns|png}
+   * 组合图标文件路径（按平台选择合适格式）
+   * - macOS: .icns + 备用 png
+   * - win32: .ico + 备用 png
+   * - linux: .png
    */
-  private resolveIconFile(icon: AppIcon, ext: 'icns' | 'png'): string {
-    // 通用变量
-    const baseDir = app.isPackaged
-      ? path.join(process.resourcesPath, 'appIcons')
-      : path.join(__dirname, '..', '..', 'assets', 'appIcons');
-
-
-    // png 时，打开对应的 文件夹，读取 icon_512x512@2x.png
-    const iconsetDir = `${icon}`;
-    // icns 文件直接放在根目录下
-    if (ext === 'icns') {
-      return path.join(baseDir, `${icon}`, `icon.icns`);
+  private resolveIconFile(icon: AppIcon): { primary: string; fallbackPng: string } {
+    const baseDir = this.getAppIconsBaseDir();
+    const dir = path.join(baseDir, `${icon}`);
+    const png = path.join(dir, 'icon_512x512@2x.png');
+    if (process.platform === 'darwin') {
+      return { primary: path.join(dir, 'icon.icns'), fallbackPng: png };
     }
-
-    const pngFileName = 'icon_512x512@2x.png';
-
-    return path.join(baseDir, iconsetDir, pngFileName);
+    if (process.platform === 'win32') {
+      return { primary: path.join(dir, 'icon.ico'), fallbackPng: png };
+    }
+    return { primary: png, fallbackPng: png };
   }
 
-  /** macOS only: update the Dock icon immediately */
-
-
-  private async updateDockIcon(icon: AppIcon) {
-    if (process.platform !== 'darwin') return;
-
-    const pngPath = this.resolveIconFile(icon, 'png');
-    console.log('从路径加载图标：', pngPath);
-    // 先按原来逻辑加载
-    const img = nativeImage.createFromPath(pngPath);
-
-    if (img.isEmpty()) {
-      console.warn(`图标都加载失败，跳过圆角处理`);
+  /**
+   * 应用图标到当前运行会话（各平台）：
+   * - macOS: 优先调用外部 Swift 小工具；否则回退到覆盖 electron.icns + setDockIcon。
+   * - Windows: 更新所有窗口的图标（.ico 优先，退化到 png）。
+   * - Linux: 更新所有窗口的图标（png）。
+   */
+  private async updateAppIcon(icon: AppIcon) {
+    const { primary, fallbackPng } = this.resolveIconFile(icon);
+    if (process.platform === 'darwin') {
+      const tool = this.findMacSetIconTool();
+      if (tool) {
+        try {
+          await this.runMacSetIconTool(tool, primary);
+          // 同步 Dock 以立刻可见
+          const img = nativeImage.createFromPath(fallbackPng);
+          if (!img.isEmpty()) app.dock.setIcon(img);
+          this.refreshAllWindowIcons(img);
+          return;
+        } catch (e) {
+          console.warn('[ICON] 调用 Swift 工具失败，回退到覆盖 electron.icns：', e);
+        }
+      }
+      // 回退：覆盖主 icns 并刷新 Dock
+      this.overwriteAppIconWithIcns(primary);
+      const img = nativeImage.createFromPath(fallbackPng);
+      if (!img.isEmpty()) app.dock.setIcon(img);
+      this.refreshAllWindowIcons(img);
       return;
     }
-    app.dock.setIcon(img);
-    this.overwriteAppIcon(icon);
+
+    // Windows / Linux: 设置所有窗口图标
+    let img = nativeImage.createFromPath(primary);
+    if (img.isEmpty()) img = nativeImage.createFromPath(fallbackPng);
+    if (img.isEmpty()) {
+      console.error('[ICON] 无法加载图标：', primary, 'fallback:', fallbackPng);
+      return;
+    }
+    this.refreshAllWindowIcons(img);
   }
 
 
-  private overwriteAppIcon(icon: AppIcon): void {
-    const srcIcns = this.resolveIconFile(icon, 'icns');
+  private overwriteAppIconWithIcns(srcIcns: string): void {
     console.log('[ICON] 源 icns 路径:', srcIcns);
 
     if (!fs.existsSync(srcIcns)) {
@@ -117,6 +143,41 @@ export class PreferenceService {
     } catch (e) {
       console.error('[ICON] 覆盖或刷新图标时出错：', e);
     }
+  }
+
+  private refreshAllWindowIcons(img: Electron.NativeImage) {
+    const windows = BrowserWindow.getAllWindows();
+    windows.forEach(win => win.setIcon(img));
+  }
+
+  /**
+   * macOS: 查找外部 Swift 小工具的路径，支持：
+   * - 环境变量 FREEFLOW_SETICON_TOOL
+   * - resources/bin/setAppIcon
+   * - resources/macTools/SetAppIcon
+   */
+  private findMacSetIconTool(): string | null {
+    if (process.platform !== 'darwin') return null;
+    const candidates = [
+      process.env.FREEFLOW_SETICON_TOOL,
+      path.join(process.resourcesPath, 'bin', 'setAppIcon'),
+      path.join(process.resourcesPath, 'macTools', 'SetAppIcon'),
+    ].filter(Boolean) as string[];
+    for (const p of candidates) {
+      try { if (p && fs.existsSync(p)) return p; } catch { /* ignore */ }
+    }
+    return null;
+  }
+
+  /** 调用外部 Swift 小工具设置 App 图标 */
+  private runMacSetIconTool(toolPath: string, icnsPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const child = spawn(toolPath, [icnsPath], { stdio: 'inherit' });
+      child.once('error', reject);
+      child.once('exit', (code) => {
+        if (code === 0) resolve(); else reject(new Error(`exit ${code}`));
+      });
+    });
   }
 
 

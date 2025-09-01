@@ -31,7 +31,6 @@ import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadC
 import { HifiniThreadCacheRepositoryImpl } from '@main/database/repository/impl/HifiniThreadCacheRepositoryImpl';
 import { AppDataPath, DataPath } from '@main/core/PathConfig';
 import { DISymbol } from '@main/di/symbol';
-import { PreferenceService } from '@main/services/PreferenceService';
 import IpcController from '@main/core/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
@@ -44,6 +43,7 @@ import { BilibiliService } from '@main/contentProvider/Bilibili/BilibiliService'
 import { Settings } from '@src/shared/settings/schema';
 import { ConfigService } from '@main/core/configService';
 import { OS } from '@src/shared/OS';
+import { PreferenceService } from '@main/services/PreferenceService';
 
 const container = new Container();
 export { container };
@@ -122,6 +122,7 @@ container
   .bind<PreferenceService>(DISymbol.PreferenceService)
   .to(PreferenceService)
   .inSingletonScope();
+
 
 // ===== 内容提供者（单例） =====
 container

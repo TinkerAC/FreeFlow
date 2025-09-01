@@ -10,7 +10,7 @@ import clsx from 'clsx';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { ProgressBar } from '@components/Playerbar/ProgressBar';
 
-import { useSetting } from '@components/Maincontent/SettingView/useSettings';
+import { useSetting } from '@renderer/core/config/SettingsContext';
 import '@components/Playerbar/ProgressBar/skins/Classic/ClassicBar';
 import '@components/Playerbar/ProgressBar/skins/Neon/NeonBar';
 import '@components/Playerbar/ProgressBar/skins/Waveform/WaveformBar';

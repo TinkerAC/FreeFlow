@@ -3,7 +3,6 @@ import type { Settings } from '@src/shared/settings/schema';
 import { defaultSettings } from '@src/shared/settings/schema';
 import { configContext } from '@renderer/core/electronContextApi';
 import { applyAllSettings } from '@renderer/core/config/applySettings';
-import chalk from 'chalk';
 
 type Ctx = {
   settings: Settings | null;
@@ -107,6 +106,5 @@ export function useSetting<T>(path: string, fallback: T) {
   }, [settings, path, fallback]);
 
   const setValue = (v: T) => setByPath<T>(path, v);
-  console.debug(chalk.blue(`[useSetting] ${path} =`, value));
   return { value, setValue } as const;
 }
