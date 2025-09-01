@@ -143,7 +143,7 @@ if (!gotTheLock) {
         } catch (e) {
           console.error('移除窗口关闭事件失败', e);
         }
-        mainWin.webContents.send('request-player-state');
+        mainWin.webContents.send('player:request-state');
       }
 
       // 兜底强退

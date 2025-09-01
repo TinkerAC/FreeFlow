@@ -156,14 +156,17 @@ const Application: React.FC = () => {
     const offControl = window.mainApi.playerApi.onControl((cmd: string, payload: any) => {
       const p = playerInstanceRef.current;
       if (!p) return;
+      const push = () => {
+        try { playerContext.broadcastState(p.dumpPlayerState()); } catch {}
+      };
       switch (cmd) {
-        case 'play': p.play(); break;
-        case 'pause': p.pause(); break;
-        case 'toggle': p.togglePlayPause(); break;
-        case 'next': p.playNext(); break;
-        case 'prev': p.playPrevious(); break;
-        case 'seek': if (typeof payload === 'number') p.setCurrentTime(payload); break;
-        case 'setVolume': if (typeof payload === 'number') p.setVolume(payload); break;
+        case 'play': p.play(); push(); break;
+        case 'pause': p.pause(); push(); break;
+        case 'toggle': p.togglePlayPause(); push(); break;
+        case 'next': { const pr = p.playNext(); push(); pr.finally(push); break; }
+        case 'prev': { const pr = p.playPrevious(); push(); pr.finally(push); break; }
+        case 'seek': if (typeof payload === 'number') { p.setCurrentTime(payload); push(); } break;
+        case 'setVolume': if (typeof payload === 'number') { p.setVolume(payload); push(); } break;
       }
     });
     return () => { offControl?.(); };

@@ -26,6 +26,11 @@ export default function MiniPlayer({
   const [showLyrics, setShowLyrics] = useState(false);
   const [lyric, setLyric] = useState<Lyric | null>(null);
   const lyricRef = useRef<HTMLDivElement>(null);
+  // 本地插值：基于最近一次权威时间锚点进行平滑推进
+  const [displayTime, setDisplayTime] = useState(0);
+  const anchorTimeRef = useRef(0); // 秒
+  const anchorTsRef = useRef(0);   // performance.now()
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const off = window.mainApi.playerApi.onStateUpdate((st: PlayerState) => {
@@ -41,18 +46,55 @@ export default function MiniPlayer({
         isPlaying: !!st?.isPlaying,
         track: cur || null,
       });
+      // 更新插值锚点并立即对齐显示
+      const ct = st?.currentTime || 0;
+      anchorTimeRef.current = ct;
+      anchorTsRef.current = performance.now();
+      setDisplayTime(ct);
     });
     window.mainApi.playerApi.requestLiveState();
     return () => { off?.(); };
   }, []);
 
-  // 为保证在主窗口隐藏或计时器被系统降频时仍能更新进度，这里做轻量轮询拉取
+  // 本地插值推进：播放时用 RAF 线性推进，避免仅靠拉取造成的停顿
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      try { window.mainApi.playerApi.requestLiveState(); } catch {}
-    }, 1000);
-    return () => window.clearInterval(timer);
+    const loop = () => {
+      const now = performance.now();
+      const elapsed = Math.max(0, (now - anchorTsRef.current) / 1000);
+      const dur = state.duration || Infinity;
+      const next = Math.min(dur, anchorTimeRef.current + elapsed);
+      setDisplayTime(next);
+      rafIdRef.current = requestAnimationFrame(loop);
+    };
+    if (state.isPlaying) {
+      anchorTimeRef.current = state.currentTime || anchorTimeRef.current;
+      anchorTsRef.current = performance.now();
+      rafIdRef.current = requestAnimationFrame(loop);
+    }
+    return () => {
+      if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    };
+  }, [state.isPlaying, state.duration, state.currentTime]);
+
+  // 关键时刻拉取：窗口聚焦/可见切回时，主动请求一次最新状态
+  useEffect(() => {
+    const onFocus = () => { try { window.mainApi.playerApi.requestLiveState(); } catch {} };
+    const onVis = () => { if (document.visibilityState === 'visible') onFocus(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, []);
+
+  // 控制后“脉冲式拉取”：立刻 + 150ms + 800ms，对齐封面/时长/进度
+  const pulsePull = () => {
+    try { window.mainApi.playerApi.requestLiveState(); } catch {}
+    setTimeout(() => { try { window.mainApi.playerApi.requestLiveState(); } catch {} }, 150);
+    setTimeout(() => { try { window.mainApi.playerApi.requestLiveState(); } catch {} }, 800);
+  };
 
   // 加载歌词（展开时或曲目变化时）
   useEffect(() => {
@@ -67,8 +109,8 @@ export default function MiniPlayer({
 
   const pct = useMemo(() => {
     const d = state.duration || 1;
-    return Math.min(1, Math.max(0, state.currentTime / d));
-  }, [state.currentTime, state.duration]);
+    return Math.min(1, Math.max(0, displayTime / d));
+  }, [displayTime, state.duration]);
 
   // 当前歌词行（基于 originLines）
   const currentLine = useMemo<LyricLine | null>(() => {
@@ -103,21 +145,21 @@ export default function MiniPlayer({
         <div className={styles.actions}>
           <button
             className={styles.icon}
-            onClick={() => window.mainApi.playerApi.control('prev')}
+            onClick={() => { window.mainApi.playerApi.control('prev'); pulsePull(); }}
             title='上一首'
           >
             <i className='fas fa-step-backward' />
           </button>
           <button
             className={styles.icon}
-            onClick={() => window.mainApi.playerApi.control('toggle')}
+            onClick={() => { window.mainApi.playerApi.control('toggle'); pulsePull(); }}
             title={state.isPlaying ? '暂停' : '播放'}
           >
             <i className={`fas ${state.isPlaying ? 'fa-pause' : 'fa-play'}`} />
           </button>
           <button
             className={styles.icon}
-            onClick={() => window.mainApi.playerApi.control('next')}
+            onClick={() => { window.mainApi.playerApi.control('next'); pulsePull(); }}
             title='下一首'
           >
             <i className='fas fa-step-forward' />
@@ -144,7 +186,7 @@ export default function MiniPlayer({
             {state.artist}
           </div>
           <div className={styles.times}>
-            {formatTime(state.currentTime)} / {formatTime(state.duration)}
+            {formatTime(displayTime)} / {formatTime(state.duration)}
           </div>
           <div className={styles.progress}>
             <div className={styles.progressRow}>

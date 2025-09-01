@@ -451,7 +451,8 @@ export default class PlayerController extends AbstractController<[PlayerState]> 
 
   private startProgressTimer() {
     if (this.progressTimer !== null) return;
-    this.progressTimer = window.setInterval(this.updateCurrentTimeAndPositionState, 500);
+    // 提高进度广播频率，提升 Mini 同步流畅度
+    this.progressTimer = window.setInterval(this.updateCurrentTimeAndPositionState, 250);
   }
 
   private stopProgressTimer() {
