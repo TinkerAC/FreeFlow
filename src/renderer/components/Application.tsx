@@ -67,6 +67,8 @@ const Application: React.FC = () => {
   }, []);
 
   /* ---------- 5. 播放器逻辑 ---------- */
+  const location = useLocation();
+  const isMini = location.pathname === '/mini';
   const audioRef = useRef<HTMLAudioElement>(null);
   const playerInstanceRef = useRef<PlayerController | null>(null);
   const [playerState, setPlayerState] = useState<PlayerState>({
@@ -81,6 +83,7 @@ const Application: React.FC = () => {
 
 
   useEffect(() => {
+    if (isMini) return; // 单持有者：迷你窗口不创建播放器
     const initPlayer = async () => {
       const dump = await playerContext.getPlayerStateFromMain();
       if (audioRef.current && !playerInstanceRef.current) {
@@ -88,6 +91,8 @@ const Application: React.FC = () => {
 
         player.subscribe((st: PlayerState) => {
           setPlayerState(st);
+          // 向主进程广播实时状态，供 Mini 订阅
+          playerContext.broadcastState(st);
         });
 
         playerInstanceRef.current = player;
@@ -104,12 +109,13 @@ const Application: React.FC = () => {
     initPlayer().then(
       () => console.info(chalk.green('播放器初始化成功')),
     );
-  }, [audioRef.current]);
+  }, [audioRef.current, isMini]);
 
   useEffect(() => {
+    if (isMini) return;
     const handleReqState = () => {
       const player = playerInstanceRef.current;
-      if (player) playerContext.sendPlayerState(player.dumpPlayerState());
+      if (player) playerContext.broadcastState(player.dumpPlayerState());
     };
     const handleShortcut = (data: string) => {
       const player = playerInstanceRef.current;
@@ -142,7 +148,26 @@ const Application: React.FC = () => {
       shortcutContext.removeShortcutListener();
       playerContext.removeRequestPlayerStateListener();
     };
-  }, []);
+  }, [isMini]);
+
+  // 接收来自主进程的控制命令，仅主窗口处理
+  useEffect(() => {
+    if (isMini) return;
+    const offControl = window.mainApi.playerApi.onControl((cmd: string, payload: any) => {
+      const p = playerInstanceRef.current;
+      if (!p) return;
+      switch (cmd) {
+        case 'play': p.play(); break;
+        case 'pause': p.pause(); break;
+        case 'toggle': p.togglePlayPause(); break;
+        case 'next': p.playNext(); break;
+        case 'prev': p.playPrevious(); break;
+        case 'seek': if (typeof payload === 'number') p.setCurrentTime(payload); break;
+        case 'setVolume': if (typeof payload === 'number') p.setVolume(payload); break;
+      }
+    });
+    return () => { offControl?.(); };
+  }, [isMini]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -163,12 +188,11 @@ const Application: React.FC = () => {
   });
 
   /* ---------- 7. UI ---------- */
-  const location = useLocation();
-  if (location.pathname === '/mini') {
+  if (isMini) {
     return (
       <div className="App h-full w-full flex flex-col bg-transparent">
-        <audio ref={audioRef} hidden preload="auto" />
-        <MiniPlayer player={playerInstanceRef.current} />
+        {/* 单持有者：迷你窗口不挂载 <audio>，不创建 PlayerController */}
+        <MiniPlayer player={null} />
       </div>
     );
   }

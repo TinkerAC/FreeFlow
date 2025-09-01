@@ -1,32 +1,5 @@
 // global.d.ts
-
-
-import { ConfigApi } from '@renderer/core/ipc/configApi';
-import { LibraryApi } from '@renderer/core/ipc/libraryApi';
-import { LyricsApi } from '@renderer/core/ipc/lyricsApi';
-import { SystemApi } from '@renderer/core/ipc/systemApi';
-import { PlayerApi } from '@renderer/core/ipc/playerApi';
-import { PlaylistApi } from '@renderer/core/ipc/playlistApi';
-import { SearchApi } from '@renderer/core/ipc/searchApi';
-import { ShortcutApi } from '@renderer/core/ipc/shortcutApi';
-import { WindowControlApi } from '@renderer/core/ipc/windowControlApi';
-
-interface MainApi {
-  configApi: ConfigApi;
-  libraryApi: LibraryApi;
-  lyricsApi: LyricsApi;
-  systemApi: SystemApi;
-  playerApi: PlayerApi;
-  playlistApi: PlaylistApi;
-  searchApi: SearchApi;
-  shortcutApi: ShortcutApi;
-  windowControlApi: WindowControlApi;
-  miniPlayerApi: {
-    toggle(): Promise<void>;
-    show(): Promise<void>;
-    hide(): Promise<void>;
-  };
-}
+import type { MainApi } from '@src/shared/ipc/types';
 
 declare global {
   interface Window {
@@ -49,4 +22,3 @@ declare module '@mui/material/styles' {
     };
   }
 }
-

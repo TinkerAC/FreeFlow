@@ -50,6 +50,14 @@ export interface PlayerApi {
   onRequestPlayerState(callback: () => void): void;
 
   removeRequestPlayerStateListener(): void;
+
+  // Single-owner extensions
+  control(cmd: 'play'|'pause'|'toggle'|'next'|'prev'|'seek'|'setVolume', payload?: any): void;
+  onStateUpdate(cb: (state: PlayerState) => void): () => void;
+  requestLiveState(): void;
+  broadcastState(state: PlayerState): void;
+  onLiveStateRequest(cb: () => void): () => void;
+  onControl(cb: (cmd: string, payload: any) => void): () => void;
 }
 
 /** Playlist */

@@ -12,6 +12,8 @@ export default class AppWindow extends AbstractWindow {
       // 覆写/追加差异化配置
       webPreferences: {
         preload: APP_WINDOW_PRELOAD_WEBPACK_ENTRY,
+        // 隐藏到后台后仍保持定时器/媒体不被降频，保证向 Mini 广播进度
+        backgroundThrottling: false,
         // 继承父类默认其它字段
       },
     });

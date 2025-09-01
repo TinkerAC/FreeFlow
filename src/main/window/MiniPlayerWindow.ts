@@ -23,6 +23,8 @@ export default class MiniPlayerWindow extends AbstractWindow {
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
+        // Mini 窗口同样不降频，保证 UI 动画/渲染流畅
+        backgroundThrottling: false,
       },
     });
 

@@ -54,6 +54,9 @@ export default class IpcController {
   ) {
   }
 
+  // 缓存最近一次播放器状态，便于新窗口（如 Mini）快速首屏展示
+  private lastPlayerState: PlayerState | null = null;
+
   /**
    * 调用一次即可完成所有 IPC 处理器的注册。
    */
@@ -118,10 +121,16 @@ export default class IpcController {
         this.windowManager.activate(WindowKey.MAIN);
       } else {
         this.windowManager.activate(WindowKey.MINI);
+        // 切换到 Mini 后，主动向主渲染进程请求一次实时状态，确保 Mini 立刻刷新封面/进度
+        const main = this.windowManager.get(WindowKey.MAIN);
+        main?.webContents.send('player:request-state');
       }
     });
     ipcMain.handle('mini-player:show', async () => {
       this.windowManager.activate(WindowKey.MINI);
+      // 显示 Mini 时立即触发一次状态同步
+      const main = this.windowManager.get(WindowKey.MAIN);
+      main?.webContents.send('player:request-state');
     });
     ipcMain.handle('mini-player:hide', async () => {
       this.windowManager.hide(WindowKey.MINI);
@@ -191,6 +200,31 @@ export default class IpcController {
       mainWindow && mainWindow.destroy();
       // 结束整个应用
       app.quit();
+    });
+
+    // Single-owner: proxy player controls to MAIN renderer
+    ipcMain.on('player:control', (evt, cmd: string, payload: any) => {
+      const main = this.windowManager.get(WindowKey.MAIN);
+      main?.webContents.send('player:control', cmd, payload);
+    });
+    // Single-owner: broadcast live state to other windows
+    ipcMain.on('player:state', (evt, state: PlayerState) => {
+      this.lastPlayerState = state;
+      const all = BrowserWindow.getAllWindows();
+      for (const w of all) {
+        if (w.webContents.id === evt.sender.id) continue; // avoid echo
+        try { w.webContents.send('player:state', state); } catch {}
+      }
+    });
+    // Request current state from owner (main) and rely on broadcast back
+    ipcMain.on('player:request-state', (evt) => {
+      // 先用缓存立即响应，以提升新窗口首屏体验
+      if (this.lastPlayerState) {
+        try { evt.sender.send('player:state', this.lastPlayerState); } catch {}
+      }
+      // 再请求 MAIN 渲染进程广播最新状态，确保一致性
+      const main = this.windowManager.get(WindowKey.MAIN);
+      main?.webContents.send('player:request-state');
     });
   }
 

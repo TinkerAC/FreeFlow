@@ -5,7 +5,9 @@ import { DefaultCover } from '@components/static';
 import { formatTime } from '@src/utils/timeUtils';
 import { lyricsContext } from '@renderer/core/electronContextApi';
 import type { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
+import type { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import type { PlayerState } from '@src/shared/domainModel/playerState';
 
 export default function MiniPlayer({
   player,
@@ -19,41 +21,49 @@ export default function MiniPlayer({
     currentTime: 0,
     duration: 0,
     isPlaying: false,
+    track: null as TrackEntity | null,
   });
   const [showLyrics, setShowLyrics] = useState(false);
   const [lyric, setLyric] = useState<Lyric | null>(null);
   const lyricRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!player) return;
-    const sync = () => {
-      const t = player.playQueue.currentTrack;
+    const off = window.mainApi.playerApi.onStateUpdate((st: PlayerState) => {
+      const ci = st?.queue?.currentIndex ?? 0;
+      const libIdx = st?.queue?.indexList?.[ci] ?? 0;
+      const cur = st?.queue?.queue?.[libIdx];
       setState({
-        title: t?.title || '未播放',
-        artist: t?.artist || '',
-        cover: t?.cover_src || DefaultCover,
-        currentTime: player.currentTime || 0,
-        duration: t?.duration || 0,
-        isPlaying: player.isPlaying,
+        title: cur?.title || '未播放',
+        artist: cur?.artist || '',
+        cover: cur?.cover_src || DefaultCover,
+        currentTime: st?.currentTime || 0,
+        duration: cur?.duration || 0,
+        isPlaying: !!st?.isPlaying,
+        track: cur || null,
       });
-    };
-    sync();
-    const unsub = player.subscribe(sync);
-    return () => {
-      unsub();
-    };
-  }, [player]);
+    });
+    window.mainApi.playerApi.requestLiveState();
+    return () => { off?.(); };
+  }, []);
+
+  // 为保证在主窗口隐藏或计时器被系统降频时仍能更新进度，这里做轻量轮询拉取
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      try { window.mainApi.playerApi.requestLiveState(); } catch {}
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // 加载歌词（展开时或曲目变化时）
   useEffect(() => {
-    const t = player?.playQueue.currentTrack;
+    const t = state.track;
     if (!showLyrics || !t) { setLyric(null); return; }
     let alive = true;
     lyricsContext.getLyrics(t)
       .then((l) => { if (alive) setLyric(l || null); })
       .catch(() => setLyric(null));
     return () => { alive = false; };
-  }, [showLyrics, player?.playQueue.currentTrack?.platform, player?.playQueue.currentTrack?.platform_unique_id]);
+  }, [showLyrics, state.track?.platform, state.track?.platform_unique_id]);
 
   const pct = useMemo(() => {
     const d = state.duration || 1;
@@ -93,21 +103,21 @@ export default function MiniPlayer({
         <div className={styles.actions}>
           <button
             className={styles.icon}
-            onClick={() => player?.playPrevious()}
+            onClick={() => window.mainApi.playerApi.control('prev')}
             title='上一首'
           >
             <i className='fas fa-step-backward' />
           </button>
           <button
             className={styles.icon}
-            onClick={() => player?.togglePlayPause()}
+            onClick={() => window.mainApi.playerApi.control('toggle')}
             title={state.isPlaying ? '暂停' : '播放'}
           >
             <i className={`fas ${state.isPlaying ? 'fa-pause' : 'fa-play'}`} />
           </button>
           <button
             className={styles.icon}
-            onClick={() => player?.playNext()}
+            onClick={() => window.mainApi.playerApi.control('next')}
             title='下一首'
           >
             <i className='fas fa-step-forward' />

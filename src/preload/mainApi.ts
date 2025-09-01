@@ -44,11 +44,32 @@ const mainApi: MainApi = {
 
     onRequestPlayerState: (callback) => {
       const listener = () => callback();
-      ipcRenderer.on('request-player-state', listener);
+      // 统一使用 `player:request-state` 频道
+      ipcRenderer.on('player:request-state', listener);
     },
 
     removeRequestPlayerStateListener: () => {
-      ipcRenderer.removeAllListeners('request-player-state');
+      ipcRenderer.removeAllListeners('player:request-state');
+    },
+
+    // Single-owner extensions
+    control: (cmd: any, payload?: any) => ipcRenderer.send('player:control', cmd, payload),
+    onStateUpdate: (cb: (s: PlayerState) => void) => {
+      const handler = (_: Electron.IpcRendererEvent, s: PlayerState) => cb(s);
+      ipcRenderer.on('player:state', handler);
+      return () => ipcRenderer.removeListener('player:state', handler);
+    },
+    requestLiveState: () => ipcRenderer.send('player:request-state'),
+    broadcastState: (state: PlayerState) => ipcRenderer.send('player:state', state),
+    onLiveStateRequest: (cb: () => void) => {
+      const handler = () => cb();
+      ipcRenderer.on('player:request-state', handler);
+      return () => ipcRenderer.removeListener('player:request-state', handler);
+    },
+    onControl: (cb: (cmd: string, payload: any) => void) => {
+      const handler = (_: Electron.IpcRendererEvent, cmd: string, payload: any) => cb(cmd, payload);
+      ipcRenderer.on('player:control', handler);
+      return () => ipcRenderer.removeListener('player:control', handler);
     },
   },
 
