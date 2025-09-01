@@ -79,6 +79,7 @@
     --font-ui-lg: clamp(16px, 1.6vw, 18px);
 
     /* PlayerBar 与进度条默认皮肤变量（可被组件覆盖） */
+    --playerbar-height: 72px; /* 与 PlayerBar.module.css 保持一致 */
     --playerbar-bg: color-mix(in oklab, rgb(var(--md-sys-color-surface)) 92%, transparent);
 
     --pg-height-sm: 4px;

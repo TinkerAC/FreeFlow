@@ -17,6 +17,8 @@ export const ThemeSettings = z.object({
   source: ThemeSource.default('material-you'),
   seed: z.string().default('#66ccff'),    // 仅在 source === 'material-you' 时使用
   preset: ThemePreset.default('classic'),  // 仅在 source === 'preset' 时使用
+  /** 是否每日自动更换新的种子颜色（仅对 Material You 有效） */
+  autoDailySeed: z.boolean().default(false),
 });
 export type ThemeSettings = z.infer<typeof ThemeSettings>;
 

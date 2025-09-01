@@ -4,6 +4,24 @@ import { configContext, systemContext } from '@renderer/core/electronContextApi'
 import { formatStorageUnit } from '@src/utils/fsUtils';
 import ViewShell from '@components/Maincontent/ViewShell/ViewShell';
 
+// 内联占位头像，避免访问外部 https 资源导致 SSL 报错
+const AVATAR_PLACEHOLDER_DATA =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#374151"/>
+        <stop offset="100%" stop-color="#4b5563"/>
+      </linearGradient>
+    </defs>
+    <rect width="96" height="96" rx="48" fill="url(#g)"/>
+    <g fill="#ffffff" opacity="0.95">
+      <circle cx="48" cy="40" r="16"/>
+      <path d="M16 84c6-16 22-24 32-24s26 8 32 24z"/>
+    </g>
+  </svg>`);
+
 /** 简单 SVG 图标 */
 const FolderIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
@@ -107,7 +125,7 @@ function ProfileView() {
     alert('UnImplemented.');
   };
 
-  const avatarSrc = avatarPath ? `file://${avatarPath}` : 'https://via.placeholder.com/96/374151/FFFFFF?text=Avatar';
+  const avatarSrc = avatarPath ? `file://${avatarPath}` : AVATAR_PLACEHOLDER_DATA;
 
   return (
     <ViewShell>
@@ -128,7 +146,7 @@ function ProfileView() {
                      title="更改头像" tabIndex={0}
                      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleSelectAvatar()}>
                   <img src={avatarSrc} alt="Avatar" className={styles.avatarImg}
-                       onError={(e) => ((e.currentTarget.src = 'https://via.placeholder.com/96/374151/FFFFFF?text=Avatar'))} />
+                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = AVATAR_PLACEHOLDER_DATA; }} />
                   <div className={styles.avatarMask}>更改头像</div>
                 </div>
                 <input ref={avatarInputRef} id="avatarUploadInput" type="file" accept="image/*"

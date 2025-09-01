@@ -22,6 +22,7 @@ export default function SettingsView() {
   const themeMode = useSetting<ThemeMode>('theme.mode', 'system');
   const themeSource = useSetting<ThemeSource>('theme.source', 'material-you');
   const seedHex = useSetting<string>('theme.seed', '#66ccff');
+  const autoDailySeed = useSetting<boolean>('theme.autoDailySeed', false);
   const preset = useSetting<ThemePreset>('theme.preset', 'classic');
 
   const progressSkin = useSetting<ProgressSkin>('audio.progressSkin', 'classic');
@@ -94,6 +95,13 @@ export default function SettingsView() {
                   ]}
                 />
               }
+            />
+          )}
+          {themeSource.value === 'material-you' && (
+            <SettingRow
+              label="每日设置新的种子颜色"
+              sub="每天自动更换 Material You 种子色"
+              control={<Switch checked={!!autoDailySeed.value} onChange={autoDailySeed.setValue} />}
             />
           )}
           <SettingRow
