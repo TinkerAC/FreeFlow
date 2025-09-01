@@ -49,25 +49,6 @@ export default function RightContent({ player }: RightContentProps) {
     try { localStorage.removeItem('recentlyPlayed'); } catch {}
   };
 
-  if (!currentTrack && !remainingTracks.length) {
-    return (
-      <div
-        style={{
-          height: '100%',
-          display: 'grid',
-          placeItems: 'center',
-          color: 'rgb(var(--md-sys-color-on-surface-variant))',
-          background: 'rgb(var(--md-sys-color-surface-container-low))',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <i className="fas fa-music" style={{ fontSize: 32, opacity: .6 }} />
-          <p style={{ marginTop: 6 }}>暂无播放队列</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <PlayQueue
       currentTrack={currentTrack}
