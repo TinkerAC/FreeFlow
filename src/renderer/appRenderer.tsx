@@ -4,6 +4,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 import Application from './components/Application';
 
 import { SettingsProvider } from '@renderer/core/config/SettingsContext';
+import { DailySeedSchedulerBridge } from '@renderer/core/config/SettingsContext';
 
 import '@renderer/styles/tokens.material.css';
 import DesignSystemBridge from '@renderer/designSystem/DesignSystemBridge';
@@ -12,6 +13,7 @@ console.log('[FreeFlow] : Renderer execution started');
 
 createRoot(document.getElementById('app')!).render(
   <SettingsProvider>
+    <DailySeedSchedulerBridge />
     <DesignSystemBridge>
       <HashRouter>
         <Routes>

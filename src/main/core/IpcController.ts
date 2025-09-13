@@ -77,6 +77,11 @@ export default class IpcController {
     this.registerDownloadHandlers();
     this.registerMiscHandlers();
 
+    // 初始化：记录当前图标，避免第一次“任意设置变更”就触发图标重设
+    try {
+      this.lastAppliedIcon = this.preferenceService.getCurrentIcon();
+    } catch { /* ignore */ }
+
     // 监听设置变化以应用 App 图标（仅在 icon 变更时执行）
     this.configService.onChanged((s) => {
       const icon = (s as any)?.app?.icon as AppIcon | undefined;

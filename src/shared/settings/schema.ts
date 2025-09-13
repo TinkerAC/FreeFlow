@@ -9,14 +9,63 @@ export type ThemeMode = z.infer<typeof ThemeMode>;
 export const ThemeSource = z.enum(['material-you', 'preset']);
 export type ThemeSource = z.infer<typeof ThemeSource>;
 
-/** 预设主题名：你可以继续扩展 */
-export const ThemePreset = z.enum(['classic', 'spotify', 'netease']);
+/** 预设主题名：扩展包含一组观感较好的种子色 */
+export const ThemePreset = z.enum([
+  'classic',
+  'spotify',
+  'netease',
+  // palette-based presets
+  'indigo',
+  'blue',
+  'cyan',
+  'green',
+  'lime',
+  'amber',
+  'orange',
+  'red',
+  'pink',
+  'purple',
+  'deepPurple',
+  'indigoDeep',
+  'lightBlue',
+  'teal',
+  'lightGreen',
+  'limeDeep',
+  'yellow',
+  'amberDeep',
+  'deepOrange',
+  'brown',
+  'blueGrey',
+]);
 export type ThemePreset = z.infer<typeof ThemePreset>;
 
 export const ThemeSettings = z.object({
   mode: ThemeMode.default('dark'),
   source: ThemeSource.default('material-you'),
   seed: z.string().default('#66ccff'),    // 仅在 source === 'material-you' 时使用
+  /** Material You 种子色预设（可编辑） */
+  materialSeedPresets: z.array(z.string()).default([
+    '#6750A4', // Indigo
+    '#1E88E5', // Blue
+    '#00ACC1', // Cyan
+    '#43A047', // Green
+    '#7CB342', // Lime
+    '#FBC02D', // Amber
+    '#FB8C00', // Orange
+    '#E53935', // Red
+    '#D81B60', // Pink
+    '#8E24AA', // Purple
+    '#5E35B1', // Deep Purple
+    '#3949AB', // Indigo Deep
+    '#039BE5', // Light Blue
+    '#00897B', // Teal
+    '#C0CA33', // Lime Deep
+    '#FDD835', // Yellow
+    '#FFB300', // Amber Deep
+    '#F4511E', // Deep Orange
+    '#6D4C41', // Brown
+    '#546E7A', // Blue Grey
+  ]),
   preset: ThemePreset.default('classic'),  // 仅在 source === 'preset' 时使用
   /** 是否每日自动更换新的种子颜色（仅对 Material You 有效） */
   autoDailySeed: z.boolean().default(false),

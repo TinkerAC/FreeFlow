@@ -6,12 +6,14 @@ import SettingsGroup from './parts/SettingsGroup';
 import SettingRow from './parts/SettingRow';
 import Switch from './controls/Switch';
 import Select from './controls/Select';
+import ColorSelect from './controls/ColorSelect';
 import Slider from './controls/Slider';
 import Segmented from './controls/Segmented';
 import ColorSeed from './controls/ColorSeed';
 import { AppIcon, getIconOptions } from '@src/shared/hifiniCookies';
 
 import { useSetting } from '@renderer/core/config/SettingsContext'; // ← 关键：用新的 useSetting
+import { PRESET_SEEDS } from '@renderer/theme/presets';
 
 type ThemeMode = 'system' | 'light' | 'dark';
 type ThemeSource = 'material-you' | 'preset';
@@ -25,6 +27,8 @@ export default function SettingsView() {
   const seedHex = useSetting<string>('theme.seed', '#66ccff');
   const autoDailySeed = useSetting<boolean>('theme.autoDailySeed', false);
   const preset = useSetting<ThemePreset>('theme.preset', 'classic');
+  const seedPresets = useSetting<string[]>('theme.materialSeedPresets', []);
+  const [newSeed, setNewSeed] = React.useState('');
 
   const progressSkin = useSetting<ProgressSkin>('audio.progressSkin', 'classic');
   const volume = useSetting<number>('audio.volume', 0.8);
@@ -111,6 +115,60 @@ export default function SettingsView() {
                     { label: 'Netease', value: 'netease' },
                   ]}
                 />
+              }
+            />
+          )}
+          {themeSource.value === 'material-you' && (
+            <SettingRow
+              label="种子色预设"
+              sub="按名称选择，并预览色块"
+              control={
+                (() => {
+                  const toTitle = (k: string) => k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^\w/, s => s.toUpperCase());
+                  // 1) 内置预设（带名称）
+                  const builtin = Object.entries(PRESET_SEEDS).map(([name, hex]) => ({ label: toTitle(name), hex }));
+                  // 2) 用户自定义（可能与内置重复，去重后追加）
+                  const customList = (seedPresets.value || []).filter(Boolean);
+                  const seen = new Set(builtin.map(b => b.hex.toLowerCase()));
+                  const customs = customList
+                    .filter(h => !seen.has(h.toLowerCase()))
+                    .map(h => ({ label: h.toUpperCase(), hex: h }));
+                  const options = [...builtin, ...customs];
+                  return (
+                    <ColorSelect
+                      value={seedHex.value}
+                      options={options}
+                      onChange={(hex) => seedHex.setValue(hex)}
+                    />
+                  );
+                })()
+              }
+            />
+          )}
+          {themeSource.value === 'material-you' && (
+            <SettingRow
+              label="添加种子预设"
+              sub="输入 #RRGGBB 并添加"
+              control={
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder="#6750A4"
+                    value={newSeed}
+                    onChange={(e) => setNewSeed(e.target.value)}
+                    style={{ height: 28, borderRadius: 999, background: 'rgba(var(--md-sys-color-surface-variant), .35)', border: '1px solid rgb(var(--md-sys-color-outline-variant))', color: 'rgb(var(--md-sys-color-on-surface))', padding: '0 10px', width: 140 }}
+                  />
+                  <button
+                    onClick={() => {
+                      const hex = newSeed.trim();
+                      if (!/^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(hex)) return;
+                      const list = Array.from(new Set([...(seedPresets.value || []), hex]));
+                      seedPresets.setValue(list);
+                      setNewSeed('');
+                    }}
+                    style={{ height: 28, padding: '0 12px', borderRadius: 999, background: 'rgb(var(--md-sys-color-primary))', color: '#fff', border: 'none' }}
+                  >添加</button>
+                </div>
               }
             />
           )}

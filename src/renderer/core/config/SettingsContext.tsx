@@ -108,3 +108,43 @@ export function useSetting<T>(path: string, fallback: T) {
   const setValue = (v: T) => setByPath<T>(path, v);
   return { value, setValue } as const;
 }
+
+// 在启用“每日切换种子颜色”时，跨越午夜后自动重新应用主题（不改动持久化 seed）。
+// 这样即使应用长时间运行，第二天也会换色。
+function useDailySeedMidnightScheduler(enabled: boolean) {
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    function schedule() {
+      // 计算到下一次本地午夜的毫秒数
+      const now = new Date();
+      const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+      const delay = Math.max(1000, next.getTime() - now.getTime());
+      timer = setTimeout(async () => {
+        try {
+          // 拿最新的设置并重新应用（applyAllSettings 内部会根据当日计算 seed）
+          const s = await configContext.getAll();
+          applyAllSettings(s);
+        } finally {
+          // 继续排下一次
+          schedule();
+        }
+      }, delay);
+    }
+
+    if (enabled) schedule();
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [enabled]);
+}
+
+// 将调度器绑定到 SettingsProvider 中，便于拿到当前设置状态。
+// 仅当启用 autoDailySeed 且 source 为 material-you 时激活。
+export function DailySeedSchedulerBridge(): JSX.Element | null {
+  const { settings } = useSettingsContext();
+  const autoDaily = !!settings?.theme.autoDailySeed;
+  const isMY = settings?.theme.source === 'material-you';
+  useDailySeedMidnightScheduler(autoDaily && isMY);
+  return null;
+}

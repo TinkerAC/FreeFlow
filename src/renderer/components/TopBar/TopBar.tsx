@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import styles from './TopBar.module.css';
 import { configContext, searchContext, systemContext, windowControlContext } from '@renderer/core/electronContextApi';
-import { debug } from '@components/static';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import PlayerController from '@renderer/core/controller/PlayerController';
@@ -160,7 +159,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
           </button>
 
           <button className={styles.iconBtn} title="调试" onClick={() => navigate('/debug')}>
-            <img src={debug} alt="Debug" width={16} height={16} />
+            <i className="fa-solid fa-bug" />
           </button>
 
           <div
