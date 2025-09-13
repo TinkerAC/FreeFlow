@@ -15,10 +15,11 @@ interface ContextMenuProps {
   player: PlayerController;
   handleCloseMenu: () => void;
   musicLibraryController: MusicLibraryController;
+  onEditRequest?: (track: TrackEntity) => void;
 }
 
 export default function ContextMenu({
-                                      x, y, track, handleCloseMenu, player, musicLibraryController,
+                                      x, y, track, handleCloseMenu, player, musicLibraryController, onEditRequest,
                                     }: ContextMenuProps) {
 
   // --- Refs ---
@@ -175,6 +176,15 @@ export default function ContextMenu({
         <button className={styles.item} role="menuitem" onClick={removeFromCurrent}>
           <span className={clsx('fas fa-xmark', styles.icon)} />
           <span>从 {musicLibraryController.activePlaylist?.title ?? '当前'} 中移除</span>
+        </button>
+
+        <button
+          className={styles.item}
+          role="menuitem"
+          onClick={() => { onEditRequest?.(track); }}
+        >
+          <span className={clsx('fas fa-pen', styles.icon)} />
+          <span>编辑歌曲信息</span>
         </button>
 
         <button

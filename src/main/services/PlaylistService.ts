@@ -79,22 +79,38 @@ export default class PlaylistService {
           const tracksWithInfo = await Promise.allSettled(
             playlist.tracks.map(async (track) => {
               try {
-                const trackInfo = await this.trackService.getTrackInfo(track.platform, track.platform_unique_id);
-                return {
-                  ...track,
-                  ...trackInfo,
+                const info = await this.trackService.getTrackInfo(track.platform, track.platform_unique_id);
+                // 合并策略：以数据库中的可编辑字段为准（title/artist/album）
+                // 仅用拉取的信息补充非编辑字段（duration/cover_src 等）
+                const merged = {
+                  ...info,
+                  // 以下字段优先使用数据库（track）当前值，避免覆盖用户编辑
+                  title: (track.title ?? info?.title) as any,
+                  artist: (track.artist ?? info?.artist) as any,
+                  album: (track.album ?? info?.album) as any,
+                  // 封面/时长优先使用 info（如果存在），否则保留 db 值
+                  cover_src: (info?.cover_src ?? track.cover_src) as any,
+                  duration: (info?.duration ?? track.duration) as any,
+                  id: track.id,
+                  platform: track.platform,
+                  platform_unique_id: track.platform_unique_id,
+                  created_at: track.created_at,
+                  modified_at: track.modified_at,
+                  played_count: track.played_count,
+                  downloaded: track.downloaded,
                 };
+                return merged;
               } catch (error) {
                 console.error(`Error fetching info for track ID ${track.id}:`, error);
-                return null; // 将错误的 track 标记为 null
+                return track; // 回退到数据库记录，而不是丢弃
               }
             }),
           );
 
           // 移除发生错误的 track
           const validTracks = tracksWithInfo
-            .filter((result) => result.status === 'fulfilled' && result.value !== null)
-            .map((result) => (result as PromiseFulfilledResult<TrackEntity>).value);
+            .filter((result) => result.status === 'fulfilled' && result.value)
+            .map((result) => (result as PromiseFulfilledResult<TrackEntity>).value as TrackEntity);
 
           return {
             ...playlist,
@@ -191,4 +207,3 @@ export default class PlaylistService {
   }
 
 }
-

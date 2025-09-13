@@ -39,6 +39,13 @@ export interface LyricsApi {
   getLyrics(track: TrackEntity): Promise<Lyric>;
 }
 
+/** Track */
+export interface TrackApi {
+  getInfo(platform: string, platform_unique_id: string): Promise<TrackEntity>;
+  updateBasic(payload: { platform: string; platform_unique_id: string; title?: string; artist?: string; album?: string }): Promise<TrackEntity>;
+  cleanBasic(payload: { title: string; artist?: string; album?: string }): Promise<{ title: string; artist: string; album?: string }>;
+}
+
 /** Player */
 export interface PlayerApi {
   getPlayerStateFromMain(): Promise<PlayerState>;
@@ -132,6 +139,7 @@ export interface MainApi {
   configApi: ConfigApi;
   libraryApi: LibraryApi;
   lyricsApi: LyricsApi;
+  trackApi: TrackApi;
   playerApi: PlayerApi;
   playlistApi: PlaylistApi;
   searchApi: SearchApi;

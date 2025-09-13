@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ContextMenu from './ContextMenu';
 import Track from '@components/Maincontent/PlaylistView/Track';
+import ModalEditTrack from '@components/Maincontent/PlaylistView/ModalEditTrack';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
@@ -20,6 +21,7 @@ export function Playlist({
   const [menu, setMenu] = useState<{ visible: boolean; x: number; y: number; track: TrackEntity | null }>({
     visible: false, x: 0, y: 0, track: null,
   });
+  const [editing, setEditing] = useState<TrackEntity | null>(null);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -134,6 +136,15 @@ export function Playlist({
           handleCloseMenu={() => setMenu({ visible: false, x: 0, y: 0, track: null })}
           player={player}
           musicLibraryController={musicLibraryController}
+          onEditRequest={(t) => { setEditing(t); setMenu({ visible: false, x: 0, y: 0, track: null }); }}
+        />
+      )}
+
+      {editing && (
+        <ModalEditTrack
+          track={editing}
+          onClose={() => setEditing(null)}
+          onSaved={async () => { await musicLibraryController.refreshPlaylists(); }}
         />
       )}
     </div>

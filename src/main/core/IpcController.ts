@@ -31,6 +31,7 @@ import { AppIcon } from '@src/shared/hifiniCookies';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 import { Channels } from '@src/shared/ipc/channels';
+import { AiTextService } from '@main/services/ai/AiTextService';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能切分成若干私有注册方法，
@@ -56,6 +57,7 @@ export default class IpcController {
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
     @inject(DISymbol.PreferenceService) private readonly preferenceService: PreferenceService,
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
+    @inject(DISymbol.AiTextService) private readonly aiText: AiTextService,
   ) {
   }
 
@@ -72,7 +74,6 @@ export default class IpcController {
     this.registerPlayerHandlers();
     this.registerTrackHandlers();
     this.registerSearchHandlers();
-    // 旧 Config API 已移除，统一使用 V2 Settings API
     this.registerConfigV2Handlers();
     this.registerDownloadHandlers();
     this.registerMiscHandlers();
@@ -308,7 +309,7 @@ export default class IpcController {
 
       let delivered = 0;
       for (const w of targets) {
-        try { w.webContents.send(Channels.Player.State, state); delivered++; } catch {}
+        try { w.webContents.send(Channels.Player.State, state); delivered++; } catch { }
       }
       // 调试输出已移除
     });
@@ -316,7 +317,7 @@ export default class IpcController {
     ipcMain.on(Channels.Player.RequestState, (evt) => {
       // 先用缓存立即响应，以提升新窗口首屏体验
       if (this.lastPlayerState) {
-        try { evt.sender.send(Channels.Player.State, this.lastPlayerState); } catch {}
+        try { evt.sender.send(Channels.Player.State, this.lastPlayerState); } catch { }
       }
       // 再请求 MAIN 渲染进程广播最新状态，确保一致性
       const main = this.windowManager.get(WindowKey.MAIN);
@@ -347,6 +348,26 @@ export default class IpcController {
       },
     );
 
+    // 更新曲目基础信息（title/artist/album）- 通过二元主键定位
+    ipcMain.handle(
+      Channels.Track.UpdateBasic,
+      async (_evt: IpcMainInvokeEvent, payload: { platform: string; platform_unique_id: string; title?: string; artist?: string; album?: string }) => {
+        if (!payload || typeof payload.platform !== 'string' || typeof payload.platform_unique_id !== 'string') {
+          throw new Error('invalid payload');
+        }
+        return await this.trackService.updateBasicInfo(payload);
+      },
+    );
+
+    // 仅清洗（不落库）：返回建议的 title/artist/album
+    ipcMain.handle(
+      Channels.Track.CleanBasic,
+      async (_evt: IpcMainInvokeEvent, payload: { title: string; artist?: string; album?: string }) => {
+        const { title, artist, album } = payload || { title: '' };
+        return await this.aiText.cleanBasic(String(title ?? ''), String(artist ?? ''), String(album ?? ''));
+      },
+    );
+
     ipcMain.handle(Channels.Lyrics.Get, async (_evt: IpcMainInvokeEvent, track: TrackEntity) => {
       console.log('IPC: 获取歌词:', track);
       return await this.lyricService.getLyrics(track);
@@ -367,15 +388,15 @@ export default class IpcController {
   private registerSearchHandlers(): void {
     /** —— 工具函数 —— */
 
-      // 安全 Promise：失败就返回 fallback，并打日志
+    // 安全 Promise：失败就返回 fallback，并打日志
     const safe = async <T>(p: Promise<T>, label: string, fallback: T): Promise<T> => {
-        try {
-          return await p;
-        } catch (e) {
-          console.error(`[search:${label}] failed:`, e);
-          return fallback;
-        }
-      };
+      try {
+        return await p;
+      } catch (e) {
+        console.error(`[search:${label}] failed:`, e);
+        return fallback;
+      }
+    };
 
     // 封面 URL 统一 https / 支持 //schema
     const httpsify = (u?: string) => {
@@ -402,22 +423,18 @@ export default class IpcController {
         (typeof (x as any).title === 'string' && 'creator' in x)
       );
 
-    // —— 曲目清洗：字段兜底、封面 https、清理奇怪的 artist 值 ——
-    const sanitizeTrack = (t: any): TrackEntity | null => {
+    const normalizeTrack = (t: any): TrackEntity | null => {
       if (!isTrackLike(t)) return null;
-
-      const artist = String(t.artist ?? '');
 
       const out: TrackEntity = {
         platform: t.platform,
         platform_unique_id: String(t.platform_unique_id ?? ''),
         title: String(t.title ?? ''),
-        artist,
+        artist: String(t.artist ?? ''),
         album: String(t.album ?? ''),
         duration: Number(t.duration ?? 0) || 0,
         cover_src: httpsify(t.cover_src) || '',
         created_at: t.created_at ? new Date(t.created_at) : new Date(),
-        // fee 字段已移除/可选时不再写入
       };
 
       if (!out.title || !out.platform_unique_id) return null;
@@ -484,13 +501,12 @@ export default class IpcController {
       const allTracksRaw = results.flatMap(r => r?.track_result ?? []);
       const allPlRaw = results.flatMap(r => r?.playlist_result ?? []);
 
-      // 清洗 + 去重
-      const track_result = dedupeTracks(
-        allTracksRaw
-          .filter(isTrackLike)
-          .map(sanitizeTrack)
-          .filter(Boolean) as TrackEntity[],
-      );
+      // 仅标准化 + 去重（不进行 AI 清洗）
+      const normalized = allTracksRaw
+        .filter(isTrackLike)
+        .map((t) => normalizeTrack(t))
+        .filter(Boolean) as TrackEntity[];
+      const track_result = dedupeTracks(normalized);
 
       const playlist_result = dedupePlaylists(
         allPlRaw.filter(isPlaylistLike),
@@ -522,8 +538,6 @@ export default class IpcController {
   }
 
   /* -------------------------- 设置 & 配置 --------------------------- */
-  // 旧 get-config/set-config & PreferenceService 已移除
-
   /** 新接口（Settings 全量/分支/patch） */
   private registerConfigV2Handlers() {
     ipcMain.handle(Channels.Config.GetAll, async () => {

@@ -22,6 +22,8 @@ export const Channels = {
   },
   Track: {
     GetInfo: 'track:get-info',
+    UpdateBasic: 'track:update-basic',
+    CleanBasic: 'track:clean-basic',
   },
   Player: {
     LoadState: 'player:load-state',

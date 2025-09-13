@@ -34,4 +34,5 @@ export const DISymbol = {
   BilibiliService: Symbol.for('BilibiliService'),
   SettingsStore: Symbol.for('SettingsStore'),
   ConfigService: Symbol.for('ConfigService'),
+  AiTextService: Symbol.for('AiTextService'),
 };

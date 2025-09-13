@@ -8,6 +8,7 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import { DISymbol } from '@main/di/symbol';
+import type { AiTextService } from '@main/services/ai/AiTextService';
 
 
 @injectable()
@@ -16,6 +17,7 @@ export default class TrackService {
     @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
     @inject(DISymbol.HifiniMusic) private hifiniMusic: HifiniMusic,
     @inject(DISymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
+    @inject(DISymbol.AiTextService) private aiText: AiTextService,
   ) {
   }
 
@@ -96,6 +98,15 @@ export default class TrackService {
       return track1;
     }
 
+    // 在写库前调用 AI 清洗标题/歌手（仅在启用且可用时生效，失败则忽略）
+    try {
+      const cleaned = await this.aiText.cleanTitleArtist(track.title ?? '', track.artist ?? '');
+      if (cleaned?.title) track.title = cleaned.title;
+      if (typeof cleaned?.artist === 'string') track.artist = cleaned.artist;
+    } catch {
+      // ignore
+    }
+
     return await this.trackRepository.create(track);
 
   }
@@ -137,6 +148,18 @@ export default class TrackService {
 
   public async localSearch(term: string, limit: number = 20): Promise<TrackEntity[]> {
     return await this.trackRepository.localSearch(term, limit);
+  }
+
+  /** 更新曲目的基础元信息（title/artist/album）。返回更新后的实体。*/
+  public async updateBasicInfo(payload: { platform: string; platform_unique_id: string; title?: string; artist?: string; album?: string }): Promise<TrackEntity> {
+    const prev = await this.trackRepository.findByPlatformAndPlatformUniqueId(payload.platform, payload.platform_unique_id);
+    if (!prev) throw new Error(`Track not found: ${payload.platform}:${payload.platform_unique_id}`);
+    const next: TrackEntity = { ...prev } as TrackEntity;
+    if (typeof payload.title === 'string') next.title = payload.title;
+    if (typeof payload.artist === 'string') next.artist = payload.artist;
+    if (typeof payload.album === 'string') next.album = payload.album;
+    next.modified_at = new Date();
+    return await this.trackRepository.update(next);
   }
 
 }

@@ -126,6 +126,12 @@ export const ServiceSettings = z.object({
     bbs_sid: z.string().default(''),
     bbs_token: z.string().default(''),
   }).default({ bbs_sid: '', bbs_token: '' }),
+  ai: z.object({
+    enabled: z.boolean().default(false),
+    provider: z.enum(['gemini']).default('gemini'),
+    geminiApiKey: z.string().default(''),
+    geminiModel: z.string().default('gemini-2.5-flash'),
+  }).default({ enabled: false, provider: 'gemini', geminiApiKey: '', geminiModel: 'gemini-2.5-flash' }),
 });
 export type ServiceSettings = z.infer<typeof ServiceSettings>;
 
@@ -158,6 +164,11 @@ export const Settings = z.object({
     mode: 'system',
     source: 'preset',
     seed: '#6750A4',
+    materialSeedPresets: [
+      '#6750A4', '#1E88E5', '#00ACC1', '#43A047', '#7CB342', '#FBC02D', '#FB8C00', '#E53935',
+      '#D81B60', '#8E24AA', '#5E35B1', '#3949AB', '#039BE5', '#00897B', '#C0CA33', '#FDD835',
+      '#FFB300', '#F4511E', '#6D4C41', '#546E7A'
+    ],
     preset: 'classic',
     autoDailySeed: false,
   }),
@@ -176,7 +187,10 @@ export const Settings = z.object({
     supportedFormats: ['mp3','flac','wav','m4a','ogg','aac'],
   }),
   network: NetworkSettings.default({ port: 29321 }),
-  services: ServiceSettings.default({ hifiniCookie: { bbs_sid: '', bbs_token: '' } }),
+  services: ServiceSettings.default({
+    hifiniCookie: { bbs_sid: '', bbs_token: '' },
+    ai: { enabled: false, provider: 'gemini', geminiApiKey: '', geminiModel: 'gemini-1.5-flash' }
+  }),
   user: UserSettings.default({ userName: '', avatarPath: '' }),
   cache: CacheSettings.default({ cacheTime: 3600 }),
 });

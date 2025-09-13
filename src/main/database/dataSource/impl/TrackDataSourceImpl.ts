@@ -47,9 +47,25 @@ export class TrackDataSourceImpl implements TrackDataSource {
   }
 
   async update(track: TrackRecord): Promise<TrackRecord> {
-    await Track.update(track, { where: { id: track.id } });
-    const updated = await Track.findByPk(track.id);
-    return Object.assign(new TrackRecord(), updated!.get({ plain: true }));
+    const where = (track.id !== undefined && track.id !== null)
+      ? { id: track.id }
+      : { platform: track.platform, platform_unique_id: track.platform_unique_id } as any;
+
+    // 仅更新允许变动的字段，避免误写入 id/主键
+    const payload: Partial<TrackRecord> = {
+      title: track.title,
+      artist: track.artist,
+      album: track.album,
+      duration: track.duration,
+      cover_src: track.cover_src,
+      modified_at: new Date(),
+    };
+
+    await Track.update(payload, { where });
+
+    const updated = await Track.findOne({ where });
+    if (!updated) throw new Error('Track update failed: record not found after update');
+    return Object.assign(new TrackRecord(), updated.get({ plain: true }));
   }
 
   async bindLocalFileToTrack(trackId: number, fileName: string): Promise<TrackRecord> {

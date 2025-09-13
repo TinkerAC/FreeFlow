@@ -46,6 +46,11 @@ export default function SettingsView() {
   const avatarPath = useSetting<string>('user.avatarPath', '');
   const bbsSid = useSetting<string>('services.hifiniCookie.bbs_sid', '');
   const bbsToken = useSetting<string>('services.hifiniCookie.bbs_token', '');
+  // AI settings
+  const aiEnabled = useSetting<boolean>('services.ai.enabled', false);
+  const aiProvider = useSetting<'gemini'>('services.ai.provider', 'gemini');
+  const aiKey = useSetting<string>('services.ai.geminiApiKey', '');
+  const aiModel = useSetting<string>('services.ai.geminiModel', 'gemini-1.5-flash');
   const scanPaths = useSetting<string[]>('library.scanPaths', []);
   const supportedFormats = useSetting<string[]>('library.supportedFormats', ['mp3','flac','wav','m4a','ogg','aac']);
   const networkPort = useSetting<number>('network.port', 29321);
@@ -347,6 +352,67 @@ export default function SettingsView() {
                   color: 'rgb(var(--md-sys-color-on-surface))',
                   padding: '0 10px',
                   minWidth: 320,
+                }}
+              />
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title="AI" desc="LLM 清洗搜索标题（需要重启生效）">
+          <SettingRow
+            label="启用 AI 清洗"
+            sub="在聚合搜索结果中使用 LLM 解析标题/歌手"
+            control={<Switch checked={!!aiEnabled.value} onChange={aiEnabled.setValue} />}
+          />
+          <SettingRow
+            label="提供方"
+            sub="当前仅支持 Gemini"
+            control={
+              <Segmented<'gemini'>
+                value={aiProvider.value}
+                onChange={aiProvider.setValue}
+                options={[{ label: 'Gemini', value: 'gemini' }]}
+              />
+            }
+          />
+          <SettingRow
+            label="API Key"
+            sub="仅保存在本地设置（不会上传）"
+            control={
+              <input
+                type="password"
+                value={aiKey.value}
+                onChange={(e) => aiKey.setValue(e.target.value)}
+                placeholder="粘贴你的 Gemini API Key"
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  minWidth: 320,
+                }}
+              />
+            }
+          />
+          <SettingRow
+            label="模型"
+            sub="例如 gemini-1.5-flash 或 1.5-pro"
+            control={
+              <input
+                type="text"
+                value={aiModel.value}
+                onChange={(e) => aiModel.setValue(e.target.value)}
+                placeholder="gemini-1.5-flash"
+                style={{
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                  color: 'rgb(var(--md-sys-color-on-surface))',
+                  padding: '0 10px',
+                  minWidth: 220,
                 }}
               />
             }

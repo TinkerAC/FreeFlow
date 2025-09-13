@@ -35,6 +35,14 @@ const mainApi: MainApi = {
     getLyrics: (track) => ipcRenderer.invoke(Channels.Lyrics.Get, track) as Promise<Lyric>,
   },
 
+  trackApi: {
+    getInfo: (platform: string, platform_unique_id: string) => ipcRenderer.invoke(Channels.Track.GetInfo, platform, platform_unique_id) as Promise<TrackEntity>,
+    updateBasic: (payload: { platform: string; platform_unique_id: string; title?: string; artist?: string; album?: string }) =>
+      ipcRenderer.invoke(Channels.Track.UpdateBasic, payload) as Promise<TrackEntity>,
+    cleanBasic: (payload: { title: string; artist?: string; album?: string }) =>
+      ipcRenderer.invoke(Channels.Track.CleanBasic, payload) as Promise<{ title: string; artist: string; album?: string }>,
+  },
+
   playerApi: {
     getPlayerStateFromMain: () => ipcRenderer.invoke(Channels.Player.LoadState) as Promise<PlayerState>,
     sendPlayerState: (playerState) => ipcRenderer.send(Channels.Player.ReplyState, playerState),

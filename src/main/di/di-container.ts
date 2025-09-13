@@ -44,6 +44,7 @@ import { Settings } from '@src/shared/settings/schema';
 import { ConfigService } from '@main/core/configService';
 import { OS } from '@src/shared/OS';
 import { PreferenceService } from '@main/services/PreferenceService';
+import { AiTextService, HeuristicAiTextService } from '@main/services/ai/AiTextService';
 
 const container = new Container();
 export { container };
@@ -122,6 +123,43 @@ container
   .bind<PreferenceService>(DISymbol.PreferenceService)
   .to(PreferenceService)
   .inSingletonScope();
+
+// ===== AI/Text utilities（根据 Settings 选择提供方，禁用或无密钥则退回本地兜底） =====
+try {
+  const cfg = container.get<ConfigService>(DISymbol.ConfigService);
+  const ai = (cfg.get('services.ai') as any) ?? {};
+  const enabled = !!ai.enabled;
+  const provider = String(ai.provider ?? 'gemini');
+  const key = String(ai.geminiApiKey ?? '');
+  const model = String(ai.geminiModel ?? 'gemini-1.5-flash');
+
+  if (enabled && provider === 'gemini' && key) {
+    container
+      .bind<AiTextService>(DISymbol.AiTextService)
+      .toDynamicValue(() => {
+        // Lazy require，避免未启用时加载 SDK
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { GeminiAiTextService } = require('@main/services/ai/providers/GeminiTextService');
+        return new GeminiAiTextService(key, model);
+      })
+      .inSingletonScope();
+    console.info(`AI provider: Gemini (${model}) [from settings]`);
+  } else {
+    container
+      .bind<AiTextService>(DISymbol.AiTextService)
+      .to(HeuristicAiTextService)
+      .inSingletonScope();
+    console.info('AI provider: Heuristic (disabled or no key)');
+  }
+} catch (e) {
+  container
+    .bind<AiTextService>(DISymbol.AiTextService)
+    .to(HeuristicAiTextService)
+    .inSingletonScope();
+  console.warn('AI provider init failed, fallback to Heuristic:', e);
+}
+
+
 
 
 // ===== 内容提供者（单例） =====
