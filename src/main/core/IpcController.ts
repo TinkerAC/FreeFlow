@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainEvent, IpcMainInvokeEvent, screen, session } from 'electron';
 import { inject, injectable } from 'inversify';
 import PlaylistService from '@main/services/PlaylistService';
 import { loadPlayer, savePlayer } from '@main/services/PlayerService';
@@ -32,6 +32,7 @@ import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 import { Channels } from '@src/shared/ipc/channels';
 import { AiTextService } from '@main/services/ai/AiTextService';
+import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能切分成若干私有注册方法，
@@ -43,6 +44,7 @@ export default class IpcController {
   private miniBoundSet = new WeakSet<BrowserWindow>();
   // 记录最近一次应用的图标，避免无关配置变更触发重复覆盖图标
   private lastAppliedIcon: AppIcon | null = null;
+  private youtubeLoginWindow: BrowserWindow | null = null;
   constructor(
     @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
     @inject(DISymbol.PlaylistService) private readonly playlistService: PlaylistService,
@@ -58,6 +60,7 @@ export default class IpcController {
     @inject(DISymbol.PreferenceService) private readonly preferenceService: PreferenceService,
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
     @inject(DISymbol.AiTextService) private readonly aiText: AiTextService,
+    @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
   ) {
   }
 
@@ -74,6 +77,7 @@ export default class IpcController {
     this.registerPlayerHandlers();
     this.registerTrackHandlers();
     this.registerSearchHandlers();
+    this.registerYouTubeMusicHandlers();
     this.registerConfigV2Handlers();
     this.registerDownloadHandlers();
     this.registerMiscHandlers();
@@ -495,7 +499,11 @@ export default class IpcController {
 
 
       // 拉齐所有平台结果
-      const results = await Promise.all([neteaseP, qqP, bilibiliP]);
+      const youtubeP = this.youtubeMusic?.search
+        ? safe(this.youtubeMusic.search(keywords), 'youtube.search', EMPTY)
+        : Promise.resolve(EMPTY);
+
+      const results = await Promise.all([neteaseP, qqP, bilibiliP, youtubeP]);
 
       // 堆叠全结果
       const allTracksRaw = results.flatMap(r => r?.track_result ?? []);
@@ -537,6 +545,20 @@ export default class IpcController {
     });
   }
 
+  private registerYouTubeMusicHandlers(): void {
+    ipcMain.handle(Channels.YouTubeMusic.OpenLogin, async () => {
+      await this.openYouTubeLoginWindow();
+    });
+
+    ipcMain.handle(Channels.YouTubeMusic.SyncCredentials, async () => {
+      return await this.syncYouTubeMusicCredentials();
+    });
+
+    ipcMain.handle(Channels.YouTubeMusic.CloseLogin, async () => {
+      await this.closeYouTubeLoginWindow();
+    });
+  }
+
   /* -------------------------- 设置 & 配置 --------------------------- */
   /** 新接口（Settings 全量/分支/patch） */
   private registerConfigV2Handlers() {
@@ -570,6 +592,99 @@ export default class IpcController {
       const next = await this.configService.patch(partial);
       // this.broadcastConfigChanged(next);
     });
+  }
+
+  private async openYouTubeLoginWindow(): Promise<void> {
+    if (this.youtubeLoginWindow && !this.youtubeLoginWindow.isDestroyed()) {
+      this.youtubeLoginWindow.show();
+      this.youtubeLoginWindow.focus();
+      return;
+    }
+
+    const loginWindow = new BrowserWindow({
+      width: 1100,
+      height: 720,
+      title: 'YouTube Music 登录',
+      autoHideMenuBar: true,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        partition: 'persist:youtube-music-login',
+      },
+    });
+
+    this.youtubeLoginWindow = loginWindow;
+    loginWindow.on('closed', () => {
+      this.youtubeLoginWindow = null;
+    });
+
+    try {
+      await loginWindow.loadURL('https://music.youtube.com/');
+    } catch (error) {
+      console.error('[YouTubeMusic] 登录窗口加载失败:', error);
+      throw error;
+    }
+  }
+
+  private async closeYouTubeLoginWindow(): Promise<void> {
+    if (this.youtubeLoginWindow && !this.youtubeLoginWindow.isDestroyed()) {
+      this.youtubeLoginWindow.close();
+    }
+  }
+
+  private async syncYouTubeMusicCredentials(): Promise<{ cookie: string; visitorData: string }> {
+    const partition = 'persist:youtube-music-login';
+    const loginWindow = this.youtubeLoginWindow;
+    const targetSession = loginWindow?.webContents.session ?? session.fromPartition(partition);
+
+    const collectCookies = async () => {
+      const aggregates: Electron.Cookie[] = [];
+      try {
+        aggregates.push(...await targetSession.cookies.get({ url: 'https://music.youtube.com' }));
+      } catch {}
+      try {
+        aggregates.push(...await targetSession.cookies.get({ domain: '.youtube.com' }));
+      } catch {}
+
+      const map = new Map<string, string>();
+      for (const entry of aggregates) {
+        if (!entry?.name) continue;
+        map.set(entry.name, entry.value ?? '');
+      }
+      return Array.from(map.entries())
+        .filter(([name]) => !!name)
+        .map(([name, value]) => `${name}=${value}`)
+        .join('; ');
+    };
+
+    const cookie = await collectCookies();
+
+    let visitorData = '';
+    if (loginWindow && !loginWindow.isDestroyed()) {
+      try {
+        visitorData = await loginWindow.webContents.executeJavaScript(
+          "window.ytcfg?.get?.('VISITOR_DATA') ?? ''",
+          true,
+        );
+      } catch (error) {
+        console.warn('[YouTubeMusic] 提取 VISITOR_DATA 失败:', error);
+      }
+    }
+
+    if (!visitorData) {
+      try {
+        const infoCookie = await targetSession.cookies.get({ name: 'VISITOR_INFO1_LIVE' });
+        visitorData = infoCookie?.[0]?.value ?? '';
+      } catch {}
+    }
+
+    this.configService.setByPath('services.youtubeMusic.cookie', cookie ?? '');
+    this.configService.setByPath('services.youtubeMusic.visitorData', visitorData ?? '');
+
+    return {
+      cookie: cookie ?? '',
+      visitorData: visitorData ?? '',
+    };
   }
 
 

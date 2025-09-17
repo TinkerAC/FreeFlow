@@ -126,6 +126,10 @@ export const ServiceSettings = z.object({
     bbs_sid: z.string().default(''),
     bbs_token: z.string().default(''),
   }).default({ bbs_sid: '', bbs_token: '' }),
+  youtubeMusic: z.object({
+    cookie: z.string().default(''),
+    visitorData: z.string().default(''),
+  }).default({ cookie: '', visitorData: '' }),
   ai: z.object({
     enabled: z.boolean().default(false),
     provider: z.enum(['gemini']).default('gemini'),
@@ -189,6 +193,7 @@ export const Settings = z.object({
   network: NetworkSettings.default({ port: 29321 }),
   services: ServiceSettings.default({
     hifiniCookie: { bbs_sid: '', bbs_token: '' },
+    youtubeMusic: { cookie: '', visitorData: '' },
     ai: { enabled: false, provider: 'gemini', geminiApiKey: '', geminiModel: 'gemini-1.5-flash' }
   }),
   user: UserSettings.default({ userName: '', avatarPath: '' }),

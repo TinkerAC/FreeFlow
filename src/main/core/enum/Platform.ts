@@ -4,6 +4,7 @@ export enum Platform {
   LOCAL = 'Local',
   QQ_MUSIC = 'QQMusic',
   BILIBILI = 'Bilibili',
+  YOUTUBE_MUSIC = 'YouTubeMusic',
 }
 
 
@@ -19,8 +20,9 @@ export function castToPlatform(platform: string): Platform {
       return Platform.QQ_MUSIC;
     case Platform.BILIBILI:
       return Platform.BILIBILI;
+    case Platform.YOUTUBE_MUSIC:
+      return Platform.YOUTUBE_MUSIC;
     default:
       throw new Error(`Unknown platform: ${platform}`);
   }
 }
-

@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './ListRow.module.css';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { Bilibili, Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
+import { Bilibili, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic, DefaultCover } from '@components/static';
 
 function PlatformIcon({ platform }: { platform: string }) {
   const size = 18;
@@ -11,6 +11,7 @@ function PlatformIcon({ platform }: { platform: string }) {
   if (platform === 'Hifini') return <img src={Hifini} alt={platform} style={common} />;
   if (platform === 'QQMusic') return <img src={QQMusic} alt={platform} style={common} />;
   if (platform === 'Bilibili') return <img src={Bilibili} alt={platform} style={common} />;
+  if (platform === 'YouTubeMusic') return <img src={YouTubeMusic} alt={platform} style={common} />;
   return null;
 }
 
@@ -32,7 +33,7 @@ export default function TracksTab({
           onDoubleClick={() => player.addTrackToNextAndPlay(t)}
           onContextMenu={(e) => onContextMenu(e, t)}
         >
-          <img src={t.cover_src}
+          <img src={t.cover_src || DefaultCover}
                alt={t.title}
                referrerPolicy="no-referrer"
                className={styles.cover} />

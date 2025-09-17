@@ -68,6 +68,11 @@ export const Channels = {
   Shortcut: {
     Global: 'shortcut:global',
   },
+  YouTubeMusic: {
+    OpenLogin: 'youtube:open-login-window',
+    SyncCredentials: 'youtube:sync-credentials',
+    CloseLogin: 'youtube:close-login-window',
+  },
 } as const;
 
 export type ChannelGroups = typeof Channels;

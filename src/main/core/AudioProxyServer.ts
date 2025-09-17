@@ -5,6 +5,7 @@ import { isPortOccupied } from '@src/utils/netUtils';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
+import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 import { PassThrough } from 'stream';
@@ -39,6 +40,7 @@ class ProxyServerManager {
     @inject(DISymbol.TrackRepository) private readonly trackRepository: TrackRepository,
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
+    @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
   ) {
     this.app = express();
     this.port = 4399;
@@ -428,6 +430,8 @@ class ProxyServerManager {
       case Platform.BILIBILI:
         // 你的 Bilibili Provider 若后续支持 forceReload，可把第二个参数加上
         return this.bilibili.getTrackLink(platformUniqueId);
+      case Platform.YOUTUBE_MUSIC:
+        return this.youtubeMusic.getTrackLink(platformUniqueId);
       default:
         throw new BadRequestError('Unsupported platform.');
     }

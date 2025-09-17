@@ -134,6 +134,12 @@ export interface MiniPlayerApi {
   setExpanded(expanded: boolean): Promise<void>;
 }
 
+export interface YouTubeMusicApi {
+  openLoginWindow(): Promise<void>;
+  syncCredentials(): Promise<{ cookie: string; visitorData?: string }>;
+  closeLoginWindow(): Promise<void>;
+}
+
 /** 主聚合 */
 export interface MainApi {
   configApi: ConfigApi;
@@ -147,4 +153,5 @@ export interface MainApi {
   systemApi: SystemApi;
   windowControlApi: WindowControlApi;
   miniPlayerApi: MiniPlayerApi;
+  youtubeMusicApi: YouTubeMusicApi;
 }

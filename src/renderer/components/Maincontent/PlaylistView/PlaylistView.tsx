@@ -3,7 +3,7 @@ import styles from './PlaylistView.module.css';
 
 import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
-import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic, Local } from '@components/static';
+import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic, Local, YouTubeMusic } from '@components/static';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
@@ -129,7 +129,8 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
     if (platform === 'Hifini') return <img src={Hifini} alt={platform} style={common} />;
     if (platform === 'QQMusic') return <img src={QQMusic} alt={platform} style={common} />;
     if (platform === 'Bilibili') return <img src={Bilibili} alt={platform} style={common} />;
-  if (platform === 'Local') return <img src={Local} alt={platform} style={common} />;
+    if (platform === 'YouTubeMusic') return <img src={YouTubeMusic} alt={platform} style={common} />;
+    if (platform === 'Local') return <img src={Local} alt={platform} style={common} />;
     return null;
   }
 

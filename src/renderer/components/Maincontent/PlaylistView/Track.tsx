@@ -1,7 +1,7 @@
 // file: src/renderer/components/Maincontent/PlaylistView/Track.tsx
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
-import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic } from '@components/static';
+import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import styles from './PlaylistView.module.css';
@@ -94,6 +94,9 @@ const Track: React.FC<TrackProps> = ({ track, index, onRightClick, player }) => 
         )}
         {track?.platform === 'Bilibili' && (
           <img src={Bilibili} alt="Bilibili" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+        )}
+        {track?.platform === 'YouTubeMusic' && (
+          <img src={YouTubeMusic} alt="YouTubeMusic" style={{ width: 18, height: 18, objectFit: 'contain' }} />
         )}
       </td>
 

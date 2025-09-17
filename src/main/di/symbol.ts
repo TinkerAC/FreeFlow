@@ -15,6 +15,7 @@ export const DISymbol = {
   HifiniMusic: Symbol.for('HifiniMusic'),
   NetEaseCloudMusic: Symbol.for('NetEaseCloudMusic'),
   QQMusic: Symbol.for('QQMusic'),
+  YouTubeMusic: Symbol.for('YouTubeMusic'),
   PlaylistDetailDataSource: Symbol.for('PlaylistDetailDataSource'),
   HifiniThreadCacheDataSource: Symbol.for('HifiniThreadCacheDataSource'),
   PlaylistDataSource: Symbol.for('PlaylistDataSource'),

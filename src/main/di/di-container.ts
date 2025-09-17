@@ -15,6 +15,7 @@ import { WindowManager } from '@main/window/windowManager';
 import { HifiniDownloader } from '@main/services/Downloader';
 import { LyricService } from '@main/services/LyricService';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
+import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import { PlaylistDetailDataSource } from '@main/database/dataSource/PlaylistDetailDataSource';
 import { PlaylistDetailDataSourceImpl } from '@main/database/dataSource/impl/PlaylistDetailDataSourceImpl';
 import { HifiniThreadCacheDataSource } from '@main/database/dataSource/HifiniThreadCacheDataSource';
@@ -174,6 +175,10 @@ container
 container
   .bind<QQMusic>(DISymbol.QQMusic)
   .to(QQMusic)
+  .inSingletonScope();
+container
+  .bind<YouTubeMusic>(DISymbol.YouTubeMusic)
+  .to(YouTubeMusic)
   .inSingletonScope();
 container
   .bind<Bilibili>(DISymbol.Bilibili)

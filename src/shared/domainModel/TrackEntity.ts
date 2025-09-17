@@ -260,6 +260,61 @@ export class QQMusicTrackModel extends TrackEntity {
 }
 
 /**
+ * YouTubeMusicTrackModel 类：YouTube Music 平台的 TrackRecord 实现
+ */
+export class YouTubeMusicTrackModel extends TrackEntity {
+  album: string;
+  artist: string;
+  cover_src: string;
+  created_at: Date;
+  duration: number;
+  platform: Platform;
+  platform_unique_id: string;
+  title: string;
+
+  constructor(
+    platform_unique_id: string,
+    title: string,
+    artist: string,
+    album: string,
+    duration: number,
+    cover_src: string,
+  ) {
+    super();
+    this.platform = Platform.YOUTUBE_MUSIC;
+    this.platform_unique_id = platform_unique_id;
+    this.title = title;
+    this.artist = artist;
+    this.album = album;
+    this.duration = duration;
+    this.cover_src = cover_src;
+    this.created_at = new Date();
+  }
+
+  public static build(json: {
+    platform_unique_id: string;
+    title?: string;
+    artist?: string;
+    album?: string;
+    duration?: number;
+    cover_src?: string;
+  }): TrackEntity {
+    return new YouTubeMusicTrackModel(
+      json.platform_unique_id,
+      json.title ?? '',
+      json.artist ?? '',
+      json.album ?? '',
+      json.duration ?? 0,
+      json.cover_src ?? '',
+    );
+  }
+
+  static empty(): TrackEntity {
+    return new YouTubeMusicTrackModel('', '', '', '', 0, '');
+  }
+}
+
+/**
  * NetEaseCloudMusicTrackModel 类：网易云音乐平台的 TrackRecord 实现
  */
 export class NetEaseCloudMusicTrackModel extends TrackEntity {

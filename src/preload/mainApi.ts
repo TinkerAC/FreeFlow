@@ -133,6 +133,12 @@ const mainApi: MainApi = {
     hide: () => ipcRenderer.invoke(Channels.MiniPlayer.Hide),
     setExpanded: (expanded: boolean) => ipcRenderer.invoke(Channels.MiniPlayer.SetExpanded, { expanded }),
   },
+
+  youtubeMusicApi: {
+    openLoginWindow: () => ipcRenderer.invoke(Channels.YouTubeMusic.OpenLogin) as Promise<void>,
+    syncCredentials: () => ipcRenderer.invoke(Channels.YouTubeMusic.SyncCredentials) as Promise<{ cookie: string; visitorData?: string }>,
+    closeLoginWindow: () => ipcRenderer.invoke(Channels.YouTubeMusic.CloseLogin) as Promise<void>,
+  },
 };
 
 contextBridge.exposeInMainWorld('mainApi', mainApi);
