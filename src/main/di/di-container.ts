@@ -46,6 +46,7 @@ import { ConfigService } from '@main/core/configService';
 import { OS } from '@src/shared/OS';
 import { PreferenceService } from '@main/services/PreferenceService';
 import { AiTextService, HeuristicAiTextService } from '@main/services/ai/AiTextService';
+import { ProviderManager } from '@main/core/ProviderManager';
 
 const container = new Container();
 export { container };
@@ -118,6 +119,11 @@ container
 container
   .bind<LyricService>(DISymbol.LyricService)
   .to(LyricService)
+  .inSingletonScope();
+
+container
+  .bind<ProviderManager>(DISymbol.ProviderManager)
+  .to(ProviderManager)
   .inSingletonScope();
 
 container

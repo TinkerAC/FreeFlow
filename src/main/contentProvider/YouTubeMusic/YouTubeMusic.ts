@@ -27,7 +27,7 @@ export default class YouTubeMusic implements ContentProvider {
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
   ) {}
 
-  public async searchTracks(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {
+  public async searchTrack(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {
     const items = await this.searchMusicItems(keyword, 'song');
     const seen = new Set<string>();
     return items
@@ -43,7 +43,7 @@ export default class YouTubeMusic implements ContentProvider {
 
   public async search(keyword: string, filterPaid = true): Promise<FusionSearchResult> {
     const [tracks, playlists] = await Promise.all([
-      this.searchTracks(keyword, filterPaid),
+      this.searchTrack(keyword, filterPaid),
       this.searchPlaylists(keyword),
     ]);
 

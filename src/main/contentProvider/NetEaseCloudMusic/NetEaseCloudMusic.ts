@@ -40,7 +40,7 @@ export default class NetEaseCloudMusic implements ContentProvider {
    * @param keyword 搜索关键词
    * @param filterPaid 是否过滤付费歌曲（默认值 true）
    */
-  public async searchTracks(
+  public async searchTrack(
     keyword: string,
     filterPaid: boolean = true,
   ): Promise<TrackEntity[]> {
@@ -136,7 +136,7 @@ ${resultSongs
     filterPaid: boolean = true,
   ): Promise<FusionSearchResult> {
     try {
-      const tracks = this.searchTracks(keyword, filterPaid);
+      const tracks = this.searchTrack(keyword, filterPaid);
       const playlists = this.cloudSearchPlaylist(keyword);
       //用promise.all 并发执行
       const [trackResults, playlistResults] = await Promise.all([tracks, playlists]);

@@ -164,7 +164,7 @@ export default class HifiniMusic implements ContentProvider {
   /**
    * 获取搜索结果，并转换为 TrackRecord 数组
    */
-  public async searchTracks(keyword: string): Promise<TrackEntity[]> {
+  public async searchTrack(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {
     try {
       const searchResults: HifiniSearchResult[] = await this.search(keyword);
       console.info(`搜索操作完成，结果数量: ${searchResults?.length || 0}`);

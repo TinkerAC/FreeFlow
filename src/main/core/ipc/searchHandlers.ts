@@ -13,6 +13,8 @@ export function registerSearchHandlers({
   bilibili,
   youtubeMusic,
   trackService,
+  configService,
+  providerManager,
 }: IpcContext): void {
   const safe = async <T>(p: Promise<T>, label: string, fallback: T): Promise<T> => {
     try {
@@ -95,40 +97,7 @@ export function registerSearchHandlers({
 
   ipcMain.handle(Channels.Search.GetResults, async (_evt: IpcMainInvokeEvent, keywords: string) => {
     console.log('后端收到搜索请求:', keywords);
-
-    const EMPTY: FusionSearchResult = { track_result: [], playlist_result: [] };
-
-    const neteaseP = netEaseCloudMusic?.search
-      ? safe(netEaseCloudMusic.search(keywords), 'netease.search', EMPTY)
-      : Promise.resolve(EMPTY);
-
-    const qqP = qqMusic?.search
-      ? safe(qqMusic.search(keywords), 'qq.search', EMPTY)
-      : Promise.resolve(EMPTY);
-
-    const bilibiliP = bilibili?.search
-      ? safe(bilibili.search(keywords), 'bilibili.search', EMPTY)
-      : Promise.resolve(EMPTY);
-
-    const youtubeP = youtubeMusic?.search
-      ? safe(youtubeMusic.search(keywords), 'youtube.search', EMPTY)
-      : Promise.resolve(EMPTY);
-
-    const results = await Promise.all([neteaseP, qqP, bilibiliP, youtubeP]);
-
-    const allTracksRaw = results.flatMap((r) => r?.track_result ?? []);
-    const allPlRaw = results.flatMap((r) => r?.playlist_result ?? []);
-
-    const normalized = allTracksRaw
-      .filter(isTrackLike)
-      .map((t) => normalizeTrack(t))
-      .filter(Boolean) as TrackEntity[];
-    const track_result = dedupeTracks(normalized);
-
-    const playlist_result = dedupePlaylists(allPlRaw.filter(isPlaylistLike));
-
-    const fusion: FusionSearchResult = { track_result, playlist_result };
-    return fusion;
+    return await providerManager.searchFusion(keywords);
   });
 
   ipcMain.handle(Channels.Search.LocalSearch, async (_evt: IpcMainInvokeEvent, keywords: string) => {
@@ -140,12 +109,14 @@ export function registerSearchHandlers({
     Channels.Search.GetPlaylistDetail,
     async (_evt: IpcMainInvokeEvent, platform: string, platform_unique_id: string) => {
       console.log('后端收到获取歌单详情请求:', platform, platform_unique_id);
-      switch (platform) {
-        case Platform.NET_EASE_CLOUD_MUSIC:
+      const toggles = (configService.get('services.providers') ?? {}) as Record<string, boolean>;
+    switch (platform) {
+      case Platform.NET_EASE_CLOUD_MUSIC:
+          if (!providerManager.isEnabled(Platform.NET_EASE_CLOUD_MUSIC)) throw new Error('Provider disabled: NetEaseCloudMusic');
           return await netEaseCloudMusic.getFullPlaylist(platform_unique_id);
-        case Platform.QQ_MUSIC:
+      case Platform.QQ_MUSIC:
           throw NotImplementedError;
-        case Platform.BILIBILI:
+      case Platform.BILIBILI:
           throw NotImplementedError;
         default:
           throw new Error(`不支持的平台: ${platform}`);
@@ -153,4 +124,3 @@ export function registerSearchHandlers({
     },
   );
 }
-

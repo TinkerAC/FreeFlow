@@ -126,6 +126,22 @@ export const ServiceSettings = z.object({
     bbs_sid: z.string().default(''),
     bbs_token: z.string().default(''),
   }).default({ bbs_sid: '', bbs_token: '' }),
+  /** 各内容提供商的开关（统一入口） */
+  providers: z
+    .object({
+      netease: z.boolean().default(true),
+      qq: z.boolean().default(true),
+      bilibili: z.boolean().default(true),
+      youtubeMusic: z.boolean().default(true),
+      hifini: z.boolean().default(true),
+    })
+    .default({
+      netease: true,
+      qq: true,
+      bilibili: true,
+      youtubeMusic: true,
+      hifini: true,
+    }),
   youtubeMusic: z.object({
     cookie: z.string().default(''),
     visitorData: z.string().default(''),
@@ -193,6 +209,7 @@ export const Settings = z.object({
   network: NetworkSettings.default({ port: 29321 }),
   services: ServiceSettings.default({
     hifiniCookie: { bbs_sid: '', bbs_token: '' },
+    providers: { netease: true, qq: true, bilibili: true, youtubeMusic: true, hifini: true },
     youtubeMusic: { cookie: '', visitorData: '' },
     ai: { enabled: false, provider: 'gemini', geminiApiKey: '', geminiModel: 'gemini-1.5-flash' }
   }),

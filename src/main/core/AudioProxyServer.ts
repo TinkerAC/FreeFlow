@@ -19,6 +19,8 @@ import { DISymbol } from '@main/di/symbol';
 import { BadRequestError } from '@main/core/exceptions/BadRequestError';
 import { castToPlatform, Platform } from '@main/core/enum/Platform';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
+import { ConfigService } from '@main/core/configService';
+import { ProviderManager } from '@main/core/ProviderManager';
 
 const DEFAULT_AUDIO_MIME = 'audio/mpeg';
 
@@ -41,6 +43,8 @@ class ProxyServerManager {
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
     @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
+    @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
+    @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
   ) {
     this.app = express();
     this.port = 4399;
@@ -351,6 +355,8 @@ class ProxyServerManager {
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36',
       Accept: '*/*',
       Connection: 'keep-alive',
+      // 提供一个常见的 Accept-Language，部分上游会据此返回更稳定的内容
+      'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
     };
 
     // 透传 Range，支持边播边拖
@@ -362,6 +368,20 @@ class ProxyServerManager {
       headers['Origin'] = 'https://www.bilibili.com';
     } else if (/hifini\.com/i.test(musicLink)) {
       headers['Referer'] = 'https://hifini.com/';
+    }
+
+    // YouTube/Googlevideo 端点偶发要求 Range/来源头；
+    // 若客户端未带 Range，则为首段请求补一个通用 Range，
+    // 并附带来源，避免 403（尤其是部分 itag 的直链）。
+    try {
+      const host = new URL(musicLink).hostname;
+      if (/\.googlevideo\.com$/i.test(host) || /youtube(?:music)?\.com$/i.test(host)) {
+        if (!headers['Range']) headers['Range'] = 'bytes=0-';
+        headers['Referer'] = headers['Referer'] ?? 'https://music.youtube.com/';
+        headers['Origin'] = headers['Origin'] ?? 'https://music.youtube.com';
+      }
+    } catch {
+      // ignore URL parse error
     }
 
     return headers;
@@ -420,6 +440,10 @@ class ProxyServerManager {
     platformUniqueId: string,
     _forceReload = false,
   ): Promise<string | undefined> {
+    // 全局开关：若该平台被禁用，直接拒绝
+    if (!this.providerManager.isEnabled(platform)) {
+      throw new BadRequestError(`Provider disabled: ${platform}`);
+    }
     switch (platform) {
       case Platform.HIFINI:
         return this.hifiniMusic.getTrackLink(platformUniqueId, _forceReload);
@@ -436,6 +460,8 @@ class ProxyServerManager {
         throw new BadRequestError('Unsupported platform.');
     }
   }
+
+  // 提供商开关逻辑由 ProviderManager 统一维护
 }
 
 export default ProxyServerManager;

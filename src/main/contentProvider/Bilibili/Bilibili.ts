@@ -58,7 +58,7 @@ export default class Bilibili implements ContentProvider {
    *  - series/collection/fav（保留原注释的模式，后续需要可解开）
    *  - 其它：走关键字搜索（WBI），返回视频列表（每个视频先用 P1）
    */
-  async searchTracks(keyword: string): Promise<TrackEntity[]> {
+  async searchTrack(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {
     try {
       const kw = (keyword || '').trim();
       if (!kw) return [];

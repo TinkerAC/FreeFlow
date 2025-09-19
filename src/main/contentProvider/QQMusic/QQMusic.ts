@@ -29,7 +29,7 @@ export class QQMusic implements ContentProvider {
    * @param keyword 搜索关键词
    * @param filterPaid 是否过滤付费歌曲（默认值 true）
    */
-  public async searchTracks(
+  public async searchTrack(
     keyword: string,
     filterPaid: boolean = true,
   ): Promise<TrackEntity[]> {
@@ -68,7 +68,7 @@ ${resultSongs
     keyword: string,
     filterPaid: boolean = true,
   ): Promise<FusionSearchResult> {
-    const tracks = await this.searchTracks(keyword, filterPaid);
+    const tracks = await this.searchTrack(keyword, filterPaid);
     return {
       track_result: tracks,
       playlist_result: [],
@@ -165,7 +165,7 @@ ${resultSongs
 // 测试代码（可选）
 // (async () => {
 //   const qqMusic = new QQMusic();
-//   const track_result = await qqMusic.searchTracks('银临');
+//   const track_result = await qqMusic.searchTrack('银临');
 //   console.log(track_result);
 //   const trackLink = await qqMusic.getTrackLink('000A1xry3KwdhW');
 //   console.log(trackLink);

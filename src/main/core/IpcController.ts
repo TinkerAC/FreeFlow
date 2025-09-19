@@ -16,6 +16,7 @@ import { PreferenceService } from '@main/services/PreferenceService';
 import { AiTextService } from '@main/services/ai/AiTextService';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import { IpcContext } from './ipc/ipcContext';
+import { ProviderManager } from '@main/core/ProviderManager';
 import { registerSystemHandlers } from './ipc/systemHandlers';
 import { registerWindowHandlers } from './ipc/windowHandlers';
 import { registerPlaylistHandlers } from './ipc/playlistHandlers';
@@ -48,6 +49,7 @@ export default class IpcController {
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
     @inject(DISymbol.AiTextService) private readonly aiText: AiTextService,
     @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
+    @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
   ) {}
 
   public register(): void {
@@ -67,6 +69,7 @@ export default class IpcController {
       aiText: this.aiText,
       youtubeMusic: this.youtubeMusic,
       hifiniMusic: this.hifiniMusic,
+      providerManager: this.providerManager,
     };
 
     registerSystemHandlers(context);
