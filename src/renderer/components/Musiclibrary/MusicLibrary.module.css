@@ -27,6 +27,7 @@
 }
 .menuBtn {
     /* 默认放第 1 列即可；收起后改到第 2 列 */
+    grid-column: 1;
 }
 .collapsed .menuBtn {
     grid-column: 2;
@@ -113,6 +114,30 @@
 .scroll::-webkit-scrollbar-thumb { background: transparent; }
 .scroll::-webkit-scrollbar-track { background: transparent; }
 
+.dragDivider {
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        rgba(var(--md-sys-color-primary), 0.0) 0%,
+        rgba(var(--md-sys-color-primary), 0.65) 15%,
+        rgba(var(--md-sys-color-primary), 0.8) 50%,
+        rgba(var(--md-sys-color-primary), 0.65) 85%,
+        rgba(var(--md-sys-color-primary), 0.0) 100%
+    );
+    border-radius: 999px;
+    margin: 4px 6px;
+    pointer-events: none;
+    transition: transform 120ms ease;
+}
+
+.dragDividerSmall {
+    margin: 2px 4px;
+}
+
+.endDropZone {
+    height: 24px; /* 提供可命中的末尾 drop 区域 */
+    width: 100%;
+}
 /* 展开态：纵向列表 */
 .list {
     display: flex;
