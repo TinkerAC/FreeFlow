@@ -1,0 +1,52 @@
+/* Reusable context menu styles */
+.menu {
+  position: fixed;
+  z-index: 100000; /* ensure above app panes */
+  min-width: 220px;
+  max-width: 280px;
+  background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 92%, transparent);
+  backdrop-filter: blur(8px) saturate(1.05);
+  border: 1px solid rgb(var(--md-sys-color-outline-variant));
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-2);
+  color: rgb(var(--md-sys-color-on-surface));
+  padding: 6px;
+}
+.item {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .12s ease, opacity .12s ease;
+  outline: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+.item:hover { background: rgba(var(--md-sys-color-surface-variant), .5); }
+.item:active { transform: translateY(1px); }
+.item[disabled] { opacity: .6; cursor: not-allowed; }
+.icon { text-align: center; opacity: .9; }
+.subWrap { position: relative; }
+.subCaret { opacity: .7; }
+.divider { height: 1px; margin: 6px 4px; background: rgb(var(--md-sys-color-outline-variant)); border-radius: 1px; }
+.subMenu {
+  position: fixed;
+  z-index: 100200; /* above main menu and typical footers (PlayerBar) */
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 92%, transparent);
+  border: 1px solid rgb(var(--md-sys-color-outline-variant));
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-2);
+  backdrop-filter: blur(8px) saturate(1.05);
+  padding: 6px;
+}
+.subMenu::-webkit-scrollbar { width: 6px; }
+.subMenu::-webkit-scrollbar-thumb { background: rgba(var(--md-sys-color-surface-variant), .6); border-radius: 6px; }
+.subMenu::-webkit-scrollbar-track { background: transparent; }

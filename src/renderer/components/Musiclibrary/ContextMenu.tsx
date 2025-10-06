@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
-import styles from './ContextMenu.module.css'
+import CommonContextMenu, { MenuItem } from '@renderer/components/common/ContextMenu/ContextMenu';
 
 interface ContextMenuProps {
   x: number;
@@ -24,26 +24,43 @@ function ContextMenu({
     return () => window.removeEventListener('keydown', onEsc);
   }, [handleCloseMenu]);
 
-  // 视口边界保护（避免超出可视区域）
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const left = Math.min(Math.max(8, x), vw - 208);
-  const top  = Math.min(Math.max(8, y), vh - 120);
+  const playlists = musicLibraryController.playlists ?? [];
+  const candidates = playlists.filter(p => p.playlist_id !== eventPlaylist?.playlist_id);
 
-  return createPortal(
-    <div className={styles.menu} style={{ left, top }} onClick={(e)=>e.stopPropagation()}>
-      <div
-        className={styles.menuItem}
-        onClick={() => {
-          if (!eventPlaylist) return;
-          playlistContext.removePlaylist(eventPlaylist.playlist_id)
-            .then(() => musicLibraryController.refreshPlaylists());
-          handleCloseMenu();
-        }}
-      >
-        删除歌单
-      </div>
-    </div>,
-    document.body,
+  const moveAllTo = async (targetId: number) => {
+    try {
+      const tracks = eventPlaylist?.tracks ?? [];
+      for (const t of tracks) {
+        await playlistContext.addTrackToPlaylist(t, targetId);
+      }
+      await musicLibraryController.refreshPlaylists();
+    } finally {
+      handleCloseMenu();
+    }
+  };
+
+  const items: MenuItem[] = [
+    {
+      key: 'move_all',
+      icon: 'fas fa-share-from-square',
+      label: '将此歌单所有曲目添加到…',
+      submenu: candidates.map((p) => ({
+        key: `to_${p.playlist_id}`,
+        icon: 'fas fa-list',
+        label: p.title === 'Library' ? '库' : p.title,
+        onClick: () => moveAllTo(p.playlist_id!),
+      })),
+    },
+    {
+      key: 'delete',
+      icon: 'fas fa-trash',
+      label: '删除歌单',
+      onClick: () => playlistContext.removePlaylist(eventPlaylist.playlist_id).then(() => musicLibraryController.refreshPlaylists()),
+    },
+  ];
+
+  return (
+    <CommonContextMenu x={x} y={y} onRequestClose={handleCloseMenu} items={items} />
   );
 }
 
