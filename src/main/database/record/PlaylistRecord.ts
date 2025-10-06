@@ -11,6 +11,7 @@ export interface PlaylistRecordProps {
   platform: Platform;
   platform_unique_id: string;
   played_count: number;
+  position?: number;
   created_at?: Date;
   modified_at?: Date;
 }
@@ -24,6 +25,7 @@ export class PlaylistRecord extends AbstractRecord implements PlaylistRecordProp
   platform!: Platform;
   platform_unique_id!: string;
   played_count!: number;
+  position?: number;
   created_at?: Date;
   modified_at?: Date;
 
@@ -38,6 +40,7 @@ export class PlaylistRecord extends AbstractRecord implements PlaylistRecordProp
     rec.platform = entity.platform;
     rec.platform_unique_id = entity.platform_unique_id;
     rec.played_count = entity.played_count;
+    rec.position = entity.position;
     rec.created_at = entity.created_at;
     rec.modified_at = entity.modified_at;
 
@@ -55,6 +58,7 @@ export class PlaylistRecord extends AbstractRecord implements PlaylistRecordProp
       platform: this.platform,
       platform_unique_id: this.platform_unique_id,
       played_count: this.played_count,
+      position: this.position,
       created_at: this.created_at,
       modified_at: this.modified_at,
     };

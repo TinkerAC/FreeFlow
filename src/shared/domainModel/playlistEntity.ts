@@ -18,6 +18,7 @@ export class PlaylistEntity extends AbstractEntity {
   modified_at?: Date;
   playlist_cover: string;
   played_count?: number;
+  position?: number;
 
   constructor(
     playlist_id: number,
@@ -31,6 +32,7 @@ export class PlaylistEntity extends AbstractEntity {
     creator: string,
     modified_at: Date,
     playlist_cover: string,
+    position?: number,
   ) {
     super();
     this.playlist_id = playlist_id;
@@ -44,6 +46,7 @@ export class PlaylistEntity extends AbstractEntity {
     this.tracks = tracks;
     this.creator = creator;
     this.modified_at = new Date(modified_at);
+    this.position = position;
   }
 
   /**
@@ -64,6 +67,7 @@ export class PlaylistEntity extends AbstractEntity {
       json.creator,
       json.modified_at,
       json.playlist_cover,
+      json.position,
     );
   }
 }

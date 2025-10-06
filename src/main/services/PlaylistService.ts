@@ -206,4 +206,12 @@ export default class PlaylistService {
     }
   }
 
+  public async updatePlaylistPositions(updates: Array<{ playlist_id: number; position: number }>): Promise<void> {
+    await this.playlistRepository.updatePlaylistPositions(updates);
+  }
+
+  public async updateTrackPositions(playlistId: number, updates: Array<{ track_id: number; position: number }>): Promise<void> {
+    await this.playlistRepository.updateTrackPositions(playlistId, updates);
+  }
+
 }

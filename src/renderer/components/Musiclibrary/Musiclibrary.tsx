@@ -22,6 +22,8 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
   const [collapsed, setCollapsed] = useState<boolean>(true);
   const [playlists, setPlaylists] = useState<PlaylistEntity[]>(musicLibraryController.playlists);
   const [selectedItem, setSelectedItem] = useState<number>(musicLibraryController.selectedLibraryItem || 0);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +55,68 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
     window.addEventListener('click', close);
     return () => window.removeEventListener('click', close);
   }, [contextMenuVisible]);
+
+  // 拖拽处理
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDragOverIndex(null);
+      return;
+    }
+
+    // 重新排序歌单
+    const newPlaylists = [...playlists];
+    const draggedPlaylist = newPlaylists[draggedIndex];
+    newPlaylists.splice(draggedIndex, 1);
+    newPlaylists.splice(dropIndex, 0, draggedPlaylist);
+
+    // 更新位置
+    const updates = newPlaylists.map((playlist, index) => ({
+      playlist_id: playlist.playlist_id!,
+      position: index,
+    }));
+
+    try {
+      await playlistContext.updatePlaylistPositions(updates);
+      await musicLibraryController.refreshPlaylists();
+      
+      // 更新选中项
+      if (selectedItem === draggedIndex) {
+        setSelectedItem(dropIndex);
+        musicLibraryController.selectItem(dropIndex);
+      } else if (selectedItem > draggedIndex && selectedItem <= dropIndex) {
+        setSelectedItem(selectedItem - 1);
+        musicLibraryController.selectItem(selectedItem - 1);
+      } else if (selectedItem < draggedIndex && selectedItem >= dropIndex) {
+        setSelectedItem(selectedItem + 1);
+        musicLibraryController.selectItem(selectedItem + 1);
+      }
+    } catch (error) {
+      console.error('Failed to update playlist positions:', error);
+    }
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
 
   return (
     <aside ref={rootRef} className={clsx(styles.root, collapsed && styles.collapsed)}>
@@ -106,12 +170,17 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                   description={item.description || ''}
                   index={index}
                   isSelected={selectedItem === index}
+                  isDragging={draggedIndex === index}
                   onClick={() => {
                     musicLibraryController.selectItem(index);
                     musicLibraryController.activePlaylist = item;
                     navigate('/playlist');
                   }}
                   onRightClick={(e) => handleRightClick(e, item.playlist_id)}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
                 />
               ))
             ) : (

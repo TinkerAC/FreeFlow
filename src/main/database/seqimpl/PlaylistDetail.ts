@@ -7,7 +7,7 @@ import { PlaylistDetailRecordProps } from '@main/database/record/PlaylistDetailR
 export interface PlaylistDetailCreationAttributes
   extends Optional<
     PlaylistDetailRecordProps,
-    'created_at' | 'modified_at'
+    'position' | 'created_at' | 'modified_at'
   > {
 }
 
@@ -16,6 +16,7 @@ export class PlaylistDetail
   implements PlaylistDetailRecordProps {
   public playlist_id!: number;
   public track_id!: number;
+  public position?: number;
   public created_at?: Date;
   public modified_at?: Date;
 }
@@ -35,6 +36,10 @@ PlaylistDetail.init(
       references: { model: Track, key: 'id' },
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
+    },
+    position: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
   },
   {

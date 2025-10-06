@@ -54,27 +54,68 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
   const [modalVisible, setModalVisible] = useState(false);
   const [filteredTracks, setFilteredTracks] = useState(presentPlaylist?.tracks || []);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [sortBy, setSortBy] = useState<'default' | 'title' | 'artist' | 'date-added' | 'date-added-desc'>('default');
 
   /* 歌单切换时刷新列表 */
   useEffect(() => {
-    setFilteredTracks(presentPlaylist?.tracks || []);
-  }, [presentPlaylist]);
+    applySortAndFilter();
+  }, [presentPlaylist, sortBy, searchKeyword]);
 
-  /* 关键字搜索 */
-  useEffect(() => {
-    if (!searchKeyword) {
-      setFilteredTracks(presentPlaylist?.tracks || []);
-      return;
-    }
-    const lower = searchKeyword.toLowerCase();
-    setFilteredTracks(
-      (presentPlaylist?.tracks || []).filter((t) =>
+  const applySortAndFilter = () => {
+    let tracks = presentPlaylist?.tracks || [];
+    
+    // 先过滤
+    if (searchKeyword) {
+      const lower = searchKeyword.toLowerCase();
+      tracks = tracks.filter((t) =>
         (t.title || '').toLowerCase().includes(lower) ||
         (t.artist || '').toLowerCase().includes(lower) ||
         (t.album || '').toLowerCase().includes(lower),
-      ),
-    );
-  }, [searchKeyword, presentPlaylist]);
+      );
+    }
+    
+    // 再排序
+    let sorted = [...tracks];
+    switch (sortBy) {
+      case 'title':
+        sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+        break;
+      case 'artist':
+        sorted.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
+        break;
+      case 'date-added':
+        sorted.sort((a, b) => (a.created_at?.getTime() || 0) - (b.created_at?.getTime() || 0));
+        break;
+      case 'date-added-desc':
+        sorted.sort((a, b) => (b.created_at?.getTime() || 0) - (a.created_at?.getTime() || 0));
+        break;
+      case 'default':
+      default:
+        // 保持原有顺序（按数据库position字段排序）
+        break;
+    }
+    
+    setFilteredTracks(sorted);
+  };
+
+  const handleSortChange = async (newSortBy: typeof sortBy) => {
+    setSortBy(newSortBy);
+    
+    // 如果选择默认排序，保存当前顺序到数据库
+    if (newSortBy === 'default' && presentPlaylist?.playlist_id) {
+      const updates = filteredTracks.map((track, index) => ({
+        track_id: track.id!,
+        position: index,
+      }));
+      
+      try {
+        await playlistContext.updateTrackPositions(presentPlaylist.playlist_id, updates);
+        await musicLibraryController.refreshPlaylists();
+      } catch (error) {
+        console.error('Failed to save track positions:', error);
+      }
+    }
+  };
 
   /** ViewShell 的滚动容器 */
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -226,6 +267,20 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
                 />
               )}
             </button>
+
+            {/* 排序选择器 */}
+            <select 
+              className={styles.sortSelect}
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value as typeof sortBy)}
+              title="排序方式"
+            >
+              <option value="default">默认排序</option>
+              <option value="title">按标题</option>
+              <option value="artist">按艺术家</option>
+              <option value="date-added">添加日期↑</option>
+              <option value="date-added-desc">添加日期↓</option>
+            </select>
 
             {/* 搜索框 */}
             <input

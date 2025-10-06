@@ -51,12 +51,24 @@ export class PlaylistDetailDataSourceImpl implements PlaylistDetailDataSource {
   }
 
   async findByPlaylistId(playlistId: number): Promise<PlaylistDetailRecord[] | null> {
-    const rows = await PlaylistDetail.findAll({ where: { playlist_id: playlistId } });
+    const rows = await PlaylistDetail.findAll({ 
+      where: { playlist_id: playlistId },
+      order: [['position', 'ASC'], ['created_at', 'DESC']],
+    });
     if (!rows.length) return null;
     return rows.map(r => Object.assign(new PlaylistDetailRecord(), r.get({ plain: true })));
   }
 
   async deleteByPlaylistIdAndTrackId(playlistId: number, trackId: number): Promise<number> {
     return PlaylistDetail.destroy({ where: { playlist_id: playlistId, track_id: trackId } });
+  }
+
+  async updatePositions(updates: Array<{ playlist_id: number; track_id: number; position: number }>): Promise<void> {
+    // Use transaction for batch update
+    await Promise.all(
+      updates.map(({ playlist_id, track_id, position }) =>
+        PlaylistDetail.update({ position }, { where: { playlist_id, track_id } })
+      )
+    );
   }
 }

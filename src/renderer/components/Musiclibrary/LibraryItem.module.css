@@ -76,3 +76,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* 拖拽状态 */
+.dragging {
+    opacity: 0.5;
+    cursor: move;
+}
+
+.root[draggable="true"] {
+    cursor: grab;
+}
+
+.root[draggable="true"]:active {
+    cursor: grabbing;
+}

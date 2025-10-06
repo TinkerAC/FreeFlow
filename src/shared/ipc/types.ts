@@ -83,6 +83,10 @@ export interface PlaylistApi {
   removeTrackFromPlaylist(playlistId: number, track: TrackEntity): Promise<void>;
 
   createPlaylist(): Promise<void>;
+
+  updatePlaylistPositions(updates: Array<{ playlist_id: number; position: number }>): Promise<void>;
+
+  updateTrackPositions(playlistId: number, updates: Array<{ track_id: number; position: number }>): Promise<void>;
 }
 
 /** Search */

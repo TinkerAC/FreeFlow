@@ -42,6 +42,8 @@ export const Channels = {
     Modify: 'playlist:modify',
     Remove: 'playlist:remove',
     Add: 'playlist:add',
+    UpdatePositions: 'playlist:update-positions',
+    UpdateTrackPositions: 'playlist:update-track-positions',
   },
   Search: {
     GetResults: 'search:get-results',

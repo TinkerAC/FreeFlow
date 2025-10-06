@@ -10,6 +10,7 @@ export interface PlaylistCreationAttributes
     | 'playlist_cover'
     | 'description'
     | 'played_count'
+    | 'position'
     | 'created_at'
     | 'modified_at'
   > {
@@ -26,6 +27,7 @@ export class Playlist
   public platform!: Platform;
   public platform_unique_id!: string;
   public played_count!: number;
+  public position?: number;
   public created_at?: Date;
   public modified_at?: Date;
 }
@@ -56,6 +58,10 @@ Playlist.init(
       allowNull: false,
     },
     played_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    position: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },

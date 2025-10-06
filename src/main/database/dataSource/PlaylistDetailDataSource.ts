@@ -26,4 +26,6 @@ export interface PlaylistDetailDataSource {
 
 
   deleteByPlaylistIdAndTrackId(playlistId: number, trackId: number): Promise<number>;
+
+  updatePositions(updates: Array<{ playlist_id: number; track_id: number; position: number }>): Promise<void>;
 }

@@ -95,6 +95,10 @@ const mainApi: MainApi = {
     addTrackToPlaylist: (track, playlistId) => ipcRenderer.invoke(Channels.Playlist.AddTrack, track, playlistId),
     removeTrackFromPlaylist: (playlistId, track) => ipcRenderer.invoke(Channels.Playlist.RemoveTrack, playlistId, track),
     createPlaylist: () => ipcRenderer.invoke(Channels.Playlist.Create),
+    updatePlaylistPositions: (updates: Array<{ playlist_id: number; position: number }>) => 
+      ipcRenderer.invoke(Channels.Playlist.UpdatePositions, updates),
+    updateTrackPositions: (playlistId: number, updates: Array<{ track_id: number; position: number }>) =>
+      ipcRenderer.invoke(Channels.Playlist.UpdateTrackPositions, playlistId, updates),
   },
 
   searchApi: {

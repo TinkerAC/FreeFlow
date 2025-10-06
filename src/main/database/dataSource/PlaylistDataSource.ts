@@ -18,4 +18,6 @@ export interface PlaylistDataSource {
   ): Promise<PlaylistRecord | null>;
 
   findOrCreate(playListModel: PlaylistRecord): Promise<PlaylistRecord>;
+
+  updatePositions(updates: Array<{ playlist_id: number; position: number }>): Promise<void>;
 }

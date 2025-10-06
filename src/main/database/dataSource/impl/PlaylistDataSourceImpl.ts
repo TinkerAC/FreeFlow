@@ -15,7 +15,9 @@ export class PlaylistDataSourceImpl implements PlaylistDataSource {
   }
 
   async findAll(): Promise<PlaylistRecord[]> {
-    const rows = await Playlist.findAll();
+    const rows = await Playlist.findAll({
+      order: [['position', 'ASC'], ['created_at', 'DESC']],
+    });
 
     // console.debug('findAll rows:', rows);
     return rows.map(r => Object.assign(new PlaylistRecord(), r.get({ plain: true })));
@@ -44,10 +46,19 @@ export class PlaylistDataSourceImpl implements PlaylistDataSource {
 
   async update(pl: PlaylistRecord): Promise<PlaylistRecord> {
     await Playlist.update(
-      { title: pl.title, description: pl.description, creator: pl.creator },
+      { title: pl.title, description: pl.description, creator: pl.creator, position: pl.position },
       { where: { playlist_id: pl.playlist_id } },
     );
     const updated = await Playlist.findByPk(pl.playlist_id);
     return Object.assign(new PlaylistRecord(), updated!.get({ plain: true }));
+  }
+
+  async updatePositions(updates: Array<{ playlist_id: number; position: number }>): Promise<void> {
+    // Use transaction for batch update
+    await Promise.all(
+      updates.map(({ playlist_id, position }) =>
+        Playlist.update({ position }, { where: { playlist_id } })
+      )
+    );
   }
 }

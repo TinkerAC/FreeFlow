@@ -202,6 +202,27 @@
     transform: translateY(1px);
 }
 
+.sortSelect {
+    background: rgb(var(--md-sys-color-surface-container));
+    color: rgb(var(--md-sys-color-on-surface));
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 999px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.sortSelect:hover {
+    background: rgb(var(--md-sys-color-surface-container-high));
+    border-color: rgb(var(--md-sys-color-outline));
+}
+
+.sortSelect:focus {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+}
+
 .search {
     margin-left: auto;
     width: 260px;

@@ -69,4 +69,13 @@ export class PlaylistRepositoryImpl implements PlaylistRepository {
     await this.playlistDetailDataSource.createFromRaw(playlistId, trackId);
 
   }
+
+  async updatePlaylistPositions(updates: Array<{ playlist_id: number; position: number }>): Promise<void> {
+    await this.ds.updatePositions(updates);
+  }
+
+  async updateTrackPositions(playlistId: number, updates: Array<{ track_id: number; position: number }>): Promise<void> {
+    const detailUpdates = updates.map(u => ({ playlist_id: playlistId, track_id: u.track_id, position: u.position }));
+    await this.playlistDetailDataSource.updatePositions(detailUpdates);
+  }
 }

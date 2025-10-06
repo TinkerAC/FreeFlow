@@ -13,18 +13,29 @@ interface ItemProps {
   isSelected: boolean;
   onClick: () => void;
   onRightClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
+  isDragging?: boolean;
 }
 
 export default function Item({
                                imgSrc, altText, title, description, isSelected, onClick, onRightClick,
+                               onDragStart, onDragOver, onDrop, onDragEnd, isDragging,
                              }: ItemProps) {
 
   imgSrc = imgSrc || DefaultCover;
   return (
     <div
-      className={clsx(styles.root, isSelected && styles.selected)}
+      className={clsx(styles.root, isSelected && styles.selected, isDragging && styles.dragging)}
       onClick={onClick}
       onContextMenu={onRightClick}
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
       // 键盘可达性：Enter/Space 触发
       role="button"
       tabIndex={0}

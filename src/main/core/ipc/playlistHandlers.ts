@@ -42,5 +42,19 @@ export function registerPlaylistHandlers({ playlistService }: IpcContext): void 
   ipcMain.handle(Channels.Playlist.Add, async (_evt: IpcMainInvokeEvent, playlist: PlaylistEntity) => {
     return await playlistService.addPlaylist(playlist);
   });
+
+  ipcMain.handle(
+    Channels.Playlist.UpdatePositions,
+    async (_evt: IpcMainInvokeEvent, updates: Array<{ playlist_id: number; position: number }>) => {
+      return await playlistService.updatePlaylistPositions(updates);
+    },
+  );
+
+  ipcMain.handle(
+    Channels.Playlist.UpdateTrackPositions,
+    async (_evt: IpcMainInvokeEvent, playlistId: number, updates: Array<{ track_id: number; position: number }>) => {
+      return await playlistService.updateTrackPositions(playlistId, updates);
+    },
+  );
 }
 
