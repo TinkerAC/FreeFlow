@@ -10,6 +10,7 @@ import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 import { fa, tr } from 'zod/v4/locales/index.cjs';
 
@@ -118,7 +119,10 @@ export class ProviderManager {
       } else if (typeof (provider as any).searchTrack === 'function') {
         tasks.push(
           Promise.resolve()
-            .then(async () => ({ track_result: await (provider as any).searchTrack(keyword, true), playlist_result: [] }))
+            .then(async (): Promise<FusionSearchResult> => ({
+              track_result: await (provider as any).searchTrack(keyword, true),
+              playlist_result: [] as PlaylistEntity[],
+            }))
             .catch(() => EMPTY),
         );
       }
