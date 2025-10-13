@@ -74,7 +74,7 @@ export interface PlaylistApi {
 
   addPlaylist(playlist: PlaylistEntity): Promise<void>;
 
-  modifyPlaylist(playlist: { playlist_id: number; description: string; title: string }): Promise<void>;
+  modifyPlaylist(playlist: { playlist_id: number; description: string; title: string; playlist_cover?: string }): Promise<void>;
 
   removePlaylist(playlistId: number): Promise<void>;
 

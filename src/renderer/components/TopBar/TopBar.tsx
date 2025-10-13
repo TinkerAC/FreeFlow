@@ -9,7 +9,7 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import clsx from 'clsx';
 import { OS } from '@src/shared/OS';
-import { useNavigate } from 'react-router-dom';
+import { useNavigation, ViewType } from '@renderer/core/navigation';
 
 async function getSearchResults(searchTerm: string) {
   return searchContext.getSearchResults(searchTerm);
@@ -25,7 +25,7 @@ interface TopBarProps {
 }
 
 export default function TopBar({ setSearchResults, player }: TopBarProps) {
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLUListElement>(null);
 
@@ -80,7 +80,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
     const kw = term.trim();
     if (!kw) return;
     setLocalResults([]);
-    navigate('/search');
+    navigation.push(ViewType.SEARCH_RESULTS);
     getSearchResults(kw).then(setSearchResults);
   };
 
@@ -108,19 +108,39 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
               <button className={clsx(styles.light, styles.min)} onClick={windowControlContext.minimize} />
               <button className={clsx(styles.light, styles.max)} onClick={windowControlContext.maximize} />
             </div>
-            <button className={styles.iconBtn} title="后退" onClick={() => navigate(-1)}>
+            <button 
+              className={styles.iconBtn} 
+              title="后退" 
+              onClick={() => navigation.goBack()}
+              disabled={!navigation.canGoBack}
+            >
               <i className="fa-solid fa-arrow-left" />
             </button>
-            <button className={styles.iconBtn} title="前进" onClick={() => navigate(1)}>
+            <button 
+              className={styles.iconBtn} 
+              title="前进" 
+              onClick={() => navigation.goForward()}
+              disabled={!navigation.canGoForward}
+            >
               <i className="fa-solid fa-arrow-right" />
             </button>
           </div>
         ) : (
           <div className={styles.left}>
-            <button className={styles.iconBtn} title="后退" onClick={() => navigate(-1)}>
+            <button 
+              className={styles.iconBtn} 
+              title="后退" 
+              onClick={() => navigation.goBack()}
+              disabled={!navigation.canGoBack}
+            >
               <i className="fa-solid fa-arrow-left" />
             </button>
-            <button className={styles.iconBtn} title="前进" onClick={() => navigate(1)}>
+            <button 
+              className={styles.iconBtn} 
+              title="前进" 
+              onClick={() => navigation.goForward()}
+              disabled={!navigation.canGoForward}
+            >
               <i className="fa-solid fa-arrow-right" />
             </button>
           </div>
@@ -137,7 +157,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && performNetworkSearch(searchTerm)}
-              onFocus={() => navigate('/search')}
+              onFocus={() => navigation.push(ViewType.SEARCH_RESULTS)}
               className={styles.searchInput}
             />
           </div>
@@ -153,19 +173,19 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
           <button
             className={styles.iconBtn}
             title="设置"
-            onClick={() => navigate('/settings-app')}
+            onClick={() => navigation.push(ViewType.SETTINGS)}
           >
             <i className="fa-solid fa-gear" />
           </button>
 
-          <button className={styles.iconBtn} title="调试" onClick={() => navigate('/debug')}>
+          <button className={styles.iconBtn} title="调试" onClick={() => navigation.push(ViewType.DEBUG)}>
             <i className="fa-solid fa-bug" />
           </button>
 
           <div
             className={styles.userBadge}
             title={userName || '无'}
-            onClick={() => navigate('/profile')}
+            onClick={() => navigation.push(ViewType.PROFILE)}
           >
             {userName ? userName[0]?.toUpperCase() : '无'}
           </div>

@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { DefaultCover } from '@components/static';
 import PlayerController from '@renderer/core/controller/PlayerController';
-import { useNavigate } from 'react-router-dom';
+import { useNavigation, ViewType } from '@renderer/core/navigation';
 import styles from './PlayerBar.module.css';
 import clsx from 'clsx';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -106,7 +106,7 @@ export default function PlayerBar({
   const coverCls = unstyled ? classNames?.cover : clsx(styles.cover, classNames?.cover);
   const iconCls = unstyled ? classNames?.icon : clsx(styles.iconButton, classNames?.icon);
 
-  const navigate = useNavigate();
+  const navigation = useNavigation();
 
   return (
     <>
@@ -184,7 +184,7 @@ export default function PlayerBar({
             )} />
           </i>
           <i className={iconCls} onClick={onToggleRightContent} title="播放列表"><span className="fas fa-list" /></i>
-          <i className={iconCls} onClick={() => navigate('/lyric')} title="歌词"><span
+          <i className={iconCls} onClick={() => navigation.push(ViewType.LYRIC)} title="歌词"><span
             className="fas fa-align-center" /></i>
 
           {/* 音量按钮锚点 */}

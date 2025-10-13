@@ -49,7 +49,8 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
     return () => unsubscribe();
   }, [musicLibraryController]);
 
-  const coverImage = presentPlaylist?.tracks?.[0]?.cover_src || DefaultCover;
+  // 优先使用数据库中的 playlist_cover，如果没有则使用第一首歌曲的封面
+  const coverImage = presentPlaylist?.playlist_cover || presentPlaylist?.tracks?.[0]?.cover_src || DefaultCover;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [filteredTracks, setFilteredTracks] = useState(presentPlaylist?.tracks || []);

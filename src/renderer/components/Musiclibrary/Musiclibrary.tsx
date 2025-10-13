@@ -5,7 +5,7 @@ import ContextMenu from './ContextMenu';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
-import { useNavigate } from 'react-router-dom';
+import { useNavigation, ViewType } from '@renderer/core/navigation';
 import styles from './MusicLibrary.module.css';
 import clsx from 'clsx';
 
@@ -14,7 +14,7 @@ interface MusicLibraryProps {
 }
 
 export default function MusicLibrary({ musicLibraryController }: MusicLibraryProps) {
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [eventPlaylist, setEventPlaylist] = useState<PlaylistEntity | null>(null);
@@ -208,7 +208,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                       onClick={() => {
                         musicLibraryController.selectItem(index);
                         musicLibraryController.activePlaylist = item;
-                        navigate('/playlist');
+                        navigation.push(ViewType.PLAYLIST);
                       }}
                       onRightClick={(e) => handleRightClick(e, item.playlist_id)}
                       onDragStart={(e) => handleDragStart(e, index)}
@@ -273,7 +273,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                     onClick={() => {
                       musicLibraryController.selectItem(index);
                       musicLibraryController.activePlaylist = item;
-                      navigate('/playlist');
+                      navigation.push(ViewType.PLAYLIST);
                     }}
                     onContextMenu={(e) => handleRightClick(e, item.playlist_id)}
                     onDragStart={(e) => handleDragStart(e, index)}

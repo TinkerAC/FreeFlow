@@ -17,9 +17,10 @@ interface ContextMenuProps {
   handleCloseMenu: () => void;
   musicLibraryController: MusicLibraryController;
   onEditRequest?: (track: TrackEntity) => void;
+  onDetailRequest?: (track: TrackEntity) => void;
 }
 
-export default function ContextMenu({ x, y, track, handleCloseMenu, player, musicLibraryController, onEditRequest }: ContextMenuProps) {
+export default function ContextMenu({ x, y, track, handleCloseMenu, player, musicLibraryController, onEditRequest, onDetailRequest }: ContextMenuProps) {
   if (!track) return null;
 
   const playlists = musicLibraryController.playlists ?? [];
@@ -41,6 +42,7 @@ export default function ContextMenu({ x, y, track, handleCloseMenu, player, musi
   };
 
   const items: MenuItem[] = [
+    { key: 'detail', icon: 'fas fa-info-circle', label: '查看详情', onClick: () => onDetailRequest?.(track) },
     { key: 'next', icon: 'fas fa-forward', label: '添加到下一首播放', onClick: () => player.addTrackToNext(track) },
     {
       key: 'add_to', icon: 'fas fa-folder-plus', label: '添加到…', submenu: candidatePlaylists.map(pl => ({

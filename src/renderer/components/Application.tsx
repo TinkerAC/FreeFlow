@@ -25,8 +25,10 @@ import LyricView from '@components/Maincontent/LyricView/LyricView';
 import DebugView from '@components/Maincontent/DebugView/DebugView';
 import SettingsView from '@components/Maincontent/SettingView/SettingsView';
 import MiniPlayer from '@components/MiniPlayer/MiniPlayer';
+import { NavigationProvider, ViewType } from '@renderer/core/navigation';
+import MainContentSwitch from '@components/Maincontent/MainContentSwitch';
 
-const Application: React.FC = () => {
+const ApplicationContent: React.FC = () => {
   /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
   const musicServiceRef = useRef<MusicLibraryController | null>(null);
   if (musicServiceRef.current === null) {
@@ -232,21 +234,12 @@ const Application: React.FC = () => {
               />
             }
             main={
-              <div className="h-full">
-                <div className="h-full">
-                  <Routes>
-                    <Route path="/" element={<Navigate to="/playlist" replace />} />
-                    <Route path="/playlist" element={<PlaylistView player={playerInstanceRef.current!} musicLibraryController={musicServiceRef.current!} />} />
-                    <Route path="/search" element={<SearchResultView player={playerInstanceRef.current!} fusionSearchResult={searchResults} musicLibraryController={musicServiceRef.current!} />} />
-                    <Route path="/profile" element={<ProfileView />} />
-                    <Route path="/lyric" element={playerInstanceRef.current ? <LyricView player={playerInstanceRef.current} /> : <div style={{ padding: 16, color: '#f87171' }}>播放器未就绪</div>} />
-                    <Route path="/debug" element={<DebugView player={playerInstanceRef.current!} />} />
-                  <Route path="/settings-app" element={<SettingsView />} />
-                  <Route path="/mini" element={<MiniPlayer player={playerInstanceRef.current} />} />
-                  <Route path="*" element={<div style={{ padding: 16 }}>未找到页面</div>} />
-                </Routes>
-                </div>
-              </div>
+              <MainContentSwitch
+                player={playerInstanceRef.current}
+                searchResults={searchResults}
+                musicLibraryController={musicServiceRef.current!}
+                keepAlive={false}
+              />
             }
             right={
               <RightDock>
@@ -267,4 +260,14 @@ const Application: React.FC = () => {
 
 
 };
+
+// Wrap with NavigationProvider
+const Application: React.FC = () => {
+  return (
+    <NavigationProvider initialView={ViewType.PLAYLIST}>
+      <ApplicationContent />
+    </NavigationProvider>
+  );
+};
+
 export default Application;

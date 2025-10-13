@@ -7,10 +7,12 @@ export enum View {
   LYRIC = 'lyric',
   DEBUG = 'debug',
   SETTINGS = 'settings',
+  TRACK_DETAIL = 'trackDetail',
 }
 
 export interface StackItem {
   view: View;
+  data?: any; // 用于传递额外数据，如 TrackEntity
 }
 
 export type ViewChangeListener = (stack: StackItem[], pointer: number) => void;
@@ -54,22 +56,26 @@ export class MainContentViewStack {
   }
 
   /** 导航到新视图，会截断 pointer 之后的历史 */
-  public navigate(view: View) {
+  public navigate(view: View, data?: any) {
 
     //如果新视图已经在栈中，直接跳转到该视图
     const existingIndex = this.stack.findIndex(item => item.view === view);
     if (existingIndex !== -1) {
+      // 如果提供了新数据，更新该项的数据
+      if (data !== undefined) {
+        this.stack[existingIndex].data = data;
+      }
       this.pointer = existingIndex;
       this.notify();
       return;
     }
     //如果新视图不在栈中，则添加到栈中
     this.stack = this.stack.slice(0, this.pointer + 1);
-    this.stack.push({ view });
+    this.stack.push({ view, data });
     this.pointer = this.stack.length - 1;
     this.notify();
 
-    console.info("已经导航到新视图:", view);
+    console.info("已经导航到新视图:", view, data ? "with data" : "");
   }
 
   /** 后退一步（如果可能） */

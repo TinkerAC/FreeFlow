@@ -6,6 +6,7 @@ import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import styles from './PlaylistView.module.css';
+import { useNavigation, ViewType } from '@renderer/core/navigation';
 
 interface PlaylistProps {
   filteredTracks: TrackEntity[];
@@ -17,6 +18,7 @@ interface PlaylistProps {
 export function Playlist({
                            filteredTracks, player, musicLibraryController, scrollContainerRef,
                          }: PlaylistProps) {
+  const navigation = useNavigation();
   const [showFloatingButtons, setShowFloatingButtons] = useState(false);
   const [menu, setMenu] = useState<{ visible: boolean; x: number; y: number; track: TrackEntity | null }>({
     visible: false, x: 0, y: 0, track: null,
@@ -137,6 +139,10 @@ export function Playlist({
           player={player}
           musicLibraryController={musicLibraryController}
           onEditRequest={(t) => { setEditing(t); setMenu({ visible: false, x: 0, y: 0, track: null }); }}
+          onDetailRequest={(t) => {
+            navigation.push(ViewType.TRACK_DETAIL, t);
+            setMenu({ visible: false, x: 0, y: 0, track: null });
+          }}
         />
       )}
 

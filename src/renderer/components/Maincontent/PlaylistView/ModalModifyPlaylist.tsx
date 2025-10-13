@@ -9,15 +9,20 @@ interface ModalModifyPlaylistProps {
 }
 
 const ModalModifyPlaylist = ({ onClose, musicLibraryController }: ModalModifyPlaylistProps) => {
-  const [title, setTitle] = useState(musicLibraryController.activePlaylist?.title || '');
-  const [description, setDescription] = useState(musicLibraryController.activePlaylist?.description || '');
+  const currentPlaylist = musicLibraryController.activePlaylist;
+  const [title, setTitle] = useState(currentPlaylist?.title || '');
+  const [description, setDescription] = useState(currentPlaylist?.description || '');
+  const [coverUrl, setCoverUrl] = useState(currentPlaylist?.playlist_cover || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await playlistContext.modifyPlaylist(
-      { playlist_id: musicLibraryController.activePlaylist?.playlist_id, title, description },
-    );
-    musicLibraryController.refreshPlaylists();
+    await playlistContext.modifyPlaylist({
+      playlist_id: currentPlaylist?.playlist_id,
+      title,
+      description,
+      playlist_cover: coverUrl.trim() || undefined,
+    });
+    await musicLibraryController.refreshPlaylists();
     onClose();
   };
 
@@ -62,9 +67,53 @@ const ModalModifyPlaylist = ({ onClose, musicLibraryController }: ModalModifyPla
           <i className="fas fa-times" />
         </button>
 
-        <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>编辑歌单</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 16 }}>编辑歌单</h2>
 
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 14 }}>
+          {/* 封面预览 */}
+          {coverUrl && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+              <img
+                src={coverUrl}
+                alt="封面预览"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+                style={{
+                  width: 160,
+                  height: 160,
+                  objectFit: 'cover',
+                  borderRadius: 12,
+                  border: '2px solid rgb(var(--md-sys-color-outline-variant))',
+                  boxShadow: '0 4px 12px rgba(0,0,0,.2)',
+                }}
+              />
+            </div>
+          )}
+
+          <label style={{ display: 'grid', gap: 6 }}>
+            <span style={{ fontSize: 12, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>
+              封面 URL（可选）
+            </span>
+            <input
+              type="text"
+              value={coverUrl}
+              onChange={(e) => setCoverUrl(e.target.value)}
+              placeholder="输入封面图片 URL"
+              style={{
+                padding: '10px 12px', borderRadius: 10,
+                background: 'color-mix(in oklab, rgb(var(--md-sys-color-surface)) 80%, transparent)',
+                border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                color: 'rgb(var(--md-sys-color-on-surface))',
+                fontSize: 13,
+              }}
+            />
+            <span style={{ fontSize: 11, color: 'rgb(var(--md-sys-color-on-surface-variant))', opacity: 0.7 }}>
+              留空则使用第一首歌曲的封面
+            </span>
+          </label>
+
           <label style={{ display: 'grid', gap: 6 }}>
             <span style={{ fontSize: 12, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>名称</span>
             <input
@@ -82,11 +131,12 @@ const ModalModifyPlaylist = ({ onClose, musicLibraryController }: ModalModifyPla
           </label>
 
           <label style={{ display: 'grid', gap: 6 }}>
-            <span style={{ fontSize: 12, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>添加简介（可选）</span>
+            <span style={{ fontSize: 12, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>简介（可选）</span>
             <textarea
-              rows={4}
+              rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="输入歌单简介"
               style={{
                 padding: '10px 12px', borderRadius: 10, resize: 'vertical',
                 background: 'color-mix(in oklab, rgb(var(--md-sys-color-surface)) 80%, transparent)',
