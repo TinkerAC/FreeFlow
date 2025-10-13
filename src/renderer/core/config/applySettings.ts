@@ -59,13 +59,11 @@ export function applyAllSettings(s: Settings) {
 
 /**
  * 计算当日应使用的种子色。
- * - 当 theme.autoDailySeed 为 true 时，优先使用“当天缓存的种子色”。
- *   如果用户刚修改了 seed，则立即以新 seed 覆盖当天缓存（保证可见的立即生效）。
+ * - 当 theme.autoDailySeed 为 true 时，基于日期生成稳定的每日随机色。
  * - 否则使用用户配置的 seed。
  */
 let currentDaySeed: string | null = null;
 let currentDayKey: string | null = null; // YYYY-MM-DD
-let lastBaseSeedSeen: string | null = null; // 记录上次参与计算的 base
 
 function getEffectiveSeed(s: Settings): string {
   const base = s.theme.seed || '#4f46e5';
@@ -78,26 +76,22 @@ function getEffectiveSeed(s: Settings): string {
   if (currentDayKey !== today) {
     currentDayKey = today;
     currentDaySeed = null;
-    lastBaseSeedSeen = null;
   }
 
-  // 如果用户刚修改了 seed（base 变化），则立即采用新的 base 作为当天颜色
-  if (lastBaseSeedSeen !== base) {
-    currentDaySeed = base;
-    lastBaseSeedSeen = base;
-  }
-
-  // 正常情况下若没有缓存，则生成一个稳定的“今日色”
+  // 生成今日种子色（基于日期的稳定伪随机色）
   if (!currentDaySeed) {
-    // 生成与日期相关、可重复的伪随机色（避免每次刷新都不同）
-    currentDaySeed = pseudoRandomHexFrom(`${base}-${today}`);
-    lastBaseSeedSeen = base;
+    currentDaySeed = generateDailySeed(today);
   }
 
   return currentDaySeed;
 }
 
-/** 简易“年内第 N 天”（本地时区） */
+/** 导出函数供 UI 显示当前实际使用的种子色 */
+export function getCurrentEffectiveSeed(s: Settings): string {
+  return getEffectiveSeed(s);
+}
+
+/** 简易"年-月-日"键（本地时区） */
 function dayKey(d: Date): string {
   const y = d.getFullYear();
   const m = `${d.getMonth() + 1}`.padStart(2, '0');
@@ -105,11 +99,59 @@ function dayKey(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-// 生成一个随机种子色（#RRGGBB）
-function pseudoRandomHexFrom(key: string): string {
-  // 简易可重复 hash（djb2）映射到 24bit 颜色
-  let h = 5381;
-  for (let i = 0; i < key.length; i++) h = ((h << 5) + h) + key.charCodeAt(i);
-  const n = (h >>> 0) % 0xFFFFFF;
-  return `#${n.toString(16).padStart(6, '0')}`;
+/**
+ * 基于日期生成稳定的每日种子色（#RRGGBB）
+ * 使用改进的哈希算法，确保颜色分布更均匀且饱和度适中
+ */
+function generateDailySeed(dateKey: string): string {
+  // 使用日期字符串生成可重复的哈希值
+  let hash = 0;
+  for (let i = 0; i < dateKey.length; i++) {
+    const char = dateKey.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // 将哈希值转换为 HSL 颜色空间，然后转为 RGB
+  // 这样可以确保生成的颜色更加丰富多彩且饱和度适中
+  const hue = Math.abs(hash % 360);
+  const saturation = 60 + (Math.abs(hash >> 8) % 30); // 60-90%
+  const lightness = 45 + (Math.abs(hash >> 16) % 20); // 45-65%
+  
+  return hslToHex(hue, saturation, lightness);
+}
+
+/**
+ * HSL 转 HEX 颜色
+ */
+function hslToHex(h: number, s: number, l: number): string {
+  s = s / 100;
+  l = l / 100;
+
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+  
+  let r = 0, g = 0, b = 0;
+
+  if (0 <= h && h < 60) {
+    r = c; g = x; b = 0;
+  } else if (60 <= h && h < 120) {
+    r = x; g = c; b = 0;
+  } else if (120 <= h && h < 180) {
+    r = 0; g = c; b = x;
+  } else if (180 <= h && h < 240) {
+    r = 0; g = x; b = c;
+  } else if (240 <= h && h < 300) {
+    r = x; g = 0; b = c;
+  } else if (300 <= h && h < 360) {
+    r = c; g = 0; b = x;
+  }
+
+  const toHex = (n: number) => {
+    const hex = Math.round((n + m) * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }

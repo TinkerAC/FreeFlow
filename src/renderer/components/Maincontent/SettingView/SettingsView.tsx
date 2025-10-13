@@ -12,8 +12,9 @@ import Segmented from './controls/Segmented';
 import ColorSeed from './controls/ColorSeed';
 import { AppIcon, getIconOptions } from '@src/shared/hifiniCookies';
 
-import { useSetting } from '@renderer/core/config/SettingsContext'; // ← 关键：用新的 useSetting
+import { useSetting, useSettingsContext } from '@renderer/core/config/SettingsContext'; // ← 关键：用新的 useSetting
 import { PRESET_SEEDS } from '@renderer/theme/presets';
+import { getCurrentEffectiveSeed } from '@renderer/core/config/applySettings';
 
 type ThemeMode = 'system' | 'light' | 'dark';
 type ThemeSource = 'material-you' | 'preset';
@@ -22,6 +23,7 @@ type ProgressSkin = 'classic' | 'neon' | 'waveform' | 'knob';
 
 export default function SettingsView() {
   // 与 schema 完全对齐
+  const { settings } = useSettingsContext();
   const themeMode = useSetting<ThemeMode>('theme.mode', 'system');
   const themeSource = useSetting<ThemeSource>('theme.source', 'material-you');
   const seedHex = useSetting<string>('theme.seed', '#66ccff');
@@ -29,6 +31,11 @@ export default function SettingsView() {
   const preset = useSetting<ThemePreset>('theme.preset', 'classic');
   const seedPresets = useSetting<string[]>('theme.materialSeedPresets', []);
   const [newSeed, setNewSeed] = React.useState('');
+  
+  // 计算当前实际使用的种子色（考虑每日随机色）
+  const currentEffectiveSeed = React.useMemo(() => {
+    return settings ? getCurrentEffectiveSeed(settings) : seedHex.value;
+  }, [settings, seedHex.value]);
 
   const progressSkin = useSetting<ProgressSkin>('audio.progressSkin', 'classic');
   const volume = useSetting<number>('audio.volume', 0.8);
@@ -233,6 +240,41 @@ export default function SettingsView() {
               label="每日设置新的种子颜色"
               sub="每天自动更换 Material You 种子色"
               control={<Switch checked={!!autoDailySeed.value} onChange={autoDailySeed.setValue} />}
+            />
+          )}
+          {themeSource.value === 'material-you' && autoDailySeed.value && (
+            <SettingRow
+              label="当前实际使用的种子色"
+              sub="今日自动生成的种子色（基于日期）"
+              control={
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 10,
+                  padding: '6px 12px',
+                  borderRadius: 999,
+                  background: 'rgba(var(--md-sys-color-surface-variant), .25)',
+                  border: '1px solid rgb(var(--md-sys-color-outline-variant))'
+                }}>
+                  <div style={{ 
+                    width: 32, 
+                    height: 32, 
+                    borderRadius: '50%', 
+                    background: currentEffectiveSeed,
+                    border: '2px solid rgba(255,255,255,.2)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,.15)'
+                  }} />
+                  <span style={{ 
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas', 
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'rgb(var(--md-sys-color-on-surface))',
+                    opacity: .9
+                  }}>
+                    {currentEffectiveSeed}
+                  </span>
+                </div>
+              }
             />
           )}
           <SettingRow
