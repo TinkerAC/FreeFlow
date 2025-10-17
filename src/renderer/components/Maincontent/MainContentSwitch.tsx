@@ -20,16 +20,16 @@ interface MainContentSwitchProps {
 }
 
 export default function MainContentSwitch({
-  player,
-  searchResults,
-  musicLibraryController,
-  keepAlive = false,
-}: MainContentSwitchProps) {
+                                            player,
+                                            searchResults,
+                                            musicLibraryController,
+                                            keepAlive = false,
+                                          }: MainContentSwitchProps) {
   const { currentEntry, history, currentIndex } = useNavigation();
 
   const render = (entry: ReturnType<typeof useNavigation>['currentEntry']) => {
     if (!entry) return <div style={{ padding: 16, opacity: .7 }}>加载中...</div>;
-    
+
     switch (entry.view) {
       case ViewType.PLAYLIST:
         return <PlaylistView player={player!} musicLibraryController={musicLibraryController} />;
@@ -47,14 +47,14 @@ export default function MainContentSwitch({
         return player ? <LyricView player={player} /> :
           <div style={{ padding: 16, color: '#f87171' }}>播放器未就绪</div>;
       case ViewType.DEBUG:
-        return <DebugView player={player!}  />;
+        return <DebugView player={player!} />;
       case ViewType.SETTINGS:
         return <SettingsView />;
       case ViewType.TRACK_DETAIL:
         return (entry.data && player) ? (
-          <TrackDetailView 
-            track={entry.data as TrackEntity} 
-            player={player} 
+          <TrackDetailView
+            track={entry.data as TrackEntity}
+            player={player}
             musicLibraryController={musicLibraryController}
           />
         ) : (

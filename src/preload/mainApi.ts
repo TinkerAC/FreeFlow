@@ -37,10 +37,20 @@ const mainApi: MainApi = {
 
   trackApi: {
     getInfo: (platform: string, platform_unique_id: string) => ipcRenderer.invoke(Channels.Track.GetInfo, platform, platform_unique_id) as Promise<TrackEntity>,
-    updateBasic: (payload: { platform: string; platform_unique_id: string; title?: string; artist?: string; album?: string }) =>
+    updateBasic: (payload: {
+      platform: string;
+      platform_unique_id: string;
+      title?: string;
+      artist?: string;
+      album?: string
+    }) =>
       ipcRenderer.invoke(Channels.Track.UpdateBasic, payload) as Promise<TrackEntity>,
     cleanBasic: (payload: { title: string; artist?: string; album?: string }) =>
-      ipcRenderer.invoke(Channels.Track.CleanBasic, payload) as Promise<{ title: string; artist: string; album?: string }>,
+      ipcRenderer.invoke(Channels.Track.CleanBasic, payload) as Promise<{
+        title: string;
+        artist: string;
+        album?: string
+      }>,
   },
 
   playerApi: {
@@ -95,7 +105,7 @@ const mainApi: MainApi = {
     addTrackToPlaylist: (track, playlistId) => ipcRenderer.invoke(Channels.Playlist.AddTrack, track, playlistId),
     removeTrackFromPlaylist: (playlistId, track) => ipcRenderer.invoke(Channels.Playlist.RemoveTrack, playlistId, track),
     createPlaylist: () => ipcRenderer.invoke(Channels.Playlist.Create),
-    updatePlaylistPositions: (updates: Array<{ playlist_id: number; position: number }>) => 
+    updatePlaylistPositions: (updates: Array<{ playlist_id: number; position: number }>) =>
       ipcRenderer.invoke(Channels.Playlist.UpdatePositions, updates),
     updateTrackPositions: (playlistId: number, updates: Array<{ track_id: number; position: number }>) =>
       ipcRenderer.invoke(Channels.Playlist.UpdateTrackPositions, playlistId, updates),
@@ -140,7 +150,10 @@ const mainApi: MainApi = {
 
   youtubeMusicApi: {
     openLoginWindow: () => ipcRenderer.invoke(Channels.YouTubeMusic.OpenLogin) as Promise<void>,
-    syncCredentials: () => ipcRenderer.invoke(Channels.YouTubeMusic.SyncCredentials) as Promise<{ cookie: string; visitorData?: string }>,
+    syncCredentials: () => ipcRenderer.invoke(Channels.YouTubeMusic.SyncCredentials) as Promise<{
+      cookie: string;
+      visitorData?: string
+    }>,
     closeLoginWindow: () => ipcRenderer.invoke(Channels.YouTubeMusic.CloseLogin) as Promise<void>,
   },
 };

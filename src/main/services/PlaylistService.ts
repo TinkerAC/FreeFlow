@@ -210,7 +210,10 @@ export default class PlaylistService {
     await this.playlistRepository.updatePlaylistPositions(updates);
   }
 
-  public async updateTrackPositions(playlistId: number, updates: Array<{ track_id: number; position: number }>): Promise<void> {
+  public async updateTrackPositions(playlistId: number, updates: Array<{
+    track_id: number;
+    position: number
+  }>): Promise<void> {
     await this.playlistRepository.updateTrackPositions(playlistId, updates);
   }
 

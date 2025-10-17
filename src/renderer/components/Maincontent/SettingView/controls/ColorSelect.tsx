@@ -4,10 +4,10 @@ import ReactDOM from 'react-dom';
 export type ColorOption = { label: string; hex: string };
 
 export default function ColorSelect({
-  value,
-  options,
-  onChange,
-}: { value: string; options: ColorOption[]; onChange: (hex: string) => void }) {
+                                      value,
+                                      options,
+                                      onChange,
+                                    }: { value: string; options: ColorOption[]; onChange: (hex: string) => void }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement | null>(null);
   const [menuPos, setMenuPos] = React.useState<{ top: number; left: number; width: number } | null>(null);
@@ -22,9 +22,19 @@ export default function ColorSelect({
     function onDocMouseDown(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
-    function onWinBlur() { setOpen(false); }
-    function onScroll() { if (open) recalcPos(); }
-    function onResize() { if (open) recalcPos(); }
+
+    function onWinBlur() {
+      setOpen(false);
+    }
+
+    function onScroll() {
+      if (open) recalcPos();
+    }
+
+    function onResize() {
+      if (open) recalcPos();
+    }
+
     document.addEventListener('mousedown', onDocMouseDown);
     window.addEventListener('blur', onWinBlur);
     window.addEventListener('scroll', onScroll, true);
@@ -77,7 +87,7 @@ export default function ColorSelect({
             height: 14,
             borderRadius: 4,
             background: current.hex,
-            border: '1px solid rgba(0,0,0,.25)'
+            border: '1px solid rgba(0,0,0,.25)',
           }}
         />
         <span style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -104,7 +114,11 @@ export default function ColorSelect({
             {options.map(opt => (
               <button
                 key={`${opt.label}-${opt.hex}`}
-                onMouseDown={(e) => { e.preventDefault(); onChange(opt.hex); setOpen(false); }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(opt.hex);
+                  setOpen(false);
+                }}
                 role="option"
                 aria-selected={opt.hex.toLowerCase() === (value || '').toLowerCase()}
                 style={{
@@ -119,13 +133,19 @@ export default function ColorSelect({
                 }}
                 title={opt.label}
               >
-                <span aria-hidden style={{ width: 14, height: 14, borderRadius: 4, background: opt.hex, border: '1px solid rgba(0,0,0,.25)' }} />
+                <span aria-hidden style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 4,
+                  background: opt.hex,
+                  border: '1px solid rgba(0,0,0,.25)',
+                }} />
                 <span style={{ flex: 1 }}>{opt.label}</span>
               </button>
             ))}
           </div>
         ),
-        document.body
+        document.body,
       )}
     </div>
   );

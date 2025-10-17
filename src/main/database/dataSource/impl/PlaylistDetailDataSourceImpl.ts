@@ -51,7 +51,7 @@ export class PlaylistDetailDataSourceImpl implements PlaylistDetailDataSource {
   }
 
   async findByPlaylistId(playlistId: number): Promise<PlaylistDetailRecord[] | null> {
-    const rows = await PlaylistDetail.findAll({ 
+    const rows = await PlaylistDetail.findAll({
       where: { playlist_id: playlistId },
       order: [['position', 'ASC'], ['created_at', 'DESC']],
     });
@@ -67,8 +67,8 @@ export class PlaylistDetailDataSourceImpl implements PlaylistDetailDataSource {
     // Use transaction for batch update
     await Promise.all(
       updates.map(({ playlist_id, track_id, position }) =>
-        PlaylistDetail.update({ position }, { where: { playlist_id, track_id } })
-      )
+        PlaylistDetail.update({ position }, { where: { playlist_id, track_id } }),
+      ),
     );
   }
 }

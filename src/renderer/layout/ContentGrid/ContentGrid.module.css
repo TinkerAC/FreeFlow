@@ -4,17 +4,31 @@
     display: grid;
     grid-template-areas: "left main right";
     grid-template-columns: var(--sidebar-w, 250px) minmax(0, 1fr) var(--right-w, 0px);
-    gap: 8px;
-    padding: 8px;
+    gap: 12px;
+    padding: 12px;
     height: 100%;
     transition: grid-template-columns .24s ease;
     overflow: hidden;
     background: transparent; /* 由各子面板自绘表面色 */
 }
 
-.left  { grid-area: left;  min-width: 0; overflow: hidden; }
-.main  { grid-area: main;  min-width: 0; overflow: hidden; }
-.right { grid-area: right; min-width: 0; overflow: hidden; }
+.left {
+    grid-area: left;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.main {
+    grid-area: main;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.right {
+    grid-area: right;
+    min-width: 0;
+    overflow: hidden;
+}
 
 .mainScroll {
     height: 100%;
@@ -24,6 +38,16 @@
 }
 
 /* 统一滚动条（可选） */
-.mainScroll::-webkit-scrollbar        { width: 8px; height: 8px; }
-.mainScroll::-webkit-scrollbar-thumb  { background: rgba(var(--md-sys-color-outline-variant), .9); border-radius: 8px; }
-.mainScroll::-webkit-scrollbar-track  { background: transparent; }
+.mainScroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.mainScroll::-webkit-scrollbar-thumb {
+    background: rgba(var(--md-sys-color-outline-variant), .9);
+    border-radius: 8px;
+}
+
+.mainScroll::-webkit-scrollbar-track {
+    background: transparent;
+}

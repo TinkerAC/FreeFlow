@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './ListRow.module.css';
-import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
+import { Bilibili, DefaultCover, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
 import { searchContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { useNavigate } from 'react-router-dom';
@@ -8,8 +8,8 @@ import MusicLibraryController from '@renderer/core/controller/MusicLibraryContro
 import { Platform } from '@main/core/enum/Platform';
 
 export default function PlaylistsTab({
-  playlists, musicLibraryController,
-}: {
+                                       playlists, musicLibraryController,
+                                     }: {
   playlists: PlaylistEntity[];
   musicLibraryController: MusicLibraryController;
 }) {

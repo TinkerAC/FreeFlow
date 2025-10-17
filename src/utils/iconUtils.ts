@@ -12,6 +12,7 @@ import path from 'node:path';
 
 export class IconUtilsError extends Error {
   code?: string;
+
   constructor(message: string, code?: string) {
     super(message);
     this.name = 'IconUtilsError';

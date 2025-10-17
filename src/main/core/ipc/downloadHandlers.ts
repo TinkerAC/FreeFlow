@@ -9,7 +9,13 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { WindowKey } from '@main/window/windowManager';
 import { IpcContext } from './ipcContext';
 
-export function registerDownloadHandlers({ fileCacheManager, downloader, windowManager, dataPath, trackService }: IpcContext): void {
+export function registerDownloadHandlers({
+                                           fileCacheManager,
+                                           downloader,
+                                           windowManager,
+                                           dataPath,
+                                           trackService,
+                                         }: IpcContext): void {
   ipcMain.handle(Channels.System.CalcFileCacheDiskUsage, async () => {
     return await fileCacheManager.getDiskUsage();
   });

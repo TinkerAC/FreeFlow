@@ -11,7 +11,7 @@ import { inject, injectable } from 'inversify';
 import ElectronStore from 'electron-store';
 import { HifiniCookies } from '@src/shared/hifiniCookies';
 import * as os from 'node:os';
-import { DataPath} from '@main/core/PathConfig';
+import { DataPath } from '@main/core/PathConfig';
 
 import { DISymbol } from '@main/di/symbol';
 
@@ -50,12 +50,12 @@ export class HifiniDownloader {
 
   constructor(
     @inject(DISymbol.Store) private readonly store: ElectronStore,
-    @inject(DISymbol.DataPath) private readonly dataPath:DataPath
+    @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
   ) {
     const cookies: HifiniCookies = store.get('hifini_cookie');
     // 下载目录使用系统临时目录
     this.downloadDir = os.tmpdir();
-    this.musicDir = this.dataPath.musicDir
+    this.musicDir = this.dataPath.musicDir;
     console.log('下载目录:', this.downloadDir);
     console.log('音乐目录:', this.musicDir);
     const cookieHeader = `bbs_sid=${cookies.bbs_sid}; bbs_token=${cookies.bbs_token}`;

@@ -75,7 +75,7 @@ export class MainContentViewStack {
     this.pointer = this.stack.length - 1;
     this.notify();
 
-    console.info("已经导航到新视图:", view, data ? "with data" : "");
+    console.info('已经导航到新视图:', view, data ? 'with data' : '');
   }
 
   /** 后退一步（如果可能） */

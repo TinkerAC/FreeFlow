@@ -15,6 +15,7 @@ export interface AiTextService {
    * Clean a noisy title/artist pair and return normalized fields.
    */
   cleanTitleArtist(rawTitle: string, rawArtist?: string | null): Promise<CleanResult>;
+
   /**
    * Clean title/artist/album cooperatively. Album is best-effort and may be undefined.
    */
@@ -47,7 +48,7 @@ export class HeuristicAiTextService implements AiTextService {
     // 2) Remove trailing qualifiers like Official MV, Lyrics, Live, 4K, HQ, etc.
     const qualifiers = [
       'official', 'mv', 'pv', 'm\/v', 'lyric', 'lyrics', 'audio', 'video', 'live', '舞台', '现场',
-      '中字', '中字版', '中英字幕', '纯享', '完整版', '完整版', '高音质', '4k', '8k', '1080p', 'official video', 'official mv', '专辑版', '单曲', 'ost'
+      '中字', '中字版', '中英字幕', '纯享', '完整版', '完整版', '高音质', '4k', '8k', '1080p', 'official video', 'official mv', '专辑版', '单曲', 'ost',
     ];
     const rxQual = new RegExp(
       `(?:\\s|\u3000|[-–—_·|｜/\\\\\\s])*(?:${qualifiers.join('|')})(?:[\\s\u3000]*版)?$`,
@@ -89,7 +90,8 @@ export class HeuristicAiTextService implements AiTextService {
         } else if (noisyKeys.test(p1)) {
           t = p2;
         } else {
-          a = p1; t = p2; // default Artist - Title
+          a = p1;
+          t = p2; // default Artist - Title
         }
       }
     }

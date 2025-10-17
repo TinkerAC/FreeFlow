@@ -24,7 +24,9 @@ export default function ContextMenu({ x, y, onRequestClose, items, className }: 
   const subOfRef = useRef<HTMLDivElement | null>(null);
   const subMenuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => () => { if (subMenuTimerRef.current) clearTimeout(subMenuTimerRef.current); }, []);
+  useEffect(() => () => {
+    if (subMenuTimerRef.current) clearTimeout(subMenuTimerRef.current);
+  }, []);
 
   const openSubmenu = (rowEl: HTMLElement) => {
     if (subMenuTimerRef.current) clearTimeout(subMenuTimerRef.current);
@@ -45,7 +47,8 @@ export default function ContextMenu({ x, y, onRequestClose, items, className }: 
 
   return (
     <>
-      <BaseContextMenu x={x} y={y} onRequestClose={onRequestClose} className={clsx(styles.menu, className)} extraOverlayRefs={[subMenuRef]}>
+      <BaseContextMenu x={x} y={y} onRequestClose={onRequestClose} className={clsx(styles.menu, className)}
+                       extraOverlayRefs={[subMenuRef]}>
         {items.map((it) => it.submenu ? (
           <div key={it.key} className={clsx(styles.item, styles.subWrap)}
                onMouseEnter={(e) => openSubmenu(e.currentTarget)}
@@ -57,7 +60,10 @@ export default function ContextMenu({ x, y, onRequestClose, items, className }: 
             <span className={clsx('fas fa-chevron-right', styles.subCaret)} />
           </div>
         ) : (
-          <button key={it.key} className={styles.item} disabled={it.disabled} onClick={() => { it.onClick?.(); onRequestClose(); }}>
+          <button key={it.key} className={styles.item} disabled={it.disabled} onClick={() => {
+            it.onClick?.();
+            onRequestClose();
+          }}>
             {it.icon && <span className={clsx(it.icon, styles.icon)} />}
             <span>{it.label}</span>
           </button>
@@ -66,17 +72,22 @@ export default function ContextMenu({ x, y, onRequestClose, items, className }: 
 
       {subPos && createPortal(
         <div ref={subMenuRef} className={styles.subMenu} style={{ left: subPos.left, top: subPos.top }}
-             onMouseEnter={() => { if (subMenuTimerRef.current) clearTimeout(subMenuTimerRef.current); }}
+             onMouseEnter={() => {
+               if (subMenuTimerRef.current) clearTimeout(subMenuTimerRef.current);
+             }}
              onMouseLeave={closeSubmenu}
         >
           {(items.find(i => i.submenu && subOfRef.current?.textContent?.includes(String(i.label)))?.submenu ?? []).map((si) => (
-            <button key={si.key} className={styles.item} disabled={si.disabled} onClick={() => { si.onClick?.(); onRequestClose(); }}>
+            <button key={si.key} className={styles.item} disabled={si.disabled} onClick={() => {
+              si.onClick?.();
+              onRequestClose();
+            }}>
               {si.icon && <span className={clsx(si.icon, styles.icon)} />}
               <span>{si.label}</span>
             </button>
           ))}
         </div>,
-        document.body
+        document.body,
       )}
     </>
   );

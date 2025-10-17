@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './database';
-import { Platform } from '@main/core/enum/Platform';
 import { OS } from '@src/shared/OS';
 
 /**

@@ -6,7 +6,14 @@ import { formatTime } from '@src/utils/timeUtils';
 import styles from './NeonBar.module.css';
 import { registerProgressSkin } from '@components/Playerbar/ProgressBar/ProgressSkinRegistry';
 
-export interface NeonBarProps { value: number; min?: number; max: number; onChange: (v:number)=>void; showTimes?: boolean; className?: string; }
+export interface NeonBarProps {
+  value: number;
+  min?: number;
+  max: number;
+  onChange: (v: number) => void;
+  showTimes?: boolean;
+  className?: string;
+}
 
 export const NeonBar: React.FC<NeonBarProps> = ({ value, min = 0, max, onChange, showTimes = true, className }) => {
   const { pct, setByPct, onKeyDown, aria } = useProgress({ value, min, max, onChange });

@@ -59,13 +59,6 @@ export class WindowManager {
     return win;
   }
 
-  /** 绑定窗口并管理生命周期 */
-  private attach(key: WindowKey, win: BrowserWindow): void {
-    this.windows.set(key, win);
-    // 调试输出已移除
-    win.on('closed', () => this.windows.delete(key));
-  }
-
   /** 显示窗口（不处理互斥） */
   public show(key: WindowKey, focus: boolean = true): BrowserWindow {
     const win = this.ensure(key);
@@ -116,5 +109,12 @@ export class WindowManager {
       }
     });
     this.windows.clear();
+  }
+
+  /** 绑定窗口并管理生命周期 */
+  private attach(key: WindowKey, win: BrowserWindow): void {
+    this.windows.set(key, win);
+    // 调试输出已移除
+    win.on('closed', () => this.windows.delete(key));
   }
 }

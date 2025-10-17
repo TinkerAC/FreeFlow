@@ -3,7 +3,7 @@ import styles from './PlaylistView.module.css';
 
 import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
-import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic, Local, YouTubeMusic } from '@components/static';
+import { Bilibili, DefaultCover, Hifini, Local, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
@@ -64,7 +64,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
 
   const applySortAndFilter = () => {
     let tracks = presentPlaylist?.tracks || [];
-    
+
     // 先过滤
     if (searchKeyword) {
       const lower = searchKeyword.toLowerCase();
@@ -74,7 +74,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
         (t.album || '').toLowerCase().includes(lower),
       );
     }
-    
+
     // 再排序
     let sorted = [...tracks];
     switch (sortBy) {
@@ -95,20 +95,20 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
         // 保持原有顺序（按数据库position字段排序）
         break;
     }
-    
+
     setFilteredTracks(sorted);
   };
 
   const handleSortChange = async (newSortBy: typeof sortBy) => {
     setSortBy(newSortBy);
-    
+
     // 如果选择默认排序，保存当前顺序到数据库
     if (newSortBy === 'default' && presentPlaylist?.playlist_id) {
       const updates = filteredTracks.map((track, index) => ({
         track_id: track.id!,
         position: index,
       }));
-      
+
       try {
         await playlistContext.updateTrackPositions(presentPlaylist.playlist_id, updates);
         await musicLibraryController.refreshPlaylists();
@@ -270,7 +270,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
             </button>
 
             {/* 排序选择器 */}
-            <select 
+            <select
               className={styles.sortSelect}
               value={sortBy}
               onChange={(e) => handleSortChange(e.target.value as typeof sortBy)}

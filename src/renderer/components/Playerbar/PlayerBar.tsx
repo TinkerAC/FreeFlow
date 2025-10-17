@@ -179,8 +179,8 @@ export default function PlayerBar({
           <i className={iconCls} title="播放模式：循环/单曲/随机" onClick={() => player.cyclePlaybackMode()}>
             <span className={clsx('fas',
               player.playbackMode === 'shuffle' ? 'fa-shuffle' :
-              player.playbackMode === 'repeat'  ? 'fa-repeat'  :
-              'fa-rotate-right' /* 循环 */
+                player.playbackMode === 'repeat' ? 'fa-repeat' :
+                  'fa-rotate-right', /* 循环 */
             )} />
           </i>
           <i className={iconCls} onClick={onToggleRightContent} title="播放列表"><span className="fas fa-list" /></i>

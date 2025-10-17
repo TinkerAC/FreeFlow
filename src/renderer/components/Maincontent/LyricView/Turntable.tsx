@@ -11,8 +11,8 @@ export type TurntableProps = {
 const Turntable: React.FC<TurntableProps> = ({ coverSrc, isPlaying, onCoverError }) => {
   // 读取配置：转速（rad/s）。period = 2π / ω
   // 读取唱机设置（UI 域）
-  const { value: speedMode } = useSetting<'preset'|'custom'>('ui.turntable.speedMode', 'preset');
-  const { value: preset } = useSetting<'slow'|'medium'|'fast'>('ui.turntable.preset', 'medium');
+  const { value: speedMode } = useSetting<'preset' | 'custom'>('ui.turntable.speedMode', 'preset');
+  const { value: preset } = useSetting<'slow' | 'medium' | 'fast'>('ui.turntable.preset', 'medium');
   const { value: customW } = useSetting<number>('ui.turntable.customAngularVelocityRadPerSec', 0.4488);
 
   const omega = (() => {
@@ -28,7 +28,8 @@ const Turntable: React.FC<TurntableProps> = ({ coverSrc, isPlaying, onCoverError
     return Math.max(0.2, Math.min(60, t));
   })();
   return (
-    <div className={`${styles.deck} ${isPlaying ? styles.isPlaying : ''}`} style={{ ['--disc-rotate-period' as any]: `${periodSec}s` }}>
+    <div className={`${styles.deck} ${isPlaying ? styles.isPlaying : ''}`}
+         style={{ ['--disc-rotate-period' as any]: `${periodSec}s` }}>
       <div className={styles.turntable}>
         {/* 静态主轴盖：不随唱片旋转 */}
         <div className={styles.spindleStatic} />

@@ -5,10 +5,23 @@
     display: grid;
     grid-template-rows: auto 1fr auto;
     height: 100%;
-    background: rgb(var(--md-sys-color-background));
+    /* Material You: 使用更明亮的背景 */
+    background: rgb(var(--md-sys-color-surface));
     color: rgb(var(--md-sys-color-on-background));
 }
 
-.top     { grid-row: 1; min-width: 0; }
-.content { grid-row: 2; min-width: 0; overflow: hidden; }
-.bottom  { grid-row: 3; min-width: 0; }
+.top {
+    grid-row: 1;
+    min-width: 0;
+}
+
+.content {
+    grid-row: 2;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.bottom {
+    grid-row: 3;
+    min-width: 0;
+}

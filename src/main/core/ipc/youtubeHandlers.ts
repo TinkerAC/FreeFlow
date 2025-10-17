@@ -54,7 +54,11 @@ export function registerYouTubeMusicHandlers({ configService }: IpcContext): voi
     const ses = loginWindow.webContents.session;
     ses.webRequest.onBeforeSendHeaders((details, cb): void => {
       const host = (() => {
-        try { return new URL(details.url).hostname; } catch { return ''; }
+        try {
+          return new URL(details.url).hostname;
+        } catch {
+          return '';
+        }
       })();
       if (host.endsWith('youtube.com') || host.endsWith('google.com')) {
         details.requestHeaders['User-Agent'] = chromeUA;
@@ -69,7 +73,11 @@ export function registerYouTubeMusicHandlers({ configService }: IpcContext): voi
         child.webContents.userAgent = chromeUA;
         child.webContents.session.webRequest.onBeforeSendHeaders((details, cb): void => {
           const host = (() => {
-            try { return new URL(details.url).hostname; } catch { return ''; }
+            try {
+              return new URL(details.url).hostname;
+            } catch {
+              return '';
+            }
           })();
           if (host.endsWith('youtube.com') || host.endsWith('google.com')) {
             details.requestHeaders['User-Agent'] = chromeUA;
@@ -161,10 +169,12 @@ export function registerYouTubeMusicHandlers({ configService }: IpcContext): voi
       const aggregates: Electron.Cookie[] = [];
       try {
         aggregates.push(...await targetSession.cookies.get({ url: 'https://music.youtube.com' }));
-      } catch {}
+      } catch {
+      }
       try {
         aggregates.push(...await targetSession.cookies.get({ domain: '.youtube.com' }));
-      } catch {}
+      } catch {
+      }
 
       const map = new Map<string, string>();
       for (const entry of aggregates) {
@@ -183,7 +193,7 @@ export function registerYouTubeMusicHandlers({ configService }: IpcContext): voi
     if (loginWindow && !loginWindow.isDestroyed()) {
       try {
         visitorData = await loginWindow.webContents.executeJavaScript(
-          "window.ytcfg?.get?.('VISITOR_DATA') ?? ''",
+          'window.ytcfg?.get?.(\'VISITOR_DATA\') ?? \'\'',
           true,
         );
       } catch (error) {
@@ -195,7 +205,8 @@ export function registerYouTubeMusicHandlers({ configService }: IpcContext): voi
       try {
         const infoCookie = await targetSession.cookies.get({ name: 'VISITOR_INFO1_LIVE' });
         visitorData = infoCookie?.[0]?.value ?? '';
-      } catch {}
+      } catch {
+      }
     }
 
     configService.setByPath('services.youtubeMusic.cookie', cookie ?? '');

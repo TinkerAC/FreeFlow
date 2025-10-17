@@ -29,6 +29,9 @@ export default class PlayerController extends AbstractController<[PlayerState]> 
   /* --------------------- 加载意图控制 --------------------- */
   private currentLoadIntentId: symbol | null = null;
   private intendedAudioSrc: string | null = null; // 当前期望播放的音频源
+  // 用于存储动态创建的事件处理器
+  private _dynamicCanplayHandler: (() => void) | null = null;
+  private _dynamicLoadedMetadataHandler: (() => void) | null = null;
 
   constructor(audio: HTMLAudioElement) {
     super(); // 初始化 AbstractController
@@ -37,137 +40,10 @@ export default class PlayerController extends AbstractController<[PlayerState]> 
     this.initMediaSession();
   }
 
-  /**
-   * 返回当前应推送给订阅者的状态元组。
-   */
-  protected getCurrentStateForSubscriber(): [PlayerState] {
-    return [this.dumpPlayerState()];
-  }
-
-  /**
-   * 内部状态变动后调用，触发订阅者回调。
-   */
-  private notifyStateChange() {
-    this.notify(); // 使用 AbstractController 提供的通知功能
-  }
-
   /* ------------------------------------------------------------------ */
   /*                      以下为原本 PlayerController 逻辑               */
 
   /* ------------------------------------------------------------------ */
-
-  /**
-   * 核心私有方法：加载并准备音轨进行播放或恢复。
-   * @param track 要加载的音轨，如果为 null，则清理播放器状态。
-   * @param isDumpLoad 是否为从 dump 状态恢复的加载。
-   * @param dumpTime 如果是 dump 加载，指定的恢复时间。
-   */
-  private async _loadAndPrepareTrack(
-    track: TrackEntity | null,
-    isDumpLoad: boolean = false,
-    dumpTime: number = 0,
-  ): Promise<void> {
-    if (!track) {
-      this.clearAudioState();
-      return;
-    }
-
-    const localLoadIntentId = Symbol('loadIntent');
-    this.currentLoadIntentId = localLoadIntentId;
-    this.isLoading = true;
-    this.notifyStateChange();
-
-    try {
-      const src: string = await getAudioSrc(track);
-
-      // 检查加载意图是否已改变
-      if (this.currentLoadIntentId !== localLoadIntentId) {
-        console.warn(`Player._loadAndPrepareTrack: 音轨 "${track.title}" 的加载意图已改变，放弃本次加载。`);
-        return;
-      }
-
-      this.intendedAudioSrc = src;
-
-      // 移除旧监听器
-      this.audio.removeEventListener('loadedmetadata', this._dynamicLoadedMetadataHandler);
-      this.audio.removeEventListener('canplay', this._dynamicCanplayHandler);
-
-      this.audio.src = src;
-      this.audio.load();
-
-      const eventToListen = isDumpLoad ? 'loadedmetadata' : 'canplay';
-
-      const handler = isDumpLoad
-        ? () => this._onAudioPreparedForDumpLoad(localLoadIntentId, dumpTime, track, src)
-        : () => this._onAudioPreparedForPlay(localLoadIntentId, track, src);
-
-      if (isDumpLoad) {
-        this._dynamicLoadedMetadataHandler = handler;
-      } else {
-        this._dynamicCanplayHandler = handler;
-      }
-
-      this.audio.addEventListener(eventToListen, handler, { once: true });
-    } catch (error) {
-      console.error(`Player._loadAndPrepareTrack: 获取音轨 "${track.title}" 的 SRC 失败:`, error);
-      if (this.currentLoadIntentId === localLoadIntentId) {
-        this.isLoading = false;
-        this.intendedAudioSrc = null;
-        this.notifyStateChange();
-      }
-    }
-  }
-
-  // 用于存储动态创建的事件处理器
-  private _dynamicCanplayHandler: (() => void) | null = null;
-  private _dynamicLoadedMetadataHandler: (() => void) | null = null;
-
-  /**
-   * canplay 事件处理。
-   */
-  private _onAudioPreparedForPlay = (expectedLoadIntentId: symbol, track: TrackEntity, expectedSrc: string): void => {
-    if (this.currentLoadIntentId !== expectedLoadIntentId || this.audio.src !== expectedSrc) {
-      console.warn(`Player._onAudioPreparedForPlay: 音轨 "${track.title}" 的事件已过时或意图改变。`);
-      return;
-    }
-
-    this.updateMediaSessionForTrack(track);
-    this.setCurrentTime(0);
-
-    if (this.playQueue.currentTrack && this.playQueue.currentTrack.id === track.id) {
-      this.playQueue.currentTrack.duration = this.audio.duration || 0;
-    }
-
-    this.setupEndedListener();
-    this.play();
-  };
-
-  /**
-   * loadedmetadata 事件处理（dump 恢复）。
-   */
-  private _onAudioPreparedForDumpLoad = (expectedLoadIntentId: symbol, dumpTime: number, track: TrackEntity, expectedSrc: string): void => {
-    if (this.currentLoadIntentId !== expectedLoadIntentId || this.audio.src !== expectedSrc) {
-      console.warn(`Player._onAudioPreparedForDumpLoad: 音轨 "${track.title}" 的事件已过时或意图改变。`);
-      return;
-    }
-
-    console.log(`Player (Dump Load): 正在为 "${track.title}" 恢复播放进度 ${dumpTime} / ${this.audio.duration}`);
-    const newTime = Math.min(dumpTime, this.audio.duration || dumpTime);
-    this.audio.currentTime = newTime;
-    this.currentTime = newTime;
-
-    if (this.playQueue.currentTrack && this.playQueue.currentTrack.id === track.id) {
-      this.playQueue.currentTrack.duration = this.audio.duration || 0;
-    }
-
-    this.setupEndedListener();
-    this.updateMediaSessionForTrack(track);
-
-    this.isLoading = false;
-    this.notifyStateChange();
-  };
-
-  /* --------------------- 公开方法：播放器控制 --------------------- */
 
   public async loadFromDump(dump: PlayerState) {
     this.currentLoadIntentId = null;
@@ -271,6 +147,8 @@ export default class PlayerController extends AbstractController<[PlayerState]> 
     await this._loadAndPrepareTrack(this.playQueue.currentTrack);
   }
 
+  /* --------------------- 公开方法：播放器控制 --------------------- */
+
   public async playPrevious(): Promise<void> {
     this.pause();
     const prevTrackInfo = this.playQueue.getPrevTrack();
@@ -373,6 +251,127 @@ export default class PlayerController extends AbstractController<[PlayerState]> 
     this.playQueue.clear();
     this.clearAudioState();
   }
+
+  /**
+   * 返回当前应推送给订阅者的状态元组。
+   */
+  protected getCurrentStateForSubscriber(): [PlayerState] {
+    return [this.dumpPlayerState()];
+  }
+
+  /**
+   * 内部状态变动后调用，触发订阅者回调。
+   */
+  private notifyStateChange() {
+    this.notify(); // 使用 AbstractController 提供的通知功能
+  }
+
+  /**
+   * 核心私有方法：加载并准备音轨进行播放或恢复。
+   * @param track 要加载的音轨，如果为 null，则清理播放器状态。
+   * @param isDumpLoad 是否为从 dump 状态恢复的加载。
+   * @param dumpTime 如果是 dump 加载，指定的恢复时间。
+   */
+  private async _loadAndPrepareTrack(
+    track: TrackEntity | null,
+    isDumpLoad: boolean = false,
+    dumpTime: number = 0,
+  ): Promise<void> {
+    if (!track) {
+      this.clearAudioState();
+      return;
+    }
+
+    const localLoadIntentId = Symbol('loadIntent');
+    this.currentLoadIntentId = localLoadIntentId;
+    this.isLoading = true;
+    this.notifyStateChange();
+
+    try {
+      const src: string = await getAudioSrc(track);
+
+      // 检查加载意图是否已改变
+      if (this.currentLoadIntentId !== localLoadIntentId) {
+        console.warn(`Player._loadAndPrepareTrack: 音轨 "${track.title}" 的加载意图已改变，放弃本次加载。`);
+        return;
+      }
+
+      this.intendedAudioSrc = src;
+
+      // 移除旧监听器
+      this.audio.removeEventListener('loadedmetadata', this._dynamicLoadedMetadataHandler);
+      this.audio.removeEventListener('canplay', this._dynamicCanplayHandler);
+
+      this.audio.src = src;
+      this.audio.load();
+
+      const eventToListen = isDumpLoad ? 'loadedmetadata' : 'canplay';
+
+      const handler = isDumpLoad
+        ? () => this._onAudioPreparedForDumpLoad(localLoadIntentId, dumpTime, track, src)
+        : () => this._onAudioPreparedForPlay(localLoadIntentId, track, src);
+
+      if (isDumpLoad) {
+        this._dynamicLoadedMetadataHandler = handler;
+      } else {
+        this._dynamicCanplayHandler = handler;
+      }
+
+      this.audio.addEventListener(eventToListen, handler, { once: true });
+    } catch (error) {
+      console.error(`Player._loadAndPrepareTrack: 获取音轨 "${track.title}" 的 SRC 失败:`, error);
+      if (this.currentLoadIntentId === localLoadIntentId) {
+        this.isLoading = false;
+        this.intendedAudioSrc = null;
+        this.notifyStateChange();
+      }
+    }
+  }
+
+  /**
+   * canplay 事件处理。
+   */
+  private _onAudioPreparedForPlay = (expectedLoadIntentId: symbol, track: TrackEntity, expectedSrc: string): void => {
+    if (this.currentLoadIntentId !== expectedLoadIntentId || this.audio.src !== expectedSrc) {
+      console.warn(`Player._onAudioPreparedForPlay: 音轨 "${track.title}" 的事件已过时或意图改变。`);
+      return;
+    }
+
+    this.updateMediaSessionForTrack(track);
+    this.setCurrentTime(0);
+
+    if (this.playQueue.currentTrack && this.playQueue.currentTrack.id === track.id) {
+      this.playQueue.currentTrack.duration = this.audio.duration || 0;
+    }
+
+    this.setupEndedListener();
+    this.play();
+  };
+
+  /**
+   * loadedmetadata 事件处理（dump 恢复）。
+   */
+  private _onAudioPreparedForDumpLoad = (expectedLoadIntentId: symbol, dumpTime: number, track: TrackEntity, expectedSrc: string): void => {
+    if (this.currentLoadIntentId !== expectedLoadIntentId || this.audio.src !== expectedSrc) {
+      console.warn(`Player._onAudioPreparedForDumpLoad: 音轨 "${track.title}" 的事件已过时或意图改变。`);
+      return;
+    }
+
+    console.log(`Player (Dump Load): 正在为 "${track.title}" 恢复播放进度 ${dumpTime} / ${this.audio.duration}`);
+    const newTime = Math.min(dumpTime, this.audio.duration || dumpTime);
+    this.audio.currentTime = newTime;
+    this.currentTime = newTime;
+
+    if (this.playQueue.currentTrack && this.playQueue.currentTrack.id === track.id) {
+      this.playQueue.currentTrack.duration = this.audio.duration || 0;
+    }
+
+    this.setupEndedListener();
+    this.updateMediaSessionForTrack(track);
+
+    this.isLoading = false;
+    this.notifyStateChange();
+  };
 
   private clearAudioState() {
     this.pause();

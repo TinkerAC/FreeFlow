@@ -178,6 +178,45 @@ ${resultSongs
   }
 
   /**
+   * 判断歌曲是否可以免费播放
+   * @param song 歌曲数据
+   */
+  isFree(song: any): boolean {
+    // fee 为 0 或 8 时，表示歌曲可以免费播放
+    return song.fee === 0 || song.fee === 8;
+  }
+
+  /**
+   * 根据歌曲唯一 ID 获取并解析歌词
+   * @param uniqueId 歌曲 ID
+   * @throws 网络或数据格式错误
+   */
+  async getLyrics(uniqueId: string): Promise<Lyric> {
+    const url = `${this.base_url}lyric?id=${uniqueId}`;
+
+    // 1. 请求接口（10 s 超时）
+    let response;
+    try {
+      response = await axios.get(url, { timeout: 10_000 });
+    } catch (err) {
+      throw new Error(`网络请求失败: ${(err as Error).message}`);
+    }
+
+    // 2. 校验必要字段
+    const data = response?.data;
+    if (!data?.lrc?.lyric) {
+      throw new Error('无效的歌词数据: 缺少 lrc.lyric 字段');
+    }
+
+    // 3. 解析三段歌词
+    return this.parseLyrics({
+      origin: data.lrc?.lyric,
+      translation: data.tlyric?.lyric,
+      pronunciation: data.romalrc?.lyric,
+    });
+  }
+
+  /**
    * 获取歌单中的所有歌曲
    * @param playlist_id 歌单 ID
    * @param limit 数量（默认值 1000）
@@ -205,15 +244,6 @@ ${resultSongs
   }
 
   /**
-   * 判断歌曲是否可以免费播放
-   * @param song 歌曲数据
-   */
-  isFree(song: any): boolean {
-    // fee 为 0 或 8 时，表示歌曲可以免费播放
-    return song.fee === 0 || song.fee === 8;
-  }
-
-  /**
    * 检查音乐可用性
    * @param id 歌曲 ID
    */
@@ -224,7 +254,6 @@ ${resultSongs
 
     return data.success;
   }
-
 
   /**
    * 将三种不同歌词解析为 Lyric 对象
@@ -277,36 +306,6 @@ ${resultSongs
       translationLines: parseLyricSegment(payload.translation),
       pronunciationLines: parseLyricSegment(payload.pronunciation),
     };
-  }
-
-  /**
-   * 根据歌曲唯一 ID 获取并解析歌词
-   * @param uniqueId 歌曲 ID
-   * @throws 网络或数据格式错误
-   */
-  async getLyrics(uniqueId: string): Promise<Lyric> {
-    const url = `${this.base_url}lyric?id=${uniqueId}`;
-
-    // 1. 请求接口（10 s 超时）
-    let response;
-    try {
-      response = await axios.get(url, { timeout: 10_000 });
-    } catch (err) {
-      throw new Error(`网络请求失败: ${(err as Error).message}`);
-    }
-
-    // 2. 校验必要字段
-    const data = response?.data;
-    if (!data?.lrc?.lyric) {
-      throw new Error('无效的歌词数据: 缺少 lrc.lyric 字段');
-    }
-
-    // 3. 解析三段歌词
-    return this.parseLyrics({
-      origin: data.lrc?.lyric,
-      translation: data.tlyric?.lyric,
-      pronunciation: data.romalrc?.lyric,
-    });
   }
 
 

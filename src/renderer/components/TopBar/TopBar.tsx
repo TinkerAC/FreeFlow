@@ -108,17 +108,17 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
               <button className={clsx(styles.light, styles.min)} onClick={windowControlContext.minimize} />
               <button className={clsx(styles.light, styles.max)} onClick={windowControlContext.maximize} />
             </div>
-            <button 
-              className={styles.iconBtn} 
-              title="后退" 
+            <button
+              className={styles.iconBtn}
+              title="后退"
               onClick={() => navigation.goBack()}
               disabled={!navigation.canGoBack}
             >
               <i className="fa-solid fa-arrow-left" />
             </button>
-            <button 
-              className={styles.iconBtn} 
-              title="前进" 
+            <button
+              className={styles.iconBtn}
+              title="前进"
               onClick={() => navigation.goForward()}
               disabled={!navigation.canGoForward}
             >
@@ -127,17 +127,17 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
           </div>
         ) : (
           <div className={styles.left}>
-            <button 
-              className={styles.iconBtn} 
-              title="后退" 
+            <button
+              className={styles.iconBtn}
+              title="后退"
               onClick={() => navigation.goBack()}
               disabled={!navigation.canGoBack}
             >
               <i className="fa-solid fa-arrow-left" />
             </button>
-            <button 
-              className={styles.iconBtn} 
-              title="前进" 
+            <button
+              className={styles.iconBtn}
+              title="前进"
               onClick={() => navigation.goForward()}
               disabled={!navigation.canGoForward}
             >
@@ -165,7 +165,8 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
 
         {/* 右：操作（Premium / 设置 / 调试 / 用户 / 窗口控件） */}
         <div className={clsx(styles.right, styles.nodrag)}>
-          <button className={styles.primaryBtn} onClick={() => { /* no-op: explore Fremium */ }}>
+          <button className={styles.primaryBtn} onClick={() => { /* no-op: explore Fremium */
+          }}>
             探索Fremium
           </button>
 

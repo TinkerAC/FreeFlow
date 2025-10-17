@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styles from './MiniPlayer.module.css';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { DefaultCover } from '@components/static';
-import { formatTime } from '@src/utils/timeUtils';
 import { lyricsContext } from '@renderer/core/electronContextApi';
 import type { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import type { TrackEntity } from '@src/shared/domainModel/TrackEntity';
@@ -10,8 +9,8 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import type { PlayerState } from '@src/shared/domainModel/playerState';
 
 export default function MiniPlayer({
-  player,
-}: {
+                                     player,
+                                   }: {
   player: PlayerController | null;
 }) {
   const [state, setState] = useState({
@@ -72,7 +71,9 @@ export default function MiniPlayer({
       lastTrackKeyRef.current = key;
     });
     // 仅依赖广播，不再主动请求状态
-    return () => { off?.(); };
+    return () => {
+      off?.();
+    };
   }, []);
 
   // 本地插值推进：播放时用 RAF 线性推进，避免仅靠拉取造成的停顿
@@ -113,12 +114,19 @@ export default function MiniPlayer({
   // 加载歌词（展开时或曲目变化时）
   useEffect(() => {
     const t = state.track;
-    if (!showLyrics || !t) { setLyric(null); return; }
+    if (!showLyrics || !t) {
+      setLyric(null);
+      return;
+    }
     let alive = true;
     lyricsContext.getLyrics(t)
-      .then((l) => { if (alive) setLyric(l || null); })
+      .then((l) => {
+        if (alive) setLyric(l || null);
+      })
       .catch(() => setLyric(null));
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [showLyrics, state.track?.platform, state.track?.platform_unique_id]);
 
   const pct = useMemo(() => {
@@ -133,7 +141,12 @@ export default function MiniPlayer({
     let lo = 0, hi = lyric.originLines.length - 1, ans = -1;
     while (lo <= hi) {
       const mid = (lo + hi) >> 1;
-      if (lyric.originLines[mid].time <= tMs) { ans = mid; lo = mid + 1; } else { hi = mid - 1; }
+      if (lyric.originLines[mid].time <= tMs) {
+        ans = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
     }
     return ans >= 0 ? lyric.originLines[ans] : null;
   }, [lyric, state.currentTime]);
@@ -156,30 +169,36 @@ export default function MiniPlayer({
           <img
             className={styles.cover}
             src={state.cover}
-            alt='cover'
-            referrerPolicy='no-referrer'
+            alt="cover"
+            referrerPolicy="no-referrer"
           />
           <div className={styles.controlsOverlay}>
             <button
               className={styles.icon}
-              onClick={() => { window.mainApi.playerApi.control('prev'); }}
-              title='上一首'
+              onClick={() => {
+                window.mainApi.playerApi.control('prev');
+              }}
+              title="上一首"
             >
-              <i className='fas fa-step-backward' />
+              <i className="fas fa-step-backward" />
             </button>
             <button
               className={styles.icon}
-              onClick={() => { window.mainApi.playerApi.control('toggle'); }}
+              onClick={() => {
+                window.mainApi.playerApi.control('toggle');
+              }}
               title={state.isPlaying ? '暂停' : '播放'}
             >
               <i className={`fas ${state.isPlaying ? 'fa-pause' : 'fa-play'}`} />
             </button>
             <button
               className={styles.icon}
-              onClick={() => { window.mainApi.playerApi.control('next'); }}
-              title='下一首'
+              onClick={() => {
+                window.mainApi.playerApi.control('next');
+              }}
+              title="下一首"
             >
-              <i className='fas fa-step-forward' />
+              <i className="fas fa-step-forward" />
             </button>
           </div>
         </div>
@@ -198,16 +217,19 @@ export default function MiniPlayer({
           <button
             className={styles.sideBtn}
             onClick={() => window.mainApi.miniPlayerApi.hide()}
-            title='返回主界面'
+            title="返回主界面"
           >
-            <i className='fas fa-window-restore' />
+            <i className="fas fa-window-restore" />
           </button>
           <button
             className={styles.sideBtn}
             onClick={async () => {
               const next = !showLyrics;
               setShowLyrics(next);
-              try { await window.mainApi.miniPlayerApi.setExpanded(next); } catch {}
+              try {
+                await window.mainApi.miniPlayerApi.setExpanded(next);
+              } catch {
+              }
             }}
             title={showLyrics ? '收起歌词' : '展开歌词'}
             aria-pressed={showLyrics}

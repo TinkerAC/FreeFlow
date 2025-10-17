@@ -1,8 +1,37 @@
-.root { display: inline-grid; place-items: center; gap: 6px; user-select: none; }
-.label{ font-size: 12px; color: rgb(var(--md-sys-color-on-surface)); opacity: .9; }
+.root {
+    display: inline-grid;
+    place-items: center;
+    gap: 6px;
+    user-select: none;
+}
 
-.svg  { width: 72px; height: 72px; cursor: pointer; }
-.track{ stroke: rgba(var(--md-sys-color-surface-variant), .6); stroke-width: 6; fill: none; }
-.indicator{ --pg-fill: rgb(var(--md-sys-color-primary)); stroke: var(--pg-fill); stroke-width: 6; fill: none;
-    filter: drop-shadow(0 0 8px color-mix(in oklab, var(--pg-fill) 35%, transparent)); transition: stroke-dashoffset .06s linear; }
-.thumb{ fill: var(--pg-fill); }
+.label {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface));
+    opacity: .9;
+}
+
+.svg {
+    width: 72px;
+    height: 72px;
+    cursor: pointer;
+}
+
+.track {
+    stroke: rgba(var(--md-sys-color-surface-variant), .6);
+    stroke-width: 6;
+    fill: none;
+}
+
+.indicator {
+    --pg-fill: rgb(var(--md-sys-color-primary));
+    stroke: var(--pg-fill);
+    stroke-width: 6;
+    fill: none;
+    filter: drop-shadow(0 0 8px color-mix(in oklab, var(--pg-fill) 35%, transparent));
+    transition: stroke-dashoffset .06s linear;
+}
+
+.thumb {
+    fill: var(--pg-fill);
+}

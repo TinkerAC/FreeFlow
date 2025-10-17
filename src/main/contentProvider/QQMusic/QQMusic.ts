@@ -6,6 +6,7 @@ import { QQMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEnt
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/core/enum/Platform';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+
 // import { da } from 'zod/v4/locales/index.cjs'; // unused
 
 
@@ -111,7 +112,11 @@ ${resultSongs
         if (typeof s !== 'string') return '';
         const hasLRC = s.includes('[') && s.includes(']');
         if (hasLRC) return s;
-        try { return Buffer.from(s, 'base64').toString('utf8'); } catch { return s; }
+        try {
+          return Buffer.from(s, 'base64').toString('utf8');
+        } catch {
+          return s;
+        }
       };
 
       const origin = decodeIfNeeded(rawOrigin);

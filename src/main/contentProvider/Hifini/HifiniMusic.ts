@@ -246,7 +246,10 @@ export default class HifiniMusic implements ContentProvider {
    * 从 Settings 中获取 services.hifiniCookie，并构造标准的 cookie 字符串
    */
   private getCookieString(): string {
-    const cookies: HifiniCookie = (this.configService.get('services.hifiniCookie') as any) || { bbs_sid: '', bbs_token: '' };
+    const cookies: HifiniCookie = (this.configService.get('services.hifiniCookie') as any) || {
+      bbs_sid: '',
+      bbs_token: '',
+    };
     if (!cookies || !cookies.bbs_sid || !cookies.bbs_token) {
       throw new Error('未找到 hifini_cookie');
     }

@@ -12,7 +12,6 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
-import { fa, tr } from 'zod/v4/locales/index.cjs';
 
 type ProviderToggles = {
   netease?: boolean;
@@ -31,28 +30,7 @@ export class ProviderManager {
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
     @inject(DISymbol.YouTubeMusic) private readonly youtube: YouTubeMusic,
     @inject(DISymbol.HifiniMusic) private readonly hifini: HifiniMusic,
-  ) {}
-
-  /* ---------------------- 聚合工具 ---------------------- */
-  private normalizeCover(url?: string): string {
-    if (!url) return '';
-    if (url.startsWith('//')) return `https:${url}`;
-    return url.replace(/^http:\/\//i, 'https://');
-  }
-
-  private dedupeTracks(arr: TrackEntity[]): TrackEntity[] {
-    const seen = new Set<string>();
-    const out: TrackEntity[] = [];
-    for (const t of arr) {
-      if (!t?.platform_unique_id) continue;
-      const key = `${t.platform}:${t.platform_unique_id}`;
-      if (seen.has(key)) continue;
-      // 轻度规范化封面
-      if (typeof t.cover_src === 'string') t.cover_src = this.normalizeCover(t.cover_src);
-      seen.add(key);
-      out.push(t);
-    }
-    return out;
+  ) {
   }
 
   isEnabled(platform: Platform): boolean {
@@ -65,25 +43,38 @@ export class ProviderManager {
       hifini: true,
     };
     switch (platform) {
-      case Platform.NET_EASE_CLOUD_MUSIC: return t.netease !== false;
-      case Platform.QQ_MUSIC: return t.qq !== false;
-      case Platform.BILIBILI: return t.bilibili !== false;
-      case Platform.YOUTUBE_MUSIC: return t.youtubeMusic !== false;
-      case Platform.HIFINI: return t.hifini !== false;
-      case Platform.LOCAL: return true;
-      default: return true;
+      case Platform.NET_EASE_CLOUD_MUSIC:
+        return t.netease !== false;
+      case Platform.QQ_MUSIC:
+        return t.qq !== false;
+      case Platform.BILIBILI:
+        return t.bilibili !== false;
+      case Platform.YOUTUBE_MUSIC:
+        return t.youtubeMusic !== false;
+      case Platform.HIFINI:
+        return t.hifini !== false;
+      case Platform.LOCAL:
+        return true;
+      default:
+        return true;
     }
   }
 
   tryResolve(platform: Platform): ContentProvider | null {
     if (!this.isEnabled(platform)) return null;
     switch (platform) {
-      case Platform.NET_EASE_CLOUD_MUSIC: return this.netease;
-      case Platform.QQ_MUSIC: return this.qq;
-      case Platform.BILIBILI: return this.bilibili;
-      case Platform.YOUTUBE_MUSIC: return this.youtube;
-      case Platform.HIFINI: return this.hifini;
-      default: return null;
+      case Platform.NET_EASE_CLOUD_MUSIC:
+        return this.netease;
+      case Platform.QQ_MUSIC:
+        return this.qq;
+      case Platform.BILIBILI:
+        return this.bilibili;
+      case Platform.YOUTUBE_MUSIC:
+        return this.youtube;
+      case Platform.HIFINI:
+        return this.hifini;
+      default:
+        return null;
     }
   }
 
@@ -182,5 +173,27 @@ export class ProviderManager {
       }
     }
     return;
+  }
+
+  /* ---------------------- 聚合工具 ---------------------- */
+  private normalizeCover(url?: string): string {
+    if (!url) return '';
+    if (url.startsWith('//')) return `https:${url}`;
+    return url.replace(/^http:\/\//i, 'https://');
+  }
+
+  private dedupeTracks(arr: TrackEntity[]): TrackEntity[] {
+    const seen = new Set<string>();
+    const out: TrackEntity[] = [];
+    for (const t of arr) {
+      if (!t?.platform_unique_id) continue;
+      const key = `${t.platform}:${t.platform_unique_id}`;
+      if (seen.has(key)) continue;
+      // 轻度规范化封面
+      if (typeof t.cover_src === 'string') t.cover_src = this.normalizeCover(t.cover_src);
+      seen.add(key);
+      out.push(t);
+    }
+    return out;
   }
 }

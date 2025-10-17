@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material You 颜色调试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+        .color-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .color-swatch {
+            height: 80px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        .color-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .color-value {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+        }
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #333;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Material You 颜色系统调试</h1>
+        
+        <div id="warning" class="warning" style="display: none;">
+            ⚠️ <strong>检测到问题：</strong>
+            <ul id="issues"></ul>
+        </div>
+
+        <div class="section-title">Primary Colors</div>
+        <div class="color-grid" id="primary-colors"></div>
+
+        <div class="section-title">Secondary Colors</div>
+        <div class="color-grid" id="secondary-colors"></div>
+
+        <div class="section-title">Tertiary Colors</div>
+        <div class="color-grid" id="tertiary-colors"></div>
+
+        <div class="section-title">Error Colors</div>
+        <div class="color-grid" id="error-colors"></div>
+
+        <div class="section-title">Surface Colors (重要！)</div>
+        <div class="color-grid" id="surface-colors"></div>
+
+        <div class="section-title">Outline Colors</div>
+        <div class="color-grid" id="outline-colors"></div>
+    </div>
+
+    <script>
+        const colorGroups = {
+            'primary-colors': [
+                'primary',
+                'on-primary',
+                'primary-container',
+                'on-primary-container',
+                'inverse-primary'
+            ],
+            'secondary-colors': [
+                'secondary',
+                'on-secondary',
+                'secondary-container',
+                'on-secondary-container'
+            ],
+            'tertiary-colors': [
+                'tertiary',
+                'on-tertiary',
+                'tertiary-container',
+                'on-tertiary-container'
+            ],
+            'error-colors': [
+                'error',
+                'on-error',
+                'error-container',
+                'on-error-container'
+            ],
+            'surface-colors': [
+                'background',
+                'on-background',
+                'surface',
+                'on-surface',
+                'surface-variant',
+                'on-surface-variant',
+                'surface-dim',
+                'surface-bright',
+                'surface-container-lowest',
+                'surface-container-low',
+                'surface-container',
+                'surface-container-high',
+                'surface-container-highest',
+                'inverse-surface',
+                'inverse-on-surface'
+            ],
+            'outline-colors': [
+                'outline',
+                'outline-variant'
+            ]
+        };
+
+        const issues = [];
+        const seenColors = new Map();
+
+        function getColorValue(name) {
+            const varName = `--md-sys-color-${name}`;
+            const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+            return value || '未定义';
+        }
+
+        function rgbToHex(rgb) {
+            if (!rgb || rgb === '未定义') return '#000000';
+            const parts = rgb.split(' ').map(n => parseInt(n));
+            if (parts.length !== 3) return '#000000';
+            return '#' + parts.map(n => n.toString(16).padStart(2, '0')).join('');
+        }
+
+        function renderColors() {
+            Object.entries(colorGroups).forEach(([groupId, colors]) => {
+                const container = document.getElementById(groupId);
+                
+                colors.forEach(name => {
+                    const value = getColorValue(name);
+                    const hex = rgbToHex(value);
+                    
+                    // 检测重复颜色
+                    if (value !== '未定义') {
+                        if (!seenColors.has(value)) {
+                            seenColors.set(value, []);
+                        }
+                        seenColors.get(value).push(name);
+                    }
+                    
+                    const card = document.createElement('div');
+                    card.className = 'color-card';
+                    card.innerHTML = `
+                        <div class="color-swatch" style="background: rgb(${value})"></div>
+                        <div class="color-name">${name}</div>
+                        <div class="color-value">rgb(${value})</div>
+                        <div class="color-value">${hex}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            });
+
+            // 检查问题
+            seenColors.forEach((names, value) => {
+                if (names.length > 3 && !value.includes('未定义')) {
+                    issues.push(`颜色 rgb(${value}) 被以下 ${names.length} 个变量使用：${names.join(', ')}`);
+                }
+            });
+
+            // 检查关键的 surface 层级是否有区分度
+            const surfaceLevels = [
+                'surface-container-lowest',
+                'surface-container-low', 
+                'surface-container',
+                'surface-container-high',
+                'surface-container-highest'
+            ];
+            const surfaceValues = surfaceLevels.map(l => getColorValue(l));
+            const uniqueSurfaces = new Set(surfaceValues);
+            
+            if (uniqueSurfaces.size < 3) {
+                issues.push(`Surface 容器层级颜色区分度不足！5个层级只有 ${uniqueSurfaces.size} 个不同的值`);
+            }
+
+            if (issues.length > 0) {
+                document.getElementById('warning').style.display = 'block';
+                const issuesList = document.getElementById('issues');
+                issues.forEach(issue => {
+                    const li = document.createElement('li');
+                    li.textContent = issue;
+                    issuesList.appendChild(li);
+                });
+            }
+        }
+
+        renderColors();
+    </script>
+</body>
+</html>

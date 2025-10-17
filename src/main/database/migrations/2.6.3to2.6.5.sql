@@ -1,6 +1,8 @@
 /* ========= dev → prd 结构迁移 ========= */
-BEGIN TRANSACTION;
-PRAGMA foreign_keys = OFF;
+BEGIN
+TRANSACTION;
+PRAGMA
+foreign_keys = OFF;
 
 /* 1. playlists 表：增加 played_count */
 ALTER TABLE playlists
@@ -16,17 +18,38 @@ ALTER TABLE track
 /* 3. 若不存在则创建 track_backup */
 CREATE TABLE IF NOT EXISTS track_backup
 (
-    id                 INTEGER PRIMARY KEY,
-    platform           TEXT NOT NULL UNIQUE,
-    platform_unique_id TEXT UNIQUE,
-    title              TEXT,
-    artist             TEXT,
-    album              TEXT,
-    duration           INTEGER,
-    cover_src          TEXT,
-    lyrics             TEXT,
-    created_at         DATETIME DEFAULT CURRENT_TIMESTAMP,
-    modified_at        DATETIME DEFAULT CURRENT_TIMESTAMP
+    id
+    INTEGER
+    PRIMARY
+    KEY,
+    platform
+    TEXT
+    NOT
+    NULL
+    UNIQUE,
+    platform_unique_id
+    TEXT
+    UNIQUE,
+    title
+    TEXT,
+    artist
+    TEXT,
+    album
+    TEXT,
+    duration
+    INTEGER,
+    cover_src
+    TEXT,
+    lyrics
+    TEXT,
+    created_at
+    DATETIME
+    DEFAULT
+    CURRENT_TIMESTAMP,
+    modified_at
+    DATETIME
+    DEFAULT
+    CURRENT_TIMESTAMP
 );
 
 /* 4. 修复触发器 library_modified_at（原先引用 track_id 列名错误） */
@@ -42,5 +65,6 @@ BEGIN
 END;
 
 /* 开启外键并提交 */
-PRAGMA foreign_keys = ON;
+PRAGMA
+foreign_keys = ON;
 COMMIT;

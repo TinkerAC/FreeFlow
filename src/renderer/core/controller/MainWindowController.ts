@@ -14,6 +14,30 @@ export default class MainWindowController extends AbstractController<MainWindowS
     this.init();
   }
 
+  public toggleMusicLibraryCollapsed(): void {
+    this.isMusicLibraryCollapsed = !this.isMusicLibraryCollapsed;
+    super.notify();
+  }
+
+  public toggleRightContent(): void {
+    this.isRightContentVisible = !this.isRightContentVisible;
+    super.notify();
+  }
+
+  public dispose(): void {
+    window.removeEventListener('resize', this.handleResize);
+    super.dispose(); // 调用父类的 dispose 清理订阅者
+    // console.log('MainWindowController disposed.');
+  }
+
+  /**
+   * 实现父类的抽象方法，提供给订阅者的参数。
+   * 对于 MainWindowController，订阅者不接收参数。
+   */
+  protected getCurrentStateForSubscriber(): MainWindowSubscriberArgs {
+    return [];
+  }
+
   private init(): void {
     this._updateLayoutState(); // 初始化时根据窗口大小设置状态
     window.addEventListener('resize', this.handleResize);
@@ -42,33 +66,9 @@ export default class MainWindowController extends AbstractController<MainWindowS
     }
   }
 
-  private handleResize(): void {
-    this._updateLayoutState();
-  }
-
-  /**
-   * 实现父类的抽象方法，提供给订阅者的参数。
-   * 对于 MainWindowController，订阅者不接收参数。
-   */
-  protected getCurrentStateForSubscriber(): MainWindowSubscriberArgs {
-    return [];
-  }
-
-  public toggleMusicLibraryCollapsed(): void {
-    this.isMusicLibraryCollapsed = !this.isMusicLibraryCollapsed;
-    super.notify();
-  }
-
-  public toggleRightContent(): void {
-    this.isRightContentVisible = !this.isRightContentVisible;
-    super.notify();
-  }
-
   // subscribe 方法已由 AbstractController 继承
 
-  public dispose(): void {
-    window.removeEventListener('resize', this.handleResize);
-    super.dispose(); // 调用父类的 dispose 清理订阅者
-    // console.log('MainWindowController disposed.');
+  private handleResize(): void {
+    this._updateLayoutState();
   }
 }

@@ -7,7 +7,7 @@ import MusicLibrary from '@components/Musiclibrary/Musiclibrary';
 import PlayerBar from '@components/Playerbar/PlayerBar';
 import { playerContext, shortcutContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import chalk from 'chalk';
@@ -18,12 +18,6 @@ import AppFrame from '@renderer/layout/AppFrame/AppFrame';
 import ContentGrid from '@renderer/layout/ContentGrid/ContentGrid';
 import RightContent from '@components/RightContent/RightContent';
 import RightDock from '@components/RightContent/RightDock';
-import PlaylistView from '@components/Maincontent/PlaylistView/PlaylistView';
-import SearchResultView from '@components/Maincontent/SearchResultView/SearchResultView';
-import ProfileView from '@components/Maincontent/ProfileView/ProfileView';
-import LyricView from '@components/Maincontent/LyricView/LyricView';
-import DebugView from '@components/Maincontent/DebugView/DebugView';
-import SettingsView from '@components/Maincontent/SettingView/SettingsView';
 import MiniPlayer from '@components/MiniPlayer/MiniPlayer';
 import { NavigationProvider, ViewType } from '@renderer/core/navigation';
 import MainContentSwitch from '@components/Maincontent/MainContentSwitch';
@@ -117,23 +111,31 @@ const ApplicationContent: React.FC = () => {
     if (isMini) return;
     const handleReqState = () => {
       const player = playerInstanceRef.current;
-      if (player) { playerContext.broadcastState(player.dumpPlayerState()); }
+      if (player) {
+        playerContext.broadcastState(player.dumpPlayerState());
+      }
     };
     const handleDumpReq = () => {
       const player = playerInstanceRef.current;
       if (player) {
-        try { playerContext.sendPlayerState(player.dumpPlayerState()); } catch {}
+        try {
+          playerContext.sendPlayerState(player.dumpPlayerState());
+        } catch {
+        }
       } else {
         // 即使播放器未初始化，仍回一个空状态，避免主进程卡住
-        try { playerContext.sendPlayerState({
-          queue: { queue: [], indexList: [], currentIndex: 0 },
-          volume: 0.5,
-          playbackMode: PlaybackMode.LOOP,
-          audioSrc: '',
-          isPlaying: false,
-          isLoading: false,
-          currentTime: 0,
-        }); } catch {}
+        try {
+          playerContext.sendPlayerState({
+            queue: { queue: [], indexList: [], currentIndex: 0 },
+            volume: 0.5,
+            playbackMode: PlaybackMode.LOOP,
+            audioSrc: '',
+            isPlaying: false,
+            isLoading: false,
+            currentTime: 0,
+          });
+        } catch {
+        }
       }
     };
     const handleShortcut = (data: string) => {
@@ -166,7 +168,10 @@ const ApplicationContent: React.FC = () => {
     playerContext.onNotification(handleNotif);
     return () => {
       playerContext.removeRequestPlayerStateListener();
-      try { offDump?.(); } catch {}
+      try {
+        offDump?.();
+      } catch {
+      }
       shortcutContext.removeShortcutListener();
       playerContext.removeRequestPlayerStateListener();
     };
@@ -179,19 +184,53 @@ const ApplicationContent: React.FC = () => {
       const p = playerInstanceRef.current;
       if (!p) return;
       const push = () => {
-        try { playerContext.broadcastState(p.dumpPlayerState()); } catch {}
+        try {
+          playerContext.broadcastState(p.dumpPlayerState());
+        } catch {
+        }
       };
       switch (cmd) {
-        case 'play': p.play(); push(); break;
-        case 'pause': p.pause(); push(); break;
-        case 'toggle': p.togglePlayPause(); push(); break;
-        case 'next': { const pr = p.playNext(); push(); pr.finally(push); break; }
-        case 'prev': { const pr = p.playPrevious(); push(); pr.finally(push); break; }
-        case 'seek': if (typeof payload === 'number') { p.setCurrentTime(payload); push(); } break;
-        case 'setVolume': if (typeof payload === 'number') { p.setVolume(payload); push(); } break;
+        case 'play':
+          p.play();
+          push();
+          break;
+        case 'pause':
+          p.pause();
+          push();
+          break;
+        case 'toggle':
+          p.togglePlayPause();
+          push();
+          break;
+        case 'next': {
+          const pr = p.playNext();
+          push();
+          pr.finally(push);
+          break;
+        }
+        case 'prev': {
+          const pr = p.playPrevious();
+          push();
+          pr.finally(push);
+          break;
+        }
+        case 'seek':
+          if (typeof payload === 'number') {
+            p.setCurrentTime(payload);
+            push();
+          }
+          break;
+        case 'setVolume':
+          if (typeof payload === 'number') {
+            p.setVolume(payload);
+            push();
+          }
+          break;
       }
     });
-    return () => { offControl?.(); };
+    return () => {
+      offControl?.();
+    };
   }, [isMini]);
 
   // 注意：不要在 loadedmetadata 时强行设置 currentTime = duration，

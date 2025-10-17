@@ -42,8 +42,20 @@ export interface LyricsApi {
 /** Track */
 export interface TrackApi {
   getInfo(platform: string, platform_unique_id: string): Promise<TrackEntity>;
-  updateBasic(payload: { platform: string; platform_unique_id: string; title?: string; artist?: string; album?: string }): Promise<TrackEntity>;
-  cleanBasic(payload: { title: string; artist?: string; album?: string }): Promise<{ title: string; artist: string; album?: string }>;
+
+  updateBasic(payload: {
+    platform: string;
+    platform_unique_id: string;
+    title?: string;
+    artist?: string;
+    album?: string
+  }): Promise<TrackEntity>;
+
+  cleanBasic(payload: { title: string; artist?: string; album?: string }): Promise<{
+    title: string;
+    artist: string;
+    album?: string
+  }>;
 }
 
 /** Player */
@@ -59,12 +71,18 @@ export interface PlayerApi {
   removeRequestPlayerStateListener(): void;
 
   // Single-owner extensions
-  control(cmd: 'play'|'pause'|'toggle'|'next'|'prev'|'seek'|'setVolume', payload?: any): void;
+  control(cmd: 'play' | 'pause' | 'toggle' | 'next' | 'prev' | 'seek' | 'setVolume', payload?: any): void;
+
   onStateUpdate(cb: (state: PlayerState) => void): () => void;
+
   requestLiveState(): void;
+
   broadcastState(state: PlayerState): void;
+
   onLiveStateRequest(cb: () => void): () => void;
+
   onDumpRequest?(cb: () => void): () => void;
+
   onControl(cb: (cmd: string, payload: any) => void): () => void;
 }
 
@@ -74,7 +92,12 @@ export interface PlaylistApi {
 
   addPlaylist(playlist: PlaylistEntity): Promise<void>;
 
-  modifyPlaylist(playlist: { playlist_id: number; description: string; title: string; playlist_cover?: string }): Promise<void>;
+  modifyPlaylist(playlist: {
+    playlist_id: number;
+    description: string;
+    title: string;
+    playlist_cover?: string
+  }): Promise<void>;
 
   removePlaylist(playlistId: number): Promise<void>;
 
@@ -133,14 +156,19 @@ export interface WindowControlApi {
 /** Mini Player */
 export interface MiniPlayerApi {
   toggle(): Promise<void>;
+
   show(): Promise<void>;
+
   hide(): Promise<void>;
+
   setExpanded(expanded: boolean): Promise<void>;
 }
 
 export interface YouTubeMusicApi {
   openLoginWindow(): Promise<void>;
+
   syncCredentials(): Promise<{ cookie: string; visitorData?: string }>;
+
   closeLoginWindow(): Promise<void>;
 }
 

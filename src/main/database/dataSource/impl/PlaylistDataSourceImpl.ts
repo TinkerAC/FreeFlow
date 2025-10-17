@@ -57,8 +57,8 @@ export class PlaylistDataSourceImpl implements PlaylistDataSource {
     // Use transaction for batch update
     await Promise.all(
       updates.map(({ playlist_id, position }) =>
-        Playlist.update({ position }, { where: { playlist_id } })
-      )
+        Playlist.update({ position }, { where: { playlist_id } }),
+      ),
     );
   }
 }

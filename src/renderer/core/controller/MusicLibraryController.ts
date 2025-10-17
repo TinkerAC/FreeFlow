@@ -8,8 +8,8 @@ type MusicLibrarySubscriberArgs = [activePlaylist: PlaylistEntity | null, playli
 export default class MusicLibraryController extends AbstractController<MusicLibrarySubscriberArgs> {
   public playlists: PlaylistEntity[] = [];
   public selectedLibraryItem: number | null = null; // 选中项的索引
-  private _activatePlaylistEntity: PlaylistEntity | null = null;
   public isMusicLibraryCollapsed = true; // 注意：此状态与 MainWindowController 中的类似状态的关系
+  private _activatePlaylistEntity: PlaylistEntity | null = null;
 
   constructor() {
     super();
@@ -19,6 +19,82 @@ export default class MusicLibraryController extends AbstractController<MusicLibr
     }).catch(err => {
       console.error('MusicLibraryController: 歌单初始化失败:', err);
     });
+  }
+
+  public get activePlaylist(): PlaylistEntity | null {
+    return this._activatePlaylistEntity;
+  }
+
+  /**
+   * 设置当前激活的歌单。
+   * 这个歌单对象可能来自当前的 playlists 数组，也可能是一个新的外部对象。
+   * @param newPlaylist 要激活的歌单，或 null 表示没有激活的歌单。
+   */
+  public set activePlaylist(newPlaylist: PlaylistEntity | null) {
+    // 检查是否真的发生了变化 (比较ID，因为对象实例可能不同但代表同一个歌单)
+    if (this._activatePlaylistEntity?.platform_unique_id === newPlaylist?.platform_unique_id && this._activatePlaylistEntity?.platform === newPlaylist?.platform) {
+      // 如果ID相同，但对象实例不同（例如，从外部传入了一个新的实例，但内容一样），
+      // 我们可以选择更新为新的实例，或者保持旧的实例。
+      // 为了简单和一致性，如果ID相同，我们认为激活状态未变，除非需要更新对象本身的引用。
+      // 如果希望总是用新实例替换，可以移除此检查或添加 this._activatePlaylistEntity !== newPlaylist
+      if (this._activatePlaylistEntity === newPlaylist) return; // 实例和ID都相同，确定无变化
+    }
+
+    const oldActivePlaylistId = this._activatePlaylistEntity?.playlist_id;
+    const oldSelectedLibraryItem = this.selectedLibraryItem;
+
+    this._activatePlaylistEntity = newPlaylist;
+
+    if (newPlaylist) {
+      // 尝试在当前列表中找到这个新激活的歌单
+      const indexInCurrentList = this.playlists.findIndex(p => p.playlist_id === newPlaylist.playlist_id);
+      if (indexInCurrentList !== -1) {
+        this.selectedLibraryItem = indexInCurrentList;
+      } else {
+        // 如果新激活的歌单不在当前列表中，则 selectedLibraryItem 不指向任何列表内项目
+        this.selectedLibraryItem = null;
+      }
+    } else {
+      // 如果 newPlaylist 为 null，则没有选中的列表内项目
+      this.selectedLibraryItem = null;
+    }
+
+    // 仅当激活的歌单ID或选中索引确实发生变化时才通知
+    // (考虑到 newPlaylist 可能与 _activatePlaylistEntity 是不同实例但id相同的情况)
+    if (oldActivePlaylistId !== this._activatePlaylistEntity?.playlist_id || oldSelectedLibraryItem !== this.selectedLibraryItem) {
+      super.notify();
+    }
+  }
+
+  public async refreshPlaylists(): Promise<void> {
+    console.log('MusicLibraryController: 正在重载歌单...');
+    await this._fetchAndSetPlaylists(true); // 获取并通知
+    console.log('MusicLibraryController: 歌单重载完成。');
+  }
+
+  public selectItem(index: number): void {
+    if (index >= 0 && index < this.playlists.length) {
+      if (this.selectedLibraryItem !== index) {
+        this._setActivePlaylistByIndex(index, true);
+      }
+    } else {
+      console.warn(`MusicLibraryController: 尝试选择无效的索引 ${index}。歌单数量: ${this.playlists.length}`);
+    }
+  }
+
+  public toggleMusicLibraryCollapse(): void {
+    this.isMusicLibraryCollapsed = !this.isMusicLibraryCollapsed;
+
+    console.log('MusicLibraryController: 切换音乐库折叠状态为:', this.isMusicLibraryCollapsed);
+
+    super.notify();
+  }
+
+  /**
+   * 实现父类的抽象方法。
+   */
+  protected getCurrentStateForSubscriber(): MusicLibrarySubscriberArgs {
+    return [this._activatePlaylistEntity, this.playlists];
   }
 
   private async _initializePlaylists(): Promise<void> {
@@ -73,19 +149,6 @@ export default class MusicLibraryController extends AbstractController<MusicLibr
   }
 
   /**
-   * 实现父类的抽象方法。
-   */
-  protected getCurrentStateForSubscriber(): MusicLibrarySubscriberArgs {
-    return [this._activatePlaylistEntity, this.playlists];
-  }
-
-  public async refreshPlaylists(): Promise<void> {
-    console.log('MusicLibraryController: 正在重载歌单...');
-    await this._fetchAndSetPlaylists(true); // 获取并通知
-    console.log('MusicLibraryController: 歌单重载完成。');
-  }
-
-  /**
    * 通过索引设置激活的歌单。
    * @param index 要激活的歌单在 playlists 数组中的索引，或 null 清除激活状态。
    * @param shouldNotify 是否通知订阅者，默认为 true。
@@ -99,69 +162,6 @@ export default class MusicLibraryController extends AbstractController<MusicLibr
       this._activatePlaylistEntity = null;
     }
     if (shouldNotify) {
-      super.notify();
-    }
-  }
-
-  public selectItem(index: number): void {
-    if (index >= 0 && index < this.playlists.length) {
-      if (this.selectedLibraryItem !== index) {
-        this._setActivePlaylistByIndex(index, true);
-      }
-    } else {
-      console.warn(`MusicLibraryController: 尝试选择无效的索引 ${index}。歌单数量: ${this.playlists.length}`);
-    }
-  }
-
-  public toggleMusicLibraryCollapse(): void {
-    this.isMusicLibraryCollapsed = !this.isMusicLibraryCollapsed;
-
-    console.log('MusicLibraryController: 切换音乐库折叠状态为:', this.isMusicLibraryCollapsed);
-
-    super.notify();
-  }
-
-  public get activePlaylist(): PlaylistEntity | null {
-    return this._activatePlaylistEntity;
-  }
-
-  /**
-   * 设置当前激活的歌单。
-   * 这个歌单对象可能来自当前的 playlists 数组，也可能是一个新的外部对象。
-   * @param newPlaylist 要激活的歌单，或 null 表示没有激活的歌单。
-   */
-  public set activePlaylist(newPlaylist: PlaylistEntity | null) {
-    // 检查是否真的发生了变化 (比较ID，因为对象实例可能不同但代表同一个歌单)
-    if (this._activatePlaylistEntity?.platform_unique_id === newPlaylist?.platform_unique_id && this._activatePlaylistEntity?.platform === newPlaylist?.platform) {
-      // 如果ID相同，但对象实例不同（例如，从外部传入了一个新的实例，但内容一样），
-      // 我们可以选择更新为新的实例，或者保持旧的实例。
-      // 为了简单和一致性，如果ID相同，我们认为激活状态未变，除非需要更新对象本身的引用。
-      // 如果希望总是用新实例替换，可以移除此检查或添加 this._activatePlaylistEntity !== newPlaylist
-      if (this._activatePlaylistEntity === newPlaylist) return; // 实例和ID都相同，确定无变化
-    }
-
-    const oldActivePlaylistId = this._activatePlaylistEntity?.playlist_id;
-    const oldSelectedLibraryItem = this.selectedLibraryItem;
-
-    this._activatePlaylistEntity = newPlaylist;
-
-    if (newPlaylist) {
-      // 尝试在当前列表中找到这个新激活的歌单
-      const indexInCurrentList = this.playlists.findIndex(p => p.playlist_id === newPlaylist.playlist_id);
-      if (indexInCurrentList !== -1) {
-        this.selectedLibraryItem = indexInCurrentList;
-      } else {
-        // 如果新激活的歌单不在当前列表中，则 selectedLibraryItem 不指向任何列表内项目
-        this.selectedLibraryItem = null;
-      }
-    } else {
-      // 如果 newPlaylist 为 null，则没有选中的列表内项目
-      this.selectedLibraryItem = null;
-    }
-
-    // 仅当激活的歌单ID或选中索引确实发生变化时才通知
-    // (考虑到 newPlaylist 可能与 _activatePlaylistEntity 是不同实例但id相同的情况)
-    if (oldActivePlaylistId !== this._activatePlaylistEntity?.playlist_id || oldSelectedLibraryItem !== this.selectedLibraryItem) {
       super.notify();
     }
   }

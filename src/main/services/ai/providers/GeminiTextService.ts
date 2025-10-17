@@ -43,7 +43,11 @@ export class GeminiAiTextService implements AiTextService {
       'Input: {"title":"RADWIMPS - なんでもないや (Live)","artist":"","album":""} -> {"title":"なんでもないや","artist":"RADWIMPS","album":""}',
       'Input: {"title":"Dua Lipa - Levitating (feat. DaBaby) [Official Video]","artist":"","album":"Future Nostalgia"} -> {"title":"Levitating","artist":"Dua Lipa, DaBaby","album":"Future Nostalgia"}',
       '',
-      `Input: ${JSON.stringify({ title: String(rawTitle ?? ''), artist: String(rawArtist ?? ''), album: String(rawAlbum ?? '') })}`,
+      `Input: ${JSON.stringify({
+        title: String(rawTitle ?? ''),
+        artist: String(rawArtist ?? ''),
+        album: String(rawAlbum ?? ''),
+      })}`,
       'Output:',
     ].join('\n');
 
@@ -74,11 +78,17 @@ export class GeminiAiTextService implements AiTextService {
 
   private extractJson(s: string): any {
     // Try direct JSON first
-    try { return JSON.parse(s); } catch { }
+    try {
+      return JSON.parse(s);
+    } catch {
+    }
     // Try to find fenced JSON
     const m = s.match(/\{[\s\S]*\}/);
     if (m) {
-      try { return JSON.parse(m[0]); } catch { }
+      try {
+        return JSON.parse(m[0]);
+      } catch {
+      }
     }
     // Basic key-value fallback
     const title = s.match(/\"?title\"?\s*[:：]\s*\"([^\"]+)/i)?.[1];

@@ -17,7 +17,9 @@ export default function RightContent({ player }: RightContentProps) {
     try {
       const raw = localStorage.getItem('recentlyPlayed');
       return raw ? (JSON.parse(raw) as TrackEntity[]) : [];
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   });
   const lastTrackIdRef = useRef<string | number | null>(null);
 
@@ -35,18 +37,24 @@ export default function RightContent({ player }: RightContentProps) {
           setHistory((prev) => {
             const arr = prev.filter(x => (x.id ?? x.platform_unique_id) !== id);
             const next = [t, ...arr].slice(0, 50);
-            try { localStorage.setItem('recentlyPlayed', JSON.stringify(next)); } catch {}
+            try {
+              localStorage.setItem('recentlyPlayed', JSON.stringify(next));
+            } catch {
+            }
             return next;
           });
         }
       }
     });
-  return () => unsub();
+    return () => unsub();
   }, [player]);
 
   const clearHistory = () => {
     setHistory([]);
-    try { localStorage.removeItem('recentlyPlayed'); } catch {}
+    try {
+      localStorage.removeItem('recentlyPlayed');
+    } catch {
+    }
   };
 
   return (
@@ -55,8 +63,8 @@ export default function RightContent({ player }: RightContentProps) {
       nextTracks={remainingTracks}
       clearQueue={() => player.clearQueue()}
       addToNextAndPlay={(track) => player.addTrackToNextAndPlay(track)}
-  historyTracks={history}
-  clearHistory={clearHistory}
+      historyTracks={history}
+      clearHistory={clearHistory}
     />
   );
 }
