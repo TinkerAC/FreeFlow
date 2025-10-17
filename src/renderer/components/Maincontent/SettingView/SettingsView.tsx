@@ -18,6 +18,7 @@ export default function SettingsView() {
   const [activeTab, setActiveTab] = React.useState<SettingsTab>('appearance');
   const tabsRef = React.useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = React.useState({ left: 0, width: 0 });
+  const isFirstRender = React.useRef(true);
 
   const tabs = React.useMemo(() => [
     { label: '外观', value: 'appearance' as const },
@@ -40,6 +41,8 @@ export default function SettingsView() {
           left: activeButton.offsetLeft,
           width: activeButton.offsetWidth,
         });
+        // 第一次渲染后标记为 false
+        isFirstRender.current = false;
       }
     };
     updateIndicator();
@@ -81,7 +84,7 @@ export default function SettingsView() {
             height: 'calc(100% - 8px)',
             borderRadius: 999,
             background: 'rgb(var(--md-sys-color-primary))',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: isFirstRender.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
             zIndex: 0,
           }}
