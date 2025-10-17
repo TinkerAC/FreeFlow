@@ -4,16 +4,22 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 1.6fr) minmax(0, 1fr);
     align-items: center;
-    height: 72px;
+    height: 80px;
     gap: 16px;
-    padding: 4px 10px;
-    background: var(--md-sys-color-surface-container-low);
+    padding: 8px 16px;
+    /* Material You: 毛玻璃效果 + 高级感 */
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-highest)) 85%, transparent);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
     color: rgb(var(--md-sys-color-on-surface));
     position: relative;
     z-index: 40;
     overflow: hidden;
-    border-top: 1px solid rgb(var(--md-sys-color-outline-variant));
-    backdrop-filter: blur(8px) saturate(1.05);
+    border-top: 1px solid rgba(var(--md-sys-color-outline-variant), 0.12);
+    box-shadow: 
+        0 -1px 0 0 rgba(var(--md-sys-color-outline-variant), 0.2),
+        0 -2px 8px 0 rgba(0, 0, 0, 0.04),
+        0 -4px 16px 0 rgba(0, 0, 0, 0.06);
     --icon-size: 16px;
 }
 

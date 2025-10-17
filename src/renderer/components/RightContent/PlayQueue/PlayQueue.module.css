@@ -5,11 +5,46 @@
     height: 100%;
     display: grid;
     grid-template-rows: auto 1fr;
+    position: relative;
+    /* Material You: 高级卡片效果 + 微光 */
     background: rgb(var(--md-sys-color-surface-container-low));
     color: rgb(var(--md-sys-color-on-surface));
     overflow: hidden; /* 关键：把滚动交给 body */
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: 
+        0 1px 2px 0 rgba(0, 0, 0, 0.03),
+        0 2px 6px 0 rgba(0, 0, 0, 0.04),
+        0 4px 12px 0 rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
+/* 顶部微光效果 */
+.root::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
 
+.root:hover {
+    box-shadow: 
+        0 2px 4px 0 rgba(0, 0, 0, 0.04),
+        0 4px 12px 0 rgba(0, 0, 0, 0.06),
+        0 8px 24px 0 rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    border-color: rgba(var(--md-sys-color-outline-variant), 0.3);
 }
 
 /* 头部 */
@@ -18,8 +53,9 @@
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 8px;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgb(var(--md-sys-color-outline-variant));
+    padding: 12px 14px;
+    background: rgb(var(--md-sys-color-surface-container));
+    border-bottom: 1px solid rgba(var(--md-sys-color-outline-variant), 0.15);
 }
 
 .tabs {

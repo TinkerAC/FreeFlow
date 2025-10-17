@@ -5,7 +5,8 @@
     display: grid;
     grid-template-rows: auto 1fr auto;
     height: 100%;
-    background: rgb(var(--md-sys-color-background));
+    /* Material You: 使用更明亮的背景 */
+    background: rgb(var(--md-sys-color-surface));
     color: rgb(var(--md-sys-color-on-background));
 }
 
