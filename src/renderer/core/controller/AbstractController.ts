@@ -17,12 +17,6 @@ export abstract class AbstractController<TSubscriberArgs extends any[]> {
   }
 
   /**
-   * 获取当前应传递给订阅者的状态参数。
-   * 具体子类必须实现此方法，以提供它们特定的状态。
-   */
-  protected abstract getCurrentStateForSubscriber(): TSubscriberArgs;
-
-  /**
    * 订阅状态变更。
    * 新的订阅者会立即以当前状态被调用一次。
    * @param fn 订阅者回调函数。
@@ -49,6 +43,22 @@ export abstract class AbstractController<TSubscriberArgs extends any[]> {
   }
 
   /**
+   * 清理控制器的资源，主要是清空订阅者列表。
+   * 具体子类应重写此方法以执行额外的清理操作（例如移除事件监听器），
+   * 然后调用 super.dispose()。
+   */
+  public dispose(): void {
+    this.subscribers = [];
+    // console.log('AbstractController disposed: subscribers cleared.');
+  }
+
+  /**
+   * 获取当前应传递给订阅者的状态参数。
+   * 具体子类必须实现此方法，以提供它们特定的状态。
+   */
+  protected abstract getCurrentStateForSubscriber(): TSubscriberArgs;
+
+  /**
    * 用当前状态通知所有订阅者。
    * 当相关状态发生变化时，具体子类应该调用此方法。
    */
@@ -63,15 +73,5 @@ export abstract class AbstractController<TSubscriberArgs extends any[]> {
         console.error('AbstractController: 通知订阅者时出错:', error, 'Subscriber:', fn);
       }
     });
-  }
-
-  /**
-   * 清理控制器的资源，主要是清空订阅者列表。
-   * 具体子类应重写此方法以执行额外的清理操作（例如移除事件监听器），
-   * 然后调用 super.dispose()。
-   */
-  public dispose(): void {
-    this.subscribers = [];
-    // console.log('AbstractController disposed: subscribers cleared.');
   }
 }

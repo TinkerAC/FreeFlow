@@ -151,7 +151,13 @@ export default class TrackService {
   }
 
   /** 更新曲目的基础元信息（title/artist/album）。返回更新后的实体。*/
-  public async updateBasicInfo(payload: { platform: string; platform_unique_id: string; title?: string; artist?: string; album?: string }): Promise<TrackEntity> {
+  public async updateBasicInfo(payload: {
+    platform: string;
+    platform_unique_id: string;
+    title?: string;
+    artist?: string;
+    album?: string
+  }): Promise<TrackEntity> {
     const prev = await this.trackRepository.findByPlatformAndPlatformUniqueId(payload.platform, payload.platform_unique_id);
     if (!prev) throw new Error(`Track not found: ${payload.platform}:${payload.platform_unique_id}`);
     const next: TrackEntity = { ...prev } as TrackEntity;

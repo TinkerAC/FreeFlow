@@ -167,8 +167,6 @@ try {
 }
 
 
-
-
 // ===== 内容提供者（单例） =====
 container
   .bind<HifiniMusic>(DISymbol.HifiniMusic)

@@ -15,9 +15,19 @@ export default function ColorSeed({ hex, onChange }: Props) {
         value={hex}
         onChange={(e) => onChange(e.target.value)}
         title={hex}
-        style={{ width: 36, height: 24, borderRadius: 6, border: '1px solid rgba(255,255,255,.15)', background: 'transparent' }}
+        style={{
+          width: 36,
+          height: 24,
+          borderRadius: 6,
+          border: '1px solid rgba(255,255,255,.15)',
+          background: 'transparent',
+        }}
       />
-      <span style={{ marginLeft: 8, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas', opacity: .85 }}>{hex}</span>
+      <span style={{
+        marginLeft: 8,
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas',
+        opacity: .85,
+      }}>{hex}</span>
     </div>
   );
 }

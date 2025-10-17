@@ -22,6 +22,28 @@ export default class TrayManager {
 
   }
 
+  public createTray(): Tray {
+    switch (this.os) {
+      case OS.WINDOWS: {
+        return this.createWindowsTray();
+      }
+      default : {
+        console.log(`当前操作系统 ${this.os} 不支持托盘功能`);
+      }
+    }
+  }
+
+  /** 释放托盘资源（可在退出或热重载时调用） */
+  public destroy(): void {
+    this.tray?.destroy();
+    this.tray = null;
+  }
+
+  /** 获取当前 Tray 实例（可能为 null） */
+  public getTray(): Tray | null {
+    return this.tray;
+  }
+
   /** 创建或返回已存在的托盘实例 */
   private createWindowsTray(): Tray {
     if (this.tray) return this.tray; // 保证单例
@@ -46,30 +68,6 @@ export default class TrayManager {
     this.tray.on('click', () => this.windowManager.show(WindowKey.MAIN));
 
     console.log('系统托盘已创建');
-    return this.tray;
-  }
-
-
-  public createTray(): Tray {
-    switch (this.os) {
-      case OS.WINDOWS: {
-        return this.createWindowsTray();
-      }
-      default : {
-        console.log(`当前操作系统 ${this.os} 不支持托盘功能`);
-      }
-    }
-  }
-
-  /** 释放托盘资源（可在退出或热重载时调用） */
-  public destroy(): void {
-    this.tray?.destroy();
-    this.tray = null;
-  }
-
-
-  /** 获取当前 Tray 实例（可能为 null） */
-  public getTray(): Tray | null {
     return this.tray;
   }
 }

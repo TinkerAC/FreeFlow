@@ -1,4 +1,4 @@
-import '@src/preload/mainApi'
+import '@src/preload/mainApi';
 
 
 // Say something

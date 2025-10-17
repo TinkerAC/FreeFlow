@@ -45,7 +45,8 @@ export function registerConfigHandlers({ configService, preferenceService }: Ipc
     if (!icon) return;
     if (lastAppliedIcon === icon) return;
     lastAppliedIcon = icon;
-    preferenceService.applyIcon(icon).catch(() => { /* noop */ });
+    preferenceService.applyIcon(icon).catch(() => { /* noop */
+    });
   });
 }
 

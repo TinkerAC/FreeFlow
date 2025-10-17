@@ -4,13 +4,13 @@
     min-height: 100%;
     border-radius: var(--radius-lg);
     overflow: hidden;
-    display: grid;               /* 允许背景跨行铺满 */
-    grid-template-rows: auto 1fr;/* 完整头 + 主体 */
+    display: grid; /* 允许背景跨行铺满 */
+    grid-template-rows: auto 1fr; /* 完整头 + 主体 */
 }
 
 /* 背景：封面模糊，粘在容器视口顶部，不随内容滚动（但受圆角裁切） */
 .backdrop {
-    position: sticky;  /* 不随内容滚动 */
+    position: sticky; /* 不随内容滚动 */
     top: 0;
     z-index: 0;
     grid-row: 1 / -1;
@@ -29,14 +29,16 @@
     position: sticky;
     top: 0;
     z-index: 3; /* 覆盖完整头和主体 */
-    height: 0;              /* 让锚点不占据布局空间 */
-    pointer-events: none;   /* 事件交给内部层 */
+    height: 0; /* 让锚点不占据布局空间 */
+    pointer-events: none; /* 事件交给内部层 */
 }
 
 /* 内层真实的头部条，绝对定位到容器顶部，实现覆盖且可淡入淡出 */
 .headerCompactInner {
     position: absolute;
-    left: 0; right: 0; top: 0;
+    left: 0;
+    right: 0;
+    top: 0;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
@@ -69,7 +71,10 @@
 }
 
 /* 简洁头部文案区域 */
-.compactText { min-width: 0; }
+.compactText {
+    min-width: 0;
+}
+
 .compactKicker {
     font-size: 12px;
     color: rgb(var(--md-sys-color-on-surface-variant));
@@ -148,7 +153,10 @@
 }
 
 /* 列表占据主体剩余空间 */
-.list { flex: 1; min-height: 0; }
+.list {
+    flex: 1;
+    min-height: 0;
+}
 
 /* 操作区 */
 .actions {
@@ -395,13 +403,20 @@ tbody td:last-child {
     place-items: center;
     border: 0;
     cursor: pointer;
-    box-shadow: 0 10px 24px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.12);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .12);
     transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
     backdrop-filter: blur(10px) saturate(1.1);
 }
 
-.fab:hover { transform: translateY(-1px); filter: brightness(1.05); }
-.fab:active { transform: translateY(0); filter: brightness(.98); }
+.fab:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+
+.fab:active {
+    transform: translateY(0);
+    filter: brightness(.98);
+}
 
 .fabPrimary {
     background: radial-gradient(circle at 30% 20%, color-mix(in oklab, rgb(var(--md-sys-color-primary)) 85%, white 10%), rgb(var(--md-sys-color-primary)));
@@ -414,4 +429,6 @@ tbody td:last-child {
     border: 1px solid rgb(var(--md-sys-color-outline-variant));
 }
 
-.fabIcon { font-size: 16px; }
+.fabIcon {
+    font-size: 16px;
+}

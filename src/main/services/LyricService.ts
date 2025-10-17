@@ -1,6 +1,5 @@
 import { inject, injectable } from 'inversify';
 import { ContentProvider } from '@main/contentProvider/ContentProvider';
-import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 
@@ -24,7 +23,8 @@ export class LyricService {
     @inject(DISymbol.QQMusic) private qqMusic: ContentProvider,
     @inject(DISymbol.YouTubeMusic) private youtubeMusic: YouTubeMusic,
     @inject(DISymbol.ProviderManager) private providerManager: ProviderManager,
-  ) {}
+  ) {
+  }
 
   async getLyrics(track_model: TrackEntity): Promise<Lyric | void> {
     const { platform, platform_unique_id } = track_model;

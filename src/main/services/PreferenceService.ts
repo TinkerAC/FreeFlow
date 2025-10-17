@@ -173,7 +173,10 @@ export class PreferenceService {
       path.join(process.resourcesPath, 'macTools', 'SetAppIcon'),
     ].filter(Boolean) as string[];
     for (const p of candidates) {
-      try { if (p && fs.existsSync(p)) return p; } catch { /* ignore */ }
+      try {
+        if (p && fs.existsSync(p)) return p;
+      } catch { /* ignore */
+      }
     }
     return null;
   }

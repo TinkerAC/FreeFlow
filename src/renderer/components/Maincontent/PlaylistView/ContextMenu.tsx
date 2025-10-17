@@ -1,6 +1,4 @@
-import React, { useLayoutEffect, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import clsx from 'clsx';
+import React, { useMemo } from 'react';
 import styles from './ContextMenu.module.css';
 
 import { libraryContext, playlistContext } from '@renderer/core/electronContextApi';
@@ -20,7 +18,16 @@ interface ContextMenuProps {
   onDetailRequest?: (track: TrackEntity) => void;
 }
 
-export default function ContextMenu({ x, y, track, handleCloseMenu, player, musicLibraryController, onEditRequest, onDetailRequest }: ContextMenuProps) {
+export default function ContextMenu({
+                                      x,
+                                      y,
+                                      track,
+                                      handleCloseMenu,
+                                      player,
+                                      musicLibraryController,
+                                      onEditRequest,
+                                      onDetailRequest,
+                                    }: ContextMenuProps) {
   if (!track) return null;
 
   const playlists = musicLibraryController.playlists ?? [];
@@ -46,13 +53,25 @@ export default function ContextMenu({ x, y, track, handleCloseMenu, player, musi
     { key: 'next', icon: 'fas fa-forward', label: '添加到下一首播放', onClick: () => player.addTrackToNext(track) },
     {
       key: 'add_to', icon: 'fas fa-folder-plus', label: '添加到…', submenu: candidatePlaylists.map(pl => ({
-        key: `pl_${pl.playlist_id}`, icon: 'fas fa-list', label: pl.title === 'Library' ? '库' : pl.title, onClick: () => addToTarget(pl.playlist_id!)
-      }))
+        key: `pl_${pl.playlist_id}`,
+        icon: 'fas fa-list',
+        label: pl.title === 'Library' ? '库' : pl.title,
+        onClick: () => addToTarget(pl.playlist_id!),
+      })),
     },
     { key: 'sep1', label: <div className={styles.divider} />, onClick: undefined },
-    { key: 'remove', icon: 'fas fa-xmark', label: `从 ${musicLibraryController.activePlaylist?.title ?? '当前'} 中移除`, onClick: removeFromCurrent },
+    {
+      key: 'remove',
+      icon: 'fas fa-xmark',
+      label: `从 ${musicLibraryController.activePlaylist?.title ?? '当前'} 中移除`,
+      onClick: removeFromCurrent,
+    },
     { key: 'edit', icon: 'fas fa-pen', label: '编辑歌曲信息', onClick: () => onEditRequest?.(track) },
-    { key: 'download', icon: 'fas fa-download', label: '下载', onClick: async () => { await libraryContext.downFromHifini(track); } },
+    {
+      key: 'download', icon: 'fas fa-download', label: '下载', onClick: async () => {
+        await libraryContext.downFromHifini(track);
+      },
+    },
   ];
 
   return (

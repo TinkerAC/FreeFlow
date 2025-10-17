@@ -1,5 +1,4 @@
 import React from 'react';
-import clsx from 'clsx';
 
 const sw = {
   root: 'inline-flex items-center cursor-pointer select-none',
@@ -9,7 +8,12 @@ const sw = {
 
 export default function Switch({
                                  checked, onChange, disabled, label,
-                               }: { checked: boolean; onChange: (v:boolean)=>void; disabled?: boolean; label?: string }) {
+                               }: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+  label?: string
+}) {
   return (
     <button
       type="button"

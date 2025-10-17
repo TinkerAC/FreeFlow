@@ -112,7 +112,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
     try {
       await playlistContext.updatePlaylistPositions(updates);
       await musicLibraryController.refreshPlaylists();
-      
+
       // 更新选中项
       if (selectedItem === draggedIndex) {
         setSelectedItem(finalDropIndex);
@@ -215,7 +215,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                       onDragEnd={handleDragEnd}
-                    />
+                    />,
                   );
                   // 分割线（下）
                   if (draggedIndex !== null && dragOverIndex === index && dragPosition === 'bottom') {
@@ -245,7 +245,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                         handleDrop(e, Math.max(0, playlists.length - 1));
                       }
                     }}
-                  />
+                  />,
                 );
                 return nodes;
               })()
@@ -263,7 +263,8 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
               playlists.forEach((item, index) => {
                 // 分割线（上）
                 if (draggedIndex !== null && dragOverIndex === index && dragPosition === 'top') {
-                  nodes.push(<div key={`gdiv-top-${index}`} className={clsx(styles.dragDivider, styles.dragDividerSmall)} />);
+                  nodes.push(<div key={`gdiv-top-${index}`}
+                                  className={clsx(styles.dragDivider, styles.dragDividerSmall)} />);
                 }
                 nodes.push(
                   <div
@@ -294,11 +295,12 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                       src={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
                       alt={`${item.title} key:${item.playlist_id}`}
                     />
-                  </div>
+                  </div>,
                 );
                 // 分割线（下）
                 if (draggedIndex !== null && dragOverIndex === index && dragPosition === 'bottom') {
-                  nodes.push(<div key={`gdiv-btm-${index}`} className={clsx(styles.dragDivider, styles.dragDividerSmall)} />);
+                  nodes.push(<div key={`gdiv-btm-${index}`}
+                                  className={clsx(styles.dragDivider, styles.dragDividerSmall)} />);
                 }
               });
               if (draggedIndex !== null && dragOverIndex === playlists.length && dragPosition === 'bottom') {
@@ -323,7 +325,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                       handleDrop(e, Math.max(0, playlists.length - 1));
                     }
                   }}
-                />
+                />,
               );
               return nodes;
             })()}

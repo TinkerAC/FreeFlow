@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './ListRow.module.css';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { Bilibili, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic, DefaultCover } from '@components/static';
+import { Bilibili, DefaultCover, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
 
 function PlatformIcon({ platform }: { platform: string }) {
   const size = 18;

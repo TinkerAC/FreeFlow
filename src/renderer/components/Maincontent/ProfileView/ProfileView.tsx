@@ -146,7 +146,10 @@ function ProfileView() {
                      title="更改头像" tabIndex={0}
                      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleSelectAvatar()}>
                   <img src={avatarSrc} alt="Avatar" className={styles.avatarImg}
-                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = AVATAR_PLACEHOLDER_DATA; }} />
+                       onError={(e) => {
+                         e.currentTarget.onerror = null;
+                         e.currentTarget.src = AVATAR_PLACEHOLDER_DATA;
+                       }} />
                   <div className={styles.avatarMask}>更改头像</div>
                 </div>
                 <input ref={avatarInputRef} id="avatarUploadInput" type="file" accept="image/*"

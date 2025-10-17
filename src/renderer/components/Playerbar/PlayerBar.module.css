@@ -17,7 +17,9 @@
     --icon-size: 16px;
 }
 
-.left, .middle, .right { min-width: 0; }
+.left, .middle, .right {
+    min-width: 0;
+}
 
 /* 左侧 */
 .left {
@@ -26,6 +28,7 @@
     gap: 12px;
     overflow: hidden;
 }
+
 .cover {
     width: 48px;
     height: 48px;
@@ -33,20 +36,33 @@
     object-fit: cover;
     flex-shrink: 0;
 }
-.meta { overflow: hidden; min-width: 0; }
+
+.meta {
+    overflow: hidden;
+    min-width: 0;
+}
+
 .title {
     font-weight: 600;
     font-size: var(--font-ui, 13px);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
 .artist {
     font-size: var(--font-ui-sm, 12px);
     color: rgb(var(--md-sys-color-on-surface-variant));
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 中间 */
-.middle { display: grid; }
+.middle {
+    display: grid;
+}
+
 .middleInner {
     display: grid;
     grid-template-rows: min-content min-content;
@@ -54,6 +70,7 @@
     align-items: center;
     min-width: 0;
 }
+
 .controls {
     justify-self: center;
     display: flex;
@@ -61,6 +78,7 @@
     gap: 16px;
     flex-wrap: wrap;
 }
+
 .progress {
     align-self: stretch;
     display: flex;
@@ -69,7 +87,10 @@
     gap: 10px;
     overflow: hidden;
 }
-.progress > * { max-height: var(--pg-area-max-h, 28px); }
+
+.progress > * {
+    max-height: var(--pg-area-max-h, 28px);
+}
 
 /* 图标按钮 */
 .iconButton {
@@ -82,19 +103,30 @@
     line-height: 1;
     transition: background .15s, opacity .15s, transform .05s;
 }
-.iconButton:hover { opacity: 1; background: rgba(var(--md-sys-color-surface-variant), .35); }
-.iconButton:active { transform: translateY(1px); }
-.iconButton:focus-visible { outline: 2px solid rgb(var(--md-sys-color-primary)); outline-offset: 2px; }
+
+.iconButton:hover {
+    opacity: 1;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+.iconButton:active {
+    transform: translateY(1px);
+}
+
+.iconButton:focus-visible {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+}
 
 /* 右侧工具 */
 .right {
     display: flex;
     align-items: center;
-    gap: 10px;           /* 优化间距 */
-    justify-self: center;   /* 右侧区水平居中 */
+    gap: 10px; /* 优化间距 */
+    justify-self: center; /* 右侧区水平居中 */
     overflow: hidden;
     min-width: 0;
-    padding-left: 12px;  /* 与中部留出间距，避免贴太近 */
+    padding-left: 12px; /* 与中部留出间距，避免贴太近 */
 }
 
 /* ─── 垂直音量弹出层（Portal 渲染，不受 overflow 裁剪） ───────────── */
@@ -116,9 +148,9 @@
     background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 92%, transparent);
     border: 1px solid rgb(var(--md-sys-color-outline-variant));
     border-radius: var(--radius-md);
-    box-shadow: var(--elev-2, 0 8px 24px rgba(0,0,0,.35));
+    box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, .35));
     backdrop-filter: blur(10px) saturate(1.05);
-    position: fixed;           /* 由 TSX 设置 left/top */
+    position: fixed; /* 由 TSX 设置 left/top */
 }
 
 /* 小三角：位于弹层底部正中 */
@@ -136,8 +168,8 @@
 /* 竖向滑块容器：给一个确定的可视区 */
 .volSliderBox {
     position: relative;
-    width: 64px;         /* 与弹层等宽，便于居中 */
-    height: 160px;       /* 垂直长度 */
+    width: 64px; /* 与弹层等宽，便于居中 */
+    height: 160px; /* 垂直长度 */
     display: block;
 }
 
@@ -150,8 +182,8 @@
     transform: translate(-50%, -50%) rotate(-90deg);
     transform-origin: 50% 50%;
 
-    width: 160px;        /* 旋转前的宽：= 垂直方向长度 */
-    height: 28px;        /* 旋转前的高：= 水平方向粗细 */
+    width: 160px; /* 旋转前的宽：= 垂直方向长度 */
+    height: 28px; /* 旋转前的高：= 水平方向粗细 */
 
     -webkit-appearance: none;
     appearance: none;
@@ -163,6 +195,7 @@
     border-radius: var(--radius-sm);
     background: rgb(var(--md-sys-color-surface-variant));
 }
+
 .volSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -175,7 +208,10 @@
     cursor: pointer;
     transition: transform .12s ease;
 }
-.volSlider:active::-webkit-slider-thumb { transform: scale(0.95); }
+
+.volSlider:active::-webkit-slider-thumb {
+    transform: scale(0.95);
+}
 
 .volValue {
     font-size: 12px;
@@ -184,4 +220,6 @@
 }
 
 /* 旧的横向音量条（隐藏） */
-.volume { display: none; }
+.volume {
+    display: none;
+}

@@ -8,15 +8,30 @@
     /* 默认（中号）变量 */
     --lyric-base: clamp(18px, 2.1vh, 24px);
     --f-active: 1.18; /* 当前行：保持突出 */
-    --f-near1: 0.98;  /* 邻近一行：略小于 1 */
-    --f-near2: 0.94;  /* 邻近二行：更小 */
-    --f-far: 0.88;    /* 更远行：明显缩小 */
+    --f-near1: 0.98; /* 邻近一行：略小于 1 */
+    --f-near2: 0.94; /* 邻近二行：更小 */
+    --f-far: 0.88; /* 更远行：明显缩小 */
 }
 
 /* 尺寸档位：小 / 中（默认） / 大 */
-.sizeSmall { --lyric-base: clamp(16px, 1.9vh, 22px); --f-active: 1.12; --f-near1: 0.97; --f-near2: 0.93; --f-far: .88; }
-.sizeMedium { /* 复用默认变量 */ }
-.sizeLarge { --lyric-base: clamp(19px, 2.3vh, 26px); --f-active: 1.22; --f-near1: 0.99; --f-near2: 0.95; --f-far: .90; }
+.sizeSmall {
+    --lyric-base: clamp(16px, 1.9vh, 22px);
+    --f-active: 1.12;
+    --f-near1: 0.97;
+    --f-near2: 0.93;
+    --f-far: .88;
+}
+
+.sizeMedium { /* 复用默认变量 */
+}
+
+.sizeLarge {
+    --lyric-base: clamp(19px, 2.3vh, 26px);
+    --f-active: 1.22;
+    --f-near1: 0.99;
+    --f-near2: 0.95;
+    --f-far: .90;
+}
 
 /* 顶部信息/切换条 */
 .topbar {
@@ -53,8 +68,15 @@
     cursor: pointer;
     transition: background .15s, transform .05s;
 }
-.chip:hover { background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 80%, transparent); }
-.chip:active { transform: translateY(1px); }
+
+.chip:hover {
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 80%, transparent);
+}
+
+.chip:active {
+    transform: translateY(1px);
+}
+
 .chipActive {
     background: rgba(var(--md-sys-color-primary), .18);
     border-color: rgb(var(--md-sys-color-primary));
@@ -71,8 +93,15 @@
 }
 
 /* 隐藏滚动条（按需保留/移除） */
-.viewport::-webkit-scrollbar { width: 0; height: 0; }
-.viewport { scrollbar-width: none; -ms-overflow-style: none; }
+.viewport::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+.viewport {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
 
 /* 滚动内容容器 */
 .scrollInner {
@@ -95,7 +124,15 @@
     animation: shimmer 1.6s infinite;
     opacity: .9;
 }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
 
 /* 行样式层级：越靠近当前越突出 */
 .line {
@@ -111,7 +148,7 @@
     white-space: normal;
     word-break: break-word;
     overflow-wrap: anywhere;
-    transition: color .18s, filter .18s, transform .28s cubic-bezier(.4,0,.2,1), opacity .18s;
+    transition: color .18s, filter .18s, transform .28s cubic-bezier(.4, 0, .2, 1), opacity .18s;
     scroll-snap-align: center;
     scroll-snap-stop: always;
     will-change: transform;
@@ -124,7 +161,7 @@
     font-weight: 800;
     color: rgb(var(--md-sys-color-on-surface));
     filter: none;
-    text-shadow: 0 2px 16px rgba(0,0,0,.18);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, .18);
     transform: scale(var(--f-active));
     z-index: 3;
 }
@@ -152,7 +189,12 @@
 
 /* 小屏减少放大倍数，避免重叠：通过覆盖变量实现 */
 @media (max-width: 640px) {
-  .right { --f-active: 1.10; --f-near1: 0.97; --f-near2: 0.93; --f-far: .90; }
+    .right {
+        --f-active: 1.10;
+        --f-near1: 0.97;
+        --f-near2: 0.93;
+        --f-far: .90;
+    }
 }
 
 /* 空状态 */
@@ -177,14 +219,34 @@
 }
 
 /* 尺寸控制按钮 */
-.sizeCtrl { display: inline-flex; align-items: center; gap: 8px; margin-left: 8px; }
-.sizeBtn {
-  height: 24px; min-width: 28px; padding: 0 8px; border-radius: 999px; border: 1px solid rgb(var(--md-sys-color-outline-variant));
-  background: rgb(var(--md-sys-color-surface-variant)); color: rgb(var(--md-sys-color-on-surface)); cursor: pointer;
-  transition: background .15s, transform .05s; font-weight: 700;
+.sizeCtrl {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 8px;
 }
-.sizeBtn:hover { background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 80%, transparent); }
-.sizeActive { background: rgba(var(--md-sys-color-primary), .18); border-color: rgb(var(--md-sys-color-primary)); }
+
+.sizeBtn {
+    height: 24px;
+    min-width: 28px;
+    padding: 0 8px;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    background: rgb(var(--md-sys-color-surface-variant));
+    color: rgb(var(--md-sys-color-on-surface));
+    cursor: pointer;
+    transition: background .15s, transform .05s;
+    font-weight: 700;
+}
+
+.sizeBtn:hover {
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 80%, transparent);
+}
+
+.sizeActive {
+    background: rgba(var(--md-sys-color-primary), .18);
+    border-color: rgb(var(--md-sys-color-primary));
+}
 
 /* 错误容器 */
 .errorContainer {

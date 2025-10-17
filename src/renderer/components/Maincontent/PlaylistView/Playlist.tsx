@@ -138,7 +138,10 @@ export function Playlist({
           handleCloseMenu={() => setMenu({ visible: false, x: 0, y: 0, track: null })}
           player={player}
           musicLibraryController={musicLibraryController}
-          onEditRequest={(t) => { setEditing(t); setMenu({ visible: false, x: 0, y: 0, track: null }); }}
+          onEditRequest={(t) => {
+            setEditing(t);
+            setMenu({ visible: false, x: 0, y: 0, track: null });
+          }}
           onDetailRequest={(t) => {
             navigation.push(ViewType.TRACK_DETAIL, t);
             setMenu({ visible: false, x: 0, y: 0, track: null });
@@ -150,7 +153,9 @@ export function Playlist({
         <ModalEditTrack
           track={editing}
           onClose={() => setEditing(null)}
-          onSaved={async () => { await musicLibraryController.refreshPlaylists(); }}
+          onSaved={async () => {
+            await musicLibraryController.refreshPlaylists();
+          }}
         />
       )}
     </div>

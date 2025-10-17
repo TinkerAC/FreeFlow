@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { libraryContext, playlistContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
-import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic, Local, YouTubeMusic } from '@components/static';
+import { Bilibili, DefaultCover, Hifini, Local, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
 import ViewShell from '@components/Maincontent/ViewShell/ViewShell';
 import styles from './TrackDetailView.module.css';
 

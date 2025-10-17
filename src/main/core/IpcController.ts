@@ -50,7 +50,8 @@ export default class IpcController {
     @inject(DISymbol.AiTextService) private readonly aiText: AiTextService,
     @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
     @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
-  ) {}
+  ) {
+  }
 
   public register(): void {
     const context: IpcContext = {

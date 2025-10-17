@@ -43,20 +43,25 @@
     transition: background .12s ease, opacity .12s ease;
     outline: none;
 }
+
 .item:hover {
     background: rgba(var(--md-sys-color-surface-variant), .5);
 }
+
 .item:active {
     transform: translateY(1px);
 }
+
 .item[aria-disabled="true"] {
     opacity: .6;
     cursor: not-allowed;
 }
+
 .icon {
     text-align: center;
     opacity: .9;
 }
+
 .kbd {
     font-size: 11px;
     opacity: .7;
@@ -73,6 +78,7 @@
 .subWrap {
     position: relative;
 }
+
 .subCaret {
     opacity: .7;
 }
@@ -93,6 +99,15 @@
     z-index: 10001; /* 确保在主菜单之上 */
 }
 
-.subMenu::-webkit-scrollbar { width: 6px; }
-.subMenu::-webkit-scrollbar-thumb { background: rgba(var(--md-sys-color-surface-variant), .6); border-radius: 6px; }
-.subMenu::-webkit-scrollbar-track { background: transparent; }
+.subMenu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.subMenu::-webkit-scrollbar-thumb {
+    background: rgba(var(--md-sys-color-surface-variant), .6);
+    border-radius: 6px;
+}
+
+.subMenu::-webkit-scrollbar-track {
+    background: transparent;
+}

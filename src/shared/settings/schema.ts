@@ -96,7 +96,11 @@ export const UISettings = z.object({
   /** 迷你播放器窗口的上次位置与尺寸 */
   miniPlayer: MiniPlayerBounds.default({ width: 360, height: 140 }),
   /** 唱机设置 */
-  turntable: TurntableSettings.default({ speedMode: 'preset', preset: 'medium', customAngularVelocityRadPerSec: 0.4488 }),
+  turntable: TurntableSettings.default({
+    speedMode: 'preset',
+    preset: 'medium',
+    customAngularVelocityRadPerSec: 0.4488,
+  }),
 });
 export type UISettings = z.infer<typeof UISettings>;
 
@@ -110,7 +114,7 @@ export type AudioSettings = z.infer<typeof AudioSettings>;
 /** ------- 音乐库 ------- */
 export const LibrarySettings = z.object({
   scanPaths: z.array(z.string()).default([]),
-  supportedFormats: z.array(z.string()).default(['mp3','wav','flac','ogg','m4a','aac','webm','opus','oga']),
+  supportedFormats: z.array(z.string()).default(['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'webm', 'opus', 'oga']),
 });
 export type LibrarySettings = z.infer<typeof LibrarySettings>;
 
@@ -187,7 +191,7 @@ export const Settings = z.object({
     materialSeedPresets: [
       '#6750A4', '#1E88E5', '#00ACC1', '#43A047', '#7CB342', '#FBC02D', '#FB8C00', '#E53935',
       '#D81B60', '#8E24AA', '#5E35B1', '#3949AB', '#039BE5', '#00897B', '#C0CA33', '#FDD835',
-      '#FFB300', '#F4511E', '#6D4C41', '#546E7A'
+      '#FFB300', '#F4511E', '#6D4C41', '#546E7A',
     ],
     preset: 'classic',
     autoDailySeed: false,
@@ -204,14 +208,14 @@ export const Settings = z.object({
   }),
   library: LibrarySettings.default({
     scanPaths: [],
-    supportedFormats: ['mp3','flac','wav','m4a','ogg','aac'],
+    supportedFormats: ['mp3', 'flac', 'wav', 'm4a', 'ogg', 'aac'],
   }),
   network: NetworkSettings.default({ port: 29321 }),
   services: ServiceSettings.default({
     hifiniCookie: { bbs_sid: '', bbs_token: '' },
     providers: { netease: true, qq: true, bilibili: true, youtubeMusic: true, hifini: true },
     youtubeMusic: { cookie: '', visitorData: '' },
-    ai: { enabled: false, provider: 'gemini', geminiApiKey: '', geminiModel: 'gemini-1.5-flash' }
+    ai: { enabled: false, provider: 'gemini', geminiApiKey: '', geminiModel: 'gemini-1.5-flash' },
   }),
   user: UserSettings.default({ userName: '', avatarPath: '' }),
   cache: CacheSettings.default({ cacheTime: 3600 }),

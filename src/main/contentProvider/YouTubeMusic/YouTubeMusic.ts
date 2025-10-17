@@ -25,7 +25,8 @@ export default class YouTubeMusic implements ContentProvider {
 
   constructor(
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
-  ) {}
+  ) {
+  }
 
   public async searchTrack(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {
     const items = await this.searchMusicItems(keyword, 'song');

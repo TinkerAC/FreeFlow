@@ -29,9 +29,20 @@
 }
 
 /* 去掉 WebKit/Mozilla 默认内边距与描边，并继承圆角 */
-.root input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: inherit; }
-.root input[type="color"]::-webkit-color-swatch { border: 0; border-radius: inherit; }
-.root input[type="color"]::-moz-color-swatch { border: 0; border-radius: inherit; }
+.root input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: inherit;
+}
+
+.root input[type="color"]::-webkit-color-swatch {
+    border: 0;
+    border-radius: inherit;
+}
+
+.root input[type="color"]::-moz-color-swatch {
+    border: 0;
+    border-radius: inherit;
+}
 
 .root input[type="color"]:hover {
     filter: brightness(1.02);

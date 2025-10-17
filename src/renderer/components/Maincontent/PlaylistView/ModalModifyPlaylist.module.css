@@ -1,13 +1,16 @@
 .overlay {
-    position: fixed; inset: 0;
-    display: grid; place-items: center;
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
     z-index: 11000;
     background: color-mix(in oklab, black 50%, transparent);
     backdrop-filter: blur(2px);
 }
 
 .modal {
-    width: 420px; max-width: calc(100vw - 32px);
+    width: 420px;
+    max-width: calc(100vw - 32px);
     background: rgb(var(--md-sys-color-surface-container-high));
     color: rgb(var(--md-sys-color-on-surface));
     border: 1px solid rgb(var(--md-sys-color-outline-variant));
@@ -18,17 +21,43 @@
 }
 
 .header {
-    display: grid; grid-template-columns: 1fr auto; align-items: center; margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    margin-bottom: 8px;
 }
-.title { font-size: 18px; font-weight: 800; }
-.close {
-    width: 28px; height: 28px; display: grid; place-items: center;
-    border-radius: var(--radius-sm); cursor: pointer; opacity: .8;
-}
-.close:hover { opacity: 1; background: rgba(var(--md-sys-color-surface-variant), .4); }
 
-.form { display: grid; gap: 12px; margin-top: 4px; }
-.label { font-size: 12px; color: rgb(var(--md-sys-color-on-surface-variant)); }
+.title {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.close {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    opacity: .8;
+}
+
+.close:hover {
+    opacity: 1;
+    background: rgba(var(--md-sys-color-surface-variant), .4);
+}
+
+.form {
+    display: grid;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.label {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
 .input, .textarea {
     width: 100%;
     background: rgb(var(--md-sys-color-surface-container));
@@ -37,16 +66,27 @@
     border-radius: var(--radius-md);
     padding: 8px 10px;
 }
+
 .input:focus, .textarea:focus {
     outline: 2px solid rgb(var(--md-sys-color-primary));
     outline-offset: 2px;
 }
+
 .actions {
-    display: flex; justify-content: center; margin-top: 6px;
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
 }
+
 .primary {
-    padding: 8px 18px; border-radius: 999px; cursor: pointer; border: 0;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 0;
     background: rgb(var(--md-sys-color-on-primary-container));
     color: rgb(var(--md-sys-color-primary-container));
 }
-.primary:hover { filter: brightness(1.05); }
+
+.primary:hover {
+    filter: brightness(1.05);
+}

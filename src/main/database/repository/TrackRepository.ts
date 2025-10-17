@@ -31,6 +31,6 @@ export default interface TrackRepository {
   increasePlayCount(track: TrackEntity): Promise<TrackEntity>;
 
 
-  localSearch(term: string,limit:number): Promise<TrackEntity[]>;
+  localSearch(term: string, limit: number): Promise<TrackEntity[]>;
 
 }

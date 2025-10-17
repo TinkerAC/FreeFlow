@@ -36,13 +36,28 @@ export interface BiliSearchVideoItem {
 
 @injectable()
 export class BilibiliService {
+  /** ============ WBI 签名 ============ */
+  private static readonly MIXIN_TAB = [
+    46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49, 33, 9, 42, 19, 29, 28, 14,
+    39, 12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40, 61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59,
+    6, 63, 57, 62, 11, 36, 20, 34, 44, 52,
+  ];
+  private static readonly DEFAULT_HEADERS = {
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+      '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+    'Referer': 'https://www.bilibili.com',
+    'Origin': 'https://www.bilibili.com',
+  };
   private http: AxiosInstance;
   private jar = new CookieJar();
-
   /** 简单缓存：key = `${bvid}:${cid}` */
   private playUrlCache = new Map<string, PlayUrlCacheEntry>();
   /** 缓存有效期（毫秒），默认 ~110 分钟，避免过早过期 */
   private PLAY_URL_TTL = 110 * 60 * 1000;
+  private lastReqAt = 0;
 
   constructor() {
     // 用 cookiejar 支持 + 伪装为浏览器
@@ -64,39 +79,8 @@ export class BilibiliService {
     } as AxiosRequestConfig));
   }
 
-
-  /** ============ WBI 签名 ============ */
-  private static readonly MIXIN_TAB = [
-    46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49, 33, 9, 42, 19, 29, 28, 14,
-    39, 12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40, 61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59,
-    6, 63, 57, 62, 11, 36, 20, 34, 44, 52,
-  ];
-
   private static mixinKey(orig: string) {
     return BilibiliService.MIXIN_TAB.map((i) => orig[i]).join('').slice(0, 32);
-  }
-
-  private async getWbiKeys(): Promise<{ mixin: string }> {
-    const r = await this.http.get('/x/web-interface/nav', { jar: this.jar });
-    const img = r.data?.data?.wbi_img?.img_url ?? '';
-    const sub = r.data?.wbi_img?.sub_url ?? r.data?.data?.wbi_img?.sub_url ?? '';
-    const imgKey = img.split('/').pop()?.split('.')[0] ?? '';
-    const subKey = sub.split('/').pop()?.split('.')[0] ?? '';
-    return { mixin: BilibiliService.mixinKey(imgKey + subKey) };
-  }
-
-  private signWbi(params: Record<string, any>, mixin: string) {
-    const wts = Math.round(Date.now() / 1000);
-    // 过滤特殊字符
-    const filtered: Record<string, string> = {};
-    for (const k of Object.keys(params)) filtered[k] = String(params[k]).replace(/[!'()*]/g, '');
-    // 排序 & 编码
-    const sorted = Object.keys(filtered)
-      .sort()
-      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(filtered[k])}`)
-      .join('&');
-    const w_rid = md5(sorted + mixin);
-    return { ...params, wts, w_rid };
   }
 
   /** ============ database.sqlit会话 & 工具 ============ */
@@ -129,53 +113,6 @@ export class BilibiliService {
     return sec;
   }
 
-  private static readonly DEFAULT_HEADERS = {
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
-      '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-    'Referer': 'https://www.bilibili.com',
-    'Origin': 'https://www.bilibili.com',
-  };
-
-  private lastReqAt = 0;
-
-  /** 简单节流：两次调用至少间隔 420~600ms（含抖动） */
-  private async throttle(minGapMs = 420) {
-    const now = Date.now();
-    const gap = this.lastReqAt + minGapMs - now;
-    if (gap > 0) {
-      const jitter = Math.floor(80 + Math.random() * 100);
-      await new Promise(r => setTimeout(r, gap + jitter));
-    }
-    this.lastReqAt = Date.now();
-  }
-
-  /** 打一次前台首页 + nav，吃下必要 Cookie，降低 412 概率 */
-  private async ensureSession(force = false) {
-    // 1) 访问首页（很多关键 Cookie 在这里下发）
-    if (force) {
-      // 强制刷新时先等一下再打
-      await new Promise(r => setTimeout(r, 150 + Math.random() * 150));
-    }
-    await this.throttle();
-    await this.http.get('https://www.bilibili.com/', {
-      baseURL: undefined,
-      headers: BilibiliService.DEFAULT_HEADERS,
-      withCredentials: true,
-    });
-
-    // 2) 再拉一次 nav（WBI 也依赖这个上下文）
-    await this.throttle();
-    await this.http.get('/x/web-interface/nav', {
-      headers: BilibiliService.DEFAULT_HEADERS,
-      withCredentials: true,
-    });
-  }
-
-  /** ============ 基础信息 ============ */
-
   /** BV → 视频信息（含全部分P） */
   async getVideoInfo(bvid: string): Promise<BiliVideoInfo> {
     await this.ensureSession();
@@ -202,10 +139,6 @@ export class BilibiliService {
   async getCID(bvid: string): Promise<number> {
     const info = await this.getVideoInfo(bvid);
     return info.pages[0]?.cid ?? 0;
-  }
-
-  private sleep(ms: number) {
-    return new Promise((r) => setTimeout(r, ms));
   }
 
   /** ============ 取音轨直链（含缓存 & 兜底） ============ */
@@ -277,6 +210,68 @@ export class BilibiliService {
 
     this.playUrlCache.set(cacheKey, { value: play!, createdAt: now });
     return play!;
+  }
+
+  private async getWbiKeys(): Promise<{ mixin: string }> {
+    const r = await this.http.get('/x/web-interface/nav', { jar: this.jar });
+    const img = r.data?.data?.wbi_img?.img_url ?? '';
+    const sub = r.data?.wbi_img?.sub_url ?? r.data?.data?.wbi_img?.sub_url ?? '';
+    const imgKey = img.split('/').pop()?.split('.')[0] ?? '';
+    const subKey = sub.split('/').pop()?.split('.')[0] ?? '';
+    return { mixin: BilibiliService.mixinKey(imgKey + subKey) };
+  }
+
+  /** ============ 基础信息 ============ */
+
+  private signWbi(params: Record<string, any>, mixin: string) {
+    const wts = Math.round(Date.now() / 1000);
+    // 过滤特殊字符
+    const filtered: Record<string, string> = {};
+    for (const k of Object.keys(params)) filtered[k] = String(params[k]).replace(/[!'()*]/g, '');
+    // 排序 & 编码
+    const sorted = Object.keys(filtered)
+      .sort()
+      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(filtered[k])}`)
+      .join('&');
+    const w_rid = md5(sorted + mixin);
+    return { ...params, wts, w_rid };
+  }
+
+  /** 简单节流：两次调用至少间隔 420~600ms（含抖动） */
+  private async throttle(minGapMs = 420) {
+    const now = Date.now();
+    const gap = this.lastReqAt + minGapMs - now;
+    if (gap > 0) {
+      const jitter = Math.floor(80 + Math.random() * 100);
+      await new Promise(r => setTimeout(r, gap + jitter));
+    }
+    this.lastReqAt = Date.now();
+  }
+
+  /** 打一次前台首页 + nav，吃下必要 Cookie，降低 412 概率 */
+  private async ensureSession(force = false) {
+    // 1) 访问首页（很多关键 Cookie 在这里下发）
+    if (force) {
+      // 强制刷新时先等一下再打
+      await new Promise(r => setTimeout(r, 150 + Math.random() * 150));
+    }
+    await this.throttle();
+    await this.http.get('https://www.bilibili.com/', {
+      baseURL: undefined,
+      headers: BilibiliService.DEFAULT_HEADERS,
+      withCredentials: true,
+    });
+
+    // 2) 再拉一次 nav（WBI 也依赖这个上下文）
+    await this.throttle();
+    await this.http.get('/x/web-interface/nav', {
+      headers: BilibiliService.DEFAULT_HEADERS,
+      withCredentials: true,
+    });
+  }
+
+  private sleep(ms: number) {
+    return new Promise((r) => setTimeout(r, ms));
   }
 
   // 防止偶发设备时间误差导致 TTL 过短

@@ -15,13 +15,13 @@ interface PlayQueueProps {
 }
 
 export default function PlayQueue({
-  currentTrack,
-  nextTracks = [],
-  clearQueue,
-  addToNextAndPlay,
-  historyTracks = [],
-  clearHistory,
-}: PlayQueueProps) {
+                                    currentTrack,
+                                    nextTracks = [],
+                                    clearQueue,
+                                    addToNextAndPlay,
+                                    historyTracks = [],
+                                    clearHistory,
+                                  }: PlayQueueProps) {
   const [tab, setTab] = useState<'queue' | 'recent'>('queue');
   const isQueueTab = tab === 'queue';
   const isEmptyQueue = !currentTrack && nextTracks.length === 0;

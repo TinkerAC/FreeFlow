@@ -15,7 +15,15 @@ export interface BaseContextMenuProps {
   extraOverlayRefs?: Array<React.RefObject<HTMLElement>>;
 }
 
-export default function BaseContextMenu({ x, y, onRequestClose, className, role = 'menu', children, extraOverlayRefs }: BaseContextMenuProps) {
+export default function BaseContextMenu({
+                                          x,
+                                          y,
+                                          onRequestClose,
+                                          className,
+                                          role = 'menu',
+                                          children,
+                                          extraOverlayRefs,
+                                        }: BaseContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({ opacity: 0 });
 

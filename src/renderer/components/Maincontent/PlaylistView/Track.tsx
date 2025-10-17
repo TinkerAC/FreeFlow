@@ -1,7 +1,7 @@
 // file: src/renderer/components/Maincontent/PlaylistView/Track.tsx
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
-import { DefaultCover, Bilibili, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
+import { Bilibili, DefaultCover, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import styles from './PlaylistView.module.css';
@@ -84,7 +84,8 @@ const Track: React.FC<TrackProps> = ({ track, index, onRightClick, player }) => 
       {/* 平台（图标渲染） */}
       <td className={`${styles.colAlbum} hidden md:table-cell`} title={track?.platform as any}>
         {track?.platform === 'NetEaseCloudMusic' && (
-          <img src={NetEaseCloudMusic} alt="NetEaseCloudMusic" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+          <img src={NetEaseCloudMusic} alt="NetEaseCloudMusic"
+               style={{ width: 18, height: 18, objectFit: 'contain' }} />
         )}
         {track?.platform === 'Hifini' && (
           <img src={Hifini} alt="Hifini" style={{ width: 18, height: 18, objectFit: 'contain' }} />

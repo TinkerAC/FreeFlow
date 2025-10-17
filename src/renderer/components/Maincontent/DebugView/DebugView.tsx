@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 // eslint-disable-next-line import/no-unresolved
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { useLocation } from 'react-router-dom';
@@ -11,14 +11,20 @@ interface DebugViewProps {
 
 /* 小工具：安全 JSON 序列化 */
 function safeStringify(obj: unknown, space = 2) {
-  try { return JSON.stringify(obj, (k, v) => (typeof v === 'function' ? '[fn]' : v), space); } catch { return '[unserializable]'; }
+  try {
+    return JSON.stringify(obj, (k, v) => (typeof v === 'function' ? '[fn]' : v), space);
+  } catch {
+    return '[unserializable]';
+  }
 }
 
 interface PlayerLike {
-  on?(evt: string, handler: () => void): void;
-  off?(evt: string, handler: () => void): void;
   audio?: HTMLAudioElement;
   playQueue?: { currentTrack?: { title?: string } };
+
+  on?(evt: string, handler: () => void): void;
+
+  off?(evt: string, handler: () => void): void;
 }
 
 const DebugView: React.FC<DebugViewProps> = ({ player }) => {
@@ -49,8 +55,20 @@ const DebugView: React.FC<DebugViewProps> = ({ player }) => {
     volume: audio.volume,
     networkState: audio.networkState,
     readyState: audio.readyState,
-    buffered: (() => { try { return audio.buffered?.length ? audio.buffered.end(0) : 0; } catch { return 0; } })(),
-    played: (() => { try { return audio.played?.length ? audio.played.end(0) : 0; } catch { return 0; } })(),
+    buffered: (() => {
+      try {
+        return audio.buffered?.length ? audio.buffered.end(0) : 0;
+      } catch {
+        return 0;
+      }
+    })(),
+    played: (() => {
+      try {
+        return audio.played?.length ? audio.played.end(0) : 0;
+      } catch {
+        return 0;
+      }
+    })(),
   } : null;
 
   const header = (
@@ -107,7 +125,12 @@ const DebugView: React.FC<DebugViewProps> = ({ player }) => {
             </button>
           </div>
           {expanded.route && (
-            <pre className={styles.codeBlock}>{safeStringify({ pathname: location.pathname, search: location.search, hash: location.hash, historyLength: window.history.length })}</pre>
+            <pre className={styles.codeBlock}>{safeStringify({
+              pathname: location.pathname,
+              search: location.search,
+              hash: location.hash,
+              historyLength: window.history.length,
+            })}</pre>
           )}
         </section>
       </div>

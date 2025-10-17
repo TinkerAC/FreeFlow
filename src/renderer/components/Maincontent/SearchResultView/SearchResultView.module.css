@@ -1,8 +1,18 @@
 /* file: src/renderer/components/Maincontent/SearchResultView/TabbedSearchResultView.module.css */
-.root { height: 100%; width: 100%; }
-.content { display: grid; gap: 16px; }
+.root {
+    height: 100%;
+    width: 100%;
+}
+
+.content {
+    display: grid;
+    gap: 16px;
+}
+
 /* TabbedSearchResultView.module.css *禁止content滚动 */
-.content::-webkit-scrollbar { display: none; }
+.content::-webkit-scrollbar {
+    display: none;
+}
 
 
 

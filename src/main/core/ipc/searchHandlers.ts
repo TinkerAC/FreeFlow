@@ -2,20 +2,19 @@ import { ipcMain, IpcMainInvokeEvent } from 'electron';
 import { Channels } from '@src/shared/ipc/channels';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
-import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { Platform } from '@main/core/enum/Platform';
 import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 import { IpcContext } from './ipcContext';
 
 export function registerSearchHandlers({
-  netEaseCloudMusic,
-  qqMusic,
-  bilibili,
-  youtubeMusic,
-  trackService,
-  configService,
-  providerManager,
-}: IpcContext): void {
+                                         netEaseCloudMusic,
+                                         qqMusic,
+                                         bilibili,
+                                         youtubeMusic,
+                                         trackService,
+                                         configService,
+                                         providerManager,
+                                       }: IpcContext): void {
   const safe = async <T>(p: Promise<T>, label: string, fallback: T): Promise<T> => {
     try {
       return await p;
@@ -110,13 +109,13 @@ export function registerSearchHandlers({
     async (_evt: IpcMainInvokeEvent, platform: string, platform_unique_id: string) => {
       console.log('后端收到获取歌单详情请求:', platform, platform_unique_id);
       const toggles = (configService.get('services.providers') ?? {}) as Record<string, boolean>;
-    switch (platform) {
-      case Platform.NET_EASE_CLOUD_MUSIC:
+      switch (platform) {
+        case Platform.NET_EASE_CLOUD_MUSIC:
           if (!providerManager.isEnabled(Platform.NET_EASE_CLOUD_MUSIC)) throw new Error('Provider disabled: NetEaseCloudMusic');
           return await netEaseCloudMusic.getFullPlaylist(platform_unique_id);
-      case Platform.QQ_MUSIC:
+        case Platform.QQ_MUSIC:
           throw NotImplementedError;
-      case Platform.BILIBILI:
+        case Platform.BILIBILI:
           throw NotImplementedError;
         default:
           throw new Error(`不支持的平台: ${platform}`);

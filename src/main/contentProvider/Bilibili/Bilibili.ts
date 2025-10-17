@@ -17,42 +17,6 @@ export default class Bilibili implements ContentProvider {
   constructor(@inject(DISymbol.BilibiliService) private bilibili: BilibiliService) {
   }
 
-  /** 只存 BV + 分P，播放时再解析直链 */
-  private toTracksFromVideo(info: BiliVideoInfo): TrackEntity[] {
-    const cover = info.cover;
-    const artist = info.owner?.name ?? 'UP主';
-    return (info.pages ?? []).map((p, idx) => ({
-      platform: Platform.BILIBILI,
-      platform_unique_id: `${info.bvid}?p=${idx + 1}`,
-      title: info.pages.length === 1 ? info.title : p?.part || `${info.title}(P${idx + 1})}`,
-      artist,
-      album: 'Bilibili',
-      duration: Number(p?.duration ?? 0),
-      cover_src: cover,
-      created_at: new Date(),
-      fee: 0,
-    }));
-  }
-
-  private toTracksFromVideos(infos: BiliVideoInfo[]): TrackEntity[] {
-    return infos.flatMap((v) => this.toTracksFromVideo(v));
-  }
-
-  /** 搜索结果（关键字）→ 先给每个视频一条 Track（默认 P1），轻量快速 */
-  private toTracksFromSearch(items: BiliSearchVideoItem[]): TrackEntity[] {
-    return items.map((it) => ({
-      platform: Platform.BILIBILI,
-      platform_unique_id: `${it.bvid}?p=1`,
-      title: it.title || it.bvid,
-      artist: it.author || 'UP主',
-      album: 'Bilibili',
-      duration: Number(it.duration || 0),
-      cover_src: it.cover,
-      created_at: new Date(),
-      fee: 0,
-    }));
-  }
-
   /** 支持：
    *  - 文本里“包含” BVxxx → 拉该视频全部分 P
    *  - series/collection/fav（保留原注释的模式，后续需要可解开）
@@ -139,6 +103,42 @@ export default class Bilibili implements ContentProvider {
   isFree(_song: unknown): boolean {
     void _song;
     return true;
+  }
+
+  /** 只存 BV + 分P，播放时再解析直链 */
+  private toTracksFromVideo(info: BiliVideoInfo): TrackEntity[] {
+    const cover = info.cover;
+    const artist = info.owner?.name ?? 'UP主';
+    return (info.pages ?? []).map((p, idx) => ({
+      platform: Platform.BILIBILI,
+      platform_unique_id: `${info.bvid}?p=${idx + 1}`,
+      title: info.pages.length === 1 ? info.title : p?.part || `${info.title}(P${idx + 1})}`,
+      artist,
+      album: 'Bilibili',
+      duration: Number(p?.duration ?? 0),
+      cover_src: cover,
+      created_at: new Date(),
+      fee: 0,
+    }));
+  }
+
+  private toTracksFromVideos(infos: BiliVideoInfo[]): TrackEntity[] {
+    return infos.flatMap((v) => this.toTracksFromVideo(v));
+  }
+
+  /** 搜索结果（关键字）→ 先给每个视频一条 Track（默认 P1），轻量快速 */
+  private toTracksFromSearch(items: BiliSearchVideoItem[]): TrackEntity[] {
+    return items.map((it) => ({
+      platform: Platform.BILIBILI,
+      platform_unique_id: `${it.bvid}?p=1`,
+      title: it.title || it.bvid,
+      artist: it.author || 'UP主',
+      album: 'Bilibili',
+      duration: Number(it.duration || 0),
+      cover_src: it.cover,
+      created_at: new Date(),
+      fee: 0,
+    }));
   }
 
   /** 支持 "BV...?p=N"、"BV...:p=N"、"BV..._pN"，默认 p=1 */

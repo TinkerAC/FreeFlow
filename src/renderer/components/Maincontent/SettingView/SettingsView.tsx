@@ -21,31 +21,241 @@ type ThemeSource = 'material-you' | 'preset';
 type ThemePreset = 'classic' | 'spotify' | 'netease';
 type ProgressSkin = 'classic' | 'neon' | 'waveform' | 'knob';
 
-export default function SettingsView() {
-  // 与 schema 完全对齐
-  const { settings } = useSettingsContext();
+function ThemeSettingsSection() {
   const themeMode = useSetting<ThemeMode>('theme.mode', 'system');
   const themeSource = useSetting<ThemeSource>('theme.source', 'material-you');
   const seedHex = useSetting<string>('theme.seed', '#66ccff');
   const autoDailySeed = useSetting<boolean>('theme.autoDailySeed', false);
   const preset = useSetting<ThemePreset>('theme.preset', 'classic');
   const seedPresets = useSetting<string[]>('theme.materialSeedPresets', []);
-  const [newSeed, setNewSeed] = React.useState('');
-  
-  // 计算当前实际使用的种子色（考虑每日随机色）
-  const currentEffectiveSeed = React.useMemo(() => {
-    return settings ? getCurrentEffectiveSeed(settings) : seedHex.value;
-  }, [settings, seedHex.value]);
-
   const progressSkin = useSetting<ProgressSkin>('audio.progressSkin', 'classic');
+  const { settings } = useSettingsContext();
+  const [newSeedInput, setNewSeedInput] = React.useState('');
+
+  const materialSeedOptions = React.useMemo(() => {
+    const toTitle = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^[a-z]/, c => c.toUpperCase());
+    const builtin = Object.entries(PRESET_SEEDS).map(([name, hex]) => ({ label: toTitle(name), hex }));
+    const customList = (seedPresets.value || []).filter(Boolean);
+    const seen = new Set(builtin.map(item => item.hex.toLowerCase()));
+    const deduped = customList
+      .filter(hex => !seen.has(hex.toLowerCase()))
+      .map(hex => ({ label: hex.toUpperCase(), hex }));
+    return [...builtin, ...deduped];
+  }, [seedPresets.value]);
+
+  const currentEffectiveSeed = React.useMemo(() => (
+    settings ? getCurrentEffectiveSeed(settings) : seedHex.value
+  ), [settings, seedHex.value]);
+
+  const normalizedEffectiveSeed = React.useMemo(() => (
+    (currentEffectiveSeed || '#000000').toUpperCase()
+  ), [currentEffectiveSeed]);
+
+  const isSeedInputValid = React.useMemo(() => (
+    /^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(newSeedInput.trim())
+  ), [newSeedInput]);
+
+  const handleAddPreset = React.useCallback(() => {
+    const hex = newSeedInput.trim();
+    if (!/^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(hex)) return;
+    const existing = (seedPresets.value || []).map(item => item.toUpperCase());
+    const next = Array.from(new Set([...existing, hex.toUpperCase()]));
+    seedPresets.setValue(next);
+    setNewSeedInput('');
+  }, [newSeedInput, seedPresets]);
+
+  const showMaterialControls = themeSource.value === 'material-you';
+
+  return (
+    <SettingsGroup title="外观" desc="主题模式、来源与配色">
+      <SettingRow
+        label="主题模式"
+        sub="跟随系统或强制浅色/深色"
+        control={(
+          <Segmented<ThemeMode>
+            value={themeMode.value}
+            onChange={themeMode.setValue}
+            options={[
+              { label: '系统', value: 'system' },
+              { label: '浅色', value: 'light' },
+              { label: '深色', value: 'dark' },
+            ]}
+          />
+        )}
+      />
+      <SettingRow
+        label="主题来源"
+        sub="Material You 或预设"
+        control={(
+          <Segmented<ThemeSource>
+            value={themeSource.value}
+            onChange={themeSource.setValue}
+            options={[
+              { label: 'Material You', value: 'material-you' },
+              { label: '预设', value: 'preset' },
+            ]}
+          />
+        )}
+      />
+
+      {showMaterialControls ? (
+        <>
+          <SettingRow
+            label="基础种子色"
+            sub="调整后即时刷新 Material You 配色"
+            control={<ColorSeed hex={seedHex.value} onChange={seedHex.setValue} />}
+          />
+          <SettingRow
+            label="快速选择"
+            sub="从内置与收藏方案中切换"
+            control={(
+              <ColorSelect
+                value={seedHex.value}
+                options={materialSeedOptions}
+                onChange={(hex) => seedHex.setValue(hex)}
+              />
+            )}
+          />
+          <SettingRow
+            label="收藏种子色"
+            sub="输入 #RRGGBB / #RRGGBBAA 添加到列表"
+            control={(
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder="#6750A4"
+                  value={newSeedInput}
+                  onChange={(e) => setNewSeedInput(e.target.value)}
+                  style={{
+                    height: 28,
+                    borderRadius: 999,
+                    background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                    border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                    color: 'rgb(var(--md-sys-color-on-surface))',
+                    padding: '0 10px',
+                    width: 150,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddPreset}
+                  disabled={!isSeedInputValid}
+                  style={{
+                    height: 28,
+                    padding: '0 12px',
+                    borderRadius: 999,
+                    background: isSeedInputValid ? 'rgb(var(--md-sys-color-primary))' : 'rgba(var(--md-sys-color-outline-variant), .45)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: isSeedInputValid ? 'pointer' : 'not-allowed',
+                    opacity: isSeedInputValid ? 1 : 0.65,
+                  }}
+                >添加
+                </button>
+              </div>
+            )}
+          />
+          <SettingRow
+            label="每日随机种子"
+            sub="每天凌晨自动生成新的种子色"
+            control={(
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Switch checked={!!autoDailySeed.value} onChange={autoDailySeed.setValue} />
+                {autoDailySeed.value && <SeedBadge hex={normalizedEffectiveSeed} caption="今日" />}
+              </div>
+            )}
+          />
+        </>
+      ) : (
+        <SettingRow
+          label="预设主题"
+          sub="从内置方案中选择"
+          control={(
+            <Select<ThemePreset>
+              value={preset.value}
+              onChange={preset.setValue}
+              options={[
+                { label: 'Classic', value: 'classic' },
+                { label: 'Spotify', value: 'spotify' },
+                { label: 'Netease', value: 'netease' },
+              ]}
+            />
+          )}
+        />
+      )}
+
+      <SettingRow
+        label="进度条皮肤"
+        sub="Classic / Neon / Waveform / Knob"
+        control={(
+          <Select<ProgressSkin>
+            value={progressSkin.value}
+            onChange={progressSkin.setValue}
+            options={[
+              { label: 'Classic', value: 'classic' },
+              { label: 'Neon', value: 'neon' },
+              { label: 'Waveform', value: 'waveform' },
+              { label: 'Knob', value: 'knob' },
+            ]}
+          />
+        )}
+      />
+    </SettingsGroup>
+  );
+}
+
+function SeedBadge({ hex, caption }: { hex: string; caption?: string }) {
+  const normalized = (hex || '#000000').toUpperCase();
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '6px 12px',
+        borderRadius: 999,
+        background: 'rgba(var(--md-sys-color-surface-variant), .25)',
+        border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: '50%',
+          background: normalized,
+          border: '2px solid rgba(255,255,255,.2)',
+          boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+        }}
+      />
+      <span
+        style={{
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas',
+          fontSize: 13,
+          fontWeight: 600,
+          color: 'rgb(var(--md-sys-color-on-surface))',
+        }}
+      >
+        {normalized}
+      </span>
+      {caption ? (
+        <span style={{ fontSize: 12, opacity: 0.75, color: 'rgb(var(--md-sys-color-on-surface))' }}>{caption}</span>
+      ) : null}
+    </div>
+  );
+}
+
+export default function SettingsView() {
   const volume = useSetting<number>('audio.volume', 0.8);
 
   const sidebarCollapsed = useSetting<boolean>('ui.sidebarCollapsed', true);
   const appIcon = useSetting<AppIcon>('app.icon', AppIcon.Default);
 
   // 唱机（转速）设置：预设/自定义
-  const ttMode = useSetting<'preset'|'custom'>('ui.turntable.speedMode', 'preset');
-  const ttPreset = useSetting<'slow'|'medium'|'fast'>('ui.turntable.preset', 'medium');
+  const ttMode = useSetting<'preset' | 'custom'>('ui.turntable.speedMode', 'preset');
+  const ttPreset = useSetting<'slow' | 'medium' | 'fast'>('ui.turntable.preset', 'medium');
   const ttCustom = useSetting<number>('ui.turntable.customAngularVelocityRadPerSec', 0.4488);
 
   // 新增：用户、服务、音乐库、网络、缓存
@@ -61,7 +271,7 @@ export default function SettingsView() {
   const aiKey = useSetting<string>('services.ai.geminiApiKey', '');
   const aiModel = useSetting<string>('services.ai.geminiModel', 'gemini-1.5-flash');
   const scanPaths = useSetting<string[]>('library.scanPaths', []);
-  const supportedFormats = useSetting<string[]>('library.supportedFormats', ['mp3','flac','wav','m4a','ogg','aac']);
+  const supportedFormats = useSetting<string[]>('library.supportedFormats', ['mp3', 'flac', 'wav', 'm4a', 'ogg', 'aac']);
   const networkPort = useSetting<number>('network.port', 29321);
   const cacheTime = useSetting<number>('cache.cacheTime', 3600);
   const [ytSyncing, setYtSyncing] = React.useState(false);
@@ -128,179 +338,14 @@ export default function SettingsView() {
   return (
     <ViewShell header={header} padded hideScrollbar>
       <div className={styles.root}>
-        <SettingsGroup title="外观" desc="主题模式、来源与配色">
-          <SettingRow
-            label="主题模式"
-            sub="跟随系统或强制浅色/深色"
-            control={
-              <Segmented<ThemeMode>
-                value={themeMode.value}
-                onChange={themeMode.setValue}
-                options={[
-                  { label: '系统', value: 'system' },
-                  { label: '浅色', value: 'light' },
-                  { label: '深色', value: 'dark' },
-                ]}
-              />
-            }
-          />
-          <SettingRow
-            label="主题来源"
-            sub="Material You 或预设"
-            control={
-              <Segmented<ThemeSource>
-                value={themeSource.value}
-                onChange={themeSource.setValue}
-                options={[
-                  { label: 'Material You', value: 'material-you' },
-                  { label: '预设', value: 'preset' },
-                ]}
-              />
-            }
-          />
-          {themeSource.value === 'material-you' ? (
-            <SettingRow
-              label="Material You 种子色"
-              sub="更改后立即应用"
-              control={<ColorSeed hex={seedHex.value} onChange={seedHex.setValue} />}
-            />
-          ) : (
-            <SettingRow
-              label="预设主题"
-              sub="从内置方案中选择"
-              control={
-                <Select<ThemePreset>
-                  value={preset.value}
-                  onChange={preset.setValue}
-                  options={[
-                    { label: 'Classic', value: 'classic' },
-                    { label: 'Spotify', value: 'spotify' },
-                    { label: 'Netease', value: 'netease' },
-                  ]}
-                />
-              }
-            />
-          )}
-          {themeSource.value === 'material-you' && (
-            <SettingRow
-              label="种子色预设"
-              sub="按名称选择，并预览色块"
-              control={
-                (() => {
-                  const toTitle = (k: string) => k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^\w/, s => s.toUpperCase());
-                  // 1) 内置预设（带名称）
-                  const builtin = Object.entries(PRESET_SEEDS).map(([name, hex]) => ({ label: toTitle(name), hex }));
-                  // 2) 用户自定义（可能与内置重复，去重后追加）
-                  const customList = (seedPresets.value || []).filter(Boolean);
-                  const seen = new Set(builtin.map(b => b.hex.toLowerCase()));
-                  const customs = customList
-                    .filter(h => !seen.has(h.toLowerCase()))
-                    .map(h => ({ label: h.toUpperCase(), hex: h }));
-                  const options = [...builtin, ...customs];
-                  return (
-                    <ColorSelect
-                      value={seedHex.value}
-                      options={options}
-                      onChange={(hex) => seedHex.setValue(hex)}
-                    />
-                  );
-                })()
-              }
-            />
-          )}
-          {themeSource.value === 'material-you' && (
-            <SettingRow
-              label="添加种子预设"
-              sub="输入 #RRGGBB 并添加"
-              control={
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    placeholder="#6750A4"
-                    value={newSeed}
-                    onChange={(e) => setNewSeed(e.target.value)}
-                    style={{ height: 28, borderRadius: 999, background: 'rgba(var(--md-sys-color-surface-variant), .35)', border: '1px solid rgb(var(--md-sys-color-outline-variant))', color: 'rgb(var(--md-sys-color-on-surface))', padding: '0 10px', width: 140 }}
-                  />
-                  <button
-                    onClick={() => {
-                      const hex = newSeed.trim();
-                      if (!/^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(hex)) return;
-                      const list = Array.from(new Set([...(seedPresets.value || []), hex]));
-                      seedPresets.setValue(list);
-                      setNewSeed('');
-                    }}
-                    style={{ height: 28, padding: '0 12px', borderRadius: 999, background: 'rgb(var(--md-sys-color-primary))', color: '#fff', border: 'none' }}
-                  >添加</button>
-                </div>
-              }
-            />
-          )}
-          {themeSource.value === 'material-you' && (
-            <SettingRow
-              label="每日设置新的种子颜色"
-              sub="每天自动更换 Material You 种子色"
-              control={<Switch checked={!!autoDailySeed.value} onChange={autoDailySeed.setValue} />}
-            />
-          )}
-          {themeSource.value === 'material-you' && autoDailySeed.value && (
-            <SettingRow
-              label="当前实际使用的种子色"
-              sub="今日自动生成的种子色（基于日期）"
-              control={
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 10,
-                  padding: '6px 12px',
-                  borderRadius: 999,
-                  background: 'rgba(var(--md-sys-color-surface-variant), .25)',
-                  border: '1px solid rgb(var(--md-sys-color-outline-variant))'
-                }}>
-                  <div style={{ 
-                    width: 32, 
-                    height: 32, 
-                    borderRadius: '50%', 
-                    background: currentEffectiveSeed,
-                    border: '2px solid rgba(255,255,255,.2)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,.15)'
-                  }} />
-                  <span style={{ 
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas', 
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: 'rgb(var(--md-sys-color-on-surface))',
-                    opacity: .9
-                  }}>
-                    {currentEffectiveSeed}
-                  </span>
-                </div>
-              }
-            />
-          )}
-          <SettingRow
-            label="进度条皮肤"
-            sub="Classic / Neon / Waveform / Knob"
-            control={
-              <Select<ProgressSkin>
-                value={progressSkin.value}
-                onChange={progressSkin.setValue}
-                options={[
-                  { label: 'Classic', value: 'classic' },
-                  { label: 'Neon', value: 'neon' },
-                  { label: 'Waveform', value: 'waveform' },
-                  { label: 'Knob', value: 'knob' },
-                ]}
-              />
-            }
-          />
-        </SettingsGroup>
+        <ThemeSettingsSection />
 
         <SettingsGroup title="唱机" desc="唱片转速（rad/s）">
           <SettingRow
             label="速度模式"
             sub="选择预设或自定义速度"
             control={
-              <Segmented<'preset'|'custom'>
+              <Segmented<'preset' | 'custom'>
                 value={ttMode.value}
                 onChange={ttMode.setValue}
                 options={[{ label: '预设', value: 'preset' }, { label: '自定义', value: 'custom' }]}
@@ -312,10 +357,13 @@ export default function SettingsView() {
               label="预设档位"
               sub="慢 / 中 / 快"
               control={
-                <Segmented<'slow'|'medium'|'fast'>
+                <Segmented<'slow' | 'medium' | 'fast'>
                   value={ttPreset.value}
                   onChange={ttPreset.setValue}
-                  options={[{ label: '慢', value: 'slow' }, { label: '中', value: 'medium' }, { label: '快', value: 'fast' }]}
+                  options={[{ label: '慢', value: 'slow' }, { label: '中', value: 'medium' }, {
+                    label: '快',
+                    value: 'fast',
+                  }]}
                 />
               }
             />
@@ -328,7 +376,15 @@ export default function SettingsView() {
                   type="number" min={0.01} max={20} step={0.01}
                   value={ttCustom.value}
                   onChange={(e) => ttCustom.setValue(Math.max(0.01, Math.min(20, Number(e.target.value))))}
-                  style={{ height: 28, borderRadius: 999, background: 'rgba(var(--md-sys-color-surface-variant), .35)', border: '1px solid rgb(var(--md-sys-color-outline-variant))', color: 'rgb(var(--md-sys-color-on-surface))', padding: '0 10px', width: 180 }}
+                  style={{
+                    height: 28,
+                    borderRadius: 999,
+                    background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                    border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                    color: 'rgb(var(--md-sys-color-on-surface))',
+                    padding: '0 10px',
+                    width: 180,
+                  }}
                 />
               }
             />
@@ -465,7 +521,8 @@ export default function SettingsView() {
                       color: '#fff',
                       border: 'none',
                     }}
-                  >打开登录窗口</button>
+                  >打开登录窗口
+                  </button>
                   <button
                     onClick={syncYouTubeCredentials}
                     disabled={ytSyncing}
@@ -489,7 +546,8 @@ export default function SettingsView() {
                       color: 'rgb(var(--md-sys-color-error))',
                       border: '1px solid rgba(var(--md-sys-color-error), .35)',
                     }}
-                  >清除</button>
+                  >清除
+                  </button>
                 </div>
                 <div style={{ fontSize: 12, opacity: .8 }}>
                   {ytMessage || `当前 Cookie：${youtubeCookiePreview}｜VISITOR_DATA：${youtubeVisitorPreview}`}

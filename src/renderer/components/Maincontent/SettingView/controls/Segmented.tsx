@@ -2,7 +2,11 @@ import React from 'react';
 
 export default function Segmented<T extends string>({
                                                       value, onChange, options,
-                                                    }: { value:T; onChange:(v:T)=>void; options:{label:string; value:T}[] }) {
+                                                    }: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { label: string; value: T }[]
+}) {
   return (
     <div
       style={{
@@ -20,7 +24,7 @@ export default function Segmented<T extends string>({
             key={o.value}
             role="tab"
             aria-selected={active}
-            onClick={()=>onChange(o.value)}
+            onClick={() => onChange(o.value)}
             style={{
               height: 28, padding: '0 12px', borderRadius: 999, border: 0, cursor: 'pointer',
               background: active ? 'rgb(var(--md-sys-color-primary))' : 'transparent',

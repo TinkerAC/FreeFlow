@@ -22,20 +22,20 @@ interface LyricScrollerProps {
 }
 
 const LyricScroller: React.FC<LyricScrollerProps> = ({
-  title = '歌词',
-  lines,
-  loading,
-  error,
-  activeIndex,
-  activeType,
-  onTypeChange,
-  hasOrigin = false,
-  hasPronunciation = false,
-  hasTranslation = false,
-  onLineClick,
-  showChips = true,
-  onRetry,
-}) => {
+                                                       title = '歌词',
+                                                       lines,
+                                                       loading,
+                                                       error,
+                                                       activeIndex,
+                                                       activeType,
+                                                       onTypeChange,
+                                                       hasOrigin = false,
+                                                       hasPronunciation = false,
+                                                       hasTranslation = false,
+                                                       onLineClick,
+                                                       showChips = true,
+                                                       onRetry,
+                                                     }) => {
   // 滚动控制状态
   const viewportRef = useRef<HTMLDivElement>(null);
   const lastActiveRef = useRef<number | null>(null);
@@ -163,15 +163,15 @@ const LyricScroller: React.FC<LyricScrollerProps> = ({
   const Skeleton = useMemo(() => (
     <>
       {Array.from({ length: 12 }).map((_, i) => (
-        <motion.div 
-          key={i} 
+        <motion.div
+          key={i}
           className={styles.skel}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
         />
       ))}
-      <motion.div 
+      <motion.div
         className={styles.hint}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -215,10 +215,10 @@ const LyricScroller: React.FC<LyricScrollerProps> = ({
       ai === i
         ? styles.lineActive
         : dist === 1
-        ? styles.lineNear1
-        : dist === 2
-        ? styles.lineNear2
-        : styles.lineFar;
+          ? styles.lineNear1
+          : dist === 2
+            ? styles.lineNear2
+            : styles.lineFar;
 
     return (
       <motion.p
@@ -247,7 +247,7 @@ const LyricScroller: React.FC<LyricScrollerProps> = ({
 
   // 错误重试组件
   const ErrorView = useMemo(() => (
-    <motion.div 
+    <motion.div
       className={styles.errorContainer}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -268,15 +268,16 @@ const LyricScroller: React.FC<LyricScrollerProps> = ({
     </motion.div>
   ), [error, onRetry]);
 
-  const [size, setSize] = useState<'small'|'medium'|'large'>('medium');
+  const [size, setSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   return (
-    <div className={ `${styles.right} ${size==='small'?styles.sizeSmall: size==='large'?styles.sizeLarge: styles.sizeMedium}` }>
+    <div
+      className={`${styles.right} ${size === 'small' ? styles.sizeSmall : size === 'large' ? styles.sizeLarge : styles.sizeMedium}`}>
       <div className={styles.topbar}>
         <div className={styles.topTitle}>
           {title}
           {isAutoScrollDisabled && (
-            <motion.span 
+            <motion.span
               className={styles.scrollIndicator}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -286,7 +287,7 @@ const LyricScroller: React.FC<LyricScrollerProps> = ({
             </motion.span>
           )}
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {showChips ? (
             <div className={styles.chips}>
               <Chip type="origin" label="原" disabled={!hasOrigin} />
@@ -298,9 +299,15 @@ const LyricScroller: React.FC<LyricScrollerProps> = ({
           )}
           {/* 尺寸控制：小/中/大（Apple Music 风） */}
           <div className={styles.sizeCtrl} aria-label="歌词大小">
-            <button className={`${styles.sizeBtn} ${size==='small'?styles.sizeActive:''}`} onClick={() => setSize('small')} title="小">A</button>
-            <button className={`${styles.sizeBtn} ${size==='medium'?styles.sizeActive:''}`} onClick={() => setSize('medium')} title="中" style={{ fontSize: '110%' }}>A</button>
-            <button className={`${styles.sizeBtn} ${size==='large'?styles.sizeActive:''}`} onClick={() => setSize('large')} title="大" style={{ fontSize: '125%' }}>A</button>
+            <button className={`${styles.sizeBtn} ${size === 'small' ? styles.sizeActive : ''}`}
+                    onClick={() => setSize('small')} title="小">A
+            </button>
+            <button className={`${styles.sizeBtn} ${size === 'medium' ? styles.sizeActive : ''}`}
+                    onClick={() => setSize('medium')} title="中" style={{ fontSize: '110%' }}>A
+            </button>
+            <button className={`${styles.sizeBtn} ${size === 'large' ? styles.sizeActive : ''}`}
+                    onClick={() => setSize('large')} title="大" style={{ fontSize: '125%' }}>A
+            </button>
           </div>
         </div>
       </div>

@@ -14,7 +14,7 @@ export default function ContentGrid({
 }) {
   const vars: React.CSSProperties = {
     ['--sidebar-w' as any]: sidebarCollapsed ? '72px' : '250px',
-    ['--right-w'   as any]: rightVisible ? '320px' : '0px',
+    ['--right-w' as any]: rightVisible ? '320px' : '0px',
   };
   return (
     <div className={styles.root} style={vars}>

@@ -12,10 +12,12 @@
 .groupHeader {
     margin-bottom: 8px;
 }
+
 .groupTitle {
     font-size: 14px;
     font-weight: 700;
 }
+
 .groupDesc {
     font-size: 12px;
     color: rgb(var(--md-sys-color-on-surface-variant));
@@ -28,15 +30,26 @@
     gap: var(--gap);
     padding: 10px 0;
 }
+
 @media (max-width: 720px) {
-    .row { grid-template-columns: 1fr; align-items: start; }
+    .row {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
 }
 
-.labelWrap { min-width: 0; }
-.label {
-    font-size: 14px; font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.labelWrap {
+    min-width: 0;
 }
+
+.label {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .sub {
     margin-top: 4px;
     font-size: 12px;
@@ -44,11 +57,17 @@
 }
 
 .controlWrap {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
     justify-content: flex-end;
 }
+
 @media (max-width: 720px) {
-    .controlWrap { justify-content: flex-start; }
+    .controlWrap {
+        justify-content: flex-start;
+    }
 }
 
 .divider {
@@ -59,13 +78,20 @@
 }
 
 .btn {
-    height: 32px; padding: 0 12px; border-radius: 999px; border: 0;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 0;
     background: rgb(var(--md-sys-color-primary));
     color: rgb(var(--md-sys-color-on-primary));
-    font-weight: 700; cursor: pointer;
+    font-weight: 700;
+    cursor: pointer;
 }
+
 .btnGhost {
-    height: 32px; padding: 0 12px; border-radius: 999px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
     background: rgba(var(--md-sys-color-surface-variant), .6);
     color: rgb(var(--md-sys-color-on-surface));
     border: 1px solid rgb(var(--md-sys-color-outline-variant));

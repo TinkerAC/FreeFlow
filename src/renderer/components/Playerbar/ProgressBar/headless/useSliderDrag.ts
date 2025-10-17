@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 
 export function useSliderDrag(ref: React.RefObject<HTMLElement>, setByPct: (p: number) => void) {
   const getPctFromEvent = useCallback((ev: PointerEvent | React.PointerEvent) => {
-    const el = ref.current; if (!el) return 0;
+    const el = ref.current;
+    if (!el) return 0;
     const rect = el.getBoundingClientRect();
     const x = 'clientX' in ev ? ev.clientX : (ev as any).nativeEvent.clientX;
     const p = (x - rect.left) / rect.width;
@@ -10,7 +11,8 @@ export function useSliderDrag(ref: React.RefObject<HTMLElement>, setByPct: (p: n
   }, [ref]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
-    const el = ref.current; if (!el) return;
+    const el = ref.current;
+    if (!el) return;
     (e.target as Element).setPointerCapture?.(e.pointerId);
     setByPct(getPctFromEvent(e));
 
