@@ -3,7 +3,8 @@ import styles from './PlaylistView.module.css';
 
 import { Playlist } from '@components/Maincontent/PlaylistView/Playlist';
 import ModalModifyPlaylist from '@components/Maincontent/PlaylistView/ModalModifyPlaylist';
-import { Bilibili, DefaultCover, Hifini, Local, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
+import { DefaultCover, Local } from '@components/static';
+import { PlatformIcon } from '@components/PlatformIcon';
 import { playlistContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
@@ -163,17 +164,13 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
     return () => io.disconnect();
   }, [presentPlaylist]);
 
-  // 简洁头上的“平台”标签，使用图标
-  function PlatformIcon({ platform }: { platform?: string }) {
-    const size = 16;
-    const common = { width: size, height: size, objectFit: 'contain' } as const;
-    if (platform === 'NetEaseCloudMusic') return <img src={NetEaseCloudMusic} alt={platform} style={common} />;
-    if (platform === 'Hifini') return <img src={Hifini} alt={platform} style={common} />;
-    if (platform === 'QQMusic') return <img src={QQMusic} alt={platform} style={common} />;
-    if (platform === 'Bilibili') return <img src={Bilibili} alt={platform} style={common} />;
-    if (platform === 'YouTubeMusic') return <img src={YouTubeMusic} alt={platform} style={common} />;
-    if (platform === 'Local') return <img src={Local} alt={platform} style={common} />;
-    return null;
+  // 简洁头上的"平台"标签，使用图标
+  function PlatformIconWrapper({ platform }: { platform?: string }) {
+    if (platform === 'Local') {
+      return <img src={Local} alt={platform} style={{ width: 16, height: 16, objectFit: 'contain' }} />;
+    }
+    if (!platform) return null;
+    return <PlatformIcon platform={platform} size={16} />;
   }
 
   return (
@@ -187,7 +184,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
             <div className={styles.compactKicker} title="平台">
               平台
               <span style={{ display: 'inline-flex', marginLeft: 6, verticalAlign: 'middle' }}>
-                <PlatformIcon platform={presentPlaylist?.platform as any} />
+                <PlatformIconWrapper platform={presentPlaylist?.platform as any} />
               </span>
             </div>
             <TtlMarquee text={presentPlaylist?.title || '未知歌单'} />
@@ -217,7 +214,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
             <div className={styles.kicker} title="平台">
               平台
               <span style={{ display: 'inline-flex', marginLeft: 8, verticalAlign: 'middle' }}>
-                <PlatformIcon platform={presentPlaylist?.platform as any} />
+                <PlatformIconWrapper platform={presentPlaylist?.platform as any} />
               </span>
             </div>
             <h1 className={styles.title} onClick={() => setModalVisible(true)}>

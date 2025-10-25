@@ -56,7 +56,30 @@ export default function PlayerBar({
   // ── 音量弹层 ──────────────────────────────────────────────────
   const [showVol, setShowVol] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const volBtnWrapRef = useRef<HTMLDivElement>(null);
+  const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 清除隐藏定时器
+  const clearHideTimer = () => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  };
+
+  // 启动隐藏定时器（1.5秒后自动隐藏）
+  const startHideTimer = () => {
+    clearHideTimer();
+    hideTimerRef.current = setTimeout(() => {
+      setIsFadingOut(true);
+      // 等待淡出动画完成后再真正隐藏
+      setTimeout(() => {
+        setShowVol(false);
+        setIsFadingOut(false);
+      }, 150); // 与 CSS fadeOut 动画时长一致
+    }, 1500); // 1.5秒后自动隐藏
+  };
 
   useEffect(() => {
     if (!showVol) return;
@@ -80,6 +103,7 @@ export default function PlayerBar({
       window.removeEventListener('scroll', update, true);
       window.removeEventListener('mousedown', onDown);
       window.removeEventListener('keydown', onEsc);
+      clearHideTimer(); // 清理定时器
     };
   }, [showVol]);
 
@@ -188,7 +212,12 @@ export default function PlayerBar({
             className="fas fa-align-center" /></i>
 
           {/* 音量按钮锚点 */}
-          <div className={styles.volWrap} ref={volBtnWrapRef}>
+          <div 
+            className={styles.volWrap} 
+            ref={volBtnWrapRef}
+            onMouseEnter={clearHideTimer}
+            onMouseLeave={startHideTimer}
+          >
             <i
               className={iconCls}
               title="音量"
@@ -225,7 +254,7 @@ export default function PlayerBar({
           left = Math.max(8, Math.min(left, window.innerWidth - POP_W - 8));
           return (
             <div
-              className={styles.volPopover}
+              className={`${styles.volPopover} ${isFadingOut ? styles.fadeOut : ''}`}
               style={{
                 width: POP_W,
                 left: Math.round(left),
@@ -235,6 +264,8 @@ export default function PlayerBar({
               role="dialog"
               aria-label="音量调节"
               onMouseDown={(e) => e.stopPropagation()}
+              onMouseEnter={clearHideTimer}
+              onMouseLeave={startHideTimer}
             >
               <div className={styles.volSliderBox}>
                 <input

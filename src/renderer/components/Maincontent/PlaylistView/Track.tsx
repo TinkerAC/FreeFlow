@@ -1,9 +1,10 @@
 // file: src/renderer/components/Maincontent/PlaylistView/Track.tsx
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { formatTime, timeAgo } from '@src/utils/timeUtils';
-import { Bilibili, DefaultCover, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
+import { DefaultCover } from '@components/static';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import { PlatformIcon } from '@components/PlatformIcon';
 import styles from './PlaylistView.module.css';
 
 interface TrackProps {
@@ -102,22 +103,7 @@ const Track: React.FC<TrackProps> = ({ track, index, onRightClick, player }) => 
 
       {/* 平台（图标渲染） */}
       <td className={`${styles.colAlbum} hidden md:table-cell`} title={track?.platform as any}>
-        {track?.platform === 'NetEaseCloudMusic' && (
-          <img src={NetEaseCloudMusic} alt="NetEaseCloudMusic"
-               style={{ width: 18, height: 18, objectFit: 'contain' }} />
-        )}
-        {track?.platform === 'Hifini' && (
-          <img src={Hifini} alt="Hifini" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-        )}
-        {track?.platform === 'QQMusic' && (
-          <img src={QQMusic} alt="QQMusic" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-        )}
-        {track?.platform === 'Bilibili' && (
-          <img src={Bilibili} alt="Bilibili" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-        )}
-        {track?.platform === 'YouTubeMusic' && (
-          <img src={YouTubeMusic} alt="YouTubeMusic" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-        )}
+        {track?.platform && <PlatformIcon platform={track.platform} size={18} />}
       </td>
 
       {/* 添加日期（居中） */}

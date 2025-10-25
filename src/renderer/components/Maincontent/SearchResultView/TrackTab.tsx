@@ -2,18 +2,8 @@ import React from 'react';
 import styles from './ListRow.module.css';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { Bilibili, DefaultCover, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
-
-function PlatformIcon({ platform }: { platform: string }) {
-  const size = 18;
-  const common = { width: size, height: size, objectFit: 'contain' } as const;
-  if (platform === 'NetEaseCloudMusic') return <img src={NetEaseCloudMusic} alt={platform} style={common} />;
-  if (platform === 'Hifini') return <img src={Hifini} alt={platform} style={common} />;
-  if (platform === 'QQMusic') return <img src={QQMusic} alt={platform} style={common} />;
-  if (platform === 'Bilibili') return <img src={Bilibili} alt={platform} style={common} />;
-  if (platform === 'YouTubeMusic') return <img src={YouTubeMusic} alt={platform} style={common} />;
-  return null;
-}
+import { DefaultCover } from '@components/static';
+import { PlatformIcon } from '@components/PlatformIcon';
 
 export default function TracksTab({
                                     tracks, player, onContextMenu,

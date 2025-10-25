@@ -157,6 +157,35 @@
     box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, .35));
     backdrop-filter: blur(10px) saturate(1.05);
     position: fixed; /* 由 TSX 设置 left/top */
+    
+    /* 淡入淡出动画 */
+    animation: volPopoverFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes volPopoverFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-100%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-100%) scale(1);
+    }
+}
+
+.volPopover.fadeOut {
+    animation: volPopoverFadeOut 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes volPopoverFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(-100%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-100%) scale(0.95);
+    }
 }
 
 /* 小三角：位于弹层底部正中 */

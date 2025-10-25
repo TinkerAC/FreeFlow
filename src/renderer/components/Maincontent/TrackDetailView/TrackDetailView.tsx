@@ -3,7 +3,8 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { libraryContext, playlistContext } from '@renderer/core/electronContextApi';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
-import { Bilibili, DefaultCover, Hifini, Local, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
+import { DefaultCover, Local } from '@components/static';
+import { PlatformIcon } from '@components/PlatformIcon';
 import ViewShell from '@components/Maincontent/ViewShell/ViewShell';
 import styles from './TrackDetailView.module.css';
 
@@ -55,15 +56,11 @@ export default function TrackDetailView({ track, player, musicLibraryController 
 
   // 获取平台图标
   const getPlatformIcon = (platform?: string) => {
-    const size = 24;
-    const common = { width: size, height: size, objectFit: 'contain' } as const;
-    if (platform === 'NetEaseCloudMusic') return <img src={NetEaseCloudMusic} alt={platform} style={common} />;
-    if (platform === 'Hifini') return <img src={Hifini} alt={platform} style={common} />;
-    if (platform === 'QQMusic') return <img src={QQMusic} alt={platform} style={common} />;
-    if (platform === 'Bilibili') return <img src={Bilibili} alt={platform} style={common} />;
-    if (platform === 'YouTubeMusic') return <img src={YouTubeMusic} alt={platform} style={common} />;
-    if (platform === 'Local') return <img src={Local} alt={platform} style={common} />;
-    return null;
+    if (platform === 'Local') {
+      return <img src={Local} alt={platform} style={{ width: 24, height: 24, objectFit: 'contain' }} />;
+    }
+    if (!platform) return null;
+    return <PlatformIcon platform={platform} size={24} />;
   };
 
   // 获取平台名称
