@@ -44,6 +44,19 @@ function TtlMarquee({ text }: { text: string }) {
 
 const Track: React.FC<TrackProps> = ({ track, index, onRightClick, player }) => {
   const [hovered, setHovered] = useState(false);
+  const [isCurrentTrack, setIsCurrentTrack] = useState(false);
+
+  // 检测是否为当前播放曲目
+  React.useEffect(() => {
+    const checkCurrentTrack = () => {
+      setIsCurrentTrack(player.playQueue.currentTrack?.id === track.id);
+    };
+    
+    checkCurrentTrack();
+    // 监听播放状态变化
+    const interval = setInterval(checkCurrentTrack, 500);
+    return () => clearInterval(interval);
+  }, [player, track.id]);
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -53,7 +66,7 @@ const Track: React.FC<TrackProps> = ({ track, index, onRightClick, player }) => 
   return (
     <tr
       id={`track-${track.id}`}
-      className={styles.row}
+      className={`${styles.row} ${isCurrentTrack ? styles.playing : ''}`}
       onContextMenu={(e) => onRightClick(e, track)}
       onDoubleClick={() => player.addTrackToNextAndPlay(track)}
       onMouseEnter={() => setHovered(true)}
@@ -62,7 +75,13 @@ const Track: React.FC<TrackProps> = ({ track, index, onRightClick, player }) => 
       {/* 序号 / 播放（更窄 + 等宽数字） */}
       <td className={styles.colIndex}>
         {hovered ? (
-          <i className="fas fa-play cursor-pointer" onClick={handlePlayClick} aria-label="播放" />
+          <i 
+            className={`fas fa-play cursor-pointer ${styles.playIcon}`} 
+            onClick={handlePlayClick} 
+            aria-label="播放" 
+          />
+        ) : isCurrentTrack ? (
+          <i className="fas fa-volume-up" style={{ color: 'rgb(var(--md-sys-color-primary))' }} />
         ) : (
           index + 1
         )}

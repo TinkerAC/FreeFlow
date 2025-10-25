@@ -62,6 +62,14 @@
     height: 48px;
     border-radius: var(--radius-md);
     object-fit: cover;
+    box-shadow: 
+        0 2px 8px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 12%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 8%, transparent);
+    transition: transform .2s ease;
+}
+
+.compactThumb:hover {
+    transform: scale(1.05);
 }
 
 .compactActions {
@@ -104,6 +112,19 @@
     border-radius: var(--radius-lg);
     object-fit: cover;
     flex-shrink: 0;
+    box-shadow: 
+        0 12px 32px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 18%, transparent),
+        0 4px 12px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 12%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 10%, transparent);
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cover:hover {
+    transform: scale(1.02) translateY(-2px);
+    box-shadow: 
+        0 16px 40px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 22%, transparent),
+        0 6px 16px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 16%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 15%, transparent);
 }
 
 .meta {
@@ -175,18 +196,35 @@
     place-items: center;
     border: 0;
     cursor: pointer;
-    background: rgb(var(--md-sys-color-primary));
+    background: radial-gradient(
+        circle at 30% 30%,
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 95%, white 10%),
+        rgb(var(--md-sys-color-primary))
+    );
     color: rgb(var(--md-sys-color-on-primary));
-    box-shadow: 0 8px 24px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 35%, transparent);
-    transition: filter .12s ease, transform .05s ease;
+    box-shadow: 
+        0 8px 24px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 35%, transparent),
+        0 2px 8px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 25%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 20%, transparent);
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .playBtn:hover {
-    filter: brightness(1.05);
+    background: radial-gradient(
+        circle at 30% 30%,
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 100%, white 15%),
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 105%, transparent)
+    );
+    box-shadow: 
+        0 12px 32px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 42%, transparent),
+        0 4px 12px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 30%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 25%, transparent);
+    transform: scale(1.05);
 }
 
 .playBtn:active {
-    transform: translateY(1px);
+    transform: scale(0.98);
+    transition-duration: .1s;
 }
 
 .iconGhost {
@@ -197,54 +235,123 @@
     place-items: center;
     cursor: pointer;
     border: 0;
-    background: rgba(var(--md-sys-color-surface-variant), .35);
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 35%, transparent);
     color: rgb(var(--md-sys-color-on-surface));
-    transition: background .15s ease, transform .05s ease;
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.iconGhost::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at center,
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 15%, transparent),
+        transparent 70%
+    );
+    opacity: 0;
+    transition: opacity .2s ease;
 }
 
 .iconGhost:hover {
-    background: rgba(var(--md-sys-color-surface-variant), .5);
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 50%, transparent);
+    transform: scale(1.05);
+    box-shadow: 
+        0 2px 8px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 8%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 10%, transparent);
+}
+
+.iconGhost:hover::before {
+    opacity: 1;
 }
 
 .iconGhost:active {
-    transform: translateY(1px);
+    transform: scale(0.98);
+    transition-duration: .1s;
 }
 
 .sortSelect {
-    background: rgb(var(--md-sys-color-surface-container));
+    background: linear-gradient(
+        135deg,
+        rgb(var(--md-sys-color-surface-container)),
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-container)) 95%, transparent)
+    );
     color: rgb(var(--md-sys-color-on-surface));
-    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border: 1px solid color-mix(in oklab, rgb(var(--md-sys-color-outline-variant)) 60%, transparent);
     border-radius: 999px;
-    padding: 8px 12px;
+    padding: 8px 14px;
     cursor: pointer;
     font-size: 14px;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 5%, transparent);
 }
 
 .sortSelect:hover {
-    background: rgb(var(--md-sys-color-surface-container-high));
+    background: linear-gradient(
+        135deg,
+        rgb(var(--md-sys-color-surface-container-high)),
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 95%, transparent)
+    );
     border-color: rgb(var(--md-sys-color-outline));
+    box-shadow: 
+        0 2px 8px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 8%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 8%, transparent);
+    transform: translateY(-1px);
 }
 
 .sortSelect:focus {
     outline: 2px solid rgb(var(--md-sys-color-primary));
     outline-offset: 2px;
+    border-color: rgb(var(--md-sys-color-primary));
+}
+
+.sortSelect:active {
+    transform: translateY(0);
 }
 
 .search {
     margin-left: auto;
     width: 260px;
     max-width: 40vw;
-    background: rgb(var(--md-sys-color-surface-container));
+    background: linear-gradient(
+        135deg,
+        rgb(var(--md-sys-color-surface-container)),
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-container)) 95%, transparent)
+    );
     color: rgb(var(--md-sys-color-on-surface));
-    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border: 1px solid color-mix(in oklab, rgb(var(--md-sys-color-outline-variant)) 60%, transparent);
     border-radius: 999px;
-    padding: 8px 12px;
+    padding: 8px 16px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 5%, transparent);
+}
+
+.search::placeholder {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    opacity: 0.6;
+}
+
+.search:hover {
+    background: linear-gradient(
+        135deg,
+        rgb(var(--md-sys-color-surface-container-high)),
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 95%, transparent)
+    );
+    border-color: rgb(var(--md-sys-color-outline));
+    box-shadow: 
+        0 2px 8px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 8%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 8%, transparent);
 }
 
 .search:focus {
     outline: 2px solid rgb(var(--md-sys-color-primary));
     outline-offset: 2px;
+    border-color: rgb(var(--md-sys-color-primary));
+    box-shadow: 
+        0 4px 12px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 12%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 10%, transparent);
 }
 
 /* 表格（无分割线；表头居中；artist 更小且更淡） */
@@ -253,6 +360,21 @@
     table-layout: fixed;
     border-collapse: separate;
     border-spacing: 0 6px;
+    position: relative;
+}
+
+/* 为整个表格添加微妙的背景效果 */
+.table::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse at top,
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 3%, transparent),
+        transparent 60%
+    );
+    pointer-events: none;
+    opacity: 0.5;
 }
 
 thead th {
@@ -262,6 +384,27 @@ thead th {
     text-align: center;
     user-select: none;
     border-bottom: none;
+    position: relative;
+    transition: color .2s ease;
+}
+
+thead th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in oklab, rgb(var(--md-sys-color-outline-variant)) 30%, transparent) 50%,
+        transparent
+    );
+}
+
+thead th:hover {
+    color: rgb(var(--md-sys-color-on-surface));
 }
 
 tbody td {
@@ -271,15 +414,49 @@ tbody td {
 }
 
 tbody tr {
-    transition: background-color .12s ease, transform .05s ease;
+    position: relative;
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
 }
 
+/* 悬停效果 - 更高级的视觉反馈 */
 tbody tr:hover {
-    background: rgba(var(--md-sys-color-surface-variant), .35);
+    background: linear-gradient(
+        90deg,
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 8%, transparent) 0%,
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 28%, transparent) 50%,
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 8%, transparent) 100%
+    );
+    box-shadow: 0 2px 8px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 6%, transparent);
 }
 
+/* 激活效果 */
 tbody tr:active {
-    transform: translateY(1px);
+    transform: scale(0.998);
+    filter: brightness(0.96);
+}
+
+/* 当前播放行的特殊样式 */
+tbody tr.playing {
+    background: linear-gradient(
+        90deg,
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 12%, transparent),
+        color-mix(in oklab, rgb(var(--md-sys-color-primary-container)) 20%, transparent)
+    );
+    box-shadow: 
+        inset 3px 0 0 rgb(var(--md-sys-color-primary)),
+        0 1px 4px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 15%, transparent);
+}
+
+tbody tr.playing:hover {
+    background: linear-gradient(
+        90deg,
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 18%, transparent),
+        color-mix(in oklab, rgb(var(--md-sys-color-primary-container)) 28%, transparent)
+    );
+    box-shadow: 
+        inset 3px 0 0 rgb(var(--md-sys-color-primary)),
+        0 2px 12px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 20%, transparent);
 }
 
 tbody td:first-child {
@@ -339,6 +516,7 @@ tbody td:last-child {
     border-radius: var(--radius-md);
     object-fit: cover;
     flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
 }
 
 /* 跑马灯：仅在溢出时启用 */
@@ -353,6 +531,11 @@ tbody td:last-child {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: color .2s ease;
+}
+
+tbody tr:hover .ttlStatic {
+    color: rgb(var(--md-sys-color-primary));
 }
 
 .ttlMarquee {
@@ -361,6 +544,11 @@ tbody td:last-child {
     white-space: nowrap;
     will-change: transform;
     animation: marquee-pingpong 12s ease-in-out infinite alternate;
+    transition: color .2s ease;
+}
+
+tbody tr:hover .ttlMarquee {
+    color: rgb(var(--md-sys-color-primary));
 }
 
 @keyframes marquee-pingpong {
@@ -379,6 +567,29 @@ tbody td:last-child {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: color .2s ease;
+}
+
+tbody tr:hover .art {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+/* 播放图标容器 */
+.playIcon {
+    color: rgb(var(--md-sys-color-primary));
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.playIcon:hover {
+    transform: scale(1.15);
+    filter: drop-shadow(0 2px 4px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 30%, transparent));
+}
+
+.playIcon:active {
+    transform: scale(1.05);
 }
 
 /* 浮动操作按钮（FAB） */
@@ -393,6 +604,18 @@ tbody td:last-child {
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    animation: fabsSlideIn .4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fabsSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .fab {
@@ -403,32 +626,68 @@ tbody td:last-child {
     place-items: center;
     border: 0;
     cursor: pointer;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .12);
-    transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
-    backdrop-filter: blur(10px) saturate(1.1);
+    box-shadow: 
+        0 12px 28px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 18%, transparent),
+        0 4px 8px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 12%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 15%, transparent);
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(12px) saturate(1.15);
 }
 
 .fab:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.05);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 
+        0 16px 36px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 22%, transparent),
+        0 6px 12px color-mix(in oklab, rgb(var(--md-sys-color-shadow)) 16%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 20%, transparent);
 }
 
 .fab:active {
-    transform: translateY(0);
-    filter: brightness(.98);
+    transform: translateY(-1px) scale(1.02);
+    transition-duration: .1s;
 }
 
 .fabPrimary {
-    background: radial-gradient(circle at 30% 20%, color-mix(in oklab, rgb(var(--md-sys-color-primary)) 85%, white 10%), rgb(var(--md-sys-color-primary)));
+    background: radial-gradient(
+        circle at 30% 20%, 
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 90%, white 15%), 
+        rgb(var(--md-sys-color-primary))
+    );
     color: rgb(var(--md-sys-color-on-primary));
 }
 
+.fabPrimary:hover {
+    background: radial-gradient(
+        circle at 30% 20%, 
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 95%, white 20%), 
+        color-mix(in oklab, rgb(var(--md-sys-color-primary)) 110%, transparent)
+    );
+}
+
 .fabSecondary {
-    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 90%, transparent);
+    background: linear-gradient(
+        135deg,
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 92%, transparent),
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 88%, transparent)
+    );
     color: rgb(var(--md-sys-color-on-surface));
-    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border: 1px solid color-mix(in oklab, rgb(var(--md-sys-color-outline-variant)) 60%, transparent);
+}
+
+.fabSecondary:hover {
+    background: linear-gradient(
+        135deg,
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-container-highest)) 95%, transparent),
+        color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 90%, transparent)
+    );
+    border-color: rgb(var(--md-sys-color-outline));
 }
 
 .fabIcon {
     font-size: 16px;
+    transition: transform .2s ease;
+}
+
+.fab:hover .fabIcon {
+    transform: scale(1.1);
 }
