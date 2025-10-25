@@ -52,14 +52,18 @@ export class TrackDataSourceImpl implements TrackDataSource {
       : { platform: track.platform, platform_unique_id: track.platform_unique_id } as any;
 
     // 仅更新允许变动的字段，避免误写入 id/主键
+    // 只包含非 null/undefined 的字段，避免违反数据库约束
     const payload: Partial<TrackRecord> = {
-      title: track.title,
-      artist: track.artist,
-      album: track.album,
-      duration: track.duration,
-      cover_src: track.cover_src,
       modified_at: new Date(),
     };
+
+    // 只添加非 null 和非 undefined 的字段
+    if (track.title !== undefined && track.title !== null) payload.title = track.title;
+    if (track.artist !== undefined && track.artist !== null) payload.artist = track.artist;
+    if (track.album !== undefined && track.album !== null) payload.album = track.album;
+    if (track.duration !== undefined && track.duration !== null) payload.duration = track.duration;
+    if (track.cover_src !== undefined && track.cover_src !== null) payload.cover_src = track.cover_src;
+    if (track.played_count !== undefined && track.played_count !== null) payload.played_count = track.played_count;
 
     await Track.update(payload, { where });
 
