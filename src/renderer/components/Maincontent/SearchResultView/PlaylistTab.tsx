@@ -1,9 +1,10 @@
 import React from 'react';
 import styles from './ListRow.module.css';
-import { Bilibili, DefaultCover, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
+import { DefaultCover } from '@components/static';
+import { PlatformIcon } from '@components/PlatformIcon';
 import { searchContext } from '@renderer/core/electronContextApi';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
-import { useNavigate } from 'react-router-dom';
+import { useNavigation, ViewType } from '@renderer/core/navigation';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { Platform } from '@main/core/enum/Platform';
 
@@ -13,27 +14,8 @@ export default function PlaylistsTab({
   playlists: PlaylistEntity[];
   musicLibraryController: MusicLibraryController;
 }) {
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   if (!playlists?.length) return <div style={{ opacity: .7 }}>没有找到歌单。</div>;
-
-  const renderPlatformIcon = (platform: string) => {
-    const size = 18;
-    const style = { width: size, height: size, objectFit: 'contain' } as const;
-    switch (platform) {
-      case Platform.NET_EASE_CLOUD_MUSIC:
-        return <img src={NetEaseCloudMusic} alt={platform} style={style} />;
-      case Platform.HIFINI:
-        return <img src={Hifini} alt={platform} style={style} />;
-      case Platform.QQ_MUSIC:
-        return <img src={QQMusic} alt={platform} style={style} />;
-      case Platform.BILIBILI:
-        return <img src={Bilibili} alt={platform} style={style} />;
-      case Platform.YOUTUBE_MUSIC:
-        return <img src={YouTubeMusic} alt={platform} style={style} />;
-      default:
-        return null;
-    }
-  };
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -48,7 +30,7 @@ export default function PlaylistsTab({
             } else {
               musicLibraryController.activePlaylist = await searchContext.getPlaylistDetail(p.platform, id);
             }
-            navigate('/playlist');
+            navigation.push(ViewType.PLAYLIST);
           }}
         >
           <img src={p.playlist_cover || DefaultCover} alt={p.title} className={styles.cover} />
@@ -59,7 +41,7 @@ export default function PlaylistsTab({
           <div className={styles.meta}>
             来源：
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              {renderPlatformIcon(p.platform)}
+              <PlatformIcon platform={p.platform} size={18} />
               <span>{p.platform}</span>
             </span>
           </div>

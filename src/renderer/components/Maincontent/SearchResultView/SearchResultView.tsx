@@ -13,7 +13,6 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import ViewShell from '@components/Maincontent/ViewShell/ViewShell';
-import { useNavigate } from 'react-router-dom';
 
 export default function SearchResultView({
                                            initialTab = 'popular',
@@ -29,7 +28,6 @@ export default function SearchResultView({
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [contextMenu, setContextMenu] = useStateRef<{ x: number; y: number } | null>(null);
   const [, setSelectedTrack, selectedTrackRef] = useStateRef<TrackEntity | null>(null);
-  const navigate = useNavigate();
 
   if (!fusionSearchResult) {
     return (

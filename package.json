@@ -5,7 +5,8 @@
   "description": "一个基于ts-react-webpack-electron的复刻SpotifyUI的自由音乐播放器",
   "main": ".webpack/main",
   "scripts": {
-    "start": "cross-env NODE_ENV=development electron-forge start",
+    "dev": "cross-env NODE_ENV=development electron-forge start",
+    "start": "cross-env NODE_ENV=production electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",

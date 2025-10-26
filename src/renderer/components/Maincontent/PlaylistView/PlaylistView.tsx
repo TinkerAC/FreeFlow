@@ -41,9 +41,14 @@ interface PlaylistViewProps {
 }
 
 export default function PlaylistView({ musicLibraryController, player }: PlaylistViewProps) {
-  const [presentPlaylist, setPresentPlaylist] = useState<PlaylistEntity | null>(null);
+  const [presentPlaylist, setPresentPlaylist] = useState<PlaylistEntity | null>(
+    musicLibraryController.activePlaylist
+  );
 
   useEffect(() => {
+    // 初始化时设置当前歌单
+    setPresentPlaylist(musicLibraryController.activePlaylist);
+    
     const unsubscribe = musicLibraryController.subscribe(() => {
       setPresentPlaylist(musicLibraryController.activePlaylist);
     });
