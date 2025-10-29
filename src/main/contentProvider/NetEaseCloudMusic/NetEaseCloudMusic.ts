@@ -300,12 +300,11 @@ ${resultSongs
           return acc;
         }, []);
     };
-
-    return {
-      originLines: parseLyricSegment(payload.origin),
-      translationLines: parseLyricSegment(payload.translation),
-      pronunciationLines: parseLyricSegment(payload.pronunciation),
-    };
+    return new Lyric(
+      parseLyricSegment(payload.origin),
+      parseLyricSegment(payload.translation),
+      parseLyricSegment(payload.pronunciation,
+      ));
   }
 
 

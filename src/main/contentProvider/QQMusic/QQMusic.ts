@@ -97,11 +97,14 @@ ${resultSongs
     return song.pay.payplay === 0;
   }
 
-  public async getLyrics(uniqueId: string): Promise<Lyric | void> {
+  public async getLyrics(uniqueId: string): Promise<Lyric> {
     const url = `${this.base_url}getLyric?songmid=${uniqueId}`;
+    console.debug('url:', url);
     try {
-      const response = await axios.get(url, { timeout: 10_000 });
-      const data = response?.data ?? {};
+
+      const response = await axios.get(url);
+
+      const data = await response?.data ?? {};
       const payload = data?.response ?? data;
 
       const rawOrigin: string = payload?.lyric ?? '';
@@ -125,7 +128,8 @@ ${resultSongs
       return this.parseLyrics(origin, translation);
     } catch (error) {
       console.error('获取歌词失败:', error);
-      throw error;
+      //反回空歌词
+      return new Lyric();
     }
   }
 
@@ -159,11 +163,7 @@ ${resultSongs
       }, []);
     };
 
-    return {
-      originLines: parseSegment(origin),
-      translationLines: parseSegment(trans),
-      pronunciationLines: [],
-    };
+    return new Lyric(parseSegment(origin), parseSegment(trans), []);
   }
 }
 

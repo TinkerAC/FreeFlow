@@ -108,15 +108,11 @@ export default class YouTubeMusic implements ContentProvider {
         });
 
       if (!originLines.length) return;
+      return new Lyric(originLines, [], []);
 
-      return {
-        originLines,
-        translationLines: [],
-        pronunciationLines: [],
-      } satisfies Lyric;
     } catch (error) {
       console.warn('[YouTubeMusic] 获取歌词失败:', error);
-      return undefined;
+      return new Lyric();
     }
   }
 
