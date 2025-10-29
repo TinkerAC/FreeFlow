@@ -65,11 +65,11 @@ export class TrackRepositoryImpl implements TrackRepository {
     if (!rec) {
       throw new Error(`Track not found for platform: ${track.platform}, unique ID: ${track.platform_unique_id}`);
     }
-    
+
     // 只更新 played_count 字段，避免更新其他可能为 null 的字段
     rec.played_count = (rec.played_count || 0) + 1;
     rec.modified_at = new Date();
-    
+
     const updatedRec = await this.ds.update(rec);
     return updatedRec.toEntity();
   }

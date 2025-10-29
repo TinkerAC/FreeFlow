@@ -64,8 +64,6 @@ container.bind<Logger>(DISymbol.Logger)
     // 3. 获取目标类的构造函数 (e.g. ProxyServerManager class)
     const target = parentRequest.serviceIdentifier;
 
-    console.debug(`Logger requested for target: ${String(target)}`);
-
     // 4. 获取scope 名称
     let scope: string;
     switch (typeof target) {
@@ -78,7 +76,7 @@ container.bind<Logger>(DISymbol.Logger)
       default:
         scope = undefined;
     }
-    console.debug(`Creating logger for scope: ${scope}`);
+    rootLogger.silly(`Creating logger for scope: ${scope}`);
     // 5. 返回一个 *新创建的*、*带 Scope 的* 子 Logger
     return rootLogger.child({ context: scope });
   });
@@ -157,8 +155,9 @@ container
   .to(ProviderManager)
   .inSingletonScope();
 
+//TODO:Refactor this
 
-// ===== AI/Text utilities（根据 Settings 选择提供方，禁用或无密钥则退回本地兜底） =====
+//===== AI/Text utilities（根据 Settings 选择提供方，禁用或无密钥则退回本地兜底） =====
 try {
   const cfg = container.get<ConfigService>(DISymbol.ConfigService);
   const ai = (cfg.get('services.ai') as any) ?? {};

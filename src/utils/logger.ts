@@ -61,7 +61,4 @@ const rootLogger = winston.createLogger({
 });
 
 
-
-
-
 export default rootLogger;

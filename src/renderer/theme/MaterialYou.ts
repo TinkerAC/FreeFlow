@@ -1,5 +1,5 @@
 // file: src/renderer/theme/materialYou.ts
-import { argbFromHex, themeFromSourceColor, Hct } from '@material/material-color-utilities';
+import { argbFromHex, themeFromSourceColor } from '@material/material-color-utilities';
 
 export type Mode = 'light' | 'dark';
 
@@ -66,7 +66,7 @@ export function applyMaterialYou(seedHex: string, mode: Mode, target: HTMLElemen
   // Surface 容器层级（手动生成，因为 0.3.0 版本不提供）
   // 使用 neutral palette 的不同 tone 来创建层级
   const neutralPalette = theme.palettes.neutral;
-  
+
   if (mode === 'dark') {
     // Dark mode: 更暗的表面
     set('--md-sys-color-surface-dim', neutralPalette.tone(6));

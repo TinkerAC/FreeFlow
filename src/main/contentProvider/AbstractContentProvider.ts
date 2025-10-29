@@ -15,16 +15,14 @@ export abstract class AbstractContentProvider {
    * @example 'QQMusic'
    */
   abstract platformName: Platform;
-
-
-  /**
-   *  日志记录器
-   */
-  protected abstract readonly logger: Logger;
   /**
    *  所有可用的服务器节点
    */
   abstract serverNodes: string[];
+  /**
+   *  日志记录器
+   */
+  protected abstract readonly logger: Logger;
 
   /**
    * 根据关键词搜索歌曲，返回统一的 TrackRecord 数组

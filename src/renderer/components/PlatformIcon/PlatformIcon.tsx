@@ -24,13 +24,13 @@ interface PlatformIconProps {
  * @param hover - 是否启用悬停效果，默认 false
  */
 export const PlatformIcon: React.FC<PlatformIconProps> = ({
-  platform,
-  size = 18,
-  className = '',
-  style = {},
-  title,
-  hover = false,
-}) => {
+                                                            platform,
+                                                            size = 18,
+                                                            className = '',
+                                                            style = {},
+                                                            title,
+                                                            hover = false,
+                                                          }) => {
   const platformIconMap: Record<string, string> = {
     NetEaseCloudMusic,
     Hifini,
@@ -40,7 +40,7 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
   };
 
   const iconSrc = platformIconMap[platform];
-  
+
   if (!iconSrc) {
     // 如果平台不在映射中，返回一个默认图标或 null
     return null;
