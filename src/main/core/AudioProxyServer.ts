@@ -21,6 +21,7 @@ import { castToPlatform, Platform } from '@main/core/enum/Platform';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { ConfigService } from '@main/core/configService';
 import { ProviderManager } from '@main/core/ProviderManager';
+import { Logger } from 'winston';
 
 const DEFAULT_AUDIO_MIME = 'audio/mpeg';
 
@@ -45,6 +46,7 @@ class ProxyServerManager {
     @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
     @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
+    @inject(DISymbol.Logger) private readonly logger: Logger,
   ) {
     this.app = express();
     this.port = 4399;
@@ -61,7 +63,7 @@ class ProxyServerManager {
   /* -------------------------------------------------------------------------- */
 
   public async start(): Promise<void> {
-    console.log('代理服务器数据库已连接');
+    this.logger.info('代理服务器正在启动...');
 
     while (await isPortOccupied(this.port)) {
       console.warn(`端口 ${this.port} 已被占用，尝试使用下一个端口`);
@@ -110,7 +112,7 @@ class ProxyServerManager {
     try {
       const platformEnum: Platform = castToPlatform(platform);
 
-      console.log('代理服务器收到请求:', platform, platformUniqueId);
+      this.logger.info('代理服务器收到请求:', platform, platformUniqueId);
 
       // ---------- 1) 本地文件 ----------
       const localFilePath = await this.findLocalFile(platform, platformUniqueId);

@@ -16,12 +16,23 @@ interface PlaylistProps {
 }
 
 export function Playlist({
-                           filteredTracks, player, musicLibraryController, scrollContainerRef,
-                         }: PlaylistProps) {
+  filteredTracks,
+  player,
+  musicLibraryController,
+  scrollContainerRef,
+}: PlaylistProps) {
   const navigation = useNavigation();
   const [showFloatingButtons, setShowFloatingButtons] = useState(false);
-  const [menu, setMenu] = useState<{ visible: boolean; x: number; y: number; track: TrackEntity | null }>({
-    visible: false, x: 0, y: 0, track: null,
+  const [menu, setMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    track: TrackEntity | null;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    track: null,
   });
   const [editing, setEditing] = useState<TrackEntity | null>(null);
 
@@ -50,21 +61,21 @@ export function Playlist({
     e.preventDefault();
     setMenu({
       visible: true,
-      x: e.clientX,   // 直接用 client 坐标，与 ContextMenu 的 fixed 一致
+      x: e.clientX, // 直接用 client 坐标，与 ContextMenu 的 fixed 一致
       y: e.clientY,
       track,
     });
   };
 
   useEffect(() => {
-    const close = () => setMenu(m => ({ ...m, visible: false, track: null }));
+    const close = () => setMenu((m) => ({ ...m, visible: false, track: null }));
     if (!menu.visible) return;
     window.addEventListener('click', close);
     return () => window.removeEventListener('click', close);
   }, [menu.visible]);
 
   return (
-    <div className="mt-6 Playlist">
+    <div className='mt-6 Playlist'>
       <table className={styles.table}>
         <colgroup>
           <col className={styles.colIndex} />
@@ -74,36 +85,43 @@ export function Playlist({
           <col className={styles.colDur} />
         </colgroup>
         <thead>
-        <tr>
-          <th className={styles.colIndex}>#</th>
-          <th className={styles.colTitle}>标题</th>
-          <th className={`hidden md:table-cell ${styles.colAlbum}`}>平台</th>
-          <th className={`hidden lg:table-cell ${styles.colDate}`}>添加日期</th>
-          <th className={styles.colDur}><i className="fas fa-clock" aria-label="时长" /></th>
-        </tr>
+          <tr>
+            <th className={styles.colIndex}>#</th>
+            <th className={styles.colTitle}>标题</th>
+            <th className={`hidden md:table-cell ${styles.colAlbum}`}>平台</th>
+            <th className={`hidden lg:table-cell ${styles.colDate}`}>
+              添加日期
+            </th>
+            <th className={styles.colDur}>
+              <i className='fas fa-clock' aria-label='时长' />
+            </th>
+          </tr>
         </thead>
         <tbody>
-        {filteredTracks.length ? (
-          filteredTracks.map((track, index) => (
-            <Track
-              key={track.id}
-              track={track}
-              index={index}
-              player={player}
-              onRightClick={(e) => onRightClick(e, track)}
-            />
-          ))
-        ) : (
-          <tr>
-            <td colSpan={5} style={{
-              textAlign: 'center',
-              padding: '16px 0',
-              color: 'rgb(var(--md-sys-color-on-surface-variant))',
-            }}>
-              无曲目可显示
-            </td>
-          </tr>
-        )}
+          {filteredTracks.length ? (
+            filteredTracks.map((track, index) => (
+              <Track
+                key={track.id}
+                track={track}
+                index={index}
+                player={player}
+                onRightClick={(e) => onRightClick(e, track)}
+              />
+            ))
+          ) : (
+            <tr>
+              <td
+                colSpan={5}
+                style={{
+                  textAlign: 'center',
+                  padding: '16px 0',
+                  color: 'rgb(var(--md-sys-color-on-surface-variant))',
+                }}
+              >
+                无曲目可显示
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 
@@ -113,16 +131,16 @@ export function Playlist({
           <button
             className={`${styles.fab} ${styles.fabPrimary}`}
             onClick={locatePlayingTrack}
-            aria-label="定位到正在播放的曲目"
-            title="定位到正在播放的曲目"
+            aria-label='定位到正在播放的曲目'
+            title='定位到正在播放的曲目'
           >
             <i className={`fas fa-crosshairs ${styles.fabIcon}`}></i>
           </button>
           <button
             className={`${styles.fab} ${styles.fabSecondary}`}
             onClick={scrollToTop}
-            aria-label="返回顶部"
-            title="返回顶部"
+            aria-label='返回顶部'
+            title='返回顶部'
           >
             <i className={`fas fa-arrow-up ${styles.fabIcon}`}></i>
           </button>
@@ -135,7 +153,9 @@ export function Playlist({
           x={menu.x}
           y={menu.y}
           track={menu.track}
-          handleCloseMenu={() => setMenu({ visible: false, x: 0, y: 0, track: null })}
+          handleCloseMenu={() =>
+            setMenu({ visible: false, x: 0, y: 0, track: null })
+          }
           player={player}
           musicLibraryController={musicLibraryController}
           onEditRequest={(t) => {

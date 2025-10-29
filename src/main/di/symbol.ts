@@ -2,6 +2,7 @@
  * Inversify 注入标识符统一管理
  */
 export const DISymbol = {
+  Logger: Symbol.for('Logger'),
   Store: Symbol.for('Store'),
   Sequelize: Symbol.for('Sequelize'),
   FileCacheManager: Symbol.for('FileCacheManager'),

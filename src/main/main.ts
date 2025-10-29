@@ -1,7 +1,6 @@
 // file: src/main/core/core.ts
 import { app } from 'electron';
 import { WindowKey, WindowManager } from './window/windowManager';
-import electronSquirrelStartup from 'electron-squirrel-startup';
 
 import ProxyServerManager from '@main/core/AudioProxyServer';
 import { ConfigService } from '@main/core/configService';
@@ -11,19 +10,22 @@ import { sequelize } from '@main/database/seqimpl';
 import { is_hifini_cookies_expired } from '@main/services/AuthService';
 import { container } from '@main/di/di-container';
 import { DISymbol } from '@main/di/symbol';
-import IpcController from '@main/core/IpcController';
+import IpcController from '@main/core/ipc/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
 import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 import { getOperatingSystem } from '@src/utils/helpers';
 import chalk from 'chalk';
-
-// 新增：B站 Referer 注入（在创建任何窗口前）
-import { installBilibiliHeaders, installBilibiliHeadersForNewSessions } from '@main/core/network/bilibiliHeaders';
 import { OS } from '@src/shared/OS';
 import { Channels } from '@src/shared/ipc/channels';
+import rootLogger from '@src/utils/logger';
 
 let isQuitting = false;
+
+const logger = rootLogger.child(
+  { context: 'Main' },
+);
+
 
 // 全局异常兜底
 process.on('uncaughtException', (e) => console.error('[main] UncaughtException:', e));
@@ -35,14 +37,7 @@ if (!gotTheLock) {
   console.log('Another instance is already running, quitting...');
   app.quit();
 } else {
-  console.log('App is running...');
-
-  // squirrel 自启动场景（Windows 安装/卸载）
-  if (electronSquirrelStartup) {
-    app.quit();
-    // ⚠️ 顶层不能 `return`，否则会有 'return outside of function' 报错
-  }
-
+  logger.info('App started');
   const windowManager = container.get<WindowManager>(DISymbol.WindowManager);
 
   // 若用户再次启动应用，将唤起已有主窗口
@@ -74,9 +69,6 @@ if (!gotTheLock) {
 
   // READY
   app.whenReady().then(async () => {
-    // 1) 先安装 B 站 Referer/UA 头（在任何窗口/请求之前）
-    installBilibiliHeaders();
-    app.on('session-created', installBilibiliHeadersForNewSessions());
 
     // 2) 初始化
     await sequelize.sync();

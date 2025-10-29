@@ -276,7 +276,7 @@ ${resultSongs
         if (!trimmed) continue;
 
         const match = trimmed.match(regex);
-        if (!match) continue;              // 无效行直接忽略
+        if (!match) continue;       // 无效行直接忽略
 
         const [, mm, ss, ms = '0', textRaw] = match;
         const time =

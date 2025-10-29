@@ -1,98 +1,16 @@
 import { ipcMain, IpcMainInvokeEvent } from 'electron';
 import { Channels } from '@src/shared/ipc/channels';
-import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { Platform } from '@main/core/enum/Platform';
 import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 import { IpcContext } from './ipcContext';
 
 export function registerSearchHandlers({
                                          netEaseCloudMusic,
-                                         qqMusic,
-                                         bilibili,
-                                         youtubeMusic,
                                          trackService,
                                          configService,
                                          providerManager,
                                        }: IpcContext): void {
-  const safe = async <T>(p: Promise<T>, label: string, fallback: T): Promise<T> => {
-    try {
-      return await p;
-    } catch (error) {
-      console.error(`[search:${label}] failed:`, error);
-      return fallback;
-    }
-  };
 
-  const httpsify = (u?: string) => {
-    if (!u) return '';
-    if (u.startsWith('//')) return `https:${u}`;
-    return u.replace(/^http:\/\//i, 'https://');
-  };
-
-  const isTrackLike = (x: any): x is TrackEntity =>
-    !!x &&
-    typeof x === 'object' &&
-    typeof x.title === 'string' &&
-    typeof x.platform_unique_id === 'string' &&
-    !('playlist_id' in x) &&
-    !Array.isArray((x as any).tracks);
-
-  const isPlaylistLike = (x: any): x is PlaylistEntity =>
-    !!x &&
-    typeof x === 'object' &&
-    (
-      'playlist_id' in x ||
-      Array.isArray((x as any).tracks) ||
-      (typeof (x as any).title === 'string' && 'creator' in x)
-    );
-
-  const normalizeTrack = (t: any): TrackEntity | null => {
-    if (!isTrackLike(t)) return null;
-
-    const out: TrackEntity = {
-      platform: t.platform,
-      platform_unique_id: String(t.platform_unique_id ?? ''),
-      title: String(t.title ?? ''),
-      artist: String(t.artist ?? ''),
-      album: String(t.album ?? ''),
-      duration: Number(t.duration ?? 0) || 0,
-      cover_src: httpsify(t.cover_src) || '',
-      created_at: t.created_at ? new Date(t.created_at) : new Date(),
-    };
-
-    if (!out.title || !out.platform_unique_id) return null;
-    return out;
-  };
-
-  const dedupeTracks = (arr: TrackEntity[]) => {
-    const seen = new Set<string>();
-    const out: TrackEntity[] = [];
-    for (const t of arr) {
-      const key = `${t.platform}:${t.platform_unique_id}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        out.push(t);
-      }
-    }
-    return out;
-  };
-
-  const dedupePlaylists = (arr: PlaylistEntity[]) => {
-    const seen = new Set<string>();
-    const out: PlaylistEntity[] = [];
-    for (const p of arr) {
-      const platform = (p as any).platform ?? 'unknown';
-      const pid = (p as any).playlist_id ?? (p as any).id ?? '';
-      const fallback = `${(p as any).title ?? ''}|${(p as any).creator ?? ''}`;
-      const key = pid ? `${platform}:${pid}` : `${platform}:${fallback}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        out.push(p);
-      }
-    }
-    return out;
-  };
 
   ipcMain.handle(Channels.Search.GetResults, async (_evt: IpcMainInvokeEvent, keywords: string) => {
     console.log('后端收到搜索请求:', keywords);

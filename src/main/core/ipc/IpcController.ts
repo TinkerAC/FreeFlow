@@ -15,18 +15,18 @@ import { ConfigService } from '@main/core/configService';
 import { PreferenceService } from '@main/services/PreferenceService';
 import { AiTextService } from '@main/services/ai/AiTextService';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
-import { IpcContext } from './ipc/ipcContext';
+import { IpcContext } from './handlers/ipcContext';
 import { ProviderManager } from '@main/core/ProviderManager';
-import { registerSystemHandlers } from './ipc/systemHandlers';
-import { registerWindowHandlers } from './ipc/windowHandlers';
-import { registerPlaylistHandlers } from './ipc/playlistHandlers';
-import { registerPlayerHandlers } from './ipc/playerHandlers';
-import { registerTrackHandlers } from './ipc/trackHandlers';
-import { registerSearchHandlers } from './ipc/searchHandlers';
-import { registerYouTubeMusicHandlers } from './ipc/youtubeHandlers';
-import { registerConfigHandlers } from './ipc/configHandlers';
-import { registerDownloadHandlers } from './ipc/downloadHandlers';
-import { registerMiscHandlers } from './ipc/miscHandlers';
+import { registerSystemHandlers } from './handlers/systemHandlers';
+import { registerWindowHandlers } from './handlers/windowHandlers';
+import { registerPlaylistHandlers } from './handlers/playlistHandlers';
+import { registerPlayerHandlers } from './handlers/playerHandlers';
+import { registerTrackHandlers } from './handlers/trackHandlers';
+import { registerSearchHandlers } from './handlers/searchHandlers';
+import { registerYouTubeMusicHandlers } from './handlers/youtubeHandlers';
+import { registerConfigHandlers } from './handlers/configHandlers';
+import { registerDownloadHandlers } from './handlers/downloadHandlers';
+import { registerMiscHandlers } from './handlers/miscHandlers';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能拆分到独立模块。

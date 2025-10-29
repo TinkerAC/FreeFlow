@@ -179,7 +179,6 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
   }
 
   return (
-    // ✅ 不再传 header，“完整头+列表”与背景一起放进 wrap，随内容滚动
     <ViewShell ref={scrollRef} padded hideScrollbar>
       {/* 粘顶的简洁头（放在滚动容器最前，保证始终从顶部淡入/淡出） */}
       <div className={styles.headerCompact} data-show={showCompact ? 'true' : 'false'}>
