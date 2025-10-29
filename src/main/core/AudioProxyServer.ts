@@ -66,12 +66,12 @@ class ProxyServerManager {
     this.logger.info('代理服务器正在启动...');
 
     while (await isPortOccupied(this.port)) {
-      console.warn(`端口 ${this.port} 已被占用，尝试使用下一个端口`);
+      this.logger.warn(`端口 ${this.port} 已被占用，尝试使用下一个端口`);
       this.port++;
     }
 
     this.app.listen(this.port, () => {
-      console.log(`代理服务器正在监听端口 ${this.port}`);
+      this.logger.info(`代理服务器正在监听端口 ${this.port}`);
     });
   }
 
@@ -117,7 +117,7 @@ class ProxyServerManager {
       // ---------- 1) 本地文件 ----------
       const localFilePath = await this.findLocalFile(platform, platformUniqueId);
       if (localFilePath) {
-        console.log(`找到本地文件: ${localFilePath}`);
+        this.logger.info(`找到本地文件: ${localFilePath}`);
         await this.streamLocalFile(res, localFilePath, req);
         return;
       }
@@ -128,13 +128,13 @@ class ProxyServerManager {
 
       // 如果客户端是 Range 请求并且命中缓存，支持 206 分段返回
       if (cachedData) {
-        console.log(`${platform}-${platformUniqueId} 缓存命中`);
+        this.logger.info(`${platform}-${platformUniqueId} 缓存命中`);
         await this.respondFromCacheBuffer(cachedData, req, res);
         return;
       }
 
       // ---------- 3) 远程拉取（边播边缓存；Range 请求仅转发不缓存） ----------
-      console.log(`${platform}-${platformUniqueId} 缓存未命中，开始请求数据`);
+      this.logger.info(`${platform}-${platformUniqueId} 缓存未命中，开始请求数据`);
       await this.fetchStreamAndMaybeCache(platformEnum, platformUniqueId, cacheKey, req, res);
     } catch (err: any) {
       const status =
@@ -142,7 +142,7 @@ class ProxyServerManager {
           ? err.status
           : (err?.response?.status as number) || 500;
 
-      console.error('Proxy Error:', err?.message || err);
+      this.logger.error('Proxy Error:', err?.message || err);
       if (!res.headersSent) res.status(status).send(err?.message || 'Proxy Error');
     }
   }
@@ -285,7 +285,7 @@ class ProxyServerManager {
       // 若错误是 403，尝试重新取一次直链再请求
       const status = e?.response?.status;
       if (status === 403) {
-        console.warn('上游 403，尝试刷新直链后重试一次...');
+        this.logger.warn('上游 403，尝试刷新直链后重试一次...');
         // 刷新直链：强制绕过缓存
         upstream = await getUpstream(true);
         response = await axios.get(upstream.url, {
@@ -295,7 +295,7 @@ class ProxyServerManager {
         });
       } else if (String(e?.message || '').includes('-1')) {
         // 兼容 Hifini 的特殊返回码：-1，按你的原逻辑重取一次
-        console.log('检测到 -1，重试直链获取...');
+        this.logger.info('检测到 -1，重试直链获取...');
         upstream = await getUpstream(true);
         response = await axios.get(upstream.url, {
           responseType: 'stream',
@@ -321,7 +321,7 @@ class ProxyServerManager {
       res.status(response.status);
       response.data.pipe(res);
       response.data.on('error', (err) => {
-        console.error('上游音频流错误:', err?.message || err);
+        this.logger.error('上游音频流错误:', err?.message || err);
         if (!res.headersSent) res.status(502).end('Upstream stream error');
       });
       return;
@@ -338,14 +338,14 @@ class ProxyServerManager {
         const completeBuffer = Buffer.concat(chunks);
         await this.cacheManager.cacheFile(cacheKey, completeBuffer);
       } catch (err: any) {
-        console.error('缓存写入失败:', err?.message || err);
+        this.logger.error('缓存写入失败:', err?.message || err);
         // 缓存失败不影响播放
       } finally {
         res.end();
       }
     });
     response.data.on('error', (err) => {
-      console.error('上游音频流错误:', err?.message || err);
+      this.logger.error('上游音频流错误:', err?.message || err);
       if (!res.headersSent) res.status(502).end('Upstream stream error');
       else res.end();
     });

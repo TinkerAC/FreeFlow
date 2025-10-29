@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { Innertube, UniversalCache, YTNodes } from 'youtubei.js';
 
-import { ContentProvider } from '../ContentProvider';
+import { AbstractContentProvider } from '../AbstractContentProvider';
 import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity, YouTubeMusicTrackModel } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
@@ -9,6 +9,7 @@ import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { DISymbol } from '@main/di/symbol';
 import { ConfigService } from '@main/core/configService';
+import { Logger } from 'winston';
 
 type YouTubeMusicSettings = {
   cookie?: string;
@@ -16,7 +17,7 @@ type YouTubeMusicSettings = {
 };
 
 @injectable()
-export default class YouTubeMusic implements ContentProvider {
+export default class YouTubeMusic extends AbstractContentProvider {
   public readonly platformName = Platform.YOUTUBE_MUSIC;
   public readonly serverNodes: string[] = [];
 
@@ -25,7 +26,9 @@ export default class YouTubeMusic implements ContentProvider {
 
   constructor(
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
   ) {
+    super();
   }
 
   public async searchTrack(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {

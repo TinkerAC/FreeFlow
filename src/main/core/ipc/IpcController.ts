@@ -12,7 +12,6 @@ import { DISymbol } from '@main/di/symbol';
 import { DataPath } from '@main/core/PathConfig';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { ConfigService } from '@main/core/configService';
-import { PreferenceService } from '@main/services/PreferenceService';
 import { AiTextService } from '@main/services/ai/AiTextService';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import { IpcContext } from './handlers/ipcContext';
@@ -45,7 +44,6 @@ export default class IpcController {
     @inject(DISymbol.HifiniDownloader) private readonly downloader: HifiniDownloader,
     @inject(DISymbol.WindowManager) private readonly windowManager: WindowManager,
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
-    @inject(DISymbol.PreferenceService) private readonly preferenceService: PreferenceService,
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
     @inject(DISymbol.AiTextService) private readonly aiText: AiTextService,
     @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
@@ -65,7 +63,6 @@ export default class IpcController {
       fileCacheManager: this.fileCacheManager,
       downloader: this.downloader,
       dataPath: this.dataPath,
-      preferenceService: this.preferenceService,
       bilibili: this.bilibili,
       aiText: this.aiText,
       youtubeMusic: this.youtubeMusic,

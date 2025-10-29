@@ -6,16 +6,6 @@ export interface LyricLine {
   text: string;
 }
 
-// /**
-//  * Lyric 接口：表示完整歌词，包含多行歌词
-//  */
-// export interface Lyric {
-//   originLines: LyricLine[];
-//   translationLines: LyricLine[];
-//   pronunciationLines: LyricLine[];
-// }
-//
-
 export class Lyric {
   originLines: LyricLine[];
   translationLines: LyricLine[];

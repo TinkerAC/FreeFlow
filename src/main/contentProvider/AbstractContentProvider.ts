@@ -1,12 +1,13 @@
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/core/enum/Platform';
+import { Logger } from 'winston';
 
 /**
  * ContentProvider 接口定义了统一的搜索和获取播放链接方法，
  * 各个平台的服务类需要实现该接口，从而达到接口统一、逻辑覆盖的目的。
  */
-export abstract class ContentProvider {
+export abstract class AbstractContentProvider {
 
 
   /**
@@ -15,6 +16,11 @@ export abstract class ContentProvider {
    */
   abstract platformName: Platform;
 
+
+  /**
+   *  日志记录器
+   */
+  protected abstract readonly logger: Logger;
   /**
    *  所有可用的服务器节点
    */

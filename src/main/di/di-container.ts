@@ -43,7 +43,6 @@ import { BilibiliService } from '@main/contentProvider/Bilibili/BilibiliService'
 import { Settings } from '@src/shared/settings/schema';
 import { ConfigService } from '@main/core/configService';
 import { OS } from '@src/shared/OS';
-import { PreferenceService } from '@main/services/PreferenceService';
 import { AiTextService, HeuristicAiTextService } from '@main/services/ai/AiTextService';
 import { ProviderManager } from '@main/core/ProviderManager';
 import { Logger } from 'winston';
@@ -158,10 +157,6 @@ container
   .to(ProviderManager)
   .inSingletonScope();
 
-container
-  .bind<PreferenceService>(DISymbol.PreferenceService)
-  .to(PreferenceService)
-  .inSingletonScope();
 
 // ===== AI/Text utilities（根据 Settings 选择提供方，禁用或无密钥则退回本地兜底） =====
 try {

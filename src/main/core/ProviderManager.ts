@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { ConfigService } from '@main/core/configService';
 import { DISymbol } from '@main/di/symbol';
 import { Platform } from '@main/core/enum/Platform';
-import { ContentProvider } from '@main/contentProvider/ContentProvider';
+import { AbstractContentProvider } from '@main/contentProvider/AbstractContentProvider';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
@@ -60,7 +60,7 @@ export class ProviderManager {
     }
   }
 
-  tryResolve(platform: Platform): ContentProvider | null {
+  tryResolve(platform: Platform): AbstractContentProvider | null {
     if (!this.isEnabled(platform)) return null;
     switch (platform) {
       case Platform.NET_EASE_CLOUD_MUSIC:
@@ -78,14 +78,14 @@ export class ProviderManager {
     }
   }
 
-  resolve(platform: Platform): ContentProvider {
+  resolve(platform: Platform): AbstractContentProvider {
     const p = this.tryResolve(platform);
     if (!p) throw new Error(`Provider disabled or not found: ${platform}`);
     return p;
   }
 
-  listEnabled(): Array<{ platform: Platform; provider: ContentProvider }> {
-    const out: Array<{ platform: Platform; provider: ContentProvider }> = [];
+  listEnabled(): Array<{ platform: Platform; provider: AbstractContentProvider }> {
+    const out: Array<{ platform: Platform; provider: AbstractContentProvider }> = [];
     (Object.values(Platform) as Platform[]).forEach((pf) => {
       const p = this.tryResolve(pf);
       if (p) out.push({ platform: pf, provider: p });
@@ -150,7 +150,7 @@ export class ProviderManager {
     if (!keyword) return;
 
     // 并发发起 searchTracks，收集候选（每个 Provider 取第一个即可）
-    const candidates: Array<{ provider: ContentProvider; candidate?: TrackEntity }> = await Promise.all(
+    const candidates: Array<{ provider: AbstractContentProvider; candidate?: TrackEntity }> = await Promise.all(
       this.listEnabled().map(async ({ provider }) => {
         try {
           const res = typeof (provider as any).searchTrack === 'function'

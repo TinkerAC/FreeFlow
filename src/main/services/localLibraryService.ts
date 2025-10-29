@@ -9,27 +9,30 @@ import TrackRepository from '@main/database/repository/TrackRepository';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 import { DISymbol } from '@main/di/symbol';
+import { AbstractService } from '@main/services/AbstractService';
+import { Logger } from 'winston';
 
 @injectable()
-class LocalLibraryService {
+class LocalLibraryService extends AbstractService {
   constructor(
     @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
     @inject(DISymbol.ConfigService) private configService: ConfigService,
-    // 注入其他需要的依赖
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
   ) {
+    super();
   }
 
   public async updateLocalLibrary(): Promise<void> {
     const scanPaths = (this.configService.get('library.scanPaths') as string[]) ?? [];
     if (!scanPaths || scanPaths.length === 0) {
-      console.warn('没有配置扫描路径，将跳过更新音乐库');
+      this.logger.warn('没有配置扫描路径，将跳过更新音乐库');
       return;
     }
 
     const supportedFormats = ((this.configService.get('library.supportedFormats') as string[]) ?? [])
       .map((ext: string) => ext.toLowerCase());
-    console.log('scanPaths:', scanPaths);
-    console.log('supportedFormats:', supportedFormats);
+    this.logger.log('scanPaths:', scanPaths);
+    this.logger.log('supportedFormats:', supportedFormats);
 
 
     try {
@@ -43,19 +46,19 @@ class LocalLibraryService {
           await this.trackRepository.create(track);
         }
       } else {
-        console.log('没有找到新的音频文件');
+        this.logger.info('没有找到新的音频文件');
       }
 
       // 提交事务（如果适用）
       // await this.trackRepository.commitTransaction();
 
-      console.log('音乐库更新完成');
+      this.logger.info('音乐库更新完成');
     } catch (error) {
       // 回滚事务（如果适用）
       // await this.trackRepository.rollbackTransaction();
 
-      console.error(`更新本地音乐库时出错: ${error.message}`);
-      console.error(error);
+      this.logger.error(`更新本地音乐库时出错: ${error.message}`);
+      this.logger.error(error);
     }
   }
 
@@ -77,7 +80,7 @@ class LocalLibraryService {
                 const existingTrack = await this.trackRepository.findByPlatformAndPlatformUniqueId('Local', normalizedPath);
 
                 // if (!existingTrack) {
-                //   console.log(`发现新文件: ${normalizedPath}`);
+                //   this.logger.log(`发现新文件: ${normalizedPath}`);
                 //   const trackData: TrackRecord =
                 //     ModelFactory.buildTrackModel(
                 //       {
@@ -94,10 +97,10 @@ class LocalLibraryService {
             }
           }
         } catch (error) {
-          console.error(`读取目录 ${directoryPath} 时出错: ${error.message}`);
+          this.logger.error(`读取目录 ${directoryPath} 时出错: ${error.message}`);
         }
       } else {
-        console.warn(`目录不存在: ${directoryPath}`);
+        this.logger.warn(`目录不存在: ${directoryPath}`);
       }
     }
 

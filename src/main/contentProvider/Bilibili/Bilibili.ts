@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { Platform } from '@main/core/enum/Platform';
-import { ContentProvider } from '../ContentProvider';
+import { AbstractContentProvider } from '../AbstractContentProvider';
 import type { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import type { Lyric } from '@src/shared/domainModel/lyricLine';
 import { BilibiliService, BiliSearchVideoItem, BiliVideoInfo } from '@main/contentProvider/Bilibili/BilibiliService';
@@ -8,13 +8,18 @@ import { DISymbol } from '@main/di/symbol';
 import chalk from 'chalk';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import { Logger } from 'winston';
 
 @injectable()
-export default class Bilibili implements ContentProvider {
+export default class Bilibili extends AbstractContentProvider {
   public readonly platformName = Platform.BILIBILI;
   public readonly serverNodes = ['https://api.bilibili.com'];
 
-  constructor(@inject(DISymbol.BilibiliService) private bilibili: BilibiliService) {
+  constructor(
+    @inject(DISymbol.BilibiliService) private bilibili: BilibiliService,
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
+  ) {
+    super();
   }
 
   /** 支持：
@@ -33,15 +38,15 @@ export default class Bilibili implements ContentProvider {
         try {
           const videoInfo = await this.bilibili.getVideoInfo(BVID[0]);
           const tracks = this.toTracksFromVideo(videoInfo);
-          console.log(chalk.rgb(102, 204, 255)(`[Bilibili BV] ${BVID[0]} -> ${tracks.length} track(s)`));
+          this.logger.info(chalk.rgb(102, 204, 255)(`[Bilibili BV] ${BVID[0]} -> ${tracks.length} track(s)`));
           return tracks;
         } catch (e) {
-          console.warn('[bilibili.searchTracks] getVideoInfo failed for', BVID[0], e);
+          this.logger.warn('[bilibili.searchTracks] getVideoInfo failed for', BVID[0], e);
           // 不中断，继续尝试关键字搜索
         }
       }
     } catch (e) {
-      console.warn('[bilibili.searchTracks] failed:', e);
+      this.logger.warn('[bilibili.searchTracks] failed:', e);
       // 兜底不抛出，避免影响其它平台聚合
       return [];
     }
@@ -80,7 +85,7 @@ export default class Bilibili implements ContentProvider {
 
       return { track_result: tracks, playlist_result };
     } catch (e) {
-      console.warn('[Bilibili.search] failed:', e);
+      this.logger.warn('[Bilibili.search] failed:', e);
       return EMPTY;
     }
   }

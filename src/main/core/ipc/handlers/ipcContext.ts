@@ -6,7 +6,6 @@ import { LyricService } from '@main/services/LyricService';
 import { FileCacheManager } from '@main/core/FileCacheManager';
 import { HifiniDownloader } from '@main/services/Downloader';
 import { DataPath } from '@main/core/PathConfig';
-import { PreferenceService } from '@main/services/PreferenceService';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { AiTextService } from '@main/services/ai/AiTextService';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
@@ -26,7 +25,6 @@ export interface IpcContext {
   fileCacheManager: FileCacheManager;
   downloader: HifiniDownloader;
   dataPath: DataPath;
-  preferenceService: PreferenceService;
   bilibili: Bilibili;
   aiText: AiTextService;
   youtubeMusic: YouTubeMusic;

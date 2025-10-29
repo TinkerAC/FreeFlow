@@ -4,7 +4,7 @@ import { Settings } from '@src/shared/settings/schema';
 import { IpcContext } from './ipcContext';
 import { AppIcon } from '@src/shared/hifiniCookies';
 
-export function registerConfigHandlers({ configService, preferenceService }: IpcContext): void {
+export function registerConfigHandlers({ configService }: IpcContext): void {
   ipcMain.handle(Channels.Config.GetAll, async () => {
     return await configService.getAll();
   });
@@ -35,7 +35,7 @@ export function registerConfigHandlers({ configService, preferenceService }: Ipc
 
   let lastAppliedIcon: AppIcon | null = null;
   try {
-    lastAppliedIcon = preferenceService.getCurrentIcon();
+    // lastAppliedIcon = preferenceService.getCurrentIcon();
   } catch {
     // ignore
   }
@@ -45,8 +45,6 @@ export function registerConfigHandlers({ configService, preferenceService }: Ipc
     if (!icon) return;
     if (lastAppliedIcon === icon) return;
     lastAppliedIcon = icon;
-    preferenceService.applyIcon(icon).catch(() => { /* noop */
-    });
   });
 }
 

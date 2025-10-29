@@ -1,23 +1,28 @@
 import axios from 'axios';
-import { ContentProvider } from '../ContentProvider';
+import { AbstractContentProvider } from '../AbstractContentProvider';
 import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvider/QQMusic/QQMusicInterfaces';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { QQMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/core/enum/Platform';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+import { DISymbol } from '@main/di/symbol';
+import { Logger } from 'winston';
 
 // import { da } from 'zod/v4/locales/index.cjs'; // unused
 
 
 @injectable()
-export class QQMusic implements ContentProvider {
+export class QQMusic extends AbstractContentProvider {
 
   public readonly platformName: Platform;
   public readonly serverNodes: string[];
   private readonly base_url: string;
 
-  constructor() {
+  constructor(
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
+  ) {
+    super();
     this.platformName = Platform.QQ_MUSIC;
     this.serverNodes = ['http://47.97.185.179/qqmusicapi/'];
     this.base_url = this.serverNodes[0];
@@ -45,7 +50,7 @@ export class QQMusic implements ContentProvider {
     const resultSongs = filterPaid ? songs.filter(song => this.isFree(song)) : songs;
 
     // 打印日志
-    console.log(`
+    this.logger.info(`
 QQ音乐搜索结果:
   返回总数: ${songs.length} 首
   ${filterPaid ? '免费歌曲' : '所有歌曲'}: ${resultSongs.length} 首
@@ -85,7 +90,7 @@ ${resultSongs
     const url = `${this.base_url}getMusicPlay?songmid=${uniqueId}`;
     const response = await axios.get(url);
     const data: QQMusicTrackResponse = response.data;
-    console.dir(data, { depth: null });
+    this.logger.info(String(data), { depth: null });
     return data.data.playUrl[uniqueId].url || '';
   }
 
@@ -99,7 +104,7 @@ ${resultSongs
 
   public async getLyrics(uniqueId: string): Promise<Lyric> {
     const url = `${this.base_url}getLyric?songmid=${uniqueId}`;
-    console.debug('url:', url);
+    this.logger.debug('url:', url);
     try {
 
       const response = await axios.get(url);
@@ -127,7 +132,7 @@ ${resultSongs
 
       return this.parseLyrics(origin, translation);
     } catch (error) {
-      console.error('获取歌词失败:', error);
+      this.logger.error('获取歌词失败:', error);
       //反回空歌词
       return new Lyric();
     }
@@ -171,7 +176,7 @@ ${resultSongs
 // (async () => {
 //   const qqMusic = new QQMusic();
 //   const track_result = await qqMusic.searchTrack('银临');
-//   console.log(track_result);
+//   this.logger.info(track_result);
 //   const trackLink = await qqMusic.getTrackLink('000A1xry3KwdhW');
-//   console.log(trackLink);
+//   this.logger.info(trackLink);
 // })();

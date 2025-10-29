@@ -9,7 +9,7 @@ import { inject, injectable } from 'inversify';
 import { ConfigService } from '@main/core/configService';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
 import { isSameUTCDay } from '@src/utils/timeUtils';
-import { ContentProvider } from '@main/contentProvider/ContentProvider';
+import { AbstractContentProvider } from '@main/contentProvider/AbstractContentProvider';
 import { HifiniCookie, HifiniSearchResult } from '@main/contentProvider/Hifini/HifiniInterfaces';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
@@ -17,13 +17,14 @@ import { Lyric } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/core/enum/Platform';
 
 import { DISymbol } from '@main/di/symbol';
+import { Logger } from 'winston';
 
 /**
  * @deprecated
  * HifiniMusic 不再可用,因为 Hifini 已经停止服务。
  */
 @injectable()
-export default class HifiniMusic implements ContentProvider {
+export default class HifiniMusic extends AbstractContentProvider {
   public readonly platformName: Platform;
   public readonly serverNodes: string[] = [];
   private readonly __filename: string;
@@ -32,7 +33,9 @@ export default class HifiniMusic implements ContentProvider {
   constructor(
     @inject(DISymbol.ConfigService) private configService: ConfigService,
     @inject(DISymbol.HifiniThreadCacheRepository) private hifiniThreadCacheRepository: HifiniThreadCacheRepository,
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
   ) {
+    super();
     this.__filename = fileURLToPath(import.meta.url);
     this.__dirname = path.dirname(this.__filename);
     this.platformName = Platform.HIFINI;
