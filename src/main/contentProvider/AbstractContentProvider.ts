@@ -38,7 +38,7 @@ export abstract class AbstractContentProvider {
   abstract getTrackLink(uniqueId: string): Promise<string | void>;
 
 
-  abstract getLyrics(uniqueId: string): Promise<Lyric | void>;
+  abstract getLyrics(uniqueId: string): Promise<Lyric>;
 
   /**
    * 根据平台内部的唯一标识判断歌曲是否免费可听

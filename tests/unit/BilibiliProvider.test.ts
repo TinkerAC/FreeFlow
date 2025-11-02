@@ -1,6 +1,7 @@
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { Platform } from '@main/core/enum/Platform';
 import type { BilibiliService, BiliVideoInfo, PlayUrl } from '@main/contentProvider/Bilibili/BilibiliService';
+import { testLogger } from '../logger';
 
 // 构造 mock 的 BilibiliService
 function createMockService(): jest.Mocked<Pick<BilibiliService, 'getVideoInfo' | 'getPlayUrl'>> {
@@ -34,7 +35,7 @@ describe('Bilibili Provider', () => {
     };
     service.getVideoInfo.mockResolvedValue(video);
     service.getPlayUrl.mockResolvedValue(play);
-    provider = new Bilibili(service as any);
+    provider = new Bilibili(testLogger);
   });
 
   test('platformName/serverNodes', () => {
@@ -43,7 +44,7 @@ describe('Bilibili Provider', () => {
   });
 
   test('searchTracks 命中 BV 返回全部分P track', async () => {
-    const tracks = await provider.searchTracks('查看 BV1ABC1d7EfG 内容');
+    const tracks = await provider.searchTrack('查看 BV1ABC1d7EfG 内容');
     expect(service.getVideoInfo).toHaveBeenCalledTimes(1);
     expect(tracks.length).toBe(2);
     expect(tracks[0].platform_unique_id).toBe('BV1ABC1d7EfG?p=1');

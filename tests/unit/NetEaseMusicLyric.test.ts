@@ -1,6 +1,7 @@
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { Platform } from '@main/core/enum/Platform';
 import axios from 'axios';
+import { testLogger } from '../logger';
 
 jest.mock('axios');
 const mockedGet = axios.get as jest.Mock;
@@ -8,7 +9,7 @@ const mockedGet = axios.get as jest.Mock;
 describe('NetEaseCloudMusic Provider', () => {
   let provider: NetEaseCloudMusic;
   beforeEach(() => {
-    provider = new NetEaseCloudMusic();
+    provider = new NetEaseCloudMusic(testLogger);
     mockedGet.mockReset();
   });
 
@@ -32,7 +33,7 @@ describe('NetEaseCloudMusic Provider', () => {
       },
     });
 
-    const tracks = await provider.searchTracks('k');
+    const tracks = await provider.searchTrack('k');
     expect(tracks.map(t => t.title)).toEqual(['free0', 'free8']);
   });
 
@@ -61,11 +62,32 @@ describe('NetEaseCloudMusic Provider', () => {
   test('search 聚合 tracks + playlists', async () => {
     // cloudsearch for tracks & playlists (第一请求: searchTracks)
     mockedGet.mockResolvedValueOnce({
-      data: { result: { songs: [{ id: 10, name: 'SongX', fee: 0, ar: [{ name: 'AA' }], al: { name: 'AL', picUrl: '' }, dt: 1000 }], playlists: [{ id: 77, name: 'List1', coverImgUrl: 'c', creator: { nickname: 'U' }, description: 'desc' }] } },
+      data: {
+        result: {
+          songs: [{
+            id: 10,
+            name: 'SongX',
+            fee: 0,
+            ar: [{ name: 'AA' }],
+            al: { name: 'AL', picUrl: '' },
+            dt: 1000,
+          }], playlists: [{ id: 77, name: 'List1', coverImgUrl: 'c', creator: { nickname: 'U' }, description: 'desc' }],
+        },
+      },
     });
     // cloudsearchPlaylist (第二次 cloudsearch 请求 - 复用前端逻辑, 这里再次返回 playlists)
     mockedGet.mockResolvedValueOnce({
-      data: { result: { playlists: [{ id: 77, name: 'List1', coverImgUrl: 'c', creator: { nickname: 'U' }, description: 'desc' }] } },
+      data: {
+        result: {
+          playlists: [{
+            id: 77,
+            name: 'List1',
+            coverImgUrl: 'c',
+            creator: { nickname: 'U' },
+            description: 'desc',
+          }],
+        },
+      },
     });
     const fusion = await provider.search('keyword');
     expect(fusion.track_result.length).toBe(1);

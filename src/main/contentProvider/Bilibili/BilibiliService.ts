@@ -68,7 +68,6 @@ export class BilibiliService {
       // 允许在 Node 里像浏览器一样带 Cookie
       validateStatus: (s) => s >= 200 && s < 300,
       headers: {
-        // ← 别用 axios/1.9.0 这种 UA，会更容易 412
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
           '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',

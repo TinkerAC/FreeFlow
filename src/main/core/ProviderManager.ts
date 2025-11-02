@@ -11,7 +11,7 @@ import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
-import { Lyric } from '@src/shared/domainModel/lyricLine';
+import { Logger } from 'winston';
 
 type ProviderToggles = {
   netease?: boolean;
@@ -30,6 +30,7 @@ export class ProviderManager {
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
     @inject(DISymbol.YouTubeMusic) private readonly youtube: YouTubeMusic,
     @inject(DISymbol.HifiniMusic) private readonly hifini: HifiniMusic,
+    @inject(DISymbol.Logger) private readonly logger: Logger,
   ) {
   }
 
@@ -93,6 +94,11 @@ export class ProviderManager {
     return out;
   }
 
+  getEnabledProviders(): AbstractContentProvider[] {
+    return this.listEnabled().map(({ provider }) => provider);
+  }
+
+
   /* ---------------------- 聚合搜索 ---------------------- */
   async searchFusion(keyword: string): Promise<FusionSearchResult> {
     const EMPTY: FusionSearchResult = { track_result: [], playlist_result: [] };
@@ -129,51 +135,6 @@ export class ProviderManager {
     };
   }
 
-  /* ---------------------- 聚合歌词 ---------------------- */
-  async getLyricsForTrack(track: TrackEntity): Promise<Lyric | void> {
-    const { platform, platform_unique_id } = track || ({} as TrackEntity);
-    if (!platform || !platform_unique_id) throw new Error('无效的歌曲标识符: 缺少 platform_unique_id 字段');
-
-    // 1) 首选该平台 Provider
-    try {
-      const provider = this.resolve(platform as Platform);
-      if (provider?.getLyrics) {
-        const r = await provider.getLyrics(platform_unique_id);
-        if (r) return r;
-      }
-    } catch {
-      // 忽略，走兜底
-    }
-
-    // 2) 兜底：跨平台搜索（仅已启用 Provider），逐个尝试拿歌词
-    const keyword = `${track.title ?? ''} ${track.artist ?? ''}`.trim();
-    if (!keyword) return;
-
-    // 并发发起 searchTracks，收集候选（每个 Provider 取第一个即可）
-    const candidates: Array<{ provider: AbstractContentProvider; candidate?: TrackEntity }> = await Promise.all(
-      this.listEnabled().map(async ({ provider }) => {
-        try {
-          const res = typeof (provider as any).searchTrack === 'function'
-            ? await (provider as any).searchTrack(keyword, false)
-            : [];
-          return { provider, candidate: res?.[0] };
-        } catch {
-          return { provider };
-        }
-      }),
-    );
-
-    for (const { provider, candidate } of candidates) {
-      if (!candidate?.platform_unique_id) continue;
-      try {
-        const l = await provider.getLyrics(candidate.platform_unique_id);
-        if (l) return l;
-      } catch {
-        // 下一位
-      }
-    }
-    return;
-  }
 
   /* ---------------------- 聚合工具 ---------------------- */
   private normalizeCover(url?: string): string {

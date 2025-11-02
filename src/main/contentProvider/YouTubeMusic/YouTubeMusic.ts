@@ -93,7 +93,7 @@ export default class YouTubeMusic extends AbstractContentProvider {
     throw new Error(`[YouTubeMusic] 无法解析音频流 URL: ${uniqueId}`);
   }
 
-  public async getLyrics(uniqueId: string): Promise<Lyric | void> {
+  public async getLyrics(uniqueId: string): Promise<Lyric> {
     try {
       const client = await this.ensureClient();
       const response: any = await client.music.getLyrics(uniqueId);

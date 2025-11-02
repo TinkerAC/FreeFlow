@@ -9,6 +9,7 @@ import chalk from 'chalk';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { Logger } from 'winston';
+import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 
 @injectable()
 export default class Bilibili extends AbstractContentProvider {
@@ -27,7 +28,7 @@ export default class Bilibili extends AbstractContentProvider {
    *  - series/collection/fav（保留原注释的模式，后续需要可解开）
    *  - 其它：走关键字搜索（WBI），返回视频列表（每个视频先用 P1）
    */
-  async searchTrack(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {
+  async searchTrack(keyword: string): Promise<TrackEntity[]> {
     try {
       const kw = (keyword || '').trim();
       if (!kw) return [];
@@ -85,7 +86,7 @@ export default class Bilibili extends AbstractContentProvider {
 
       return { track_result: tracks, playlist_result };
     } catch (e) {
-      this.logger.warn('[Bilibili.search] failed:', e);
+      this.logger.warn('Search Failed', e);
       return EMPTY;
     }
   }
@@ -100,9 +101,8 @@ export default class Bilibili extends AbstractContentProvider {
   }
 
   /** B 站没有标准“歌词” */
-  async getLyrics(_uniqueId: string): Promise<Lyric | void> {
-    void _uniqueId; // 防止未使用参数 lint 报错
-    return;
+  async getLyrics(_uniqueId: string): Promise<Lyric> {
+    throw NotImplementedError;
   }
 
   isFree(_song: unknown): boolean {

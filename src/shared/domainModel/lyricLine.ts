@@ -23,7 +23,6 @@ export class Lyric {
     this.pronunciationLines = pronunciationLines;
   }
 
-
   /**
    * 判断歌词对象是否有效（至少包含一行歌词）
    */

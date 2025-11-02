@@ -18,6 +18,7 @@ import { Platform } from '@main/core/enum/Platform';
 
 import { DISymbol } from '@main/di/symbol';
 import { Logger } from 'winston';
+import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 
 /**
  * @deprecated
@@ -235,8 +236,8 @@ export default class HifiniMusic extends AbstractContentProvider {
     return true;
   }
 
-  async getLyrics(): Promise<Lyric | void> {
-    throw new Error('NotImplementedError: HifiniMusic getLyrics not implemented');
+  async getLyrics(): Promise<Lyric> {
+    throw NotImplementedError;
   }
 
   async chooseBestServerNode(): Promise<string> {

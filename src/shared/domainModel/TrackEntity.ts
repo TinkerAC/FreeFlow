@@ -19,6 +19,9 @@ export abstract class TrackEntity extends AbstractEntity {
   modified_at?: Date;           // 修改时间
   played_count?: number;         // 播放次数
 
+
+  // abstract isFree(): boolean; // 抽象方法，判断歌曲是否免费
+
 }
 
 /**
