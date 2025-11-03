@@ -16,14 +16,6 @@ import { HifiniDownloader } from '@main/services/Downloader';
 import { LyricService } from '@main/services/LyricService';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
-import { PlaylistDetailDataSource } from '@main/database/dataSource/PlaylistDetailDataSource';
-import { PlaylistDetailDataSourceImpl } from '@main/database/dataSource/impl/PlaylistDetailDataSourceImpl';
-import { HifiniThreadCacheDataSource } from '@main/database/dataSource/HifiniThreadCacheDataSource';
-import { HifiniThreadCacheDataSourceImpl } from '@main/database/dataSource/impl/HifiniThreadCacheDataSourceImpl';
-import { PlaylistDataSource } from '@main/database/dataSource/PlaylistDataSource';
-import { PlaylistDataSourceImpl } from '@main/database/dataSource/impl/PlaylistDataSourceImpl';
-import { TrackDataSource } from '@main/database/dataSource/TrackDataSource';
-import { TrackDataSourceImpl } from '@main/database/dataSource/impl/TrackDataSourceImpl';
 import TrackRepository from '@main/database/repository/TrackRepository';
 import { TrackRepositoryImpl } from '@main/database/repository/impl/TrackRepositoryImpl';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
@@ -35,8 +27,6 @@ import { DISymbol } from '@main/di/symbol';
 import IpcController from '@main/core/ipc/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
-import { SessionDataSourceImpl } from '@main/database/dataSource/impl/SessionDataSourceImpl';
-import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 import { getOperatingSystem } from '@src/utils/helpers';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { BilibiliService } from '@main/contentProvider/Bilibili/BilibiliService';
@@ -220,30 +210,7 @@ container
   .to(BilibiliService)
   .inSingletonScope();
 
-// ===== 数据源 & 仓库（单例） =====
-// DataSource
-container
-  .bind<PlaylistDetailDataSource>(DISymbol.PlaylistDetailDataSource)
-  .to(PlaylistDetailDataSourceImpl)
-  .inSingletonScope();
-container
-  .bind<HifiniThreadCacheDataSource>(DISymbol.HifiniThreadCacheDataSource)
-  .to(HifiniThreadCacheDataSourceImpl)
-  .inSingletonScope();
-container
-  .bind<PlaylistDataSource>(DISymbol.PlaylistDataSource)
-  .to(PlaylistDataSourceImpl)
-  .inSingletonScope();
-container
-  .bind<TrackDataSource>(DISymbol.TrackDataSource)
-  .to(TrackDataSourceImpl)
-  .inSingletonScope();
-container
-  .bind<SessionDataSource>(DISymbol.SessionDataSource)
-  .to(SessionDataSourceImpl)
-  .inSingletonScope();
-
-// Repository
+// ===== 仓库（单例） =====
 container
   .bind<TrackRepository>(DISymbol.TrackRepository)
   .to(TrackRepositoryImpl)

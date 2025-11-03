@@ -12,13 +12,13 @@ import { DISymbol } from '@main/di/symbol';
 import IpcController from '@main/core/ipc/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
-import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 import { getOperatingSystem } from '@src/utils/helpers';
 import chalk from 'chalk';
 import { OS } from '@src/shared/OS';
 import { Channels } from '@src/shared/ipc/channels';
 import rootLogger from '@src/utils/logger';
 import { setAppMenu } from '@main/core/menu/Menu';
+import { Session } from '@main/database/seqimpl/Session';
 
 let isQuitting = false;
 
@@ -56,7 +56,6 @@ if (!gotTheLock) {
   const ipcController = container.get<IpcController>(DISymbol.IpcController);
   const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
   const shortcutManager = container.get<ShortCutManager>(DISymbol.ShortcutManager);
-  const sessionDataSource = container.get<SessionDataSource>(DISymbol.SessionDataSource);
   const os: OS = container.get<OS>(DISymbol.RunningOS);
 
   // 稳定性：限制外部导航/弹窗
@@ -99,15 +98,20 @@ if (!gotTheLock) {
     shortcutManager.register();
 
     // 记录启动信息
-    sessionDataSource
-      .createSession(new Date(), getOperatingSystem(), app.getVersion())
-      .then(() => {
-        console.info(
-          chalk.green(
-            `启动信息记录成功: ${new Date().toISOString()} ${getOperatingSystem()} ${app.getVersion()}`,
-          ),
-        );
-      });
+    const startAt = new Date();
+    Session.create({
+      start_at: startAt,
+      operating_system: getOperatingSystem(),
+      app_version: app.getVersion(),
+    }).then(() => {
+      console.info(
+        chalk.green(
+          `启动信息记录成功: ${startAt.toISOString()} ${getOperatingSystem()} ${app.getVersion()}`,
+        ),
+      );
+    }).catch(error => {
+      logger.error('记录启动信息失败', error);
+    });
   });
 
   // Dock / 任务栏 被点击激活
