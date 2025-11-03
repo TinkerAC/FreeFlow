@@ -4,6 +4,7 @@ import { loadPlayer, savePlayer } from '@main/services/PlayerService';
 import { PlayerState } from '@src/shared/domainModel/playerState';
 import { WindowKey } from '@main/window/windowManager';
 import { IpcContext } from './ipcContext';
+import rootLogger from '@src/utils/logger';
 
 export function registerPlayerHandlers({ windowManager, dataPath }: IpcContext): void {
   let lastPlayerState: PlayerState | null = null;
@@ -11,13 +12,16 @@ export function registerPlayerHandlers({ windowManager, dataPath }: IpcContext):
   const mainWindow = windowManager.get(WindowKey.MAIN);
   ipcMain.handle(Channels.Player.LoadState, async () => loadPlayer(dataPath.playerStateDumpFile));
 
-  ipcMain.once(Channels.Player.ReplyState, (_evt: IpcMainEvent, state: PlayerState) => {
-    console.log('主进程已收到播放器状态:', state);
+  ipcMain.on(Channels.Player.ReplyState, (_evt: IpcMainEvent, state: PlayerState, terminate: boolean) => {
+    rootLogger.info(`[IPC][Player] 保存播放器状态，terminate=${terminate}`);
     savePlayer(dataPath.playerStateDumpFile, state);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.destroy();
+    if (terminate) {
+      console.log('应用即将退出，播放器状态已保存。');
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.destroy();
+      }
+      app.quit();
     }
-    app.quit();
   });
 
   ipcMain.on(Channels.Player.Control, (evt, cmd: string, payload: any) => {

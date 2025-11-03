@@ -55,7 +55,7 @@ const mainApi: MainApi = {
 
   playerApi: {
     getPlayerStateFromMain: () => ipcRenderer.invoke(Channels.Player.LoadState) as Promise<PlayerState>,
-    sendPlayerState: (playerState) => ipcRenderer.send(Channels.Player.ReplyState, playerState),
+    sendPlayerState: (playerState, terminate = true) => ipcRenderer.send(Channels.Player.ReplyState, playerState, terminate),
 
     onNotification: (callback) => {
       ipcRenderer.on(Channels.Player.Notification, (_e, message: string) => callback(message));

@@ -119,23 +119,14 @@ const ApplicationContent: React.FC = () => {
       const player = playerInstanceRef.current;
       if (player) {
         try {
-          playerContext.sendPlayerState(player.dumpPlayerState());
+          playerContext.sendPlayerState(player.dumpPlayerState(),false);
         } catch {
+          console.error(chalk.red('导出播放器状态失败，发送空状态至主进程。'));
         }
       } else {
-        // 即使播放器未初始化，仍回一个空状态，避免主进程卡住
-        try {
-          playerContext.sendPlayerState({
-            queue: { queue: [], indexList: [], currentIndex: 0 },
-            volume: 0.5,
-            playbackMode: PlaybackMode.LOOP,
-            audioSrc: '',
-            isPlaying: false,
-            isLoading: false,
-            currentTime: 0,
-          });
-        } catch {
-        }
+        console.error(
+          chalk.red('播放器未初始化，无法导出状态，发送空状态至主进程。'),
+        )
       }
     };
     const handleShortcut = (data: string) => {

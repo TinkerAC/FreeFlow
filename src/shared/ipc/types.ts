@@ -62,7 +62,7 @@ export interface TrackApi {
 export interface PlayerApi {
   getPlayerStateFromMain(): Promise<PlayerState>;
 
-  sendPlayerState(playerState: PlayerState): void;
+  sendPlayerState(playerState: PlayerState,terminate:boolean): void;
 
   onNotification(callback: (message: string) => void): void;
 

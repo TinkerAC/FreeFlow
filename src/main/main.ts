@@ -4,7 +4,6 @@ import { WindowKey, WindowManager } from './window/windowManager';
 
 import ProxyServerManager from '@main/core/AudioProxyServer';
 import { ConfigService } from '@main/core/configService';
-
 import LocalLibraryService from '@main/services/localLibraryService';
 import { sequelize } from '@main/database/seqimpl';
 import { is_hifini_cookies_expired } from '@main/services/AuthService';
@@ -19,6 +18,7 @@ import chalk from 'chalk';
 import { OS } from '@src/shared/OS';
 import { Channels } from '@src/shared/ipc/channels';
 import rootLogger from '@src/utils/logger';
+import { setAppMenu } from '@main/core/menu/Menu';
 
 let isQuitting = false;
 
@@ -70,6 +70,8 @@ if (!gotTheLock) {
   // READY
   app.whenReady().then(async () => {
 
+    // 1) 菜单
+    setAppMenu();
     // 2) 初始化
     await sequelize.sync();
     await localLibraryService.updateLocalLibrary();

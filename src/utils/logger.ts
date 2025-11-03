@@ -49,14 +49,15 @@ const rootLogger = winston.createLogger({
     // 总是输出到控制台
     new winston.transports.Console(),
 
-    // 仅在生产环境中输出到文件
-    !isDevelopment && new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error',
-    }),
-    !isDevelopment && new winston.transports.File({
-      filename: 'logs/combined.log',
-    }),
+
+    // // 仅在生产环境中输出到文件
+    // !isDevelopment && new winston.transports.File({
+    //   filename: 'logs/error.log',
+    //   level: 'error',
+    // }),
+    // !isDevelopment && new winston.transports.File({
+    //   filename: 'logs/combined.log',
+    // }),
   ].filter(Boolean), // 过滤掉开发环境中的 false 值
 });
 
