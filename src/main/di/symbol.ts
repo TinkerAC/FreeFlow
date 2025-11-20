@@ -17,6 +17,7 @@ export const DISymbol = {
   NetEaseCloudMusic: Symbol.for('NetEaseCloudMusic'),
   QQMusic: Symbol.for('QQMusic'),
   YouTubeMusic: Symbol.for('YouTubeMusic'),
+  YouTube: Symbol.for('YouTube'),
   TrackRepository: Symbol.for('TrackRepository'),
   PlaylistRepository: Symbol.for('PlaylistRepository'),
   HifiniThreadCacheRepository: Symbol.for('HifiniThreadCacheRepository'),
@@ -33,4 +34,5 @@ export const DISymbol = {
   ConfigService: Symbol.for('ConfigService'),
   AiTextService: Symbol.for('AiTextService'),
   ProviderManager: Symbol.for('ProviderManager'),
+  SearchService: Symbol.for('SearchService'),
 };

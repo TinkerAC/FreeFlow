@@ -1,47 +1,44 @@
-import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import 'reflect-metadata';
+import { describe, test, expect, beforeAll } from 'vitest';
+import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
+import { ConfigService } from '@main/core/configService';
+import { Platform } from '@main/core/enum/Platform';
+import { testLogger } from '../logger';
 
-const KEYWORD = process.env.YT_LIVE_KEYWORD ?? 'lofi hip hop';
-const RUNNER = path.resolve(__dirname, '../live/YouTubeMusicLiveRunner.ts');
-const TS_NODE_LOADER = path.resolve(__dirname, '../../node_modules/ts-node/esm.mjs');
-
-function runLiveSearch(keyword: string) {
-  const result = spawnSync(process.execPath, ['--loader', TS_NODE_LOADER, RUNNER, keyword], {
-    encoding: 'utf-8',
-    env: {
-      ...process.env,
-      YT_LIVE_KEYWORD: keyword,
-    },
-  });
-
-  if (result.status !== 0) {
-    throw new Error(result.stderr || result.stdout || `live runner exited with code ${result.status}`);
-  }
-
-  const payload = result.stdout.trim();
-  if (!payload) {
-    throw new Error('Live runner produced empty output');
-  }
-  return JSON.parse(payload);
-}
+const KEYWORD = 'Shape of You';
 
 describe('YouTubeMusic Provider (live)', () => {
-  jest.setTimeout(60000);
-  let liveResult: any;
+  let provider: YouTubeMusic;
 
   beforeAll(() => {
-    liveResult = runLiveSearch(KEYWORD);
+    const configStub = {
+      get: (key: string) => {
+        if (key === 'services.youtubeMusic') return {};
+        return undefined;
+      },
+    } as unknown as ConfigService;
+
+    provider = new YouTubeMusic(configStub, testLogger);
   });
 
-  test('searchTrack returns playable results for keyword', () => {
-    expect(liveResult.trackCount).toBeGreaterThan(0);
-    expect(liveResult.firstTrack).toBeTruthy();
-    expect(typeof liveResult.firstTrack.id).toBe('string');
-    expect(liveResult.firstTrack.title.length).toBeGreaterThan(0);
+  test('searchTrack returns playable results for keyword', async () => {
+    const tracks = await provider.searchTrack(KEYWORD);
+    expect(Array.isArray(tracks)).toBe(true);
+    expect(tracks.length).toBeGreaterThan(0);
+    
+    const first = tracks[0];
+    console.log('First track found:', first.title, first.platform_unique_id);
+    
+    expect(first.platform).toBe(Platform.YOUTUBE_MUSIC);
+    expect(typeof first.platform_unique_id).toBe('string');
+    expect(first.platform_unique_id.length).toBeGreaterThan(5);
+    expect(typeof first.title).toBe('string');
   });
 
-  test('search returns both tracks and playlists', () => {
-    expect(liveResult.trackCount).toBeGreaterThan(0);
-    expect(liveResult.playlistCount).toBeGreaterThan(0);
+  test('search returns both tracks and playlists', async () => {
+    const fusion = await provider.search(KEYWORD);
+    expect(fusion.track_result.length).toBeGreaterThan(0);
+    expect(fusion.playlist_result.length).toBeGreaterThan(0);
+    console.log(`Found ${fusion.track_result.length} tracks and ${fusion.playlist_result.length} playlists`);
   });
 });

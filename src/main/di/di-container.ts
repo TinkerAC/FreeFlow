@@ -35,6 +35,8 @@ import { ConfigService } from '@main/core/configService';
 import { OS } from '@src/shared/OS';
 import { AiTextService, HeuristicAiTextService } from '@main/services/ai/AiTextService';
 import { ProviderManager } from '@main/core/ProviderManager';
+import { SearchService } from '@main/services/SearchService';
+import YouTube from '@main/contentProvider/YouTube/YouTube';
 import { Logger } from 'winston';
 import rootLogger from '@src/utils/logger';
 
@@ -145,6 +147,11 @@ container
   .to(ProviderManager)
   .inSingletonScope();
 
+container
+  .bind<SearchService>(DISymbol.SearchService)
+  .to(SearchService)
+  .inSingletonScope();
+
 //TODO:Refactor this
 
 //===== AI/Text utilities（根据 Settings 选择提供方，禁用或无密钥则退回本地兜底） =====
@@ -199,6 +206,10 @@ container
 container
   .bind<YouTubeMusic>(DISymbol.YouTubeMusic)
   .to(YouTubeMusic)
+  .inSingletonScope();
+container
+  .bind<YouTube>(DISymbol.YouTube)
+  .to(YouTube)
   .inSingletonScope();
 container
   .bind<Bilibili>(DISymbol.Bilibili)

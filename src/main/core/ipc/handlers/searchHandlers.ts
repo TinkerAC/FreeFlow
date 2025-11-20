@@ -9,12 +9,13 @@ export function registerSearchHandlers({
                                          trackService,
                                          configService,
                                          providerManager,
+                                         searchService,
                                        }: IpcContext): void {
 
 
   ipcMain.handle(Channels.Search.GetResults, async (_evt: IpcMainInvokeEvent, keywords: string) => {
     console.log('后端收到搜索请求:', keywords);
-    return await providerManager.searchFusion(keywords);
+    return await searchService.searchFusion(keywords);
   });
 
   ipcMain.handle(Channels.Search.LocalSearch, async (_evt: IpcMainInvokeEvent, keywords: string) => {

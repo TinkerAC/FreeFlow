@@ -16,6 +16,7 @@ import { AiTextService } from '@main/services/ai/AiTextService';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import { IpcContext } from './handlers/ipcContext';
 import { ProviderManager } from '@main/core/ProviderManager';
+import { SearchService } from '@main/services/SearchService';
 import { registerSystemHandlers } from './handlers/systemHandlers';
 import { registerWindowHandlers } from './handlers/windowHandlers';
 import { registerPlaylistHandlers } from './handlers/playlistHandlers';
@@ -48,6 +49,7 @@ export default class IpcController {
     @inject(DISymbol.AiTextService) private readonly aiText: AiTextService,
     @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
     @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
+    @inject(DISymbol.SearchService) private readonly searchService: SearchService,
   ) {
   }
 
@@ -68,6 +70,7 @@ export default class IpcController {
       youtubeMusic: this.youtubeMusic,
       hifiniMusic: this.hifiniMusic,
       providerManager: this.providerManager,
+      searchService: this.searchService,
     };
 
     registerSystemHandlers(context);

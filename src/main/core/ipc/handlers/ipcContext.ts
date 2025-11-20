@@ -13,6 +13,7 @@ import { WindowManager } from '@main/window/windowManager';
 import { ConfigService } from '@main/core/configService';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import { ProviderManager } from '@main/core/ProviderManager';
+import { SearchService } from '@main/services/SearchService';
 
 export interface IpcContext {
   windowManager: WindowManager;
@@ -30,4 +31,5 @@ export interface IpcContext {
   youtubeMusic: YouTubeMusic;
   hifiniMusic: HifiniMusic;
   providerManager: ProviderManager;
+  searchService: SearchService;
 }

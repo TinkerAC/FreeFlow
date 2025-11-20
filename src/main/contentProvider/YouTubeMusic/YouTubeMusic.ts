@@ -140,18 +140,33 @@ export default class YouTubeMusic extends AbstractContentProvider {
   private async searchMusicItems(
     keyword: string,
     type: 'song' | 'playlist',
-  ): Promise<YTNodes.MusicResponsiveListItem[]> {
+  ): Promise<(YTNodes.MusicResponsiveListItem | YTNodes.Video)[]> {
     const client = await this.ensureClient();
-    const searchResponse: any = await client.music.search(keyword, { type });
-
-    const collect = (candidate: any): YTNodes.MusicResponsiveListItem[] => {
+    // Note: We ignore the 'type' filter because it often returns "No results" or incorrect items (e.g. playlists when asking for songs).
+    // Instead, we perform a general search and let the caller filter the results using toTrackEntity or toPlaylistEntity.
+    const searchResponse: any = await client.music.search(keyword);
+    
+    const collect = (candidate: any): (YTNodes.MusicResponsiveListItem | YTNodes.Video)[] => {
       if (!candidate) return [];
       const pool: any[] = [];
       if (Array.isArray(candidate)) pool.push(...candidate);
       if (Array.isArray(candidate?.contents)) pool.push(...candidate.contents);
       if (Array.isArray(candidate?.results)) pool.push(...candidate.results);
       if (Array.isArray(candidate?.items)) pool.push(...candidate.items);
-      return pool
+
+      const flattenedPool: any[] = [];
+      for (const item of pool) {
+        if (!item) continue;
+        if (item.type === 'MusicShelf' || item.constructor?.name === 'MusicShelf') {
+          if (Array.isArray(item.contents)) {
+            flattenedPool.push(...item.contents);
+          }
+        } else {
+          flattenedPool.push(item);
+        }
+      }
+
+      return flattenedPool
         .filter(Boolean)
         .map((item) => {
           if (item instanceof YTNodes.MusicResponsiveListItem) return item;
@@ -163,7 +178,7 @@ export default class YouTubeMusic extends AbstractContentProvider {
         .filter(Boolean) as YTNodes.MusicResponsiveListItem[];
     };
 
-    const sections: YTNodes.MusicResponsiveListItem[] = [];
+    const sections: (YTNodes.MusicResponsiveListItem | YTNodes.Video)[] = [];
     sections.push(...collect(searchResponse));
     sections.push(...collect(searchResponse?.songs));
     sections.push(...collect(searchResponse?.playlists));
@@ -174,9 +189,53 @@ export default class YouTubeMusic extends AbstractContentProvider {
     return sections;
   }
 
-  private toTrackEntity(item: YTNodes.MusicResponsiveListItem): TrackEntity | null {
+  private toTrackEntity(item: YTNodes.MusicResponsiveListItem | YTNodes.Video): TrackEntity | null {
+    if (item.type === 'Video' || item.constructor?.name === 'Video') {
+        const video = item as YTNodes.Video;
+        const videoId = video.id;
+        if (!videoId) return null;
+        
+        const title = video.title?.text ?? video.title?.toString() ?? '';
+        const artist = video.author?.name ?? '';
+        const durationText = video.duration?.text ?? '';
+        // Parse duration "MM:SS" to seconds
+        let duration = 0;
+        if (durationText) {
+            const parts = durationText.split(':').map(Number);
+            if (parts.length === 2) {
+                duration = parts[0] * 60 + parts[1];
+            } else if (parts.length === 3) {
+                duration = parts[0] * 3600 + parts[1] * 60 + parts[2];
+            }
+        }
+        
+        const cover = this.pickThumbnail(video as any);
+
+        return YouTubeMusicTrackModel.build({
+            platform_unique_id: videoId,
+            title,
+            artist,
+            album: '',
+            duration,
+            cover_src: cover,
+        });
+    }
+
+    const anyItem = item as any;
+    // console.log(`toTrackEntity check: id=${item.id}, type=${anyItem.item_type}, title=${item.title}`);
+    if (anyItem.item_type && anyItem.item_type !== 'song' && anyItem.item_type !== 'video') {
+      return null;
+    }
+
     const videoId = item?.id ?? item?.endpoint?.payload?.videoId;
-    if (!videoId) return null;
+    if (!videoId) {
+      return null;
+    }
+
+    // Filter out non-video IDs (Playlists usually start with PL, VL, or MPSP)
+    if (videoId.startsWith('PL') || videoId.startsWith('MPSP') || videoId.startsWith('VL')) {
+       return null;
+    }
 
     const title = item?.title?.toString?.() ?? '';
     if (!title) return null;
@@ -206,8 +265,15 @@ export default class YouTubeMusic extends AbstractContentProvider {
     });
   }
 
-  private toPlaylistEntity(item: YTNodes.MusicResponsiveListItem): PlaylistEntity | null {
-    const raw = item as unknown as { playlist_id?: string };
+  private toPlaylistEntity(item: YTNodes.MusicResponsiveListItem | YTNodes.Video): PlaylistEntity | null {
+    if (item.type === 'Video' || item.constructor?.name === 'Video') {
+        return null;
+    }
+    const raw = item as any;
+    if (raw.item_type && raw.item_type !== 'playlist') {
+      return null;
+    }
+
     const playlistId = raw?.playlist_id ?? item?.id ?? item?.endpoint?.payload?.playlistId;
     if (!playlistId) return null;
 
@@ -268,6 +334,8 @@ export default class YouTubeMusic extends AbstractContentProvider {
     const options: any = {
       cache: new UniversalCache(false),
       generate_session_locally: true,
+      gl: 'US',
+      hl: 'en',
     };
 
     if (cookie) {
