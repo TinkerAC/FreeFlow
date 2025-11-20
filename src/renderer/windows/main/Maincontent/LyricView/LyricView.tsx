@@ -112,7 +112,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
 
       {/* 右：歌词（独立组件） */}
       <LyricScroller
-        title="歌词"
+        title='歌词'
         lines={lines}
         loading={loading || !lyric}
         error={error}

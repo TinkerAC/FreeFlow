@@ -1,4 +1,5 @@
 import { AbstractWindow } from '@main/window/AbstractWindow';
+import { isAppQuitting } from '@main/window/quitState';
 
 // 由 Electron Forge 注入
 declare const APP_WINDOW_WEBPACK_ENTRY: string;
@@ -25,8 +26,9 @@ export default class AppWindow extends AbstractWindow {
 
     this.openDevtoolsIfDev();
 
-    // 自定义关闭行为：隐藏到托盘
+    // 自定义关闭行为：隐藏到托盘，但真正退出时放行
     this.on('close', (e) => {
+      if (isAppQuitting()) return;
       e.preventDefault();
       this.hide();
     });

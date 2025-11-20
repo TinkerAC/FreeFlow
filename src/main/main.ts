@@ -1,6 +1,7 @@
 // file: src/main/core/core.ts
 import { app } from 'electron';
 import { WindowKey, WindowManager } from './window/windowManager';
+import { markQuitting } from './window/quitState';
 
 import ProxyServerManager from '@main/core/AudioProxyServer';
 import { ConfigService } from '@main/core/configService';
@@ -19,8 +20,6 @@ import { Channels } from '@src/shared/ipc/channels';
 import rootLogger from '@src/utils/logger';
 import { setAppMenu } from '@main/core/menu/Menu';
 import { Session } from '@main/database/seqimpl/Session';
-
-let isQuitting = false;
 
 const logger = rootLogger.child(
   { context: 'Main' },
@@ -130,28 +129,8 @@ if (!gotTheLock) {
   });
 
   // 触发退出
-  app.on('before-quit', (event) => {
-    if (!isQuitting) {
-      event.preventDefault();
-      isQuitting = true;
-
-      const mainWin = windowManager.get(WindowKey.MAIN);
-      if (mainWin) {
-        try {
-          mainWin.removeAllListeners('close');
-        } catch (e) {
-          console.error('移除窗口关闭事件失败', e);
-        }
-        // 向主渲染进程请求一次“保存用”的播放器状态（与常规 request-state 区分开）
-        mainWin.webContents.send(Channels.Player.RequestDump);
-      }
-
-      // 兜底强退
-      setTimeout(() => {
-        console.warn('强制退出：渲染进程未在超时内响应保存请求');
-        app.exit(0);
-      }, 3000);
-    }
+  app.on('before-quit', () => {
+    markQuitting();
   });
 
   // 真正退出前：注销快捷键

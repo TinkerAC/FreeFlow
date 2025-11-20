@@ -12,6 +12,28 @@ export function registerPlayerHandlers({ windowManager, dataPath }: IpcContext):
   const mainWindow = windowManager.get(WindowKey.MAIN);
   ipcMain.handle(Channels.Player.LoadState, async () => loadPlayer(dataPath.playerStateDumpFile));
 
+  // 简单的防抖函数
+  const debounce = (fn: Function, ms: number) => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    return function (this: any, ...args: any[]) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn.apply(this, args), ms);
+    };
+  };
+
+  // 防抖保存状态 (例如每 5 秒最多保存一次)
+  const debouncedSave = debounce((state: PlayerState) => {
+    savePlayer(dataPath.playerStateDumpFile, state);
+  }, 5000);
+
+  // 应用退出前确保保存最新状态
+  app.on('will-quit', () => {
+    if (lastPlayerState) {
+      rootLogger.info('[Player] 应用退出，保存最终播放器状态');
+      savePlayer(dataPath.playerStateDumpFile, lastPlayerState);
+    }
+  });
+
   ipcMain.on(Channels.Player.ReplyState, (_evt: IpcMainEvent, state: PlayerState, terminate: boolean) => {
     rootLogger.info(`[IPC][Player] 保存播放器状态，terminate=${terminate}`);
     savePlayer(dataPath.playerStateDumpFile, state);
@@ -36,6 +58,9 @@ export function registerPlayerHandlers({ windowManager, dataPath }: IpcContext):
 
   ipcMain.on(Channels.Player.State, (evt, state: PlayerState) => {
     lastPlayerState = state;
+    // 收到状态更新时，尝试防抖保存
+    debouncedSave(state);
+
     const candidates: (BrowserWindow | null)[] = [
       windowManager.get(WindowKey.MAIN),
       windowManager.get(WindowKey.MINI),

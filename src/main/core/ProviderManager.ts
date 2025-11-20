@@ -23,6 +23,18 @@ type ProviderToggles = {
 
 @injectable()
 export class ProviderManager {
+  /** 统一维护的 Provider 实例表，方便集中管理 */
+  private readonly providers = new Map<Platform, AbstractContentProvider>();
+
+  /** Platform 对应配置项 key 的映射表（未在配置中的平台默认始终启用） */
+  private readonly toggleKeyByPlatform: Partial<Record<Platform, keyof ProviderToggles>> = {
+    [Platform.NET_EASE_CLOUD_MUSIC]: 'netease',
+    [Platform.QQ_MUSIC]: 'qq',
+    [Platform.BILIBILI]: 'bilibili',
+    [Platform.YOUTUBE_MUSIC]: 'youtubeMusic',
+    [Platform.HIFINI]: 'hifini',
+  };
+
   constructor(
     @inject(DISymbol.ConfigService) private readonly config: ConfigService,
     @inject(DISymbol.NetEaseCloudMusic) private readonly netease: NetEaseCloudMusic,
@@ -32,51 +44,56 @@ export class ProviderManager {
     @inject(DISymbol.HifiniMusic) private readonly hifini: HifiniMusic,
     @inject(DISymbol.Logger) private readonly logger: Logger,
   ) {
+    this.providers.set(Platform.NET_EASE_CLOUD_MUSIC, this.netease);
+    this.providers.set(Platform.QQ_MUSIC, this.qq);
+    this.providers.set(Platform.BILIBILI, this.bilibili);
+    this.providers.set(Platform.YOUTUBE_MUSIC, this.youtube);
+    this.providers.set(Platform.HIFINI, this.hifini);
   }
 
-  isEnabled(platform: Platform): boolean {
-    // 提供商开关
-    const t = {
-      netease: true,
-      qq: true,
-      bilibili: true,
-      youtubeMusic: false,
-      hifini: true,
+  /**
+   * 读取配置中的 Provider 开关，如未配置则回退到默认开启。
+   */
+  private readToggles(): Required<ProviderToggles> {
+    const toggles = (this.config.get('services.providers') ?? {}) as ProviderToggles;
+    return {
+      netease: toggles.netease !== false,
+      qq: toggles.qq !== false,
+      bilibili: toggles.bilibili !== false,
+      youtubeMusic: true,
+      hifini: toggles.hifini !== false,
     };
-    switch (platform) {
-      case Platform.NET_EASE_CLOUD_MUSIC:
-        return t.netease !== false;
-      case Platform.QQ_MUSIC:
-        return t.qq !== false;
-      case Platform.BILIBILI:
-        return t.bilibili !== false;
-      case Platform.YOUTUBE_MUSIC:
-        return t.youtubeMusic !== false;
-      case Platform.HIFINI:
-        return t.hifini !== false;
-      case Platform.LOCAL:
-        return true;
-      default:
-        return true;
+  }
+
+  private getToggleKey(platform: Platform): keyof ProviderToggles | null {
+    return this.toggleKeyByPlatform[platform] ?? null;
+  }
+
+  /**
+   * 判断目标平台的 Provider 是否被启用。
+   */
+  isEnabled(platform: Platform, toggles?: Required<ProviderToggles>): boolean {
+    const key = this.getToggleKey(platform);
+    if (!key) return true;
+    const resolved = toggles ?? this.readToggles();
+    return resolved[key] !== false;
+  }
+
+  /**
+   * 更新指定平台的启用状态，同时写回配置。
+   */
+  setEnabled(platform: Platform, enabled: boolean): void {
+    const key = this.getToggleKey(platform);
+    if (!key) {
+      this.logger.warn(`Provider toggle ignored for platform without config key: ${platform}`);
+      return;
     }
+    this.config.setByPath(`services.providers.${key}`, enabled);
   }
 
   tryResolve(platform: Platform): AbstractContentProvider | null {
     if (!this.isEnabled(platform)) return null;
-    switch (platform) {
-      case Platform.NET_EASE_CLOUD_MUSIC:
-        return this.netease;
-      case Platform.QQ_MUSIC:
-        return this.qq;
-      case Platform.BILIBILI:
-        return this.bilibili;
-      case Platform.YOUTUBE_MUSIC:
-        return this.youtube;
-      case Platform.HIFINI:
-        return this.hifini;
-      default:
-        return null;
-    }
+    return this.providers.get(platform) ?? null;
   }
 
   resolve(platform: Platform): AbstractContentProvider {
@@ -87,10 +104,10 @@ export class ProviderManager {
 
   listEnabled(): Array<{ platform: Platform; provider: AbstractContentProvider }> {
     const out: Array<{ platform: Platform; provider: AbstractContentProvider }> = [];
-    (Object.values(Platform) as Platform[]).forEach((pf) => {
-      const p = this.tryResolve(pf);
-      if (p) out.push({ platform: pf, provider: p });
-    });
+    const toggles = this.readToggles();
+    for (const [platform, provider] of this.providers.entries()) {
+      if (this.isEnabled(platform, toggles)) out.push({ platform, provider });
+    }
     return out;
   }
 
@@ -101,6 +118,7 @@ export class ProviderManager {
 
   /* ---------------------- 聚合搜索 ---------------------- */
   async searchFusion(keyword: string): Promise<FusionSearchResult> {
+    // 当所有 Provider 都禁用或不支持搜索时，统一返回空结果以降低调用方判断成本
     const EMPTY: FusionSearchResult = { track_result: [], playlist_result: [] };
     const tasks: Array<Promise<FusionSearchResult>> = [];
 
