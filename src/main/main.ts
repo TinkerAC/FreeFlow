@@ -16,7 +16,6 @@ import ShortCutManager from '@main/core/ShortCutManager';
 import { getOperatingSystem } from '@src/utils/helpers';
 import chalk from 'chalk';
 import { OS } from '@src/shared/OS';
-import { Channels } from '@src/shared/ipc/channels';
 import rootLogger from '@src/utils/logger';
 import { setAppMenu } from '@main/core/menu/Menu';
 import { Session } from '@main/database/seqimpl/Session';

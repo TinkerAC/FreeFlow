@@ -1,243 +1,90 @@
 // src/renderer/components/Application.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import './App.css';
 import './tailwind.css';
+
+// Components
+import AppFrame from '@renderer/layout/AppFrame/AppFrame';
+import ContentGrid from '@renderer/layout/ContentGrid/ContentGrid';
 import TopBar from '@renderer/windows/main/TopBar/TopBar';
 import MusicLibrary from '@renderer/windows/main/Musiclibrary/Musiclibrary';
 import PlayerBar from '@renderer/windows/main/Playerbar/PlayerBar';
-import { playerContext, shortcutContext } from '@renderer/core/electronContextApi';
-import PlayerController from '@renderer/core/controller/PlayerController';
-import { useLocation } from 'react-router-dom';
-import { PlayerState } from '@src/shared/domainModel/playerState';
-import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
-import chalk from 'chalk';
-import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
-import MainWindowController from '@renderer/core/controller/MainWindowController';
-import { PlaybackMode } from '@renderer/core/enum/PlaybackMode';
-import AppFrame from '@renderer/layout/AppFrame/AppFrame';
-import ContentGrid from '@renderer/layout/ContentGrid/ContentGrid';
-import RightContent from '@renderer/windows/main/RightContent/RightContent';
+import MainContentSwitch from '@renderer/windows/main/Maincontent/MainContentSwitch';
 import RightDock from '@renderer/windows/main/RightContent/RightDock';
+import RightContent from '@renderer/windows/main/RightContent/RightContent';
 import MiniPlayer from '@renderer/windows/MiniPlayer/MiniPlayer';
 import { NavigationProvider, ViewType } from '@renderer/core/navigation';
-import MainContentSwitch from '@renderer/windows/main/Maincontent/MainContentSwitch';
-//TODO:fully remove tailwind.css
+
+// Controllers & Models
+import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
+import MainWindowController from '@renderer/core/controller/MainWindowController';
+import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+
+// Hooks (New!)
+import { usePlayerFactory } from '@renderer/hooks/usePlayerFactory';
+import { useIpcBridge } from '@renderer/hooks/useIPCBridge';
+
 const ApplicationContent: React.FC = () => {
-  /* ---------- 1. 实例化服务和导航栈（惰性初始化） ---------- */
+  const location = useLocation();
+  const isMini = location.pathname === '/mini';
+
+  /* ---------- 1. 服务实例化 ---------- */
+  // 使用 Ref 保持单例
   const musicServiceRef = useRef<MusicLibraryController | null>(null);
-  if (musicServiceRef.current === null) {
+  if (!musicServiceRef.current) {
     musicServiceRef.current = new MusicLibraryController();
   }
-
   const mainWindowServiceRef = useRef<MainWindowController | null>(null);
-  if (mainWindowServiceRef.current === null) {
+  if (!mainWindowServiceRef.current) {
     mainWindowServiceRef.current = new MainWindowController();
   }
 
-  /* ---------- 3. 绑定 MainWindowController 状态 ---------- */
+  const musicLibraryController = musicServiceRef.current!;
+  const mainWindowController = mainWindowServiceRef.current!;
+
+  /* ---------- 2. UI 状态绑定 ---------- */
+  // 这里也可以进一步封装成 useMainWindowState(service)
   const [isMusicLibraryCollapsed, setIsMusicLibraryCollapsed] = useState(
-    musicServiceRef.current.isMusicLibraryCollapsed,
+    musicLibraryController.isMusicLibraryCollapsed,
   );
   const [isRightContentVisible, setIsRightContentVisible] = useState(
-    mainWindowServiceRef.current.isRightContentVisible,
+    mainWindowController.isRightContentVisible,
   );
 
-  useEffect(() => {
-    const unsub = mainWindowServiceRef.current!.subscribe(() => {
-      setIsRightContentVisible(mainWindowServiceRef.current!.isRightContentVisible);
-    });
-
-    return () => {
-      unsub();
-      mainWindowServiceRef.current!.dispose();
-    };
-  }, []);
-
-  useEffect(() => {
-    const unsub = musicServiceRef.current!.subscribe(() => {
-      setIsMusicLibraryCollapsed(musicServiceRef.current!.isMusicLibraryCollapsed);
-    });
-    return () => {
-      unsub();
-    };
-  }, []);
-
-  /* ---------- 5. 播放器逻辑 ---------- */
-  const location = useLocation();
-  const isMini = location.pathname === '/mini';
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const playerInstanceRef = useRef<PlayerController | null>(null);
-  const [playerState, setPlayerState] = useState<PlayerState>({
-    queue: { queue: [], indexList: [], currentIndex: 0 },
-    volume: 0.5,
-    playbackMode: PlaybackMode.LOOP,
-    audioSrc: '',
-    isPlaying: false,
-    isLoading: false,
-    currentTime: 0,
-  });
-
-
-  useEffect(() => {
-    if (isMini) return; // 单持有者：迷你窗口不创建播放器
-    const initPlayer = async () => {
-      const dump = await playerContext.getPlayerStateFromMain();
-      if (audioRef.current && !playerInstanceRef.current) {
-        const player = new PlayerController(audioRef.current);
-
-        player.subscribe((st: PlayerState) => {
-          setPlayerState(st);
-          // 向主进程广播实时状态，供 Mini 订阅
-          playerContext.broadcastState(st);
-        });
-
-        playerInstanceRef.current = player;
-        if (dump) {
-          try {
-            await player.loadFromDump(dump);
-          } catch (e) {
-            console.error('从 dump 初始化播放器失败', e);
-          }
-        }
-        console.log(chalk.green('播放器初始化完成!'));
-      }
-    };
-    initPlayer().then(
-      () => console.info(chalk.green('播放器初始化成功')),
+  // 简单的订阅逻辑（如果想进一步解耦，可以把这个 useEffect 也移出去）
+  React.useEffect(() => {
+    const unsubMain = mainWindowController.subscribe(() =>
+      setIsRightContentVisible(mainWindowController.isRightContentVisible),
     );
-  }, [audioRef.current, isMini]);
-
-  useEffect(() => {
-    if (isMini) return;
-    const handleReqState = () => {
-      const player = playerInstanceRef.current;
-      if (player) {
-        playerContext.broadcastState(player.dumpPlayerState());
-      }
-    };
-    const handleDumpReq = () => {
-      const player = playerInstanceRef.current;
-      if (player) {
-        try {
-          playerContext.sendPlayerState(player.dumpPlayerState(),false);
-        } catch {
-          console.error(chalk.red('导出播放器状态失败，发送空状态至主进程。'));
-        }
-      } else {
-        console.error(
-          chalk.red('播放器未初始化，无法导出状态，发送空状态至主进程。'),
-        )
-      }
-    };
-    const handleShortcut = (data: string) => {
-      const player = playerInstanceRef.current;
-      if (!player) return;
-      switch (data) {
-        case 'prev':
-          player.playPrevious().then(() => console.info(chalk.green('播放上一首成功')));
-          break;
-        case 'next':
-          player.playNext().then(() => console.info(chalk.green('播放下一首成功')));
-          break;
-        case 'play-pause':
-          player.togglePlayPause();
-          break;
-        case 'volume-up':
-          player.changeVolume(0.1);
-          break;
-        case 'volume-down':
-          player.changeVolume(-0.1);
-          break;
-      }
-    };
-    const handleNotif = (msg: string) => alert(msg);
-
-    playerContext.onRequestPlayerState(handleReqState);
-    // 单独监听“退出保存”请求
-    const offDump = (playerContext as any).onDumpRequest?.(handleDumpReq);
-    shortcutContext.onShortcut(handleShortcut);
-    playerContext.onNotification(handleNotif);
+    const unsubMusic = musicLibraryController.subscribe(() =>
+      setIsMusicLibraryCollapsed(musicLibraryController.isMusicLibraryCollapsed),
+    );
     return () => {
-      playerContext.removeRequestPlayerStateListener();
-      try {
-        offDump?.();
-      } catch {
-      }
-      shortcutContext.removeShortcutListener();
-      playerContext.removeRequestPlayerStateListener();
+      unsubMain();
+      unsubMusic();
     };
-  }, [isMini]);
+  }, [mainWindowController, musicLibraryController]);
 
-  // 接收来自主进程的控制命令，仅主窗口处理
-  useEffect(() => {
-    if (isMini) return;
-    const offControl = window.mainApi.playerApi.onControl((cmd: string, payload: any) => {
-      const p = playerInstanceRef.current;
-      if (!p) return;
-      const push = () => {
-        try {
-          playerContext.broadcastState(p.dumpPlayerState());
-        } catch {
-        }
-      };
-      switch (cmd) {
-        case 'play':
-          p.play();
-          push();
-          break;
-        case 'pause':
-          p.pause();
-          push();
-          break;
-        case 'toggle':
-          p.togglePlayPause();
-          push();
-          break;
-        case 'next': {
-          const pr = p.playNext();
-          push();
-          pr.finally(push);
-          break;
-        }
-        case 'prev': {
-          const pr = p.playPrevious();
-          push();
-          pr.finally(push);
-          break;
-        }
-        case 'seek':
-          if (typeof payload === 'number') {
-            p.setCurrentTime(payload);
-            push();
-          }
-          break;
-        case 'setVolume':
-          if (typeof payload === 'number') {
-            p.setVolume(payload);
-            push();
-          }
-          break;
-      }
-    });
-    return () => {
-      offControl?.();
-    };
-  }, [isMini]);
+  /* ---------- 3. 播放器核心逻辑 (解耦后) ---------- */
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  // 注意：不要在 loadedmetadata 时强行设置 currentTime = duration，
-  // 这会覆盖从 dump 恢复的进度。保留由 PlayerController 自行恢复/管理。
+  // A. 创建播放器
+  const { playerInstance, playerState } = usePlayerFactory(audioRef, isMini);
 
-  /* ---------- 6. 搜索结果 ---------- */
+  // B. 绑定 IPC 通信 (当 playerInstance 准备好后自动生效)
+  useIpcBridge(playerInstance, isMini);
+
+  /* ---------- 4. 搜索结果状态 ---------- */
   const [searchResults, setSearchResults] = useState<FusionSearchResult>({
     track_result: [],
     playlist_result: [],
   });
 
-  /* ---------- 7. UI ---------- */
+  /* ---------- 5. 渲染视图 ---------- */
   if (isMini) {
     return (
       <div className="App h-full w-full flex flex-col bg-transparent">
-        {/* 单持有者：迷你窗口不挂载 <audio>，不创建 PlayerController */}
         <MiniPlayer player={null} />
       </div>
     );
@@ -251,7 +98,7 @@ const ApplicationContent: React.FC = () => {
         top={
           <TopBar
             setSearchResults={setSearchResults}
-            player={playerInstanceRef.current}
+            player={playerInstance} // 注意：现在直接传实例，不再依赖 Ref.current 的不确定性
           />
         }
         content={
@@ -259,39 +106,34 @@ const ApplicationContent: React.FC = () => {
             sidebarCollapsed={isMusicLibraryCollapsed}
             rightVisible={isRightContentVisible}
             left={
-              <MusicLibrary
-                musicLibraryController={musicServiceRef.current!}
-              />
+              <MusicLibrary musicLibraryController={musicLibraryController} />
             }
             main={
               <MainContentSwitch
-                player={playerInstanceRef.current}
+                player={playerInstance}
                 searchResults={searchResults}
-                musicLibraryController={musicServiceRef.current!}
+                musicLibraryController={musicLibraryController}
                 keepAlive={false}
               />
             }
             right={
               <RightDock>
-                <RightContent player={playerInstanceRef.current} />
+                <RightContent player={playerInstance} />
               </RightDock>
             }
           />
         }
         bottom={
           <PlayerBar
-            player={playerInstanceRef.current}
-            onToggleRightContent={() => mainWindowServiceRef.current!.toggleRightContent()}
+            player={playerInstance}
+            onToggleRightContent={() => mainWindowController.toggleRightContent()}
           />
         }
       />
     </div>
   );
-
-
 };
 
-// Wrap with NavigationProvider
 const Application: React.FC = () => {
   return (
     <NavigationProvider initialView={ViewType.PLAYLIST}>
