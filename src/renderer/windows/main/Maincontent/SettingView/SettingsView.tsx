@@ -40,8 +40,12 @@ export default function SettingsView() {
           left: activeButton.offsetLeft,
           width: activeButton.offsetWidth,
         });
-        // 第一次渲染后标记为 false
-        isFirstRender.current = false;
+        // 第一次渲染后，延迟标记为 false，确保本次更新（从0到有）不应用过渡动画
+        if (isFirstRender.current) {
+          setTimeout(() => {
+            isFirstRender.current = false;
+          }, 50);
+        }
       }
     };
     updateIndicator();
@@ -86,6 +90,7 @@ export default function SettingsView() {
             transition: isFirstRender.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
             zIndex: 0,
+            opacity: indicatorStyle.width > 0 ? 1 : 0, // 只有计算出宽度后才显示
           }}
         />
 

@@ -53,6 +53,7 @@ export default function SearchResultView({
   return (
     <ViewShell
       header={<TabNav activeTab={activeTab} onTabChange={setActiveTab} />}
+      hideScrollbar
     >
       <div className={styles.content}>
         {activeTab === 'popular' && (

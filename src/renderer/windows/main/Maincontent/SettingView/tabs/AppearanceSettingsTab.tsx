@@ -18,6 +18,7 @@ function ThemeSettingsSection() {
   const themeMode = useSetting<ThemeMode>('theme.mode', 'system');
   const themeSource = useSetting<ThemeSource>('theme.source', 'material-you');
   const seedHex = useSetting<string>('theme.seed', '#66ccff');
+  const autoDailySeed = useSetting<boolean>('theme.autoDailySeed', false);
   const preset = useSetting<ThemePreset>('theme.preset', 'classic');
   const progressSkin = useSetting<ProgressSkin>('audio.progressSkin', 'classic');
   const [showPresetPalette, setShowPresetPalette] = React.useState(false);
@@ -73,8 +74,19 @@ function ThemeSettingsSection() {
 
       {/* Material You 种子色设置 */}
       {showMaterialControls && (
-        <SettingRow
-          label="基础种子色"
+        <>
+          <SettingRow
+            label="每日随机"
+            sub="每天自动生成一个新的主题色"
+            control={(
+              <Switch
+                checked={autoDailySeed.value}
+                onChange={autoDailySeed.setValue}
+              />
+            )}
+          />
+          <SettingRow
+            label="基础种子色"
           sub="选择一个主色调来生成整体配色方案"
           control={(
             <div style={{
@@ -242,7 +254,9 @@ function ThemeSettingsSection() {
             </div>
           )}
         />
-      )} <SettingRow
+      </>)}
+      
+      <SettingRow
       label="进度条皮肤"
       sub="Classic / Neon / Waveform / Knob"
       control={(

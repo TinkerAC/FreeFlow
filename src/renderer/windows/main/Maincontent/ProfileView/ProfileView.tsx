@@ -128,7 +128,7 @@ function ProfileView() {
   const avatarSrc = avatarPath ? `file://${avatarPath}` : AVATAR_PLACEHOLDER_DATA;
 
   return (
-    <ViewShell>
+    <ViewShell hideScrollbar>
       <div className={styles.root}>
         <div className={styles.container}>
           {/* 顶部 */}
