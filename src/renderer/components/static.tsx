@@ -12,7 +12,7 @@ import QQMusic from '@assets/icons/QQMusic.svg';
 import debug from '@assets/icons/debug.svg';
 import Bilibili from '@assets/icons/Bilibili.svg';
 import YouTubeMusic from '@assets/icons/YouTubeMusic.svg';
-
+import YouTube from '@assets/icons/YouTube.svg';
 import DefaultCover from '@assets/default-cover.png';
 
 
@@ -32,6 +32,7 @@ export {
   debug,
   Bilibili,
   YouTubeMusic,
+  YouTube,
 };
 
 

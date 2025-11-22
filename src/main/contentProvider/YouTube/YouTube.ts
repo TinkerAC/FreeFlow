@@ -21,8 +21,10 @@ export default class YouTube extends AbstractContentProvider {
   public readonly platformName = Platform.YOUTUBE;
   public readonly serverNodes: string[] = [];
 
-  private client?: Innertube;
-  private clientPromise?: Promise<Innertube>;
+  private searchClient?: Innertube;
+  private playerClient?: Innertube;
+  private searchClientPromise?: Promise<Innertube>;
+  private playerClientPromise?: Promise<Innertube>;
 
   constructor(
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
@@ -34,7 +36,7 @@ export default class YouTube extends AbstractContentProvider {
   public async searchTrack(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {
     const items = await this.searchVideoItems(keyword);
     const seen = new Set<string>();
-    return items
+    const tracks = items
       .map((item) => this.toTrackEntity(item))
       .filter((track): track is TrackEntity => {
         if (!track) return false;
@@ -43,14 +45,18 @@ export default class YouTube extends AbstractContentProvider {
         seen.add(key);
         return true;
       });
+
+    this.logger.info(`
+YouTube 搜索结果:
+  找到视频: ${tracks.length} 个
+${tracks.map((track) => `  - ${track.title} (${track.duration}s)`).join('\n')}
+`);
+
+    return tracks;
   }
 
   public async search(keyword: string, filterPaid = true): Promise<FusionSearchResult> {
     const tracks = await this.searchTrack(keyword, filterPaid);
-    // YouTube mainly returns videos, treating them as tracks. Playlists are possible but let's focus on tracks for now or implement playlist search if needed.
-    // For now, let's return empty playlists or implement basic playlist search if easy.
-    // Let's stick to tracks for the "Video Platform" provider as requested context implies separating music and video.
-    
     return {
       track_result: tracks,
       playlist_result: [],
@@ -58,14 +64,16 @@ export default class YouTube extends AbstractContentProvider {
   }
 
   public async getTrackLink(uniqueId: string): Promise<string> {
-    const client = await this.ensureClient();
-    const info = await client.getInfo(uniqueId); // Use general getInfo
+    const client = await this.ensurePlayerClient();
+    const info = await client.getBasicInfo(uniqueId);
     const streaming = info?.streaming_data;
 
     const adaptive = streaming?.adaptive_formats ?? [];
     const formats = streaming?.formats ?? [];
+    const allFormats = [...adaptive, ...formats];
 
-    const audioFormat = [...adaptive, ...formats].find((format: any) => {
+    // Filter for audio-only formats
+    const audioFormats = allFormats.filter((format: any) => {
       if (!format) return false;
       if (typeof format.has_audio === 'boolean' && typeof format.has_video === 'boolean') {
         return format.has_audio && !format.has_video;
@@ -74,34 +82,49 @@ export default class YouTube extends AbstractContentProvider {
       return mime.includes('audio');
     });
 
-    if (!audioFormat) {
-      // Fallback to video format if no audio-only format found (unlikely for YouTube, but possible)
-       const videoFormat = [...adaptive, ...formats].find((format: any) => {
-          return format.has_audio;
-       });
-       if (videoFormat) return videoFormat.url || (videoFormat.decipher ? videoFormat.decipher(client.session.player) : '');
+    this.logger.info(`[YouTube] Found ${audioFormats.length} audio formats for ${uniqueId}`);
+    audioFormats.forEach((f: any) => {
+        this.logger.info(`  - itag: ${f.itag}, mime: ${f.mime_type}, url: ${!!f.url}, decipher: ${!!f.decipher}`);
+    });
 
-      throw new Error(`[YouTube] 未找到可用的音频流: ${uniqueId}`);
+    // 1. Prefer formats with direct URL
+    const directFormat = audioFormats.find((f: any) => f.url);
+    if (directFormat) {
+        this.logger.info(`[YouTube] Using direct URL format itag: ${directFormat.itag}`);
+        return directFormat.url;
     }
 
-    if (typeof audioFormat.url === 'string' && audioFormat.url.length > 0) {
-      return audioFormat.url;
-    }
-
-    if (typeof audioFormat.decipher === 'function') {
-      try {
-        return audioFormat.decipher(client.session.player);
-      } catch (err) {
-        throw new Error(`[YouTube] 解密音频流失败: ${String(err)}`);
+    // 2. If no direct URL, try to decipher
+    // Try all formats that have decipher
+    for (const format of audioFormats) {
+      if (format.decipher) {
+        try {
+          const url = await format.decipher(client.session.player);
+          if (url) {
+             this.logger.info(`[YouTube] Deciphered URL for itag: ${format.itag}`);
+             return url;
+          }
+        } catch (e) {
+          this.logger.warn(`[YouTube] Decipher failed for format ${format.itag}: ${e}`);
+          continue;
+        }
       }
+    }
+
+    if (audioFormats.length === 0) {
+      // Fallback to video format if no audio-only format found
+      const videoFormat = allFormats.find((format: any) => format.has_audio);
+      if (videoFormat) {
+        if (videoFormat.url) return videoFormat.url;
+        if (videoFormat.decipher) return await videoFormat.decipher(client.session.player);
+      }
+      throw new Error(`[YouTube] 未找到可用的音频流: ${uniqueId}`);
     }
 
     throw new Error(`[YouTube] 无法解析音频流 URL: ${uniqueId}`);
   }
 
   public async getLyrics(_uniqueId: string): Promise<Lyric> {
-    // YouTube videos usually don't have structured lyrics in the same way Music does.
-    // Captions could be an option but that's complex. Returning empty for now.
     return new Lyric();
   }
 
@@ -110,12 +133,17 @@ export default class YouTube extends AbstractContentProvider {
   }
 
   private async searchVideoItems(keyword: string): Promise<YTNodes.Video[]> {
-    const client = await this.ensureClient();
-    const searchResponse = await client.search(keyword);
-    
-    if (!searchResponse.results) return [];
+    try {
+      const client = await this.ensureSearchClient();
+      const searchResponse = await client.search(keyword);
 
-    return searchResponse.results.filter((item: any) => item.type === 'Video' || item.constructor?.name === 'Video') as YTNodes.Video[];
+      if (!searchResponse.results) return [];
+
+      return searchResponse.results.filter((item: any) => item.type === 'Video' || item.constructor?.name === 'Video') as YTNodes.Video[];
+    } catch (error) {
+      this.logger.error(`[YouTube] Search failed: ${error}`);
+      return [];
+    }
   }
 
   private toTrackEntity(item: YTNodes.Video): TrackEntity | null {
@@ -142,7 +170,7 @@ export default class YouTube extends AbstractContentProvider {
       platform_unique_id: videoId,
       title,
       artist,
-      album: '', // YouTube videos don't strictly belong to an album in the search result context
+      album: '', 
       duration,
       cover_src: cover,
     });
@@ -157,25 +185,43 @@ export default class YouTube extends AbstractContentProvider {
     return '';
   }
 
-  private async ensureClient(): Promise<Innertube> {
-    if (this.client) return this.client;
-    if (this.clientPromise) return this.clientPromise;
+  private async ensureSearchClient(): Promise<Innertube> {
+    if (this.searchClient) return this.searchClient;
+    if (this.searchClientPromise) return this.searchClientPromise;
 
-    this.clientPromise = this.createClient()
+    this.searchClientPromise = this.createClient('WEB')
       .then((client) => {
-        this.client = client;
-        this.clientPromise = undefined;
+        this.searchClient = client;
+        this.searchClientPromise = undefined;
         return client;
       })
       .catch((error) => {
-        this.clientPromise = undefined;
+        this.searchClientPromise = undefined;
         throw error;
       });
 
-    return this.clientPromise;
+    return this.searchClientPromise;
   }
 
-  private async createClient(): Promise<Innertube> {
+  private async ensurePlayerClient(): Promise<Innertube> {
+    if (this.playerClient) return this.playerClient;
+    if (this.playerClientPromise) return this.playerClientPromise;
+
+    this.playerClientPromise = this.createClient('ANDROID')
+      .then((client) => {
+        this.playerClient = client;
+        this.playerClientPromise = undefined;
+        return client;
+      })
+      .catch((error) => {
+        this.playerClientPromise = undefined;
+        throw error;
+      });
+
+    return this.playerClientPromise;
+  }
+
+  private async createClient(type: 'WEB' | 'ANDROID'): Promise<Innertube> {
     const settings = (this.configService.get('services.youtube') ?? {}) as YouTubeSettings;
     const cookie = settings.cookie?.trim();
     const options: any = {
@@ -183,6 +229,7 @@ export default class YouTube extends AbstractContentProvider {
       generate_session_locally: true,
       gl: 'US',
       hl: 'en',
+      client_type: type,
     };
 
     if (cookie) {

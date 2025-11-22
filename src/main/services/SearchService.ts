@@ -11,12 +11,16 @@ export class SearchService {
     @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
   ) {}
 
-  async searchFusion(keyword: string): Promise<FusionSearchResult> {
+  async searchFusion(keyword: string, safeMode: boolean = false): Promise<FusionSearchResult> {
     // 当所有 Provider 都禁用或不支持搜索时，统一返回空结果以降低调用方判断成本
     const EMPTY: FusionSearchResult = { track_result: [], playlist_result: [] };
     const tasks: Array<Promise<FusionSearchResult>> = [];
 
-    for (const { provider } of this.providerManager.listEnabled()) {
+    const providers = safeMode
+      ? this.providerManager.getSafeProviders().map((p) => ({ platform: p.platformName, provider: p }))
+      : this.providerManager.listEnabled();
+
+    for (const { provider } of providers) {
       // 同时兼容 provider.search 与仅有 searchTracks 的实现
       const p: any = provider as any;
       if (typeof p.search === 'function') {

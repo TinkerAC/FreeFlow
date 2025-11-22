@@ -25,6 +25,12 @@ export abstract class AbstractContentProvider {
   protected abstract readonly logger: Logger;
 
   /**
+   * 是否为受审查平台（如中国大陆平台）
+   * 默认为 false，子类可覆盖
+   */
+  isCensored: boolean = false;
+
+  /**
    * 根据关键词搜索歌曲，返回统一的 TrackRecord 数组
    * @param keyword 搜索关键词
    * @param filterPaid 是否过滤付费歌曲

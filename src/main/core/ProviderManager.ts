@@ -117,4 +117,8 @@ export class ProviderManager {
   getEnabledProviders(): AbstractContentProvider[] {
     return this.listEnabled().map(({ provider }) => provider);
   }
+
+  getSafeProviders(): AbstractContentProvider[] {
+    return this.getEnabledProviders().filter((p) => !p.isCensored);
+  }
 }

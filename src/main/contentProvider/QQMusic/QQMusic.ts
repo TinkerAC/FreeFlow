@@ -15,6 +15,7 @@ export class QQMusic extends AbstractContentProvider {
 
   public readonly platformName: Platform;
   public readonly serverNodes: string[];
+  public readonly isCensored = true;
   private readonly base_url: string;
 
   constructor(

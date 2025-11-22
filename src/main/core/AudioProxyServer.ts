@@ -6,6 +6,7 @@ import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
+import YouTube from '@main/contentProvider/YouTube/YouTube';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 import { PassThrough } from 'stream';
@@ -44,6 +45,7 @@ class ProxyServerManager {
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
     @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
+    @inject(DISymbol.YouTube) private readonly youtube: YouTube,
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
     @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
     @inject(DISymbol.Logger) private readonly logger: Logger,
@@ -458,6 +460,8 @@ class ProxyServerManager {
         return this.bilibili.getTrackLink(platformUniqueId);
       case Platform.YOUTUBE_MUSIC:
         return this.youtubeMusic.getTrackLink(platformUniqueId);
+      case Platform.YOUTUBE:
+        return this.youtube.getTrackLink(platformUniqueId);
       default:
         throw new BadRequestError('Unsupported platform.');
     }

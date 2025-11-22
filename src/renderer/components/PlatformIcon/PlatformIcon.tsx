@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bilibili, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic } from '@components/static';
+import { Bilibili, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic ,YouTube} from '@components/static';
 import styles from './PlatformIcon.module.css';
 
 type PlatformType = 'NetEaseCloudMusic' | 'Hifini' | 'QQMusic' | 'Bilibili' | 'YouTubeMusic' | string;
@@ -37,6 +37,8 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
     QQMusic,
     Bilibili,
     YouTubeMusic,
+    YouTube,
+    
   };
 
   const iconSrc = platformIconMap[platform];

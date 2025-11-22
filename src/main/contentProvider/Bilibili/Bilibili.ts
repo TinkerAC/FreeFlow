@@ -15,6 +15,7 @@ import { NotImplementedError } from '@main/core/exceptions/NotImplementedError';
 export default class Bilibili extends AbstractContentProvider {
   public readonly platformName = Platform.BILIBILI;
   public readonly serverNodes = ['https://api.bilibili.com'];
+  public readonly isCensored = true;
 
   constructor(
     @inject(DISymbol.BilibiliService) private bilibili: BilibiliService,

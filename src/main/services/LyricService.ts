@@ -79,7 +79,14 @@ export class LyricService {
     }
 
     // a. 并发搜索所有已启用的平台，并排序
-    const enabled_provider = this.providerManager.getEnabledProviders();
+    let enabled_provider = this.providerManager.getEnabledProviders();
+
+    // 如果来源是不审查的平台，则只使用不审查的平台进行搜索
+    const sourceProvider = this.providerManager.tryResolve(track_model.platform as Platform);
+    if (sourceProvider && !sourceProvider.isCensored) {
+      enabled_provider = enabled_provider.filter((p) => !p.isCensored);
+    }
+
     const searchResults = await this.searchAndSortProviders(enabled_provider, keyword);
 
     // b. 找出候选列表的最大深度
