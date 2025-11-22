@@ -13,9 +13,9 @@ export function registerSearchHandlers({
                                        }: IpcContext): void {
 
 
-  ipcMain.handle(Channels.Search.GetResults, async (_evt: IpcMainInvokeEvent, keywords: string) => {
-    console.log('后端收到搜索请求:', keywords);
-    return await searchService.searchFusion(keywords);
+  ipcMain.handle(Channels.Search.GetResults, async (_evt: IpcMainInvokeEvent, keywords: string, safeMode: boolean = false) => {
+    console.log('后端收到搜索请求:', keywords, 'SafeMode:', safeMode);
+    return await searchService.searchFusion(keywords, safeMode);
   });
 
   ipcMain.handle(Channels.Search.LocalSearch, async (_evt: IpcMainInvokeEvent, keywords: string) => {

@@ -112,7 +112,7 @@ const mainApi: MainApi = {
   },
 
   searchApi: {
-    getSearchResults: (term) => ipcRenderer.invoke(Channels.Search.GetResults, term),
+    getSearchResults: (term, safeMode = false) => ipcRenderer.invoke(Channels.Search.GetResults, term, safeMode),
     localSearch: (term) => ipcRenderer.invoke(Channels.Search.LocalSearch, term),
     getPlaylistDetail: function(platform: string, platform_unique_id: string): Promise<PlaylistEntity> {
       return ipcRenderer.invoke(Channels.Search.GetPlaylistDetail, platform, platform_unique_id);

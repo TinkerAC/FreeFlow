@@ -119,7 +119,7 @@ export interface FusionSearchResult {
 }
 
 export interface SearchApi {
-  getSearchResults(term: string): Promise<FusionSearchResult>;
+  getSearchResults(term: string, safeMode?: boolean): Promise<FusionSearchResult>;
 
   localSearch(term: string): Promise<TrackEntity[]>;
 

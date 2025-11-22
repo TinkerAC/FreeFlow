@@ -11,8 +11,8 @@ import clsx from 'clsx';
 import { OS } from '@src/shared/OS';
 import { useNavigation, ViewType } from '@renderer/core/navigation';
 
-async function getSearchResults(searchTerm: string) {
-  return searchContext.getSearchResults(searchTerm);
+async function getSearchResults(searchTerm: string, safeMode: boolean = false) {
+  return searchContext.getSearchResults(searchTerm, safeMode);
 }
 
 async function getLocalSearchResults(searchTerm: string) {
@@ -34,6 +34,23 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
   const [userName, setUserName] = useState('');
   const [localResults, setLocalResults] = useState<TrackEntity[]>([]);
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') setIsShiftPressed(true);
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') setIsShiftPressed(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   useEffect(() => {
     systemContext.getPlatform().then(setPlatform);
@@ -76,12 +93,12 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
     return () => window.removeEventListener('mousedown', handler);
   }, [localResults.length]);
 
-  const performNetworkSearch = (term: string) => {
+  const performNetworkSearch = (term: string, safeMode: boolean = false) => {
     const kw = term.trim();
     if (!kw) return;
     setLocalResults([]);
     navigation.push(ViewType.SEARCH_RESULTS);
-    getSearchResults(kw).then(setSearchResults);
+    getSearchResults(kw, safeMode).then(setSearchResults);
   };
 
   const queueTrack = (t: TrackEntity) => {
@@ -148,16 +165,20 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
 
         {/* 中：搜索（更像“岛”） */}
         <div className={styles.center}>
-          <div className={styles.search}>
+          <div className={clsx(styles.search, (isInputFocused && isShiftPressed) && styles.searchSafeMode)}>
             <i className={clsx('fa-solid fa-magnifying-glass', styles.searchIcon)} aria-hidden />
             <input
               ref={inputRef}
               type="text"
-              placeholder="想播放什么？"
+              placeholder={isShiftPressed && isInputFocused ? '安全搜索模式...' : '想播放什么？'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && performNetworkSearch(searchTerm)}
-              onFocus={() => navigation.push(ViewType.SEARCH_RESULTS)}
+              onKeyDown={(e) => e.key === 'Enter' && performNetworkSearch(searchTerm, e.shiftKey)}
+              onFocus={() => {
+                setIsInputFocused(true);
+                navigation.push(ViewType.SEARCH_RESULTS);
+              }}
+              onBlur={() => setIsInputFocused(false)}
               className={styles.searchInput}
             />
           </div>
