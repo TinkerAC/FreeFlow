@@ -3,7 +3,7 @@
 .root {
     height: 100%;
     display: grid;
-    grid-template-rows: auto 1fr; /* 头部固定 + 列表滚动 */
+    grid-template-rows: auto auto 1fr; /* 头部 + 工具栏 + 列表滚动 */
     /* Material You: 高级卡片效果 + 微光 */
     background: rgb(var(--md-sys-color-surface-container-low));
     color: rgb(var(--md-sys-color-on-surface));
@@ -16,6 +16,10 @@
     inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+}
+
+.root.collapsed {
+    grid-template-rows: auto 1fr; /* 收起模式：头部 + 列表滚动 */
 }
 
 /* 顶部微光效果 */
