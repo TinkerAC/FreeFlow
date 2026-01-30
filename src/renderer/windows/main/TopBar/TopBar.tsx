@@ -121,9 +121,9 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
         {platform === OS.MACOS ? (
           <div className={clsx(styles.left, styles.nodrag)}>
             <div className={styles.traffic}>
-              <button className={clsx(styles.light, styles.close)} onClick={windowControlContext.close} />
-              <button className={clsx(styles.light, styles.min)} onClick={windowControlContext.minimize} />
-              <button className={clsx(styles.light, styles.max)} onClick={windowControlContext.maximize} />
+              <button className={clsx(styles.light, styles.close)} onClick={() => windowControlContext.close()} />
+              <button className={clsx(styles.light, styles.min)} onClick={() => windowControlContext.minimize()} />
+              <button className={clsx(styles.light, styles.max)} onClick={() => windowControlContext.maximize()} />
             </div>
             <button
               className={styles.iconBtn}
@@ -214,9 +214,9 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
 
           {platform !== OS.MACOS && (
             <div className={styles.winCtrl}>
-              <div className={styles.winBtn} title="最小化" onClick={windowControlContext.minimize}>&#8722;</div>
-              <div className={styles.winBtn} title="最大化" onClick={windowControlContext.maximize}>&#9633;</div>
-              <div className={styles.winBtn} title="关闭" onClick={windowControlContext.close}>&times;</div>
+              <div className={styles.winBtn} title="最小化" onClick={() => windowControlContext.minimize()}>&#8722;</div>
+              <div className={styles.winBtn} title="最大化" onClick={() => windowControlContext.maximize()}>&#9633;</div>
+              <div className={styles.winBtn} title="关闭" onClick={() => windowControlContext.close()}>&times;</div>
             </div>
           )}
         </div>

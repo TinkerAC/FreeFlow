@@ -52,7 +52,7 @@ export class HifiniDownloader {
     @inject(DISymbol.Store) private readonly store: ElectronStore,
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
   ) {
-    const cookies: HifiniCookies = store.get('hifini_cookie');
+    const cookies: HifiniCookies = store.get('hifini_cookie') || { bbs_sid: '', bbs_token: '' };
     // 下载目录使用系统临时目录
     this.downloadDir = os.tmpdir();
     this.musicDir = this.dataPath.musicDir;

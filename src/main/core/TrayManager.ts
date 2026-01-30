@@ -18,6 +18,7 @@ export default class TrayManager {
 
   constructor(@inject(DISymbol.RunningOS) private os: OS,
               @inject(DISymbol.WindowManager) private windowManager: WindowManager,
+              @inject(DISymbol.Logger) private logger: import('winston').Logger,
   ) {
 
   }
@@ -25,10 +26,13 @@ export default class TrayManager {
   public createTray(): Tray {
     switch (this.os) {
       case OS.WINDOWS: {
-        return this.createWindowsTray();
+        const tray = this.createWindowsTray();
+        this.logger.info('系统托盘已创建');
+        return tray;
+
       }
       default : {
-        console.log(`当前操作系统 ${this.os} 不支持托盘功能`);
+        this.logger.info(`当前操作系统 ${this.os} 不支持托盘功能`);
       }
     }
   }
@@ -48,7 +52,7 @@ export default class TrayManager {
   private createWindowsTray(): Tray {
     if (this.tray) return this.tray; // 保证单例
 
-    const trayIconPath = path.join(__dirname, '..', '..', 'assets', 'appIcon.ico');
+    const trayIconPath = path.join(__dirname, '..','..', '..', 'assets', 'appIcons','appIcon_default.png');
     this.tray = new Tray(trayIconPath);
 
     const contextMenu = Menu.buildFromTemplate([

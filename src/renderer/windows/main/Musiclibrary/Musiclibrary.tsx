@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Item from './Item';
 import ContextMenu from './ContextMenu';
 import { playlistContext } from '@renderer/core/electronContextApi';
+import {DefaultPlaylistCover} from "@src/renderer/components/static";
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { useNavigation, ViewType } from '@renderer/core/navigation';
@@ -136,7 +137,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                   whileDrag={{ scale: 1.02, boxShadow: "0 8px 20px rgba(0,0,0,0.15)", zIndex: 10 }}
                 >
                   <Item
-                    imgSrc={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
+                    imgSrc={item?.tracks?.[0]?.cover_src || DefaultPlaylistCover}
                     altText={`${item.title} key:${item.playlist_id}`}
                     title={item.title}
                     description={item.description || ''}
@@ -185,7 +186,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                   tabIndex={0}
                 >
                   <img
-                    src={item?.tracks?.[0]?.cover_src || '../assets/default-playlist-cover.png'}
+                    src={item?.tracks?.[0]?.cover_src || DefaultPlaylistCover}
                     alt={`${item.title} key:${item.playlist_id}`}
                     draggable={false}
                   />
