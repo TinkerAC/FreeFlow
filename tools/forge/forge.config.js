@@ -73,6 +73,15 @@ module.exports = {
                 js: path.join(rootDir, 'src/renderer/appPreload.tsx'),
               },
             },
+            {
+              name: 'music_workshop_window',
+              rhmr: 'react-hot-loader/patch',
+              html: path.join(rootDir, 'src/renderer/app.html'),
+              js: path.join(rootDir, 'src/renderer/musicWorkshopRenderer.tsx'),
+              preload: {
+                js: path.join(rootDir, 'src/renderer/appPreload.tsx'),
+              },
+            },
           ],
         },
         devServer: {

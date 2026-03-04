@@ -172,6 +172,12 @@ export interface YouTubeMusicApi {
   closeLoginWindow(): Promise<void>;
 }
 
+export interface MusicWorkshopApi {
+  selectFile(): Promise<string[]>;
+  readMetadata(filePath: string): Promise<any>;
+  writeMetadata(filePath: string, metadata: any): Promise<any>;
+}
+
 /** 主聚合 */
 export interface MainApi {
   configApi: ConfigApi;
@@ -186,4 +192,5 @@ export interface MainApi {
   windowControlApi: WindowControlApi;
   miniPlayerApi: MiniPlayerApi;
   youtubeMusicApi: YouTubeMusicApi;
+  musicWorkshopApi: MusicWorkshopApi;
 }

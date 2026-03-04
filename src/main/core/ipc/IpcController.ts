@@ -27,6 +27,7 @@ import { registerYouTubeMusicHandlers } from './handlers/youtubeHandlers';
 import { registerConfigHandlers } from './handlers/configHandlers';
 import { registerDownloadHandlers } from './handlers/downloadHandlers';
 import { registerMiscHandlers } from './handlers/miscHandlers';
+import { registerMusicWorkshopHandlers } from './handlers/musicWorkshopHandlers';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能拆分到独立模块。
@@ -83,5 +84,6 @@ export default class IpcController {
     registerConfigHandlers(context);
     registerDownloadHandlers(context);
     registerMiscHandlers(context);
+    registerMusicWorkshopHandlers(context);
   }
 }

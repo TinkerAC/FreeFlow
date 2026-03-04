@@ -98,6 +98,18 @@ const menu_template = [
       ]),
     ],
   },
+  // Tools Menu
+  {
+    label: 'Tools',
+    submenu: [
+      {
+        label: 'Music Workshop',
+        click: () => {
+          windowManager.show(WindowKey.WORKSHOP);
+        },
+      },
+    ],
+  },
   // Help Menu
   {
     role: 'help',
