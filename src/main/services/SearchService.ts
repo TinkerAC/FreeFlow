@@ -9,7 +9,8 @@ import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 export class SearchService {
   constructor(
     @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
-  ) {}
+  ) {
+  }
 
   async searchFusion(keyword: string, safeMode: boolean = false): Promise<FusionSearchResult> {
     // 当所有 Provider 都禁用或不支持搜索时，统一返回空结果以降低调用方判断成本
@@ -42,7 +43,19 @@ export class SearchService {
     }
 
     if (tasks.length === 0) return EMPTY;
-    const results = await Promise.all(tasks);
+
+
+    // const results = await Promise.all(tasks);
+
+    // === DEBUG: 串行请求===
+    const results: FusionSearchResult[] = [];
+    for (const task of tasks) {
+      const result = await task;
+      results.push(result);
+    }
+    // === END DEBUG ===
+
+
     const allTracks = results.flatMap((r) => r?.track_result ?? []);
     const allPlaylists = results.flatMap((r) => r?.playlist_result ?? []);
     return {

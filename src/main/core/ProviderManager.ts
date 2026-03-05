@@ -59,12 +59,19 @@ export class ProviderManager {
   private readToggles(): Required<ProviderToggles> {
     const toggles = (this.config.get('services.providers') ?? {}) as ProviderToggles;
     return {
-      netease: toggles.netease !== false,
-      qq: toggles.qq !== false,
-      bilibili: toggles.bilibili !== false,
-      youtubeMusic: true,
-      youtube: true,
-      hifini: toggles.hifini !== false,
+      // netease: toggles.netease !== false,
+      // qq: toggles.qq !== false,
+      // bilibili: toggles.bilibili !== false,
+      // youtubeMusic: toggles.youtubeMusic !== false,
+      // youtube: toggles.youtube !== false,
+      // hifini: toggles.hifini !== false,
+      netease:true,
+      qq:true,
+      bilibili:true,
+      youtubeMusic:true,
+      youtube:true,
+      hifini:false
+
     };
   }
 
@@ -105,6 +112,10 @@ export class ProviderManager {
     return p;
   }
 
+  /**
+   * 列出所有启用的 Provider 实例，返回包含平台标识和实例对象的数组。
+   * @return 启用的 Provider 列表，每项包含 platform 和 provider 两个字段
+   */
   listEnabled(): Array<{ platform: Platform; provider: AbstractContentProvider }> {
     const out: Array<{ platform: Platform; provider: AbstractContentProvider }> = [];
     const toggles = this.readToggles();

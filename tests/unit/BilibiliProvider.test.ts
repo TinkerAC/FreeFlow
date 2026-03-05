@@ -1,18 +1,19 @@
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { Platform } from '@main/core/enum/Platform';
 import type { BilibiliService, BiliVideoInfo, PlayUrl } from '@main/contentProvider/Bilibili/BilibiliService';
 import { testLogger } from '../logger';
 
-// 构造 mock 的 BilibiliService
-function createMockService(): jest.Mocked<Pick<BilibiliService, 'getVideoInfo' | 'getPlayUrl'>> {
+// Mocking BilibiliService using vitest
+const createMockService = () => {
   return {
-    getVideoInfo: jest.fn(),
-    getPlayUrl: jest.fn(),
-  } as any;
-}
+    getVideoInfo: vi.fn(),
+    getPlayUrl: vi.fn(),
+  } as unknown as any;
+};
 
 describe('Bilibili Provider', () => {
-  let service: jest.Mocked<Pick<BilibiliService, 'getVideoInfo' | 'getPlayUrl'>>;
+  let service: any;
   let provider: Bilibili;
 
   beforeEach(() => {
@@ -35,7 +36,7 @@ describe('Bilibili Provider', () => {
     };
     service.getVideoInfo.mockResolvedValue(video);
     service.getPlayUrl.mockResolvedValue(play);
-    provider = new Bilibili(testLogger);
+    provider = new Bilibili(service as any, testLogger);
   });
 
   test('platformName/serverNodes', () => {
@@ -64,4 +65,3 @@ describe('Bilibili Provider', () => {
     expect(service.getVideoInfo).not.toHaveBeenCalled();
   });
 });
-

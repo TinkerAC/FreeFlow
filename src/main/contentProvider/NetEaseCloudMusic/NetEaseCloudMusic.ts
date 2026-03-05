@@ -18,9 +18,7 @@ import { Logger } from 'winston';
 
 
 /**
- * NetEaseCloudMusic 实现 ContentProvider 接口，
- * 重构后将原有的 cloudSearch 与 getNetEaseMusicLink 分别改名并合并到 searchTracks 与 getTrackLink 方法中，
- * 新类覆盖了原有逻辑。
+ * NetEaseCloudMusic
  */
 @injectable()
 export default class NetEaseCloudMusic extends AbstractContentProvider {
@@ -33,7 +31,7 @@ export default class NetEaseCloudMusic extends AbstractContentProvider {
     @inject(DISymbol.Logger) protected readonly logger: Logger,
   ) {
     super();
-    this.serverNodes = ['http://47.97.185.179/neteasecloudmusicapi/', 'https://neteasecloudmusicapi-pi-flax.vercel.app/',
+    this.serverNodes = ['https://neteasecloudmusicapi-pi-flax.vercel.app/',
     ];
     this.base_url = this.serverNodes[0];
     this.platformName = Platform.NET_EASE_CLOUD_MUSIC;

@@ -23,14 +23,13 @@ export class QQMusic extends AbstractContentProvider {
   ) {
     super();
     this.platformName = Platform.QQ_MUSIC;
-    this.serverNodes = ['http://47.97.185.179/qqmusicapi/'];
+    this.serverNodes = ['https://qq-music-kqeb3r5a8-tinkeracs-projects.vercel.app/'];
     this.base_url = this.serverNodes[0];
   }
 
 
   /**
    * 根据关键词搜索 QQ 音乐免费歌曲，并返回统一的 TrackRecord 数组
-   * （原 cloudSearchQQ 方法逻辑重构而来）
    * @param keyword 搜索关键词
    * @param filterPaid 是否过滤付费歌曲（默认值 true）
    */
@@ -54,7 +53,7 @@ QQ音乐搜索结果:
   返回总数: ${songs.length} 首
   ${filterPaid ? '免费歌曲' : '所有歌曲'}: ${resultSongs.length} 首
 ${resultSongs
-      .map(song => `  - ${song.songname}（${song.albumname}）`)
+      .map(song => `  - ${song.songname}（${song.albumname}）-uid: ${song.songmid}`)
       .join('\n')}
   `);
 
@@ -89,7 +88,7 @@ ${resultSongs
     const url = `${this.base_url}getMusicPlay?songmid=${uniqueId}`;
     const response = await axios.get(url);
     const data: QQMusicTrackResponse = response.data;
-    this.logger.info(String(data), { depth: null });
+    this.logger.info(`QQ音乐歌曲链接详情:`, data);
     return data.data.playUrl[uniqueId].url || '';
   }
 
