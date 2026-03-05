@@ -1,4 +1,4 @@
-/** B 站 VideoInfo 抽象（最小集：只保留我们用得到的字段） */
+/** B 站 VideoInfo 抽象 */
 export interface BiliVideoInfo {
   bvid: string;
   title: string;

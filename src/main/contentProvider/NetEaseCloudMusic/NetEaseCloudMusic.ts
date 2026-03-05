@@ -46,7 +46,7 @@ export default class NetEaseCloudMusic extends AbstractContentProvider {
    */
   public async searchTrack(
     keyword: string,
-    filterPaid: boolean = true,
+    filterPaid: boolean = false,
   ): Promise<TrackEntity[]> {
     // 构造请求 URL
     const url = `${this.base_url}cloudsearch?keywords=${encodeURIComponent(
@@ -137,7 +137,7 @@ ${resultSongs
    */
   public async search(
     keyword: string,
-    filterPaid: boolean = true,
+    filterPaid: boolean = false,
   ): Promise<FusionSearchResult> {
     try {
       const tracks = this.searchTrack(keyword, filterPaid);

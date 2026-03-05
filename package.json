@@ -11,10 +11,10 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint src/ --ext .ts,.js,.tsx,.jsx",
-    "test": "jest --runInBand"
+    "test": "vitest"
   },
   "keywords": [
-    "2025",
+    "2026",
     "FreeFlow"
   ],
   "author": {

@@ -35,7 +35,7 @@ export class QQMusic extends AbstractContentProvider {
    */
   public async searchTrack(
     keyword: string,
-    filterPaid: boolean = true,
+    filterPaid: boolean = false,
   ): Promise<TrackEntity[]> {
     // 构造请求 URL
     const url = `${this.base_url}getSearchByKey?key=${encodeURIComponent(keyword)}`;
