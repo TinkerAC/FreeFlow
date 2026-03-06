@@ -89,7 +89,7 @@ export class BilibiliService {
     }
 
 
-    async searchByKey(keyword: string):any{
+    async searchByKey(keyword: string):Promise<any>{
 
         const response  = await this.http.get('/x/web-interface/search/all/v2', {
             params: {

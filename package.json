@@ -1,7 +1,7 @@
 {
   "name": "freeflow",
   "productName": "FreeFlow",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "description": "一个基于ts-react-webpack-electron的自由音乐播放器",
   "main": ".webpack/main",
   "scripts": {
