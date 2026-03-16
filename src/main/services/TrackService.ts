@@ -9,16 +9,20 @@ import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCach
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import { DISymbol } from '@main/di/symbol';
 import type { AiTextService } from '@main/services/ai/AiTextService';
+import { Logger } from 'winston';
+import { AbstractService } from '@main/services/AbstractService';
 
 
 @injectable()
-export default class TrackService {
+export default class TrackService extends AbstractService {
   constructor(
     @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
     @inject(DISymbol.HifiniMusic) private hifiniMusic: HifiniMusic,
     @inject(DISymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
     @inject(DISymbol.AiTextService) private aiText: AiTextService,
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
   ) {
+    super();
   }
 
   // 获取音乐文件的元数据
@@ -26,7 +30,7 @@ export default class TrackService {
     try {
       return await parseFile(file_path);
     } catch (error) {
-      console.error('Error reading metadata:', error);
+      this.logger.error('Error reading metadata:', error);
       throw error;
     }
   }
@@ -58,7 +62,7 @@ export default class TrackService {
 
     // only file_path or data_href is provided
     const trackModel = await this.trackRepository.findByPlatformAndPlatformUniqueId(platform, platform_unique_id);
-    // console.log('trackModel:', trackModel);
+    // this.logger.log('trackModel:', trackModel);
 
     switch (trackModel.platform) {
       case  Platform.LOCAL: {
@@ -94,7 +98,7 @@ export default class TrackService {
     const track1: TrackEntity = await this.trackRepository.findByPlatformAndPlatformUniqueId(platform, platform_unique_id);
 
     if (track1) {
-      console.log('待添加的音乐已在库中，id:', track1.id);
+      this.logger.log('待添加的音乐已在库中，id:', track1.id);
       return track1;
     }
 

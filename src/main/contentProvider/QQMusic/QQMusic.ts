@@ -1,38 +1,41 @@
 import axios from 'axios';
-import { ContentProvider } from '../ContentProvider';
+import { AbstractContentProvider } from '../AbstractContentProvider';
 import { QQCloudSearchResponse, QQMusicTrackResponse } from '@main/contentProvider/QQMusic/QQMusicInterfaces';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { QQMusicTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { Platform } from '@main/core/enum/Platform';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
-
-// import { da } from 'zod/v4/locales/index.cjs'; // unused
+import { DISymbol } from '@main/di/symbol';
+import { Logger } from 'winston';
 
 
 @injectable()
-export class QQMusic implements ContentProvider {
+export class QQMusic extends AbstractContentProvider {
 
   public readonly platformName: Platform;
   public readonly serverNodes: string[];
+  public readonly isCensored = true;
   private readonly base_url: string;
 
-  constructor() {
+  constructor(
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
+  ) {
+    super();
     this.platformName = Platform.QQ_MUSIC;
-    this.serverNodes = ['http://47.97.185.179/qqmusicapi/'];
+    this.serverNodes = ['https://qq-music-kqeb3r5a8-tinkeracs-projects.vercel.app/'];
     this.base_url = this.serverNodes[0];
   }
 
 
   /**
    * 根据关键词搜索 QQ 音乐免费歌曲，并返回统一的 TrackRecord 数组
-   * （原 cloudSearchQQ 方法逻辑重构而来）
    * @param keyword 搜索关键词
    * @param filterPaid 是否过滤付费歌曲（默认值 true）
    */
   public async searchTrack(
     keyword: string,
-    filterPaid: boolean = true,
+    filterPaid: boolean = false,
   ): Promise<TrackEntity[]> {
     // 构造请求 URL
     const url = `${this.base_url}getSearchByKey?key=${encodeURIComponent(keyword)}`;
@@ -45,12 +48,12 @@ export class QQMusic implements ContentProvider {
     const resultSongs = filterPaid ? songs.filter(song => this.isFree(song)) : songs;
 
     // 打印日志
-    console.log(`
+    this.logger.info(`
 QQ音乐搜索结果:
   返回总数: ${songs.length} 首
   ${filterPaid ? '免费歌曲' : '所有歌曲'}: ${resultSongs.length} 首
 ${resultSongs
-      .map(song => `  - ${song.songname}（${song.albumname}）`)
+      .map(song => `  - ${song.songname}（${song.albumname}）-uid: ${song.songmid}`)
       .join('\n')}
   `);
 
@@ -85,7 +88,7 @@ ${resultSongs
     const url = `${this.base_url}getMusicPlay?songmid=${uniqueId}`;
     const response = await axios.get(url);
     const data: QQMusicTrackResponse = response.data;
-    console.dir(data, { depth: null });
+    this.logger.info(`QQ音乐歌曲链接详情:`, data);
     return data.data.playUrl[uniqueId].url || '';
   }
 
@@ -97,11 +100,14 @@ ${resultSongs
     return song.pay.payplay === 0;
   }
 
-  public async getLyrics(uniqueId: string): Promise<Lyric | void> {
+  public async getLyrics(uniqueId: string): Promise<Lyric> {
     const url = `${this.base_url}getLyric?songmid=${uniqueId}`;
+    this.logger.debug('url:', url);
     try {
-      const response = await axios.get(url, { timeout: 10_000 });
-      const data = response?.data ?? {};
+
+      const response = await axios.get(url);
+
+      const data = await response?.data ?? {};
       const payload = data?.response ?? data;
 
       const rawOrigin: string = payload?.lyric ?? '';
@@ -124,8 +130,9 @@ ${resultSongs
 
       return this.parseLyrics(origin, translation);
     } catch (error) {
-      console.error('获取歌词失败:', error);
-      throw error;
+      this.logger.error('获取歌词失败:', error);
+      //反回空歌词
+      return new Lyric();
     }
   }
 
@@ -159,11 +166,7 @@ ${resultSongs
       }, []);
     };
 
-    return {
-      originLines: parseSegment(origin),
-      translationLines: parseSegment(trans),
-      pronunciationLines: [],
-    };
+    return new Lyric(parseSegment(origin), parseSegment(trans), []);
   }
 }
 
@@ -171,7 +174,7 @@ ${resultSongs
 // (async () => {
 //   const qqMusic = new QQMusic();
 //   const track_result = await qqMusic.searchTrack('银临');
-//   console.log(track_result);
+//   this.logger.info(track_result);
 //   const trackLink = await qqMusic.getTrackLink('000A1xry3KwdhW');
-//   console.log(trackLink);
+//   this.logger.info(trackLink);
 // })();

@@ -1,0 +1,311 @@
+/* file: src/renderer/components/TopBar/TopBar.module.css */
+
+.root {
+    -webkit-app-region: drag;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+
+    height: 64px;
+    padding: 0 16px;
+
+    /* Material You: 毛玻璃效果 + 高级感 */
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-highest)) 85%, transparent);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    box-shadow: 0 1px 0 0 rgba(var(--md-sys-color-outline-variant), 0.2),
+    0 2px 8px 0 rgba(0, 0, 0, 0.04),
+    0 4px 16px 0 rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(var(--md-sys-color-outline-variant), 0.12);
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.nodrag {
+    -webkit-app-region: no-drag;
+}
+
+.left, .center, .right {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+.left {
+    gap: 8px;
+}
+
+.center {
+    gap: 10px;
+}
+
+.right {
+    gap: 12px;
+}
+
+/* 通用图标按钮 */
+.iconBtn {
+    -webkit-app-region: no-drag;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    color: rgb(var(--md-sys-color-on-surface));
+    opacity: .9;
+    cursor: pointer;
+    transition: background .15s ease, opacity .15s ease, transform .05s ease;
+}
+
+.iconBtn:hover {
+    opacity: 1;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+.iconBtn:active {
+    transform: translateY(1px);
+}
+
+.search {
+    -webkit-app-region: no-drag;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+
+    /* Material You: 高级质感搜索框 */
+    background: rgba(var(--md-sys-color-surface-container-high), 0.6);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(var(--md-sys-color-outline), 0.2);
+    border-radius: 999px;
+    padding: 8px 16px;
+    min-width: 240px;
+    max-width: 560px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.search:hover {
+    background: rgba(var(--md-sys-color-surface-container-highest), 0.7);
+    border-color: rgba(var(--md-sys-color-outline), 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+.search:focus-within {
+    background: rgb(var(--md-sys-color-surface-container-highest));
+    border-color: rgb(var(--md-sys-color-primary));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08),
+    0 4px 16px rgba(var(--md-sys-color-primary), 0.12),
+    0 0 0 3px rgba(var(--md-sys-color-primary), 0.08);
+}
+
+.searchIcon {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    opacity: .9;
+}
+
+.searchInput {
+    flex: 1 1 auto;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: rgb(var(--md-sys-color-on-surface));
+    font-size: 14px;
+}
+
+.searchInput::placeholder {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    opacity: .95;
+}
+
+/* 主要按钮（示例） */
+.primaryBtn {
+    -webkit-app-region: no-drag;
+    height: 28px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    transition: filter .15s ease, transform .05s ease;
+}
+
+.primaryBtn:hover {
+    filter: brightness(1.05);
+}
+
+.primaryBtn:active {
+    transform: translateY(1px);
+}
+
+/* 用户徽标 */
+.userBadge {
+    -webkit-app-region: no-drag;
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+    font-weight: 700;
+    font-size: 12px;
+    padding: 0 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* macOS 交通灯 */
+.traffic {
+    -webkit-app-region: no-drag;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 6px;
+}
+
+.light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: default;
+    border: 0;
+    transition: filter .15s ease;
+}
+
+.light:hover {
+    filter: brightness(0.9);
+}
+
+.close {
+    background: #ff5f57;
+}
+
+.min {
+    background: #ffbd2e;
+}
+
+.max {
+    background: #28c940;
+}
+
+/* Windows 控件 */
+.winCtrl {
+    -webkit-app-region: no-drag;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 4px;
+}
+
+.winBtn {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.winBtn:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+/* 本地搜索建议 */
+.dropdown {
+    -webkit-app-region: no-drag;
+    position: fixed;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 88%, transparent);
+    backdrop-filter: blur(8px) saturate(1.1);
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), .9);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elev-2, 0 6px 20px rgba(0, 0, 0, .35));
+    color: rgb(var(--md-sys-color-on-surface));
+    max-height: 320px;
+    overflow-y: auto; /* 允许纵向滚动 */
+    overflow-x: hidden; /* 禁止横向滚动 */
+    scrollbar-width: none; /* Firefox 隐藏滚动条 */
+}
+
+/* WebKit 内核隐藏滚动条，但仍可滚动 */
+.dropdown::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+.dropdownItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.dropdownItem:hover {
+    background: rgba(var(--md-sys-color-surface-variant), .5);
+}
+
+.dropdownCover {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+
+.dropdownTitle {
+    display: block; /* 确保省略号生效 */
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdownSub {
+    display: block; /* 与标题一致，避免换行 */
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.playBtn {
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.playBtn:hover {
+    color: rgb(var(--md-sys-color-primary));
+}
+
+/* Google Safe Search Mode Animation */
+@keyframes googleFlow {
+    0% {
+        background-position: 0 0, 0 0;
+    }
+    100% {
+        background-position: 0 0, 200% 0;
+    }
+}
+
+.searchSafeMode {
+    border-color: transparent !important;
+    background: linear-gradient(rgba(var(--md-sys-color-surface-container-high), 0.9), rgba(var(--md-sys-color-surface-container-high), 0.9)) padding-box,
+    linear-gradient(90deg, #4285F4, #DB4437, #F4B400, #0F9D58, #4285F4) border-box !important;
+    background-size: 100% 100%, 200% 100% !important;
+    animation: googleFlow 3s linear infinite;
+    box-shadow: 0 2px 8px rgba(66, 133, 244, 0.25) !important;
+}

@@ -1,29 +1,29 @@
 // file: src/main/core/core.ts
 import { app } from 'electron';
 import { WindowKey, WindowManager } from './window/windowManager';
-import electronSquirrelStartup from 'electron-squirrel-startup';
+import { markQuitting } from './window/quitState';
 
 import ProxyServerManager from '@main/core/AudioProxyServer';
 import { ConfigService } from '@main/core/configService';
-
 import LocalLibraryService from '@main/services/localLibraryService';
 import { sequelize } from '@main/database/seqimpl';
 import { is_hifini_cookies_expired } from '@main/services/AuthService';
 import { container } from '@main/di/di-container';
 import { DISymbol } from '@main/di/symbol';
-import IpcController from '@main/core/IpcController';
+import IpcController from '@main/core/ipc/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
-import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 import { getOperatingSystem } from '@src/utils/helpers';
 import chalk from 'chalk';
-
-// 新增：B站 Referer 注入（在创建任何窗口前）
-import { installBilibiliHeaders, installBilibiliHeadersForNewSessions } from '@main/core/network/bilibiliHeaders';
 import { OS } from '@src/shared/OS';
-import { Channels } from '@src/shared/ipc/channels';
+import rootLogger from '@src/utils/logger';
+import { setAppMenu } from '@main/core/menu/Menu';
+import { Session } from '@main/database/seqimpl/Session';
 
-let isQuitting = false;
+const logger = rootLogger.child(
+  { context: 'Main' },
+);
+
 
 // 全局异常兜底
 process.on('uncaughtException', (e) => console.error('[main] UncaughtException:', e));
@@ -35,14 +35,7 @@ if (!gotTheLock) {
   console.log('Another instance is already running, quitting...');
   app.quit();
 } else {
-  console.log('App is running...');
-
-  // squirrel 自启动场景（Windows 安装/卸载）
-  if (electronSquirrelStartup) {
-    app.quit();
-    // ⚠️ 顶层不能 `return`，否则会有 'return outside of function' 报错
-  }
-
+  logger.info('App started');
   const windowManager = container.get<WindowManager>(DISymbol.WindowManager);
 
   // 若用户再次启动应用，将唤起已有主窗口
@@ -61,7 +54,6 @@ if (!gotTheLock) {
   const ipcController = container.get<IpcController>(DISymbol.IpcController);
   const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
   const shortcutManager = container.get<ShortCutManager>(DISymbol.ShortcutManager);
-  const sessionDataSource = container.get<SessionDataSource>(DISymbol.SessionDataSource);
   const os: OS = container.get<OS>(DISymbol.RunningOS);
 
   // 稳定性：限制外部导航/弹窗
@@ -74,10 +66,9 @@ if (!gotTheLock) {
 
   // READY
   app.whenReady().then(async () => {
-    // 1) 先安装 B 站 Referer/UA 头（在任何窗口/请求之前）
-    installBilibiliHeaders();
-    app.on('session-created', installBilibiliHeadersForNewSessions());
 
+    // 1) 菜单
+    setAppMenu();
     // 2) 初始化
     await sequelize.sync();
     await localLibraryService.updateLocalLibrary();
@@ -105,15 +96,20 @@ if (!gotTheLock) {
     shortcutManager.register();
 
     // 记录启动信息
-    sessionDataSource
-      .createSession(new Date(), getOperatingSystem(), app.getVersion())
-      .then(() => {
-        console.info(
-          chalk.green(
-            `启动信息记录成功: ${new Date().toISOString()} ${getOperatingSystem()} ${app.getVersion()}`,
-          ),
-        );
-      });
+    const startAt = new Date();
+    Session.create({
+      start_at: startAt,
+      operating_system: getOperatingSystem(),
+      app_version: app.getVersion(),
+    }).then(() => {
+      console.info(
+        chalk.green(
+          `启动信息记录成功: ${startAt.toISOString()} ${getOperatingSystem()} ${app.getVersion()}`,
+        ),
+      );
+    }).catch(error => {
+      logger.error('记录启动信息失败', error);
+    });
   });
 
   // Dock / 任务栏 被点击激活
@@ -132,28 +128,8 @@ if (!gotTheLock) {
   });
 
   // 触发退出
-  app.on('before-quit', (event) => {
-    if (!isQuitting) {
-      event.preventDefault();
-      isQuitting = true;
-
-      const mainWin = windowManager.get(WindowKey.MAIN);
-      if (mainWin) {
-        try {
-          mainWin.removeAllListeners('close');
-        } catch (e) {
-          console.error('移除窗口关闭事件失败', e);
-        }
-        // 向主渲染进程请求一次“保存用”的播放器状态（与常规 request-state 区分开）
-        mainWin.webContents.send(Channels.Player.RequestDump);
-      }
-
-      // 兜底强退
-      setTimeout(() => {
-        console.warn('强制退出：渲染进程未在超时内响应保存请求');
-        app.exit(0);
-      }, 3000);
-    }
+  app.on('before-quit', () => {
+    markQuitting();
   });
 
   // 真正退出前：注销快捷键

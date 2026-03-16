@@ -4,12 +4,13 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+    
     {
       "type": "node",
       "request": "launch",
       "name": "Launch via npm script",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["run-script", "start"],
+      "runtimeArgs": ["run-script", "dev"],
       "console": "integratedTerminal"
     }
   ]

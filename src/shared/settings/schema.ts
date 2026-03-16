@@ -69,6 +69,8 @@ export const ThemeSettings = z.object({
   preset: ThemePreset.default('classic'),  // 仅在 source === 'preset' 时使用
   /** 是否每日自动更换新的种子颜色（仅对 Material You 有效） */
   autoDailySeed: z.boolean().default(false),
+  /** 上次自动更新种子色的日期 (YYYY-MM-DD) */
+  lastDailySeedDate: z.string().optional(),
 });
 export type ThemeSettings = z.infer<typeof ThemeSettings>;
 

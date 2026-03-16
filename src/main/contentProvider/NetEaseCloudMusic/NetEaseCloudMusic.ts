@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { Platform } from '@main/core/enum/Platform';
-import { ContentProvider } from '../ContentProvider';
+import { AbstractContentProvider } from '../AbstractContentProvider';
 import {
   CheckMusicResponse,
   CloudSearchResponse,
@@ -13,21 +13,25 @@ import { NetEaseCloudMusicTrackModel, TrackEntity } from '@src/shared/domainMode
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
+import { DISymbol } from '@main/di/symbol';
+import { Logger } from 'winston';
 
 
 /**
- * NetEaseCloudMusic 实现 ContentProvider 接口，
- * 重构后将原有的 cloudSearch 与 getNetEaseMusicLink 分别改名并合并到 searchTracks 与 getTrackLink 方法中，
- * 新类覆盖了原有逻辑。
+ * NetEaseCloudMusic
  */
 @injectable()
-export default class NetEaseCloudMusic implements ContentProvider {
+export default class NetEaseCloudMusic extends AbstractContentProvider {
   public readonly platformName: Platform;
   public readonly serverNodes: string[];
+  public readonly isCensored = true;
   private readonly base_url: string;
 
-  constructor() {
-    this.serverNodes = ['http://47.97.185.179/neteasecloudmusicapi/', 'https://neteasecloudmusicapi-pi-flax.vercel.app/',
+  constructor(
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
+  ) {
+    super();
+    this.serverNodes = ['https://neteasecloudmusicapi-pi-flax.vercel.app/',
     ];
     this.base_url = this.serverNodes[0];
     this.platformName = Platform.NET_EASE_CLOUD_MUSIC;
@@ -42,7 +46,7 @@ export default class NetEaseCloudMusic implements ContentProvider {
    */
   public async searchTrack(
     keyword: string,
-    filterPaid: boolean = true,
+    filterPaid: boolean = false,
   ): Promise<TrackEntity[]> {
     // 构造请求 URL
     const url = `${this.base_url}cloudsearch?keywords=${encodeURIComponent(
@@ -59,7 +63,7 @@ export default class NetEaseCloudMusic implements ContentProvider {
       : songs;
 
     // 打印日志
-    console.log(`
+    this.logger.info(`
 网易云音乐搜索结果:
   ${filterPaid ? '免费歌曲' : '所有歌曲'}: ${resultSongs.length} 首
 ${resultSongs
@@ -93,7 +97,7 @@ ${resultSongs
     const response = await axios.get(url);
     const data: NetEaseCloudMusicTrackResponse = response.data;
 
-    console.log(`网易云音乐歌曲链接详情:`, data);
+    this.logger.info(`网易云音乐歌曲链接详情:`, data);
     const trackData = data.data[0];
     return trackData.url;
   }
@@ -133,7 +137,7 @@ ${resultSongs
    */
   public async search(
     keyword: string,
-    filterPaid: boolean = true,
+    filterPaid: boolean = false,
   ): Promise<FusionSearchResult> {
     try {
       const tracks = this.searchTrack(keyword, filterPaid);
@@ -145,7 +149,7 @@ ${resultSongs
         playlist_result: playlistResults,
       };
     } catch (error) {
-      console.error('[NetEaseCloudMusic.search] failed:', error);
+      this.logger.error('[NetEaseCloudMusic.search] failed:', error);
       return { track_result: [], playlist_result: [] };
     }
 
@@ -161,9 +165,9 @@ ${resultSongs
     const response = await axios.get(url);
     const data = response.data;
     const playlist = data.playlist;
-    console.log('获取到的歌单基本信息:', playlist);
+    this.logger.info('获取到的歌单基本信息:', playlist);
     const trackEntities = await this.getPlaylistDetail(playlist_id);
-    console.debug('获取到的歌曲列表:', trackEntities);
+    this.logger.debug('获取到的歌曲列表:', trackEntities);
     return PlaylistEntity.build({
       platform: Platform.NET_EASE_CLOUD_MUSIC,
       platform_unique_id: playlist.id.toString(),
@@ -276,7 +280,7 @@ ${resultSongs
         if (!trimmed) continue;
 
         const match = trimmed.match(regex);
-        if (!match) continue;              // 无效行直接忽略
+        if (!match) continue;       // 无效行直接忽略
 
         const [, mm, ss, ms = '0', textRaw] = match;
         const time =
@@ -300,12 +304,11 @@ ${resultSongs
           return acc;
         }, []);
     };
-
-    return {
-      originLines: parseLyricSegment(payload.origin),
-      translationLines: parseLyricSegment(payload.translation),
-      pronunciationLines: parseLyricSegment(payload.pronunciation),
-    };
+    return new Lyric(
+      parseLyricSegment(payload.origin),
+      parseLyricSegment(payload.translation),
+      parseLyricSegment(payload.pronunciation,
+      ));
   }
 
 

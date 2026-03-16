@@ -1,33 +1,31 @@
 // file: src/main/database/repository/impl/HifiniThreadCacheRepositoryImpl.ts
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadCacheRepository';
-import { HifiniThreadCacheDataSource } from '@main/database/dataSource/HifiniThreadCacheDataSource';
 import { HifiniThreadCacheModel } from '@src/shared/domainModel/hifiniThreadCacheModel';
-import { DISymbol } from '@main/di/symbol';
+import { HifiniThreadCache } from '@main/database/seqimpl/HifiniThreadCache';
+import { HifiniThreadCacheRecord } from '@main/database/record/HifiniThreadCacheRecord';
+
+const mapRowToRecord = (row: HifiniThreadCache): HifiniThreadCacheRecord =>
+  Object.assign(new HifiniThreadCacheRecord(), row.get({ plain: true }));
 
 @injectable()
 export class HifiniThreadCacheRepositoryImpl implements HifiniThreadCacheRepository {
-  constructor(
-    @inject(DISymbol.HifiniThreadCacheDataSource) private ds: HifiniThreadCacheDataSource,
-  ) {
-  }
-
   async create(attrs: Partial<HifiniThreadCacheModel>): Promise<HifiniThreadCacheModel> {
-    const rec = await this.ds.create(attrs as any);
-    return rec.toEntity();
+    const created = await HifiniThreadCache.create(attrs as any);
+    return mapRowToRecord(created).toEntity();
   }
 
   async delete(dataHref: string): Promise<number> {
-    return this.ds.delete(dataHref);
+    return HifiniThreadCache.destroy({ where: { data_href: dataHref } });
   }
 
   async findByDataHref(dataHref: string): Promise<HifiniThreadCacheModel | null> {
-    const rec = await this.ds.findByDataHref(dataHref);
-    return rec ? rec.toEntity() : null;
+    const row = await HifiniThreadCache.findOne({ where: { data_href: dataHref } });
+    return row ? mapRowToRecord(row).toEntity() : null;
   }
 
   async save(attrs: Partial<HifiniThreadCacheModel>): Promise<HifiniThreadCacheModel> {
-    const rec = await this.ds.save(attrs as any);
-    return rec.toEntity();
+    const [row] = await HifiniThreadCache.upsert(attrs as any);
+    return mapRowToRecord(row).toEntity();
   }
 }

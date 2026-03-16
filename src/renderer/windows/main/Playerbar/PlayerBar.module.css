@@ -1,0 +1,260 @@
+/* file: src/renderer/components/Playerbar/PlayerBar.module.css */
+.root {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 1.6fr) minmax(0, 1fr);
+    align-items: center;
+    height: 80px;
+    gap: 16px;
+    padding: 8px 16px;
+    /* Material You: 毛玻璃效果 + 高级感 */
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-highest)) 85%, transparent);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    color: rgb(var(--md-sys-color-on-surface));
+    position: relative;
+    z-index: 40;
+    overflow: hidden;
+    border-top: 1px solid rgba(var(--md-sys-color-outline-variant), 0.12);
+    box-shadow: 0 -1px 0 0 rgba(var(--md-sys-color-outline-variant), 0.2),
+    0 -2px 8px 0 rgba(0, 0, 0, 0.04),
+    0 -4px 16px 0 rgba(0, 0, 0, 0.06);
+    --icon-size: 16px;
+}
+
+.left, .middle, .right {
+    min-width: 0;
+}
+
+/* 左侧 */
+.left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+}
+
+/*左侧-封面*/
+.cover {
+    width: 54px;
+    height: 54px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.meta {
+    overflow: hidden;
+    min-width: 0;
+}
+
+.title {
+    font-weight: 600;
+    font-size: var(--font-ui, 13px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.artist {
+    font-size: var(--font-ui-sm, 12px);
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 中间 */
+.middle {
+    display: grid;
+}
+
+.middleInner {
+    display: grid;
+    grid-template-rows: min-content min-content;
+    row-gap: 4px;
+    align-items: center;
+    min-width: 0;
+}
+
+.controls {
+    justify-self: center;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.progress {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    margin: 0 8px;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.progress > * {
+    max-height: var(--pg-area-max-h, 28px);
+}
+
+/* 图标按钮 */
+.iconButton {
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    color: rgb(var(--md-sys-color-on-surface));
+    opacity: .9;
+    font-size: var(--icon-size, 18px);
+    line-height: 1;
+    transition: background .15s, opacity .15s, transform .05s;
+}
+
+.iconButton:hover {
+    opacity: 1;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+.iconButton:active {
+    transform: translateY(1px);
+}
+
+.iconButton:focus-visible {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+}
+
+/* 右侧工具 */
+.right {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 优化间距 */
+    justify-self: center; /* 右侧区水平居中 */
+    overflow: hidden;
+    min-width: 0;
+    padding-left: 12px; /* 与中部留出间距，避免贴太近 */
+}
+
+/* ─── 垂直音量弹出层（Portal 渲染，不受 overflow 裁剪） ───────────── */
+.volWrap {
+    position: relative; /* 仅作为获取 rect 的锚点 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 外观由内联 position:fixed 定位；这里只管皮肤 */
+.volPopover {
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    padding-top: 12px;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 92%, transparent);
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: var(--radius-md);
+    box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, .35));
+    backdrop-filter: blur(10px) saturate(1.05);
+    position: fixed; /* 由 TSX 设置 left/top */
+
+    /* 淡入淡出动画 */
+    animation: volPopoverFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes volPopoverFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-100%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-100%) scale(1);
+    }
+}
+
+.volPopover.fadeOut {
+    animation: volPopoverFadeOut 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes volPopoverFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(-100%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-100%) scale(0.95);
+    }
+}
+
+/* 小三角：位于弹层底部正中 */
+.volPopover::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgb(var(--md-sys-color-surface-container-high));
+    filter: drop-shadow(0 1px 0 rgb(var(--md-sys-color-outline-variant)));
+}
+
+/* 竖向滑块容器：给一个确定的可视区 */
+.volSliderBox {
+    position: relative;
+    width: 64px; /* 与弹层等宽，便于居中 */
+    height: 160px; /* 垂直长度 */
+    display: block;
+}
+
+/* 竖向滑块本体：绝对居中 + 旋转 */
+.volSlider {
+    margin: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    transform-origin: 50% 50%;
+
+    width: 160px; /* 旋转前的宽：= 垂直方向长度 */
+    height: 28px; /* 旋转前的高：= 水平方向粗细 */
+
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+}
+
+.volSlider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: var(--radius-sm);
+    background: rgb(var(--md-sys-color-surface-variant));
+}
+
+.volSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -6px; /* = thumb半高 - 轨道半高 */
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgb(var(--md-sys-color-primary));
+    box-shadow: 0 0 0 2px color-mix(in oklab, rgb(var(--md-sys-color-on-primary)) 30%, transparent);
+    cursor: pointer;
+    transition: transform .12s ease;
+}
+
+.volSlider:active::-webkit-slider-thumb {
+    transform: scale(0.95);
+}
+
+.volValue {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    user-select: none;
+}
+
+/* 旧的横向音量条（隐藏） */
+.volume {
+    display: none;
+}

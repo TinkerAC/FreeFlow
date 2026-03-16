@@ -1,0 +1,268 @@
+/* file: src/renderer/components/Musiclibrary/MusicLibrary.module.css */
+
+.root {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto 1fr; /* 头部 + 工具栏 + 列表滚动 */
+    /* Material You: 高级卡片效果 + 微光 */
+    background: rgb(var(--md-sys-color-surface-container-low));
+    color: rgb(var(--md-sys-color-on-surface));
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.2);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03),
+    0 2px 6px 0 rgba(0, 0, 0, 0.04),
+    0 4px 12px 0 rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.root.collapsed {
+    grid-template-rows: auto 1fr; /* 收起模式：头部 + 列表滚动 */
+}
+
+/* 顶部微光效果 */
+.root::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.15) 50%,
+            transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+.root:hover {
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04),
+    0 4px 12px 0 rgba(0, 0, 0, 0.06),
+    0 8px 24px 0 rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    border-color: rgba(var(--md-sys-color-outline-variant), 0.3);
+}
+
+/* 头部：左（汉堡）中（标题/空）右（新增） */
+.header {
+    display: grid;
+    grid-template-columns: auto 1fr auto; /* 默认：左按钮 / 中标题 / 右添加 */
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: rgb(var(--md-sys-color-surface-container));
+    border-bottom: 1px solid rgba(var(--md-sys-color-outline-variant), 0.15);
+}
+
+/* 收起态：中间只有按钮，左右撑开，按钮放第 2 列并居中 */
+.collapsed .header {
+    grid-template-columns: 1fr auto 1fr;
+}
+
+.menuBtn {
+    /* 默认放第 1 列即可；收起后改到第 2 列 */
+    grid-column: 1;
+}
+
+.collapsed .menuBtn {
+    grid-column: 2;
+    justify-self: center;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 图标按钮（汉堡/新增） */
+.iconBtn {
+    -webkit-app-region: no-drag;
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: rgb(var(--md-sys-color-on-surface));
+    opacity: .9;
+    transition: background .15s, opacity .15s, transform .05s;
+}
+
+.iconBtn:hover {
+    opacity: 1;
+    background: rgba(var(--md-sys-color-surface-variant), .35);
+}
+
+.iconBtn:active {
+    transform: translateY(1px);
+}
+
+.iconBtn:focus-visible {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+}
+
+/* 右侧新增按钮：仅展开态可见 */
+.addBtn {
+    justify-self: end;
+}
+
+.collapsed .addBtn {
+    display: none;
+}
+
+/* 工具行（展开态可见） */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+}
+
+/* Chips（增加 hover/active/焦点态差异） */
+.chip {
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgb(var(--md-sys-color-surface-variant));
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    font-size: 12px;
+    cursor: pointer;
+    color: rgb(var(--md-sys-color-on-surface));
+    transition: background .15s, border-color .15s, transform .05s;
+}
+
+.chip:hover {
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 80%, rgb(var(--md-sys-color-primary)) 20%);
+    border-color: rgb(var(--md-sys-color-primary));
+}
+
+.chip:active {
+    transform: translateY(1px);
+}
+
+.chip:focus-visible {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+}
+
+.chipActive {
+    background: rgba(var(--md-sys-color-primary), .15);
+    border-color: rgb(var(--md-sys-color-primary));
+}
+
+/* 列表滚动（唯一滚动处） */
+.scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+.scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dragDivider {
+    height: 2px;
+    background: linear-gradient(
+            90deg,
+            rgba(var(--md-sys-color-primary), 0.0) 0%,
+            rgba(var(--md-sys-color-primary), 0.65) 15%,
+            rgba(var(--md-sys-color-primary), 0.8) 50%,
+            rgba(var(--md-sys-color-primary), 0.65) 85%,
+            rgba(var(--md-sys-color-primary), 0.0) 100%
+    );
+    border-radius: 999px;
+    margin: 4px 6px;
+    pointer-events: none;
+    transition: transform 120ms ease;
+}
+
+.dragDividerSmall {
+    margin: 2px 4px;
+}
+
+.endDropZone {
+    height: 24px; /* 提供可命中的末尾 drop 区域 */
+    width: 100%;
+}
+
+/* 展开态：纵向列表 */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* 收起态：图标网格（单列，居中） */
+.grid {
+    display: none;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.collapsed .grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 侧栏窄，单列 */
+    gap: 8px;
+    justify-items: center; /* 图标居中 */
+}
+
+/* 图块（收起态项） */
+.tile {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: rgb(var(--md-sys-color-surface-container));
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background .15s, transform .05s, box-shadow .15s, outline-color .15s;
+    overflow: hidden;
+    outline: 1px solid transparent;
+}
+
+.tile:hover {
+    background: rgb(var(--md-sys-color-surface-container-high));
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+}
+
+.tile:active {
+    transform: translateY(1px);
+}
+
+.tile:focus-visible {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+}
+
+.tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tileSelected {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+}
+
+/* 无内容提示（沿用色板） */
+/* .empty { text-align:center; color: rgb(var(--md-sys-color-on-surface-variant)); } */

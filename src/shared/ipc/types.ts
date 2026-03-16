@@ -62,7 +62,7 @@ export interface TrackApi {
 export interface PlayerApi {
   getPlayerStateFromMain(): Promise<PlayerState>;
 
-  sendPlayerState(playerState: PlayerState): void;
+  sendPlayerState(playerState: PlayerState,terminate:boolean): void;
 
   onNotification(callback: (message: string) => void): void;
 
@@ -119,7 +119,7 @@ export interface FusionSearchResult {
 }
 
 export interface SearchApi {
-  getSearchResults(term: string): Promise<FusionSearchResult>;
+  getSearchResults(term: string, safeMode?: boolean): Promise<FusionSearchResult>;
 
   localSearch(term: string): Promise<TrackEntity[]>;
 
@@ -172,6 +172,12 @@ export interface YouTubeMusicApi {
   closeLoginWindow(): Promise<void>;
 }
 
+export interface MusicWorkshopApi {
+  selectFile(): Promise<string[]>;
+  readMetadata(filePath: string): Promise<any>;
+  writeMetadata(filePath: string, metadata: any): Promise<any>;
+}
+
 /** 主聚合 */
 export interface MainApi {
   configApi: ConfigApi;
@@ -186,4 +192,5 @@ export interface MainApi {
   windowControlApi: WindowControlApi;
   miniPlayerApi: MiniPlayerApi;
   youtubeMusicApi: YouTubeMusicApi;
+  musicWorkshopApi: MusicWorkshopApi;
 }

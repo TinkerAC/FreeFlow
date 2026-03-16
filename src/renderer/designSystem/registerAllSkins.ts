@@ -1,10 +1,10 @@
 import { registerFamily } from './SkinSystem';
 
 // —— 进度条家族 —— //
-import { ClassicBar } from '@components/Playerbar/ProgressBar/skins/Classic/ClassicBar';
-import { NeonBar } from '@components/Playerbar/ProgressBar/skins/Neon/NeonBar';
-import { WaveformBar } from '@components/Playerbar/ProgressBar/skins/Waveform/WaveformBar';
-import { Knob } from '@components/Playerbar/ProgressBar/skins/Knob/Knob';
+import { ClassicBar } from '@renderer/windows/main/Playerbar/ProgressBar/skins/Classic/ClassicBar';
+import { NeonBar } from '@renderer/windows/main/Playerbar/ProgressBar/skins/Neon/NeonBar';
+import { WaveformBar } from '@renderer/windows/main/Playerbar/ProgressBar/skins/Waveform/WaveformBar';
+import { Knob } from '@renderer/windows/main/Playerbar/ProgressBar/skins/Knob/Knob';
 
 registerFamily('progress', {
   classic: ClassicBar,

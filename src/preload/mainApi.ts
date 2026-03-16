@@ -55,7 +55,7 @@ const mainApi: MainApi = {
 
   playerApi: {
     getPlayerStateFromMain: () => ipcRenderer.invoke(Channels.Player.LoadState) as Promise<PlayerState>,
-    sendPlayerState: (playerState) => ipcRenderer.send(Channels.Player.ReplyState, playerState),
+    sendPlayerState: (playerState, terminate = true) => ipcRenderer.send(Channels.Player.ReplyState, playerState, terminate),
 
     onNotification: (callback) => {
       ipcRenderer.on(Channels.Player.Notification, (_e, message: string) => callback(message));
@@ -112,7 +112,7 @@ const mainApi: MainApi = {
   },
 
   searchApi: {
-    getSearchResults: (term) => ipcRenderer.invoke(Channels.Search.GetResults, term),
+    getSearchResults: (term, safeMode = false) => ipcRenderer.invoke(Channels.Search.GetResults, term, safeMode),
     localSearch: (term) => ipcRenderer.invoke(Channels.Search.LocalSearch, term),
     getPlaylistDetail: function(platform: string, platform_unique_id: string): Promise<PlaylistEntity> {
       return ipcRenderer.invoke(Channels.Search.GetPlaylistDetail, platform, platform_unique_id);
@@ -155,6 +155,12 @@ const mainApi: MainApi = {
       visitorData?: string
     }>,
     closeLoginWindow: () => ipcRenderer.invoke(Channels.YouTubeMusic.CloseLogin) as Promise<void>,
+  },
+
+  musicWorkshopApi: {
+    selectFile: () => ipcRenderer.invoke('MUSIC_WORKSHOP_SELECT_FILE'),
+    readMetadata: (filePath: string) => ipcRenderer.invoke('MUSIC_WORKSHOP_READ_METADATA', filePath),
+    writeMetadata: (filePath: string, metadata: any) => ipcRenderer.invoke('MUSIC_WORKSHOP_WRITE_METADATA', filePath, metadata),
   },
 };
 

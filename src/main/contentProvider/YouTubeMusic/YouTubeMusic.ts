@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { Innertube, UniversalCache, YTNodes } from 'youtubei.js';
 
-import { ContentProvider } from '../ContentProvider';
+import { AbstractContentProvider } from '../AbstractContentProvider';
 import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity, YouTubeMusicTrackModel } from '@src/shared/domainModel/TrackEntity';
 import { Lyric, LyricLine } from '@src/shared/domainModel/lyricLine';
@@ -9,6 +9,7 @@ import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import { DISymbol } from '@main/di/symbol';
 import { ConfigService } from '@main/core/configService';
+import { Logger } from 'winston';
 
 type YouTubeMusicSettings = {
   cookie?: string;
@@ -16,22 +17,26 @@ type YouTubeMusicSettings = {
 };
 
 @injectable()
-export default class YouTubeMusic implements ContentProvider {
+export default class YouTubeMusic extends AbstractContentProvider {
   public readonly platformName = Platform.YOUTUBE_MUSIC;
   public readonly serverNodes: string[] = [];
 
-  private client?: Innertube;
-  private clientPromise?: Promise<Innertube>;
+  private searchClient?: Innertube;
+  private playerClient?: Innertube;
+  private searchClientPromise?: Promise<Innertube>;
+  private playerClientPromise?: Promise<Innertube>;
 
   constructor(
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
   ) {
+    super();
   }
 
   public async searchTrack(keyword: string, _filterPaid: boolean = true): Promise<TrackEntity[]> {
     const items = await this.searchMusicItems(keyword, 'song');
     const seen = new Set<string>();
-    return items
+    const tracks = items
       .map((item) => this.toTrackEntity(item))
       .filter((track): track is TrackEntity => {
         if (!track) return false;
@@ -40,6 +45,14 @@ export default class YouTubeMusic implements ContentProvider {
         seen.add(key);
         return true;
       });
+
+    this.logger.info(`
+YouTube Music 搜索结果:
+  找到歌曲: ${tracks.length} 首
+${tracks.map((track) => `  - ${track.title} - ${track.artist} (${track.duration}s)`).join('\n')}
+`);
+
+    return tracks;
   }
 
   public async search(keyword: string, filterPaid = true): Promise<FusionSearchResult> {
@@ -55,14 +68,16 @@ export default class YouTubeMusic implements ContentProvider {
   }
 
   public async getTrackLink(uniqueId: string): Promise<string> {
-    const client = await this.ensureClient();
-    const info = await client.music.getInfo(uniqueId);
+    const client = await this.ensurePlayerClient();
+    // Use getBasicInfo from the main client (ANDROID) which is more robust for streams
+    const info = await client.getBasicInfo(uniqueId);
     const streaming = info?.streaming_data;
 
     const adaptive = streaming?.adaptive_formats ?? [];
     const formats = streaming?.formats ?? [];
+    const allFormats = [...adaptive, ...formats];
 
-    const audioFormat = [...adaptive, ...formats].find((format: any) => {
+    const audioFormat = allFormats.find((format: any) => {
       if (!format) return false;
       if (typeof format.has_audio === 'boolean' && typeof format.has_video === 'boolean') {
         return format.has_audio && !format.has_video;
@@ -81,7 +96,7 @@ export default class YouTubeMusic implements ContentProvider {
 
     if (typeof audioFormat.decipher === 'function') {
       try {
-        return audioFormat.decipher(client.session.player);
+        return await audioFormat.decipher(client.session.player);
       } catch (err) {
         throw new Error(`[YouTubeMusic] 解密音频流失败: ${String(err)}`);
       }
@@ -90,7 +105,7 @@ export default class YouTubeMusic implements ContentProvider {
     throw new Error(`[YouTubeMusic] 无法解析音频流 URL: ${uniqueId}`);
   }
 
-  public async getLyrics(uniqueId: string): Promise<Lyric | void> {
+  public async getLyrics(uniqueId: string): Promise<Lyric> {
     try {
       const client = await this.ensureClient();
       const response: any = await client.music.getLyrics(uniqueId);
@@ -108,15 +123,11 @@ export default class YouTubeMusic implements ContentProvider {
         });
 
       if (!originLines.length) return;
+      return new Lyric(originLines, [], []);
 
-      return {
-        originLines,
-        translationLines: [],
-        pronunciationLines: [],
-      } satisfies Lyric;
     } catch (error) {
       console.warn('[YouTubeMusic] 获取歌词失败:', error);
-      return undefined;
+      return new Lyric();
     }
   }
 
@@ -141,61 +152,124 @@ export default class YouTubeMusic implements ContentProvider {
   private async searchMusicItems(
     keyword: string,
     type: 'song' | 'playlist',
-  ): Promise<YTNodes.MusicResponsiveListItem[]> {
-    const client = await this.ensureClient();
-    const searchResponse: any = await client.music.search(keyword, { type });
+  ): Promise<(YTNodes.MusicResponsiveListItem | YTNodes.Video)[]> {
+    try {
+      const client = await this.ensureClient();
 
-    const collect = (candidate: any): YTNodes.MusicResponsiveListItem[] => {
-      if (!candidate) return [];
-      const pool: any[] = [];
-      if (Array.isArray(candidate)) pool.push(...candidate);
-      if (Array.isArray(candidate?.contents)) pool.push(...candidate.contents);
-      if (Array.isArray(candidate?.results)) pool.push(...candidate.results);
-      if (Array.isArray(candidate?.items)) pool.push(...candidate.items);
-      return pool
-        .filter(Boolean)
-        .map((item) => {
-          if (item instanceof YTNodes.MusicResponsiveListItem) return item;
-          if (item?.constructor?.name === 'MusicResponsiveListItem') {
-            return item as YTNodes.MusicResponsiveListItem;
+      const searchResponse: any = await client.music.search(keyword, { type });
+
+      const collect = (candidate: any): (YTNodes.MusicResponsiveListItem | YTNodes.Video)[] => {
+        if (!candidate) return [];
+        const pool: any[] = [];
+        if (Array.isArray(candidate)) pool.push(...candidate);
+        if (Array.isArray(candidate?.contents)) pool.push(...candidate.contents);
+        if (Array.isArray(candidate?.results)) pool.push(...candidate.results);
+        if (Array.isArray(candidate?.items)) pool.push(...candidate.items);
+
+        const flattenedPool: any[] = [];
+        for (const item of pool) {
+          if (!item) continue;
+          if (item.type === 'MusicShelf' || item.constructor?.name === 'MusicShelf') {
+            if (Array.isArray(item.contents)) {
+              flattenedPool.push(...item.contents);
+            }
+          } else {
+            flattenedPool.push(item);
           }
-          return null;
-        })
-        .filter(Boolean) as YTNodes.MusicResponsiveListItem[];
-    };
+        }
 
-    const sections: YTNodes.MusicResponsiveListItem[] = [];
-    sections.push(...collect(searchResponse));
-    sections.push(...collect(searchResponse?.songs));
-    sections.push(...collect(searchResponse?.playlists));
-    sections.push(...collect(searchResponse?.contents));
-    sections.push(...collect(searchResponse?.sections));
-    sections.push(...collect(searchResponse?.tabs?.[0]?.content));
+        return flattenedPool
+          .filter(Boolean)
+          .map((item) => {
+            if (item instanceof YTNodes.MusicResponsiveListItem) return item;
+            if (item?.constructor?.name === 'MusicResponsiveListItem') {
+              return item as YTNodes.MusicResponsiveListItem;
+            }
+            return null;
+          })
+          .filter(Boolean) as YTNodes.MusicResponsiveListItem[];
+      };
 
-    return sections;
+      const sections: (YTNodes.MusicResponsiveListItem | YTNodes.Video)[] = [];
+      sections.push(...collect(searchResponse));
+      sections.push(...collect(searchResponse?.songs));
+      sections.push(...collect(searchResponse?.playlists));
+      sections.push(...collect(searchResponse?.contents));
+      sections.push(...collect(searchResponse?.sections));
+      sections.push(...collect(searchResponse?.tabs?.[0]?.content));
+
+      return sections;
+    } catch (error) {
+      this.logger.error(`[YouTubeMusic] Search failed: ${error}`);
+      return [];
+    }
   }
 
-  private toTrackEntity(item: YTNodes.MusicResponsiveListItem): TrackEntity | null {
+  private toTrackEntity(item: YTNodes.MusicResponsiveListItem | YTNodes.Video): TrackEntity | null {
+    if (item.type === 'Video' || item.constructor?.name === 'Video') {
+        const video = item as YTNodes.Video;
+        const videoId = video.id;
+        if (!videoId) return null;
+        
+        const title = video.title?.text ?? video.title?.toString() ?? '';
+        const artist = video.author?.name ?? '';
+        const durationText = video.duration?.text ?? '';
+        // Parse duration "MM:SS" to seconds
+        let duration = 0;
+        if (durationText) {
+            const parts = durationText.split(':').map(Number);
+            if (parts.length === 2) {
+                duration = parts[0] * 60 + parts[1];
+            } else if (parts.length === 3) {
+                duration = parts[0] * 3600 + parts[1] * 60 + parts[2];
+            }
+        }
+        
+        const cover = this.pickThumbnail(video as any);
+
+        return YouTubeMusicTrackModel.build({
+            platform_unique_id: videoId,
+            title,
+            artist,
+            album: '',
+            duration,
+            cover_src: cover,
+        });
+    }
+
+    const anyItem = item as any;
+    // console.log(`toTrackEntity check: id=${item.id}, type=${anyItem.item_type}, title=${item.title}`);
+    if (anyItem.item_type && anyItem.item_type !== 'song' && anyItem.item_type !== 'video') {
+      return null;
+    }
+
     const videoId = item?.id ?? item?.endpoint?.payload?.videoId;
-    if (!videoId) return null;
+    if (!videoId) {
+      return null;
+    }
+
+    // Filter out non-video IDs (Playlists usually start with PL, VL, or MPSP)
+    if (videoId.startsWith('PL') || videoId.startsWith('MPSP') || videoId.startsWith('VL')) {
+       return null;
+    }
 
     const title = item?.title?.toString?.() ?? '';
     if (!title) return null;
 
-    const artist = Array.isArray(item?.artists)
-      ? item.artists
-        .map((artist) => artist?.name)
+    const artist = Array.isArray((item as any)?.artists)
+      ? (item as any).artists
+        .map((artist: any) => artist?.name)
         .filter(Boolean)
         .join(' / ')
-      : item?.author?.name ?? '';
+      : (item as any)?.author?.name ?? '';
 
-    const album = item?.album?.name ?? '';
+    const album = (item as any)?.album?.name ?? '';
     const raw = item as unknown as {
       duration_seconds?: number;
       duration?: { seconds?: number };
     };
     const duration = Number(raw?.duration_seconds ?? raw?.duration?.seconds ?? 0) || 0;
-    const cover = this.pickThumbnail(item);
+    const cover = this.pickThumbnail(item as any);
 
     return YouTubeMusicTrackModel.build({
       platform_unique_id: videoId,
@@ -207,19 +281,26 @@ export default class YouTubeMusic implements ContentProvider {
     });
   }
 
-  private toPlaylistEntity(item: YTNodes.MusicResponsiveListItem): PlaylistEntity | null {
-    const raw = item as unknown as { playlist_id?: string };
+  private toPlaylistEntity(item: YTNodes.MusicResponsiveListItem | YTNodes.Video): PlaylistEntity | null {
+    if (item.type === 'Video' || item.constructor?.name === 'Video') {
+        return null;
+    }
+    const raw = item as any;
+    if (raw.item_type && raw.item_type !== 'playlist') {
+      return null;
+    }
+
     const playlistId = raw?.playlist_id ?? item?.id ?? item?.endpoint?.payload?.playlistId;
     if (!playlistId) return null;
 
     const title = item?.title?.toString?.() ?? '';
     if (!title) return null;
 
-    const creator = Array.isArray(item?.artists)
-      ? item.artists.map((artist) => artist?.name).filter(Boolean).join(' / ')
-      : item?.author?.name ?? '';
+    const creator = Array.isArray((item as any)?.artists)
+      ? (item as any).artists.map((artist: any) => artist?.name).filter(Boolean).join(' / ')
+      : (item as any)?.author?.name ?? '';
 
-    const cover = this.pickThumbnail(item);
+    const cover = this.pickThumbnail(item as any);
 
     return new PlaylistEntity(
       0,
@@ -236,7 +317,7 @@ export default class YouTubeMusic implements ContentProvider {
     );
   }
 
-  private pickThumbnail(item: YTNodes.MusicResponsiveListItem): string {
+  private pickThumbnail(item: YTNodes.MusicResponsiveListItem | any): string {
     const thumbs = (item as any)?.thumbnails ?? (item as any)?.thumbnail?.thumbnails ?? [];
     if (Array.isArray(thumbs) && thumbs.length > 0) {
       const usable = thumbs.find((thumb: any) => thumb?.url)?.url ?? thumbs[thumbs.length - 1]?.url;
@@ -245,30 +326,44 @@ export default class YouTubeMusic implements ContentProvider {
     return '';
   }
 
-  private async ensureClient(): Promise<Innertube> {
-    if (this.client) return this.client;
-    if (this.clientPromise) return this.clientPromise;
+  private async ensureSearchClient() {
+    if (!this.searchClient) {
+      this.searchClient = await this.createClient('WEB_REMIX');
+    }
+    return this.searchClient;
+  }
 
-    this.clientPromise = this.createClient()
+  private async ensurePlayerClient(): Promise<Innertube> {
+    if (this.playerClient) return this.playerClient;
+    if (this.playerClientPromise) return this.playerClientPromise;
+
+    this.playerClientPromise = this.createClient('ANDROID')
       .then((client) => {
-        this.client = client;
-        this.clientPromise = undefined;
+        this.playerClient = client;
+        this.playerClientPromise = undefined;
         return client;
       })
       .catch((error) => {
-        this.clientPromise = undefined;
+        this.playerClientPromise = undefined;
         throw error;
       });
 
-    return this.clientPromise;
+    return this.playerClientPromise;
   }
 
-  private async createClient(): Promise<Innertube> {
+  private async ensureClient(): Promise<Innertube> {
+      return this.ensureSearchClient();
+  }
+
+  private async createClient(type: 'WEB' | 'ANDROID' | 'WEB_REMIX' = 'WEB_REMIX'): Promise<Innertube> {
     const settings = (this.configService.get('services.youtubeMusic') ?? {}) as YouTubeMusicSettings;
     const cookie = settings.cookie?.trim();
     const options: any = {
       cache: new UniversalCache(false),
       generate_session_locally: true,
+      gl: 'US',
+      hl: 'en',
+      client_type: type,
     };
 
     if (cookie) {

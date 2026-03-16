@@ -2,6 +2,7 @@
  * Inversify 注入标识符统一管理
  */
 export const DISymbol = {
+  Logger: Symbol.for('Logger'),
   Store: Symbol.for('Store'),
   Sequelize: Symbol.for('Sequelize'),
   FileCacheManager: Symbol.for('FileCacheManager'),
@@ -16,10 +17,7 @@ export const DISymbol = {
   NetEaseCloudMusic: Symbol.for('NetEaseCloudMusic'),
   QQMusic: Symbol.for('QQMusic'),
   YouTubeMusic: Symbol.for('YouTubeMusic'),
-  PlaylistDetailDataSource: Symbol.for('PlaylistDetailDataSource'),
-  HifiniThreadCacheDataSource: Symbol.for('HifiniThreadCacheDataSource'),
-  PlaylistDataSource: Symbol.for('PlaylistDataSource'),
-  TrackDataSource: Symbol.for('TrackDataSource'),
+  YouTube: Symbol.for('YouTube'),
   TrackRepository: Symbol.for('TrackRepository'),
   PlaylistRepository: Symbol.for('PlaylistRepository'),
   HifiniThreadCacheRepository: Symbol.for('HifiniThreadCacheRepository'),
@@ -27,7 +25,6 @@ export const DISymbol = {
   IpcController: Symbol.for('IpcController'),
   TrayManager: Symbol.for('TrayManager'),
   ShortcutManager: Symbol.for('ShortcutManager'),
-  SessionDataSource: Symbol.for('SessionDataSource'),
   RunningOS: Symbol.for('RunningOS'),
   IsDevelopment: Symbol.for('IsDevelopment'),
   DataPath: Symbol.for('DataPath'),
@@ -37,4 +34,5 @@ export const DISymbol = {
   ConfigService: Symbol.for('ConfigService'),
   AiTextService: Symbol.for('AiTextService'),
   ProviderManager: Symbol.for('ProviderManager'),
+  SearchService: Symbol.for('SearchService'),
 };

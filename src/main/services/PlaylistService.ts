@@ -8,14 +8,18 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import { DISymbol } from '@main/di/symbol';
 import chalk from 'chalk';
+import { AbstractService } from '@main/services/AbstractService';
+import { Logger } from 'winston';
 
 
-export default class PlaylistService {
+export default class PlaylistService extends AbstractService {
   constructor(
     @inject(DISymbol.PlaylistRepository) private playlistRepository: PlaylistRepository,
     @inject(DISymbol.TrackRepository) private trackRepository: TrackRepository,
     @inject(DISymbol.TrackService) private trackService: TrackService,
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
   ) {
+    super();
   }
 
 
@@ -29,7 +33,7 @@ export default class PlaylistService {
         if (track.platform == Platform.LOCAL) {
           const file_exist = await fileExists(track.platform_unique_id);
           if (!file_exist) {
-            console.warn(`歌曲文件不存在: ${track.platform_unique_id}`);
+            this.logger.warn(`歌曲文件不存在: ${track.platform_unique_id}`);
           } else {
             validTracks.push(track); // 仅保留存在的文件
           }
@@ -38,12 +42,12 @@ export default class PlaylistService {
         }
       }
 
-      console.log(`库中有效歌曲数量: ${validTracks.length} / ${libraryTracks.length}`);
+      this.logger.info(`库中有效歌曲数量: ${validTracks.length} / ${libraryTracks.length}`);
 
       // Step 2: 获取所有歌单的基本信息
       const playlists: PlaylistEntity[] = await this.playlistRepository.findAll();
 
-      console.log(chalk.green('PlaylistService: 获取到歌单数量:', playlists.length));
+      this.logger.info(chalk.green('PlaylistService: 获取到歌单数量:', playlists.length));
 
       // Step 3: 获取每个歌单对应的歌曲列表，并过滤无效歌曲
       for (const playlist of playlists) {
@@ -51,7 +55,7 @@ export default class PlaylistService {
         // 根据歌曲ID从有效歌曲列表中获取歌曲
         // 过滤不存在的歌曲
         playlist.tracks = await this.trackService.findTracksByPlaylistId(playlist.playlist_id);
-        console.log(`歌单: ${playlist.title} 获取到有效歌曲数量: ${playlist.tracks.length}`);
+        this.logger.info(`歌单: ${playlist.title} 获取到有效歌曲数量: ${playlist.tracks.length}`);
       }
 
       // Step 4: 添加音乐库歌单
@@ -70,8 +74,8 @@ export default class PlaylistService {
         },
       );
 
-      console.log(`共获取到歌单数量: ${playlists.length}`);
-      // console.log('歌单信息:', playlist_result);
+      this.logger.info(`共获取到歌单数量: ${playlists.length}`);
+      // this.logger.info('歌单信息:', playlist_result);
 
       // Step 5: 获取每首歌曲的详细信息,如 封面、时长等
       return await Promise.all(
@@ -101,7 +105,7 @@ export default class PlaylistService {
                 };
                 return merged;
               } catch (error) {
-                console.error(`Error fetching info for track ID ${track.id}:`, error);
+                this.logger.error(`Error fetching info for track ID ${track.id}:`, error);
                 return track; // 回退到数据库记录，而不是丢弃
               }
             }),
@@ -121,14 +125,14 @@ export default class PlaylistService {
 
     } catch (err) {
       // 错误处理：捕获并记录所有错误
-      console.error('从数据库读取歌单时出错:', err);
+      this.logger.error('从数据库读取歌单时出错:', err);
       return [];
     }
   }
 
 
   public async addPlaylist(playlistModel: PlaylistEntity) {
-    console.log('主进程: 添加歌单:', playlistModel);
+    this.logger.info('主进程: 添加歌单:', playlistModel);
 
     const track_collection: TrackEntity[] = [];
     // add All Platform Tracks to Library
@@ -146,7 +150,7 @@ export default class PlaylistService {
 
   public async addTrackToPlaylist(playlistId: number, trackModel: TrackEntity) {
 
-    console.log(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(trackModel));
+    this.logger.info(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(trackModel));
     try {
       //如果不在库中,则添加到库中
       const track = await this.trackRepository.findOrCreate(trackModel);
@@ -154,7 +158,7 @@ export default class PlaylistService {
 
       return track.id;
     } catch (error) {
-      console.error('Error in add-track-to-playlist:', error);
+      this.logger.error('Error in add-track-to-playlist:', error);
       throw error;
     }
   }
@@ -177,7 +181,7 @@ export default class PlaylistService {
   public async modifyPlaylist(
     playlistModel: PlaylistEntity,
   ) {
-    console.log('主进程: 修改歌单信息:', playlistModel);
+    this.logger.info('主进程: 修改歌单信息:', playlistModel);
     await this.playlistRepository.update(playlistModel);
   }
 

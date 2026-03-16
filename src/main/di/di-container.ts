@@ -1,6 +1,6 @@
 // di-container.ts
 import 'reflect-metadata';
-import { Container } from 'inversify';
+import { Container, interfaces } from 'inversify';
 import Store from 'electron-store';
 import { Sequelize as SequelizeInstance } from 'sequelize';
 import { sequelize } from '@main/database/seqimpl';
@@ -16,14 +16,6 @@ import { HifiniDownloader } from '@main/services/Downloader';
 import { LyricService } from '@main/services/LyricService';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
-import { PlaylistDetailDataSource } from '@main/database/dataSource/PlaylistDetailDataSource';
-import { PlaylistDetailDataSourceImpl } from '@main/database/dataSource/impl/PlaylistDetailDataSourceImpl';
-import { HifiniThreadCacheDataSource } from '@main/database/dataSource/HifiniThreadCacheDataSource';
-import { HifiniThreadCacheDataSourceImpl } from '@main/database/dataSource/impl/HifiniThreadCacheDataSourceImpl';
-import { PlaylistDataSource } from '@main/database/dataSource/PlaylistDataSource';
-import { PlaylistDataSourceImpl } from '@main/database/dataSource/impl/PlaylistDataSourceImpl';
-import { TrackDataSource } from '@main/database/dataSource/TrackDataSource';
-import { TrackDataSourceImpl } from '@main/database/dataSource/impl/TrackDataSourceImpl';
 import TrackRepository from '@main/database/repository/TrackRepository';
 import { TrackRepositoryImpl } from '@main/database/repository/impl/TrackRepositoryImpl';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
@@ -32,25 +24,54 @@ import HifiniThreadCacheRepository from '@main/database/repository/HifiniThreadC
 import { HifiniThreadCacheRepositoryImpl } from '@main/database/repository/impl/HifiniThreadCacheRepositoryImpl';
 import { AppDataPath, DataPath } from '@main/core/PathConfig';
 import { DISymbol } from '@main/di/symbol';
-import IpcController from '@main/core/IpcController';
+import IpcController from '@main/core/ipc/IpcController';
 import TrayManager from '@main/core/TrayManager';
 import ShortCutManager from '@main/core/ShortCutManager';
-import chalk from 'chalk';
-import { SessionDataSourceImpl } from '@main/database/dataSource/impl/SessionDataSourceImpl';
-import { SessionDataSource } from '@main/database/dataSource/SessionDataSource';
 import { getOperatingSystem } from '@src/utils/helpers';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { BilibiliService } from '@main/contentProvider/Bilibili/BilibiliService';
 import { Settings } from '@src/shared/settings/schema';
 import { ConfigService } from '@main/core/configService';
 import { OS } from '@src/shared/OS';
-import { PreferenceService } from '@main/services/PreferenceService';
 import { AiTextService, HeuristicAiTextService } from '@main/services/ai/AiTextService';
 import { ProviderManager } from '@main/core/ProviderManager';
+import { SearchService } from '@main/services/SearchService';
+import YouTube from '@main/contentProvider/YouTube/YouTube';
+import { Logger } from 'winston';
+import rootLogger from '@src/utils/logger';
 
 const container = new Container();
-export { container };
 
+container.bind<Logger>(DISymbol.Logger)
+  .toDynamicValue((context: interfaces.Context) => {
+
+    // 1. 获取 Inversify 正在注入的“目标” (父请求)
+    const parentRequest = context.currentRequest.parentRequest;
+
+    // 2. 如果没有父请求 (即有人直接请求 Logger)，给一个 'Default' scope
+    if (!parentRequest) {
+      return rootLogger.child({ context: 'Default' });
+    }
+
+    // 3. 获取目标类的构造函数 (e.g. ProxyServerManager class)
+    const target = parentRequest.serviceIdentifier;
+
+    // 4. 获取scope 名称
+    let scope: string;
+    switch (typeof target) {
+      case 'symbol':
+        scope = String(target).replace(/^Symbol\((.*)\)$/, '$1');
+        break;
+      case 'string':
+        scope = target;
+        break;
+      default:
+        scope = undefined;
+    }
+    rootLogger.silly(`Creating logger for scope: ${scope}`);
+    // 5. 返回一个 *新创建的*、*带 Scope 的* 子 Logger
+    return rootLogger.child({ context: scope });
+  });
 
 // ===== 关键路径 和常量 =====
 container.bind<DataPath>(DISymbol.DataPath).toConstantValue(AppDataPath);
@@ -127,11 +148,13 @@ container
   .inSingletonScope();
 
 container
-  .bind<PreferenceService>(DISymbol.PreferenceService)
-  .to(PreferenceService)
+  .bind<SearchService>(DISymbol.SearchService)
+  .to(SearchService)
   .inSingletonScope();
 
-// ===== AI/Text utilities（根据 Settings 选择提供方，禁用或无密钥则退回本地兜底） =====
+//TODO:Refactor this
+
+//===== AI/Text utilities（根据 Settings 选择提供方，禁用或无密钥则退回本地兜底） =====
 try {
   const cfg = container.get<ConfigService>(DISymbol.ConfigService);
   const ai = (cfg.get('services.ai') as any) ?? {};
@@ -185,6 +208,10 @@ container
   .to(YouTubeMusic)
   .inSingletonScope();
 container
+  .bind<YouTube>(DISymbol.YouTube)
+  .to(YouTube)
+  .inSingletonScope();
+container
   .bind<Bilibili>(DISymbol.Bilibili)
   .to(Bilibili)
   .inSingletonScope();
@@ -194,30 +221,7 @@ container
   .to(BilibiliService)
   .inSingletonScope();
 
-// ===== 数据源 & 仓库（单例） =====
-// DataSource
-container
-  .bind<PlaylistDetailDataSource>(DISymbol.PlaylistDetailDataSource)
-  .to(PlaylistDetailDataSourceImpl)
-  .inSingletonScope();
-container
-  .bind<HifiniThreadCacheDataSource>(DISymbol.HifiniThreadCacheDataSource)
-  .to(HifiniThreadCacheDataSourceImpl)
-  .inSingletonScope();
-container
-  .bind<PlaylistDataSource>(DISymbol.PlaylistDataSource)
-  .to(PlaylistDataSourceImpl)
-  .inSingletonScope();
-container
-  .bind<TrackDataSource>(DISymbol.TrackDataSource)
-  .to(TrackDataSourceImpl)
-  .inSingletonScope();
-container
-  .bind<SessionDataSource>(DISymbol.SessionDataSource)
-  .to(SessionDataSourceImpl)
-  .inSingletonScope();
-
-// Repository
+// ===== 仓库（单例） =====
 container
   .bind<TrackRepository>(DISymbol.TrackRepository)
   .to(TrackRepositoryImpl)
@@ -233,4 +237,6 @@ container
 
 
 // ===== 其他 =====
-console.info(chalk.green('DI 容器初始化完成'));
+rootLogger.info('DI 容器初始化完成');
+
+export { container };

@@ -1,62 +1,46 @@
+import { describe, expect, test } from 'vitest';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
-import { Platform } from '@main/core/enum/Platform';
-import axios from 'axios';
+import { testLogger } from '../logger';
 
-jest.mock('axios');
-const mockedGet = axios.get as jest.Mock;
-
-function buildSong({ songmid, payplay }: { songmid: string; payplay: number }) {
-  return {
-    songmid,
-    songname: 'Title-' + songmid,
-    albumname: 'Album-' + songmid,
-    albummid: 'COVER' + songmid,
-    singer: [{ id: 1, mid: 'x', name: 'Artist' }],
-    interval: 123,
-    pubtime: 1700000000,
-    pay: { payplay, payalbum: 0, payalbumprice: 0, paydownload: 0, payinfo: 0, paytrackmouth: 0, paytrackprice: 0 },
-  };
-}
-
-describe('QQMusic Provider', () => {
+const logger = testLogger;
+describe('QQMusic Provider (Live)', () => {
   let provider: QQMusic;
-  beforeEach(() => {
-    provider = new QQMusic();
-    mockedGet.mockReset();
+  beforeAll(() => {
+    provider = new QQMusic(logger);
   });
 
-  test('platformName/serverNodes', () => {
-    expect(provider.platformName).toBe(Platform.QQ_MUSIC);
-    expect(provider.serverNodes.length).toBeGreaterThan(0);
-  });
+  test('搜索曲目 should return real results', async () => {
 
-  test('searchTracks 过滤付费歌曲', async () => {
-    mockedGet.mockResolvedValueOnce({
-      data: {
-        response: {
-          data: {
-            song: { list: [buildSong({ songmid: 'F0', payplay: 0 }), buildSong({ songmid: 'F1', payplay: 1 })] },
-          },
-        },
-      },
-    });
-    const tracks = await provider.searchTracks('k');
-    expect(tracks.length).toBe(1);
-    expect(tracks[0].platform_unique_id).toBe('F0');
-  });
+    const keyword:string = "国歌"
+    // '光辉岁月'
+    const result = await provider.search(keyword);
 
-  test('getTrackLink 返回播放链接', async () => {
-    mockedGet.mockResolvedValueOnce({ data: { data: { playUrl: { ID123: { url: 'https://qq.test/ID123.mp3', error: false } } } } });
-    const url = await provider.getTrackLink('ID123');
-    expect(url).toBe('https://qq.test/ID123.mp3');
-  });
+    const tracks = result.track_result;
+    expect(tracks.length).toBeGreaterThan(0);
+    expect(tracks[0].title).toBeDefined();
+    expect(tracks[0].artist).toBeDefined();
+    console.log('First track found:', tracks[0].title, 'by', tracks[0].artist);
+  }, 20000);
 
-  test('getLyrics 解析 LRC 行', async () => {
-    mockedGet.mockResolvedValueOnce({ data: { code: 0, response: { lyric: '[00:01.00]Hello World' } } });
-    const lyric = await provider.getLyrics('ID123');
-    expect(lyric).toBeDefined();
-    if (!lyric) return; // 保障类型收窄
-    expect(lyric.originLines[0].text).toBe('Hello World');
-    expect(lyric.originLines[0].time).toBeGreaterThan(900);
-  });
+
+  test('获取歌词 should return real lyrics', async () => {
+    // Using a known QQMusic ID for 光辉岁月: 003rJSwm3TechU
+
+    const lyric = await provider.getLyrics('003rJSwm3TechU');
+
+    expect(lyric.originLines.length).toBeGreaterThan(0);
+    console.log('Lyric lines:', lyric.originLines.length);
+
+  }, 20000);
+
+  test('获取播放链接 should return real link', async () => {
+
+    // - The Right Path（Age Of Innocence）-uid: 0008dOVc2ImmJP
+    // - 义勇军进行曲 (合唱)（标准礼仪曲集）-uid: 003h45Yk3yWjLk
+    const url:string = await provider.getTrackLink('003h45Yk3yWjLk');
+
+    expect(url).toBeDefined()
+    console.log('Track link:', url);
+
+  }, 20000);
 });

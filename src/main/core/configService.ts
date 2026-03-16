@@ -7,6 +7,8 @@ import { DISymbol } from '@main/di/symbol';
 
 import { defaultSettings, Settings } from '@src/shared/settings/schema';
 import { Channels } from '@src/shared/ipc/channels';
+import { AbstractService } from '@main/services/AbstractService';
+import { Logger } from 'winston';
 
 // ------- 小工具：按点路径读取/写入 -------
 function getByPath(obj: any, path: string) {
@@ -21,10 +23,14 @@ function setByPath(obj: any, path: string, value: any) {
 }
 
 @injectable()
-export class ConfigService {
+export class ConfigService extends AbstractService {
   private readonly ee = new EventEmitter();
 
-  constructor(@inject(DISymbol.SettingsStore) private readonly store: Store<Settings>) {
+  constructor(
+    @inject(DISymbol.SettingsStore) private readonly store: Store<Settings>,
+    @inject(DISymbol.Logger) protected readonly logger: Logger,
+  ) {
+    super();
     // 1) 启动即校验已有数据；不合法 => 直接重置为默认
     let raw: unknown = this.store.store;
     try {
