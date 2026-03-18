@@ -33,26 +33,26 @@ export default function MainContentSwitch({
 
     switch (entry.view) {
       case ViewType.PLAYLIST:
-        return (
+        return player ? (
           <PlaylistView
-            player={player!}
+            player={player}
             musicLibraryController={musicLibraryController}
           />
-        );
+        ) : <div style={{ padding: 16 }}>加载中...</div>;
       case ViewType.SEARCH_RESULTS:
-        return (
+        return player ? (
           <SearchResultView
             player={player}
             fusionSearchResult={searchResults}
             musicLibraryController={musicLibraryController}
           />
-        );
+        ) : <div style={{ padding: 16 }}>加载中...</div>;
       case ViewType.PROFILE:
         return <ProfileView />;
       case ViewType.LYRIC:
-        return <LyricView player={player} />;
+        return player ? <LyricView player={player} /> : <div style={{ padding: 16 }}>加载中...</div>;
       case ViewType.DEBUG:
-        return <DebugView player={player!} />;
+        return player ? <DebugView player={player} /> : <div style={{ padding: 16 }}>加载中...</div>;
       case ViewType.SETTINGS:
         return <SettingsView />;
       case ViewType.TRACK_DETAIL:
