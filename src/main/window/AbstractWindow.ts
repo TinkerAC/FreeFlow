@@ -61,7 +61,16 @@ export abstract class AbstractWindow extends BrowserWindow {
     try {
       await this.loadURL(url);
     } catch (e) /* eslint-disable-next-line no-console */ {
-      console.error(`[Window] failed to load ${url}`, e);
+      console.error(`[Window] failed to load URL ${url}`, e);
+    }
+  }
+
+  /** 包装 loadFile，输出错误堆栈 */
+  protected async safeLoadFile(filePath: string): Promise<void> {
+    try {
+      await this.loadFile(filePath);
+    } catch (e) /* eslint-disable-next-line no-console */ {
+      console.error(`[Window] failed to load file ${filePath}`, e);
     }
   }
 
