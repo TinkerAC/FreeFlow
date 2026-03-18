@@ -1,8 +1,10 @@
 import { AbstractWindow } from '@main/window/AbstractWindow';
 
-// 由 Electron Forge 注入（与主窗口相同入口，使用路由区分）
-declare const APP_WINDOW_WEBPACK_ENTRY: string;
-declare const APP_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+import path from 'path';
+
+// 由 Electron Forge 注入
+declare const APP_WINDOW_VITE_NAME: string;
+declare const APP_WINDOW_VITE_DEV_SERVER_URL: string;
 
 /** 迷你播放器窗口（置顶、小巧、无边框、圆角） */
 export default class MiniPlayerWindow extends AbstractWindow {
@@ -19,7 +21,7 @@ export default class MiniPlayerWindow extends AbstractWindow {
       alwaysOnTop: true,
       backgroundColor: '#202020',
       webPreferences: {
-        preload: APP_WINDOW_PRELOAD_WEBPACK_ENTRY,
+        preload: path.join(__dirname, 'appPreload.js'),
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
@@ -29,10 +31,17 @@ export default class MiniPlayerWindow extends AbstractWindow {
     });
 
     // 加载渲染进程（同入口，通过 hash 路由进入迷你播放器）
-    const url = `${APP_WINDOW_WEBPACK_ENTRY}#/mini`;
-    this.safeLoadURL(url).then(() => {
-      // no-op
-    });
+    if (APP_WINDOW_VITE_DEV_SERVER_URL) {
+      const url = `${APP_WINDOW_VITE_DEV_SERVER_URL}/app_window.html#/mini`;
+      this.safeLoadURL(url).then(() => {
+        // no-op
+      });
+    } else {
+      const url = `file://${path.join(__dirname, `../renderer/${APP_WINDOW_VITE_NAME}/index.html`)}#/mini`;
+      this.safeLoadURL(url).then(() => {
+        // no-op
+      });
+    }
 
     // 迷你窗口关闭则销毁
     this.removeAllListeners('close');

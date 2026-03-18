@@ -17,9 +17,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "paths": {
-      "*": [
-        "node_modules/*"
-      ],
       "@assets/*": [
         "./assets/*"
       ],
