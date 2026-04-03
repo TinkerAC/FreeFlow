@@ -42,7 +42,6 @@ export default class PlayerController extends AbstractController<[PlayerState]> 
 
   /* ------------------------------------------------------------------ */
   /*                      以下为原本 PlayerController 逻辑               */
-
   /* ------------------------------------------------------------------ */
 
   public async loadFromDump(dump: PlayerState) {
