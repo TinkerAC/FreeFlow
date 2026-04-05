@@ -10,7 +10,7 @@ import PlayerController from '@renderer/core/controller/PlayerController';
 import clsx from 'clsx';
 import { OS } from '@src/shared/OS';
 import { useNavigation, ViewType } from '@renderer/core/navigation';
-
+import Web3Button from '@renderer/windows/main/TopBar/ConnectWalletButton'
 async function getSearchResults(searchTerm: string, safeMode: boolean = false) {
   return searchContext.getSearchResults(searchTerm, safeMode);
 }
@@ -36,7 +36,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const [isShiftPressed, setIsShiftPressed] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
-
+  
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Shift') setIsShiftPressed(true);
@@ -186,10 +186,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
 
         {/* 右：操作（Premium / 设置 / 调试 / 用户 / 窗口控件） */}
         <div className={clsx(styles.right, styles.nodrag)}>
-          <button className={styles.primaryBtn} onClick={() => { /* no-op: explore Fremium */
-          }}>
-            探索Fremium
-          </button>
+          <Web3Button />
 
           {/* 新：齿轮按钮 -> SettingsView */}
           <button
