@@ -11,6 +11,7 @@ import MusicLibraryController from '@renderer/core/controller/MusicLibraryContro
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import SettingsView from '@renderer/windows/main/Maincontent/SettingView/SettingsView';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import Web3View from './Web3View/Web3View';
 
 interface MainContentSwitchProps {
   player: PlayerController | null;
@@ -55,6 +56,8 @@ export default function MainContentSwitch({
         return player ? <DebugView player={player} /> : <div style={{ padding: 16 }}>加载中...</div>;
       case ViewType.SETTINGS:
         return <SettingsView />;
+      case ViewType.WEB3:
+        return <Web3View />;
       case ViewType.TRACK_DETAIL:
         return entry.data && player ? (
           <TrackDetailView

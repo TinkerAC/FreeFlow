@@ -52,7 +52,7 @@ export default class TrayManager {
   private createWindowsTray(): Tray {
     if (this.tray) return this.tray; // 保证单例
 
-    const trayIconPath = path.join(__dirname, '..','..', '..', 'assets', 'appIcons','appIcon_default.png');
+    const trayIconPath = path.join(__dirname, '..', '..', 'assets', 'appIcons', 'appIcon_default.png');
     this.tray = new Tray(trayIconPath);
 
     const contextMenu = Menu.buildFromTemplate([

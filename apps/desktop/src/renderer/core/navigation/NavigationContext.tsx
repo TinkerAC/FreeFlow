@@ -21,6 +21,7 @@ export enum ViewType {
   DEBUG = 'debug',
   SETTINGS = 'settings',
   TRACK_DETAIL = 'trackDetail',
+  WEB3 = 'web3',
 }
 
 export interface NavigationEntry<TData = any> {
