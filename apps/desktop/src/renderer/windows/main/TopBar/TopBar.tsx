@@ -188,14 +188,6 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
         <div className={clsx(styles.right, styles.nodrag)}>
           <Web3Button />
 
-          <button
-            className={styles.iconBtn}
-            title="Web3 工作台"
-            onClick={() => navigation.push(ViewType.WEB3)}
-          >
-            <i className="fa-brands fa-ethereum" />
-          </button>
-
           {/* 新：齿轮按钮 -> SettingsView */}
           <button
             className={styles.iconBtn}
