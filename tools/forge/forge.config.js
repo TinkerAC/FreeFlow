@@ -9,7 +9,7 @@ module.exports = {
   packagerConfig: {
     // Create asar archive for main, renderer process files
     asar: {
-      'unpack': '**/node_modules/sharp/**/*',
+      unpack: '{**/node_modules/sharp/**/*,**/node_modules/sqlite3/**/*,**/node_modules/lzma-native/**/*,**/node_modules/canvas/**/*}',
     },
     // Set executable name
     executableName: 'FreeFlow',

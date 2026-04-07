@@ -1,14 +1,14 @@
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import { readFileSync } from 'fs';
 
-const nativeDeps = ['sharp', 'sqlite3', 'sequelize', 'sequelize-typescript', 'electron-store', 'lzma-native', 'canvas', 'jsdom'];
+// Keep only native modules external so pure JS packages are bundled when imported.
+const nativeDeps = ['sharp', 'sqlite3', 'lzma-native', 'canvas'];
 
 export default defineConfig({
-    plugins: [tsconfigPaths()],
-    build: {
-        rollupOptions: {
-            external: nativeDeps
-        }
+  plugins: [tsconfigPaths()],
+  build: {
+    rollupOptions: {
+      external: nativeDeps
     }
+  }
 });

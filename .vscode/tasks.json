@@ -4,9 +4,27 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Deploy: Run tools/deploy.ts",
+      "label": "Deploy Local Build",
       "type": "shell",
-      "command": "npx ts-node tools/deploy.ts",
+      "command": "pnpm run deploy:local",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build And Deploy Local",
+      "type": "shell",
+      "command": "pnpm run build:dir:deploy",
       "options": {
         "cwd": "${workspaceFolder}"
       },

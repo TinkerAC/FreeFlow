@@ -12,8 +12,11 @@ export interface DataPath {
   musicDir: string;
 }
 
-
 const environment = process.env.NODE_ENV || 'production';
+const appPath = app.getAppPath();
+const assetRoot = app.isPackaged
+  ? path.join(process.resourcesPath, 'appIcons')
+  : path.join(appPath, 'assets', 'appIcons');
 
 const data_Path =
   environment === 'development'
@@ -43,4 +46,8 @@ const AppDataPath: DataPath = {
   playerStateDumpFile: playerState_DumpFile,
 };
 
-export { environment, data_Path, db_Path, AppDataPath };
+function resolveAppIconPath(fileName: string): string {
+  return path.join(assetRoot, fileName);
+}
+
+export { environment, data_Path, db_Path, AppDataPath, resolveAppIconPath };

@@ -1,16 +1,18 @@
 {
   "name": "freeflow",
   "productName": "FreeFlow",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "description": "一个基于ts-react-webpack-electron的自由音乐播放器",
   "main": ".vite/build/main.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development electron-forge start",
-    "start": "cross-env NODE_ENV=production electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "eslint src/ --ext .ts,.js,.tsx,.jsx",
+    "build:dir": "electron-forge package",
+    "deploy:local": "ts-node --project tools/tsconfig.tools.json tools/deploy.ts",
+    "build:dir:deploy": "pnpm run build:dir && pnpm run deploy:local",
+    "build:desktop": "electron-forge make",
+    "build:desktop:win": "electron-forge make --platform=win32",
+    "build:desktop:mac": "electron-forge make --platform=darwin",
+    "build:desktop:linux": "electron-forge make --platform=linux",
     "test": "vitest"
   },
   "keywords": [

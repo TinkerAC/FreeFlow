@@ -1,6 +1,5 @@
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
-import { JSDOM } from 'jsdom';
 import * as cheerio from 'cheerio';
 import { getRandom } from 'random-useragent';
 import path from 'path';
@@ -336,16 +335,14 @@ export default class HifiniMusic extends AbstractContentProvider {
         },
       }).then((response: AxiosResponse<string>) => response.data);
 
-      const dom: JSDOM = new JSDOM(html);
-      const scripts: NodeListOf<HTMLScriptElement> = dom.window.document.querySelectorAll('script');
-
+      const $ = cheerio.load(html);
       let scriptContent: string = '';
-      for (const script of Array.from(scripts)) {
-        if (script.textContent && script.textContent.includes('APlayer')) {
-          scriptContent = script.textContent;
-          break;
+      $('script').each((_, script) => {
+        const textContent = $(script).html() || '';
+        if (!scriptContent && textContent.includes('APlayer')) {
+          scriptContent = textContent;
         }
-      }
+      });
 
       if (!scriptContent) {
         console.warn('页面上没有外链的音乐播放器, dataHref:', dataHref, '链接:', 'https://hifini.com/' + dataHref);

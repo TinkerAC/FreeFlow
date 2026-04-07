@@ -1,12 +1,9 @@
 import { app, Menu, Tray } from 'electron';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { inject } from 'inversify';
 import { DISymbol } from '@main/di/symbol';
 import { WindowKey, WindowManager } from '@main/window/windowManager';
 import { OS } from '@src/shared/OS';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { resolveAppIconPath } from '@main/core/PathConfig';
 
 /**
  * TrayManager
@@ -16,12 +13,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default class TrayManager {
   private tray: Tray | null = null;
 
-  constructor(@inject(DISymbol.RunningOS) private os: OS,
-              @inject(DISymbol.WindowManager) private windowManager: WindowManager,
-              @inject(DISymbol.Logger) private logger: import('winston').Logger,
-  ) {
-
-  }
+  constructor(
+    @inject(DISymbol.RunningOS) private os: OS,
+    @inject(DISymbol.WindowManager) private windowManager: WindowManager,
+    @inject(DISymbol.Logger) private logger: import('winston').Logger,
+  ) {}
 
   public createTray(): Tray {
     switch (this.os) {
@@ -29,9 +25,8 @@ export default class TrayManager {
         const tray = this.createWindowsTray();
         this.logger.info('系统托盘已创建');
         return tray;
-
       }
-      default : {
+      default: {
         this.logger.info(`当前操作系统 ${this.os} 不支持托盘功能`);
       }
     }
@@ -52,7 +47,7 @@ export default class TrayManager {
   private createWindowsTray(): Tray {
     if (this.tray) return this.tray; // 保证单例
 
-    const trayIconPath = path.join(__dirname, '..','..', '..', 'assets', 'appIcons','appIcon_default.png');
+    const trayIconPath = resolveAppIconPath('appIcon_default.png');
     this.tray = new Tray(trayIconPath);
 
     const contextMenu = Menu.buildFromTemplate([
@@ -75,4 +70,3 @@ export default class TrayManager {
     return this.tray;
   }
 }
-
