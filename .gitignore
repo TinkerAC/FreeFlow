@@ -81,8 +81,7 @@ jspm_packages/
 .dynamodb/
 
 # Webpack
-.vite
-.vite-*/
+.webpack/
 
 # Electron-Forge
 out/

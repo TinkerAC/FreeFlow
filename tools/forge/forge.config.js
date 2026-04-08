@@ -2,8 +2,6 @@
 const path = require('path');
 const rootDir = process.cwd();
 
-const { VitePlugin } = require('@electron-forge/plugin-vite');
-
 module.exports = {
   // Packager Config
   packagerConfig: {
@@ -45,27 +43,51 @@ module.exports = {
   // Forge Plugins
   plugins: [
     {
-      name: '@electron-forge/plugin-vite',
+      name: '@electron-forge/plugin-webpack',
       config: {
-        // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.
-        build: [
-          {
-            entry: 'src/main/main.ts',
-            config: 'vite.main.config.mts',
-            target: 'main',
-          },
-          {
-            entry: 'src/renderer/appPreload.tsx',
-            config: 'vite.preload.config.mts',
-            target: 'preload',
-          },
-        ],
-        renderer: [
-          {
-            name: 'app_window',
-            config: 'vite.renderer.config.mts',
-          },
-        ],
+        // Fix content-security-policy error when image or video src is different origin
+        // Remove 'unsafe-eval' to get rid of console warning in development mode.
+        devContentSecurityPolicy: `default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;`,        // Ports
+        port: 3000, // Webpack Dev Server port
+        loggerPort: 9000, // Logger port
+        // Main process webpack configuration
+        mainConfig: path.join(rootDir, 'tools/webpack/webpack.main.js'),
+        // Renderer process webpack configuration
+        renderer: {
+          // Configuration file path
+          config: path.join(rootDir, 'tools/webpack/webpack.renderer.js'),
+          // Entrypoint of the application
+          entryPoints: [
+            {
+              // Window process name
+              name: 'app_window',
+              // React Hot Module Replacement (HMR)
+              rhmr: 'react-hot-loader/patch',
+              // HTML index file template
+              html: path.join(rootDir, 'src/renderer/app.html'),
+              // Renderer
+              js: path.join(rootDir, 'src/renderer/appRenderer.tsx'),
+              // Main Window
+              // Preload
+              preload: {
+                js: path.join(rootDir, 'src/renderer/appPreload.tsx'),
+              },
+            },
+            {
+              name: 'music_workshop_window',
+              rhmr: 'react-hot-loader/patch',
+              html: path.join(rootDir, 'src/renderer/app.html'),
+              js: path.join(rootDir, 'src/renderer/musicWorkshopRenderer.tsx'),
+              preload: {
+                js: path.join(rootDir, 'src/renderer/appPreload.tsx'),
+              },
+            },
+          ],
+        },
+        devServer: {
+          liveReload: false,
+        },
+        // 移除构建阶段钩子；Swift 工具不再由主构建流程生成
       },
     },
   ],
