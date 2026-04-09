@@ -6,6 +6,7 @@ import Segmented from '../controls/Segmented';
 import { useSetting } from '@renderer/core/config/SettingsContext';
 
 export default function ServicesSettingsTab() {
+  const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
   const bbsSid = useSetting<string>('services.hifiniCookie.bbs_sid', '');
   const bbsToken = useSetting<string>('services.hifiniCookie.bbs_token', '');
   const youtubeCookie = useSetting<string>('services.youtubeMusic.cookie', '');
@@ -66,6 +67,30 @@ export default function ServicesSettingsTab() {
 
   return (
     <>
+      <SettingsGroup title="Web2.5 后端" desc="SIWE 登录与 Pinata 上传由服务端统一控制">
+        <SettingRow
+          label="后端地址"
+          sub="例如 http://localhost:8787"
+          control={(
+            <input
+              type="text"
+              value={web25BaseUrl.value}
+              onChange={(e) => web25BaseUrl.setValue(e.target.value)}
+              placeholder="http://localhost:8787"
+              style={{
+                height: 28,
+                borderRadius: 999,
+                background: 'rgba(var(--md-sys-color-surface-variant), .35)',
+                border: '1px solid rgb(var(--md-sys-color-outline-variant))',
+                color: 'rgb(var(--md-sys-color-on-surface))',
+                padding: '0 10px',
+                minWidth: 320,
+              }}
+            />
+          )}
+        />
+      </SettingsGroup>
+
       <SettingsGroup title="服务" desc="HiFiNi Cookie & YouTube Music">
         <SettingRow
           label="bbs_sid"

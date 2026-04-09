@@ -170,6 +170,11 @@ export const ServiceSettings = z.object({
     useSignedUploads: false,
     signedUploadUrl: '',
   }),
+  web25Backend: z.object({
+    baseUrl: z.string().default('http://localhost:8787'),
+  }).default({
+    baseUrl: 'http://localhost:8787',
+  }),
   web3Publishing: z.object({
     chainId: z.number().int().default(DEFAULT_SEPOLIA_CONTRACTS.chainId),
     chainName: z.string().default(DEFAULT_SEPOLIA_CONTRACTS.chainName),
@@ -264,6 +269,9 @@ export const Settings = z.object({
       groupId: '',
       useSignedUploads: false,
       signedUploadUrl: '',
+    },
+    web25Backend: {
+      baseUrl: 'http://localhost:8787',
     },
     web3Publishing: {
       chainId: DEFAULT_SEPOLIA_CONTRACTS.chainId,

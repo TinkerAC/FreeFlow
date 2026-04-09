@@ -2,6 +2,17 @@ import React from 'react';
 import { BrowserProvider, Contract, formatEther, parseEther } from 'ethers';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { useSettingsContext } from '@renderer/core/config/SettingsContext';
+import {
+  buildSiweMessage,
+  getPinataConfig,
+  getWeb25Session,
+  logoutWeb25,
+  requestSiweNonce,
+  uploadFileToWeb25Pinata,
+  verifySiweSession,
+  type PinataConfigPayload,
+  type Web25Session,
+} from '@renderer/core/web25/client';
 import { DEFAULT_SEPOLIA_CONTRACTS, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import styles from './MusicWorkshop.module.css';
@@ -122,12 +133,6 @@ function formatBytes(size?: number) {
   return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
-function fileToGateway(gateway: string, cid: string) {
-  if (!cid) return '';
-  const base = gateway.trim().replace(/\/$/, '') || 'https://gateway.pinata.cloud/ipfs';
-  return `${base}/${cid}`;
-}
-
 function slugify(value: string) {
   return value
     .trim()
@@ -154,8 +159,11 @@ export default function MusicWorkshop() {
     { id: makeId('split'), label: 'Primary artist', address: '', share: 100 },
   ]);
   const [busyState, setBusyState] = React.useState<'idle' | 'uploading-assets' | 'uploading-metadata' | 'publishing' | 'checking-access' | 'buying'>('idle');
+  const [authBusy, setAuthBusy] = React.useState(false);
+  const [web25Session, setWeb25Session] = React.useState<Web25Session | null>(null);
+  const [pinataConfig, setPinataConfig] = React.useState<PinataConfigPayload | null>(null);
 
-  const pinataSettings = settings?.services.pinata;
+  const web25BackendBaseUrl = settings?.services.web25Backend.baseUrl?.trim() || 'http://localhost:8787';
   const web3Settings = settings?.services.web3Publishing;
   const effectiveWeb3Settings = React.useMemo(() => ({
     chainId: web3Settings?.chainId || DEFAULT_SEPOLIA_CONTRACTS.chainId,
@@ -184,6 +192,33 @@ export default function MusicWorkshop() {
     setStatusLog((prev) => [message, ...prev].slice(0, 8));
     setUpload((prev) => ({ ...prev, lastAction: message }));
   }, []);
+
+  const refreshWeb25State = React.useCallback(async (silent = false) => {
+    if (!web25BackendBaseUrl) {
+      setWeb25Session(null);
+      setPinataConfig(null);
+      return;
+    }
+
+    try {
+      const [sessionPayload, pinataPayload] = await Promise.all([
+        getWeb25Session(web25BackendBaseUrl),
+        getPinataConfig(web25BackendBaseUrl),
+      ]);
+      setWeb25Session(sessionPayload.session);
+      setPinataConfig(pinataPayload);
+    } catch (error) {
+      setWeb25Session(null);
+      setPinataConfig(null);
+      if (!silent) {
+        appendStatus(`后端不可用：${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }, [appendStatus, web25BackendBaseUrl]);
+
+  React.useEffect(() => {
+    void refreshWeb25State(true);
+  }, [refreshWeb25State]);
 
   const updateAsset = <K extends keyof AssetState>(key: K, value: AssetState[K]) => {
     setAsset((prev) => ({ ...prev, [key]: value }));
@@ -234,12 +269,11 @@ export default function MusicWorkshop() {
   };
 
   const metadataDocument = React.useMemo(() => {
-    const gateway = pinataSettings?.gateway || 'https://gateway.pinata.cloud/ipfs';
     return {
       name: asset.title || 'Untitled Track',
       description: asset.description || 'Published from FreeFlow Creators Workshop',
       image: upload.coverCid ? `ipfs://${upload.coverCid}` : '',
-      external_url: upload.metadataCid ? fileToGateway(gateway, upload.metadataCid) : '',
+      external_url: upload.metadataGatewayUrl || '',
       attributes: [
         { trait_type: 'Artist', value: asset.artist || 'Unknown Artist' },
         { trait_type: 'Album', value: asset.album || 'Single' },
@@ -268,72 +302,100 @@ export default function MusicWorkshop() {
         },
         provenance: {
           storageProvider: 'Pinata',
-          pinataGroupId: pinataSettings?.groupId || '',
+          pinataGroupId: pinataConfig?.groupIdConfigured ? 'configured-on-server' : '',
           chainName: effectiveWeb3Settings.chainName,
           musicAssetAddress: effectiveWeb3Settings.musicAssetAddress || '0xYOUR_MUSIC_ASSET',
         },
       },
     };
-  }, [asset, audioFile, coverFile, effectiveWeb3Settings, pinataSettings, upload]);
+  }, [asset, audioFile, coverFile, effectiveWeb3Settings, pinataConfig, upload]);
 
   const curlPreview = React.useMemo(() => {
-    const apiBase = pinataSettings?.apiBaseUrl || 'https://uploads.pinata.cloud/v3/files';
-    const authPart = pinataSettings?.useSignedUploads
-      ? '# use the signed upload URL returned by your backend'
-      : 'Authorization: Bearer <PINATA_JWT>';
-
     return [
-      `curl --request POST "${apiBase}" \\`,
-      `  --header "${authPart}" \\`,
-      '  --form "network=public" \\',
+      `curl --request POST "${web25BackendBaseUrl.replace(/\/$/, '')}/api/v1/storage/pinata/files" \\`,
+      '  --header "Authorization: Bearer <SIWE_SESSION_TOKEN>" \\',
       `  --form "name=${slugify(asset.title || 'untitled-track')}" \\`,
+      '  --form \'keyvalues={"kind":"audio"}\' \\',
       '  --form "file=@./your-audio-file.mp3"',
     ].join('\n');
-  }, [asset.title, pinataSettings]);
+  }, [asset.title, web25BackendBaseUrl]);
 
   const uploadFileToPinata = async (file: File, name: string, keyvalues: Record<string, string>) => {
-    const apiBase = pinataSettings?.apiBaseUrl || 'https://uploads.pinata.cloud/v3/files';
-    const formData = new FormData();
-    formData.append('network', pinataSettings?.network || 'public');
-    formData.append('name', name);
-    formData.append('file', file);
-    formData.append('keyvalues', JSON.stringify(keyvalues));
-
-    if (pinataSettings?.groupId) {
-      formData.append('group_id', pinataSettings.groupId);
+    if (!web25BackendBaseUrl) {
+      throw new Error('Web2.5 后端地址为空');
+    }
+    if (!web25Session) {
+      throw new Error('请先完成 SIWE 登录');
     }
 
-    const headers: Record<string, string> = {};
-    if (pinataSettings?.useSignedUploads) {
-      if (!pinataSettings.signedUploadUrl) {
-        throw new Error('Signed upload URL is empty');
-      }
-      const response = await fetch(pinataSettings.signedUploadUrl, {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result?.error?.reason || result?.message || 'Pinata signed upload failed');
-      }
-      return result.data || result;
-    }
-
-    if (!pinataSettings?.jwt) {
-      throw new Error('Pinata JWT is empty');
-    }
-
-    headers.Authorization = `Bearer ${pinataSettings.jwt}`;
-    const response = await fetch(apiBase, {
-      method: 'POST',
-      headers,
-      body: formData,
+    return await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
+      file,
+      name,
+      keyvalues,
     });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result?.error?.reason || result?.message || 'Pinata upload failed');
+  };
+
+  const handleSiweLogin = async () => {
+    if (!walletProvider) {
+      appendStatus('请先连接钱包');
+      return;
     }
-    return result.data || result;
+    if (!web25BackendBaseUrl) {
+      appendStatus('请先配置 Web2.5 后端地址');
+      return;
+    }
+
+    setAuthBusy(true);
+
+    try {
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const signerAddress = address || await signer.getAddress();
+      const network = await ethersProvider.getNetwork();
+      const chainId = Number(network.chainId);
+      const noncePayload = await requestSiweNonce(web25BackendBaseUrl, {
+        address: signerAddress,
+        chainId,
+      });
+      const message = buildSiweMessage({
+        domain: noncePayload.domain,
+        address: signerAddress,
+        uri: noncePayload.uri,
+        statement: noncePayload.statement,
+        version: noncePayload.version,
+        chainId,
+        nonce: noncePayload.nonce,
+        issuedAt: new Date().toISOString(),
+      });
+      const signature = await signer.signMessage(message);
+      const verifiedPayload = await verifySiweSession(web25BackendBaseUrl, {
+        message,
+        signature,
+      });
+
+      setWeb25Session(verifiedPayload.session);
+      appendStatus(`SIWE 登录成功：${verifiedPayload.session.address.slice(0, 10)}...`);
+      await refreshWeb25State(true);
+    } catch (error) {
+      appendStatus(`SIWE 登录失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleSiweLogout = async () => {
+    if (!web25BackendBaseUrl) return;
+
+    setAuthBusy(true);
+    try {
+      await logoutWeb25(web25BackendBaseUrl);
+      setWeb25Session(null);
+      appendStatus('已退出 Web2.5 会话');
+    } catch (error) {
+      appendStatus(`退出会话失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setAuthBusy(false);
+    }
   };
 
   const handleUploadAssets = async () => {
@@ -356,7 +418,7 @@ export default function MusicWorkshop() {
           { kind: 'cover', artist: asset.artist || 'unknown' },
         );
         nextCoverCid = coverResult.cid;
-        nextCoverGateway = fileToGateway(pinataSettings?.gateway || '', coverResult.cid);
+        nextCoverGateway = coverResult.gatewayUrl;
       }
 
       appendStatus('正在将音频上传到 Pinata...');
@@ -369,7 +431,7 @@ export default function MusicWorkshop() {
       setUpload((prev) => ({
         ...prev,
         audioCid: audioResult.cid,
-        audioGatewayUrl: fileToGateway(pinataSettings?.gateway || '', audioResult.cid),
+        audioGatewayUrl: audioResult.gatewayUrl,
         coverCid: nextCoverCid,
         coverGatewayUrl: nextCoverGateway,
         lastAction: '音频与封面已上传到 Pinata',
@@ -409,7 +471,7 @@ export default function MusicWorkshop() {
         ...prev,
         metadataCid,
         metadataUri: `ipfs://${metadataCid}`,
-        metadataGatewayUrl: fileToGateway(pinataSettings?.gateway || '', metadataCid),
+        metadataGatewayUrl: metadataResult.gatewayUrl,
         lastAction: 'metadata 已上传，可以进入链上发布阶段',
       }));
       appendStatus('metadata 已上传，可以进入链上发布阶段');
@@ -621,10 +683,10 @@ export default function MusicWorkshop() {
           在一个独立窗口里完成歌手发布流程：整理作品素材、接入 Pinata、存储到 IPFS，并通过 PlatformHub 一次性完成分账部署、NFT 铸造和销售配置。
         </div>
       </div>
-      <div className={styles.headerActions}>
-        <button className={styles.ghostButton} onClick={() => setActiveTab('flow')}>
-          查看发行流程
-        </button>
+        <div className={styles.headerActions}>
+          <button className={styles.ghostButton} onClick={() => setActiveTab('flow')}>
+            查看发行流程
+          </button>
         <button className={styles.walletButton} onClick={() => open()}>
           {isConnected ? `钱包已连接 ${address?.slice(0, 6)}...` : '连接创作者钱包'}
         </button>
@@ -641,7 +703,8 @@ export default function MusicWorkshop() {
               <div className={styles.badgeRow}>
                 <span className={styles.badge}>Chain: {effectiveWeb3Settings.chainName}</span>
                 <span className={styles.badge}>Access: {asset.accessModel === 'purchase' ? 'Purchase Required' : 'Open Access'}</span>
-                <span className={styles.badge}>Pinata: {pinataSettings?.useSignedUploads ? 'Signed URL' : 'JWT Upload'}</span>
+                <span className={styles.badge}>Pinata: Server Controlled</span>
+                <span className={styles.badge}>SIWE: {web25Session ? 'Authenticated' : 'Not Signed In'}</span>
               </div>
               <div className={styles.heroGrid}>
                 <div className={styles.heroStat}>
@@ -777,47 +840,65 @@ export default function MusicWorkshop() {
                 <section className={styles.card}>
                   <div className={styles.cardTitle}>3. Pinata 配置</div>
                   <div className={styles.cardSub}>
-                    当前实现采用 Pinata 文档推荐的 files endpoint 方式。桌面端允许你直接填 JWT，生产环境更推荐改成后端签发 signed upload URL。
+                    Pinata JWT 已迁移到 Web2.5 后端统一托管。桌面端只保留后端地址和 SIWE 会话，不再直连 Pinata。
                   </div>
                   <div className={styles.fieldGrid}>
                     <label className={styles.label}>
-                      Pinata JWT
-                      <input className={styles.input} value={pinataSettings?.jwt || ''} onChange={(e) => setByPath('services.pinata.jwt', e.target.value)} placeholder="pinata_jwt_placeholder" />
+                      Web2.5 Backend URL
+                      <input
+                        className={styles.input}
+                        value={web25BackendBaseUrl}
+                        onChange={(e) => setByPath('services.web25Backend.baseUrl', e.target.value)}
+                        placeholder="http://localhost:8787"
+                      />
                     </label>
                     <div className={styles.fieldGridTwo}>
                       <label className={styles.label}>
                         Gateway
-                        <input className={styles.input} value={pinataSettings?.gateway || ''} onChange={(e) => setByPath('services.pinata.gateway', e.target.value)} placeholder="https://gateway.pinata.cloud/ipfs" />
+                        <input
+                          className={styles.input}
+                          value={pinataConfig?.gatewayBaseUrl || ''}
+                          readOnly
+                          placeholder="由后端返回"
+                        />
                       </label>
                       <label className={styles.label}>
-                        API Base URL
-                        <input className={styles.input} value={pinataSettings?.apiBaseUrl || ''} onChange={(e) => setByPath('services.pinata.apiBaseUrl', e.target.value)} />
+                        当前网络
+                        <input
+                          className={styles.input}
+                          value={pinataConfig?.network || ''}
+                          readOnly
+                          placeholder="由后端返回"
+                        />
                       </label>
                     </div>
                     <div className={styles.fieldGridTwo}>
                       <label className={styles.label}>
-                        Network
-                        <select className={styles.select} value={pinataSettings?.network || 'public'} onChange={(e) => setByPath('services.pinata.network', e.target.value)}>
-                          <option value="public">public</option>
-                          <option value="private">private</option>
-                        </select>
+                        SIWE 会话
+                        <input
+                          className={styles.input}
+                          value={web25Session ? `${web25Session.address.slice(0, 10)}...` : '未登录'}
+                          readOnly
+                        />
                       </label>
                       <label className={styles.label}>
-                        Group ID
-                        <input className={styles.input} value={pinataSettings?.groupId || ''} onChange={(e) => setByPath('services.pinata.groupId', e.target.value)} placeholder="optional_group_id" />
+                        Upload Limit
+                        <input
+                          className={styles.input}
+                          value={pinataConfig ? formatBytes(pinataConfig.maxFileSizeBytes) : ''}
+                          readOnly
+                          placeholder="由后端返回"
+                        />
                       </label>
                     </div>
                     <div className={styles.row}>
-                      <button className={styles.ghostButton} onClick={() => setByPath('services.pinata.useSignedUploads', !(pinataSettings?.useSignedUploads || false))}>
-                        {pinataSettings?.useSignedUploads ? '改为直接 JWT 上传' : '切换为 Signed URL 上传'}
+                      <button className={styles.ghostButton} onClick={handleSiweLogin} disabled={authBusy}>
+                        {authBusy ? '登录中…' : (web25Session ? '重新进行 SIWE 登录' : '进行 SIWE 登录')}
+                      </button>
+                      <button className={styles.ghostButton} onClick={handleSiweLogout} disabled={authBusy || !web25Session}>
+                        退出后端会话
                       </button>
                     </div>
-                    {pinataSettings?.useSignedUploads && (
-                      <label className={styles.label}>
-                        Signed Upload URL
-                        <input className={styles.input} value={pinataSettings?.signedUploadUrl || ''} onChange={(e) => setByPath('services.pinata.signedUploadUrl', e.target.value)} placeholder="https://your-backend.example.com/pinata/signed-url" />
-                      </label>
-                    )}
                     <div className={styles.row}>
                       <button className={styles.primaryButton} onClick={handleUploadAssets} disabled={busyState !== 'idle'}>
                         重新上传素材
