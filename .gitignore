@@ -102,3 +102,5 @@ workspace.xml
 packages/contracts/artifacts/
 packages/contracts/cache/
 packages/contracts/deployments/
+
+apps/desktop/data

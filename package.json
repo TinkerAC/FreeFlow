@@ -1,6 +1,11 @@
 {
   "name": "freeflow-monorepo",
   "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
+  },
   "scripts": {
     "dev:web": "pnpm --filter web run dev",
     "dev:desktop": "pnpm --filter freeflow run dev"
