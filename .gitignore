@@ -80,9 +80,10 @@ jspm_packages/
 # DynamoDB Local files
 .dynamodb/
 
-# Webpack
+# Build output
 .vite
 .vite-*/
+.webpack/
 
 # Electron-Forge
 out/

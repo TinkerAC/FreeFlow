@@ -26,7 +26,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // NPM @dev deps versions
-  for (const type of ['vite', 'typescript']) {
+  for (const type of ['webpack', 'typescript']) {
     const v = env['npm_package_devDependencies_' + type];
     if (v) versions[type] = v.replace('^', '+');
   }

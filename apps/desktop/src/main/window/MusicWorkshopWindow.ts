@@ -1,10 +1,8 @@
 import { AbstractWindow } from '@main/window/AbstractWindow';
 import { isAppQuitting } from '@main/window/quitState';
 
-import path from 'path';
-
-declare const APP_WINDOW_VITE_NAME: string;
-declare const APP_WINDOW_VITE_DEV_SERVER_URL: string;
+declare const MUSIC_WORKSHOP_WINDOW_WEBPACK_ENTRY: string;
+declare const MUSIC_WORKSHOP_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 export default class MusicWorkshopWindow extends AbstractWindow {
   constructor() {
@@ -15,18 +13,14 @@ export default class MusicWorkshopWindow extends AbstractWindow {
       minWidth: 800,
       minHeight: 600,
       webPreferences: {
-        preload: path.join(__dirname, 'appPreload.js'),
+        preload: MUSIC_WORKSHOP_WINDOW_PRELOAD_WEBPACK_ENTRY,
         nodeIntegration: false,
         contextIsolation: true,
         webSecurity: true,
       },
     });
 
-    if (APP_WINDOW_VITE_DEV_SERVER_URL) {
-      this.safeLoadURL(`${APP_WINDOW_VITE_DEV_SERVER_URL}/music_workshop_window.html`);
-    } else {
-      this.safeLoadFile(path.join(__dirname, `../renderer/${APP_WINDOW_VITE_NAME}/music_workshop_window.html`));
-    }
+    this.safeLoadURL(MUSIC_WORKSHOP_WINDOW_WEBPACK_ENTRY);
     this.openDevtoolsIfDev();
 
     this.on('close', (e) => {
