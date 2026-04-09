@@ -103,9 +103,9 @@ const menu_template = [
     label: 'Tools',
     submenu: [
       {
-        label: 'Music Workshop',
+        label: 'Creators Workshop',
         click: () => {
-          windowManager.show(WindowKey.WORKSHOP);
+          windowManager.show(WindowKey.CREATORS_WORKSHOP);
         },
       },
     ],

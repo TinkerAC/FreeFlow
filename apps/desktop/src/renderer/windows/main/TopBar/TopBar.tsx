@@ -11,6 +11,7 @@ import clsx from 'clsx';
 import { OS } from '@src/shared/OS';
 import { useNavigation, ViewType } from '@renderer/core/navigation';
 import Web3Button from '@renderer/windows/main/TopBar/ConnectWalletButton'
+import CreatorsWorkshopButton from '@renderer/windows/main/TopBar/CreatorsWorkshopButton';
 async function getSearchResults(searchTerm: string, safeMode: boolean = false) {
   return searchContext.getSearchResults(searchTerm, safeMode);
 }
@@ -187,6 +188,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
         {/* 右：操作（Premium / 设置 / 调试 / 用户 / 窗口控件） */}
         <div className={clsx(styles.right, styles.nodrag)}>
           <Web3Button />
+          <CreatorsWorkshopButton />
 
           {/* 新：齿轮按钮 -> SettingsView */}
           <button

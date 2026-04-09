@@ -75,6 +75,10 @@ export const Channels = {
     SyncCredentials: 'youtube:sync-credentials',
     CloseLogin: 'youtube:close-login-window',
   },
+  CreatorsWorkshop: {
+    Show: 'creators-workshop:show',
+    ReadMetadata: 'creators-workshop:read-metadata',
+  },
 } as const;
 
 export type ChannelGroups = typeof Channels;

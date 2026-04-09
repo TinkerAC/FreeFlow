@@ -9,7 +9,7 @@ export enum WindowKey {
   MAIN = 'MAIN',   // 主 UI 窗口
   WORKER = 'WORKER', // 后台下载 / 解析窗口
   MINI = 'MINI',     // 迷你播放器窗口
-  WORKSHOP = 'WORKSHOP', // 音乐工坊窗口
+  CREATORS_WORKSHOP = 'CREATORS_WORKSHOP', // 创作者工作台窗口
 }
 
 type Factory = () => BrowserWindow;
@@ -30,7 +30,7 @@ export class WindowManager {
     this.register(WindowKey.MAIN, () => new AppWindow(), 'primary');
     this.register(WindowKey.WORKER, () => new WorkerWindow(), 'bg');
     this.register(WindowKey.MINI, () => new MiniPlayerWindow(), 'primary');
-    this.register(WindowKey.WORKSHOP, () => new MusicWorkshopWindow(), 'tool');
+    this.register(WindowKey.CREATORS_WORKSHOP, () => new MusicWorkshopWindow(), 'tool');
   }
 
   /** 注册窗口工厂与分组 */

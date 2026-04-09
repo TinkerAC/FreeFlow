@@ -157,10 +157,9 @@ const mainApi: MainApi = {
     closeLoginWindow: () => ipcRenderer.invoke(Channels.YouTubeMusic.CloseLogin) as Promise<void>,
   },
 
-  musicWorkshopApi: {
-    selectFile: () => ipcRenderer.invoke('MUSIC_WORKSHOP_SELECT_FILE'),
-    readMetadata: (filePath: string) => ipcRenderer.invoke('MUSIC_WORKSHOP_READ_METADATA', filePath),
-    writeMetadata: (filePath: string, metadata: any) => ipcRenderer.invoke('MUSIC_WORKSHOP_WRITE_METADATA', filePath, metadata),
+  creatorsWorkshopApi: {
+    show: () => ipcRenderer.invoke(Channels.CreatorsWorkshop.Show) as Promise<void>,
+    readMetadata: (filePath: string) => ipcRenderer.invoke(Channels.CreatorsWorkshop.ReadMetadata, filePath),
   },
 };
 

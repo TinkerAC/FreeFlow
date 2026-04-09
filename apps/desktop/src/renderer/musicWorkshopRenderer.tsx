@@ -4,8 +4,11 @@ import MusicWorkshop from './windows/MusicWorkshop/MusicWorkshop';
 import { SettingsProvider } from '@renderer/core/config/SettingsContext';
 import '@renderer/styles/tokens.material.css';
 import DesignSystemBridge from '@renderer/designSystem/DesignSystemBridge';
+import { ensureWeb3Modal } from '@renderer/core/web3/bootstrap';
 
-console.log('[FreeFlow] : Music Workshop Renderer execution started');
+ensureWeb3Modal();
+
+console.log('[FreeFlow] : Creators Workshop Renderer execution started');
 
 createRoot(document.getElementById('app')!).render(
   <SettingsProvider>

@@ -7,11 +7,11 @@ declare const MUSIC_WORKSHOP_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 export default class MusicWorkshopWindow extends AbstractWindow {
   constructor() {
     super({
-      title: 'Music Workshop',
-      width: 1000,
-      height: 800,
-      minWidth: 800,
-      minHeight: 600,
+      title: 'Creators Workshop',
+      width: 1340,
+      height: 900,
+      minWidth: 1120,
+      minHeight: 720,
       webPreferences: {
         preload: MUSIC_WORKSHOP_WINDOW_PRELOAD_WEBPACK_ENTRY,
         nodeIntegration: false,
@@ -25,11 +25,6 @@ export default class MusicWorkshopWindow extends AbstractWindow {
 
     this.on('close', (e) => {
       if (isAppQuitting()) return;
-      // If we want to just hide it instead of destroying:
-      // e.preventDefault();
-      // this.hide();
-      // But for a tool window, destroying it on close is usually fine unless we want to keep state.
-      // Let's destroy it to save resources when not in use.
     });
   }
 }
