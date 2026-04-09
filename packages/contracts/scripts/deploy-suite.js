@@ -2,6 +2,7 @@ const hre = require("hardhat");
 const fs = require("fs");
 const path = require("path");
 
+// 将整套合约的部署结果写入 deployments 目录，便于后续测试和调用。
 async function writeDeployment(networkName, payload) {
   const deploymentsDir = path.resolve(__dirname, "../deployments");
   fs.mkdirSync(deploymentsDir, { recursive: true });
@@ -20,14 +21,17 @@ async function main() {
   console.log(`Deploying FreeFlow suite to ${hre.network.name} (chainId=${network.chainId})`);
   console.log(`Deployer: ${deployerAddress}`);
 
+  // 先部署作品 NFT 合约，平台中枢后续会依赖它进行铸造。
   const MusicAsset = await hre.ethers.getContractFactory("MusicAsset");
   const musicAsset = await MusicAsset.deploy("FreeFlow Music Release", "FFM", deployerAddress);
   await musicAsset.waitForDeployment();
 
+  // 分账工厂用于为每个作品创建独立的收益拆分合约。
   const RoyaltySplitterFactory = await hre.ethers.getContractFactory("RoyaltySplitterFactory");
   const royaltySplitterFactory = await RoyaltySplitterFactory.deploy();
   await royaltySplitterFactory.waitForDeployment();
 
+  // 平台中枢负责作品发布、收费访问和平台费用管理。
   const PlatformHub = await hre.ethers.getContractFactory("PlatformHub");
   const platformHub = await PlatformHub.deploy(
     await musicAsset.getAddress(),
@@ -37,10 +41,12 @@ async function main() {
   );
   await platformHub.waitForDeployment();
 
+  // 授予平台中枢铸造权限，使其能够在 publishTrack 时创建作品 NFT。
   const minterRole = await musicAsset.MINTER_ROLE();
   const grantRoleTx = await musicAsset.grantRole(minterRole, await platformHub.getAddress());
   await grantRoleTx.wait();
 
+  // 汇总部署产物和关键交易哈希，方便前端或脚本复用。
   const deployment = {
     network: hre.network.name,
     chainId: network.chainId.toString(),
@@ -68,6 +74,7 @@ async function main() {
   console.log(`\nSaved deployment file: ${outputPath}`);
 }
 
+// 统一处理脚本异常。
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
