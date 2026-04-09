@@ -97,3 +97,8 @@ workspace.xml
 /dist/
 
 草稿/
+
+# Hardhat generated files
+packages/contracts/artifacts/
+packages/contracts/cache/
+packages/contracts/deployments/

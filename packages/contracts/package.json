@@ -5,7 +5,9 @@
   "license": "MIT",
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "hello:deploy:sepolia": "hardhat run scripts/deploy-hello.js --network sepolia",
+    "hello:call:sepolia": "hardhat run scripts/call-hello.js --network sepolia"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
