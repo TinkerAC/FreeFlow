@@ -37,7 +37,7 @@ FreeFlow 内置了**六大音乐数据源**的统一对接：
 
 搜索结果按 **"推荐"、"歌曲"、"歌单"** 三大 Tab 分类展示，让信息层次清晰、操作直觉流畅。
 
-![聚合搜索界面](screenshot/search.png)
+![聚合搜索界面](apps/desktop/screenshot/search.png)
 
 - **多平台结果一目了然**：每首歌曲旁标注来源平台图标，清晰区分来自网易云、QQ 音乐、B 站还是 YouTube
 - **右键快捷操作**：对搜索结果中的任意歌曲右键，即可播放、加入播放队列、收藏到歌单或下载
@@ -47,7 +47,7 @@ FreeFlow 内置了**六大音乐数据源**的统一对接：
 
 ### 🎨 Material You 动态主题系统
 
-![主题系统](screenshot/theme.png)
+![主题系统](apps/desktop/screenshot/theme.png)
 
 FreeFlow 完整实现了 Google **Material You** 设计语言的动态配色系统：
 
@@ -61,7 +61,7 @@ FreeFlow 完整实现了 Google **Material You** 设计语言的动态配色系�
 
 ### 🎶 沉浸式歌词体验
 
-![歌词视图](screenshot/lyric.png)
+![歌词视图](apps/desktop/screenshot/lyric.png)
 
 点击播放栏即可进入精心设计的歌词界面：
 
@@ -75,7 +75,7 @@ FreeFlow 完整实现了 Google **Material You** 设计语言的动态配色系�
 
 ### 📋 播放列表与歌单管理
 
-![歌单管理](screenshot/playlist.png)
+![歌单管理](apps/desktop/screenshot/playlist.png)
 
 - **创建与编辑歌单**：自定义标题、描述和封面
 - **拖拽排序**：歌单列表与歌曲列表均支持拖拽排序，操作带有流畅的物理动画反馈
@@ -86,7 +86,7 @@ FreeFlow 完整实现了 Google **Material You** 设计语言的动态配色系�
 
 ### 🪟 Mini 播放器模式
 
-![Mini播放器](screenshot/mini.png)
+![Mini播放器](apps/desktop/screenshot/mini.png)
 
 当你需要专注于其他工作时，可以切换至精致的 **Mini 播放器**模式：
 
@@ -98,7 +98,7 @@ FreeFlow 完整实现了 Google **Material You** 设计语言的动态配色系�
 
 ### 🔍 歌曲详情与元数据
 
-![歌曲详情](screenshot/track_detail.png)
+![歌曲详情](apps/desktop/screenshot/track_detail.png)
 
 每首歌曲都有专属的**详情页面**，展示：
 
@@ -112,7 +112,7 @@ FreeFlow 完整实现了 Google **Material You** 设计语言的动态配色系�
 
 ### ⚙️ 全功能设置中心
 
-![设置中心](screenshot/settings.png)
+![设置中心](apps/desktop/screenshot/settings.png)
 
 设置中心提供**七大配置面板**，涵盖应用的方方面面：
 
