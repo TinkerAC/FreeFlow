@@ -1,7 +1,8 @@
 import React from 'react';
-import { BrowserProvider, Contract, ZeroAddress, parseEther } from 'ethers';
+import { BrowserProvider, Contract, formatEther, parseEther } from 'ethers';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { useSettingsContext } from '@renderer/core/config/SettingsContext';
+import { DEFAULT_SEPOLIA_CONTRACTS, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import styles from './MusicWorkshop.module.css';
 import './MusicWorkshop.css';
@@ -38,22 +39,23 @@ type UploadState = {
   metadataGatewayUrl: string;
   lastAction: string;
   splitterAddress: string;
-  mintTxHash: string;
-  premiumTxHash: string;
+  publishTxHash: string;
+  purchaseTxHash: string;
   tokenId: string;
 };
 
-const MUSIC_ASSET_ABI = [
-  'function mintTrack(address artist, string tokenURI_, address royaltyReceiver, uint96 feeNumerator) public returns (uint256)',
-];
-
-const ROYALTY_SPLITTER_FACTORY_ABI = [
-  'function createSplitter(address[] payees, uint256[] shares) public returns (address)',
-];
-
-const PLATFORM_HUB_ABI = [
-  'function setPremium(uint256 tokenId, bool status, uint256 price) public',
-];
+type AccessCheckState = {
+  tokenId: string;
+  creator: string;
+  payoutReceiver: string;
+  priceEth: string;
+  requiresPurchase: boolean | null;
+  active: boolean | null;
+  hasAccess: boolean | null;
+  platformFeeEth: string;
+  creatorProceedsEth: string;
+  lastUpdated: string;
+};
 
 const TABS: Array<{ value: WorkshopTab; label: string }> = [
   { value: 'assets', label: '作品准备' },
@@ -84,9 +86,22 @@ const DEFAULT_UPLOAD_STATE: UploadState = {
   metadataGatewayUrl: '',
   lastAction: '等待创作者添加作品素材',
   splitterAddress: '',
-  mintTxHash: '',
-  premiumTxHash: '',
+  publishTxHash: '',
+  purchaseTxHash: '',
   tokenId: '',
+};
+
+const DEFAULT_ACCESS_CHECK_STATE: AccessCheckState = {
+  tokenId: '',
+  creator: '',
+  payoutReceiver: '',
+  priceEth: '',
+  requiresPurchase: null,
+  active: null,
+  hasAccess: null,
+  platformFeeEth: '',
+  creatorProceedsEth: '',
+  lastUpdated: '尚未查询购买权限',
 };
 
 function makeId(prefix: string) {
@@ -133,14 +148,26 @@ export default function MusicWorkshop() {
   const [coverFile, setCoverFile] = React.useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = React.useState('');
   const [upload, setUpload] = React.useState<UploadState>(DEFAULT_UPLOAD_STATE);
+  const [accessCheck, setAccessCheck] = React.useState<AccessCheckState>(DEFAULT_ACCESS_CHECK_STATE);
   const [statusLog, setStatusLog] = React.useState<string[]>(['等待创作者开始发布流程']);
   const [royaltySplits, setRoyaltySplits] = React.useState<SplitRecipient[]>([
     { id: makeId('split'), label: 'Primary artist', address: '', share: 100 },
   ]);
-  const [busyState, setBusyState] = React.useState<'idle' | 'uploading-assets' | 'uploading-metadata' | 'minting'>('idle');
+  const [busyState, setBusyState] = React.useState<'idle' | 'uploading-assets' | 'uploading-metadata' | 'publishing' | 'checking-access' | 'buying'>('idle');
 
   const pinataSettings = settings?.services.pinata;
   const web3Settings = settings?.services.web3Publishing;
+  const effectiveWeb3Settings = React.useMemo(() => ({
+    chainId: web3Settings?.chainId || DEFAULT_SEPOLIA_CONTRACTS.chainId,
+    chainName: web3Settings?.chainName || DEFAULT_SEPOLIA_CONTRACTS.chainName,
+    rpcUrl: web3Settings?.rpcUrl || DEFAULT_SEPOLIA_CONTRACTS.rpcUrl,
+    explorerUrl: web3Settings?.explorerUrl || DEFAULT_SEPOLIA_CONTRACTS.explorerUrl,
+    musicAssetAddress: web3Settings?.musicAssetAddress || DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress,
+    royaltySplitterFactoryAddress: web3Settings?.royaltySplitterFactoryAddress || DEFAULT_SEPOLIA_CONTRACTS.royaltySplitterFactoryAddress,
+    platformHubAddress: web3Settings?.platformHubAddress || DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress,
+    defaultRoyaltyBps: web3Settings?.defaultRoyaltyBps || DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps,
+    platformFeeBps: web3Settings?.platformFeeBps || DEFAULT_SEPOLIA_CONTRACTS.platformFeeBps,
+  }), [web3Settings]);
 
   React.useEffect(() => {
     if (!coverFile) {
@@ -237,17 +264,17 @@ export default function MusicWorkshop() {
         },
         commerce: {
           unlockPriceEth: asset.accessModel === 'purchase' ? asset.priceEth : '0',
-          platformHubAddress: web3Settings?.platformHubAddress || '0xYOUR_PLATFORM_HUB',
+          platformHubAddress: effectiveWeb3Settings.platformHubAddress || '0xYOUR_PLATFORM_HUB',
         },
         provenance: {
           storageProvider: 'Pinata',
           pinataGroupId: pinataSettings?.groupId || '',
-          chainName: web3Settings?.chainName || 'Sepolia',
-          musicAssetAddress: web3Settings?.musicAssetAddress || '0xYOUR_MUSIC_ASSET',
+          chainName: effectiveWeb3Settings.chainName,
+          musicAssetAddress: effectiveWeb3Settings.musicAssetAddress || '0xYOUR_MUSIC_ASSET',
         },
       },
     };
-  }, [asset, audioFile, coverFile, pinataSettings, upload, web3Settings]);
+  }, [asset, audioFile, coverFile, effectiveWeb3Settings, pinataSettings, upload]);
 
   const curlPreview = React.useMemo(() => {
     const apiBase = pinataSettings?.apiBaseUrl || 'https://uploads.pinata.cloud/v3/files';
@@ -383,9 +410,9 @@ export default function MusicWorkshop() {
         metadataCid,
         metadataUri: `ipfs://${metadataCid}`,
         metadataGatewayUrl: fileToGateway(pinataSettings?.gateway || '', metadataCid),
-        lastAction: 'metadata 已上传，可以进入 NFT 铸造阶段',
+        lastAction: 'metadata 已上传，可以进入链上发布阶段',
       }));
-      appendStatus('metadata 已上传，可以进入 NFT 铸造阶段');
+      appendStatus('metadata 已上传，可以进入链上发布阶段');
       setActiveTab('mint');
     } catch (error) {
       appendStatus(`metadata 上传失败：${error instanceof Error ? error.message : String(error)}`);
@@ -394,7 +421,21 @@ export default function MusicWorkshop() {
     }
   };
 
-  const handleMint = async () => {
+  const normalizeSplits = (fallbackAddress: string) => {
+    const normalizedSplits = royaltySplits
+      .map((item) => ({
+        ...item,
+        address: item.address.trim(),
+        share: Number(item.share || 0),
+      }))
+      .filter((item) => item.address && item.share > 0);
+
+    return normalizedSplits.length
+      ? normalizedSplits
+      : [{ id: makeId('split'), label: 'Primary artist', address: fallbackAddress, share: 100 }];
+  };
+
+  const handlePublish = async () => {
     if (!walletProvider) {
       appendStatus('请先连接钱包');
       return;
@@ -405,86 +446,159 @@ export default function MusicWorkshop() {
       return;
     }
 
-    if (!web3Settings?.musicAssetAddress || !web3Settings.royaltySplitterFactoryAddress) {
-      appendStatus('请先填写 MusicAsset 和 RoyaltySplitterFactory 地址');
+    if (!effectiveWeb3Settings.platformHubAddress) {
+      appendStatus('PlatformHub 地址为空，无法发布作品');
       return;
     }
 
-    setBusyState('minting');
+    setBusyState('publishing');
 
     try {
-      appendStatus('正在创建版税分账合约...');
       const ethersProvider = new BrowserProvider(walletProvider);
       const signer = await ethersProvider.getSigner();
       const artistAddress = address || await signer.getAddress();
+      const finalSplits = normalizeSplits(artistAddress);
+      const requiresPurchase = asset.accessModel === 'purchase';
+      const priceWei = requiresPurchase ? parseEther(asset.priceEth || '0') : BigInt(0);
+      const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
 
-      const normalizedSplits = royaltySplits
-        .map((item) => ({
-          ...item,
-          address: item.address.trim(),
-          share: Number(item.share || 0),
-        }))
-        .filter((item) => item.address && item.share > 0);
-
-      const finalSplits = normalizedSplits.length
-        ? normalizedSplits
-        : [{ id: makeId('split'), label: 'Primary artist', address: artistAddress, share: 100 }];
-
-      const splitterFactory = new Contract(
-        web3Settings.royaltySplitterFactoryAddress,
-        ROYALTY_SPLITTER_FACTORY_ABI,
-        signer,
-      );
-
-      const predictedSplitterAddress = await splitterFactory.createSplitter.staticCall(
+      appendStatus('正在通过 PlatformHub 一次性发布作品...');
+      const [predictedTokenId, predictedSplitterAddress] = await platformHub.publishTrack.staticCall(
+        upload.metadataUri,
+        asset.royaltyBps,
+        requiresPurchase,
+        priceWei,
+        true,
         finalSplits.map((item) => item.address),
         finalSplits.map((item) => item.share),
       );
-      const createSplitterTx = await splitterFactory.createSplitter(
+      const publishTx = await platformHub.publishTrack(
+        upload.metadataUri,
+        asset.royaltyBps,
+        requiresPurchase,
+        priceWei,
+        true,
         finalSplits.map((item) => item.address),
         finalSplits.map((item) => item.share),
       );
-      await createSplitterTx.wait();
-      const splitterAddress = predictedSplitterAddress || ZeroAddress;
-      appendStatus(`分账合约已创建：${splitterAddress}`);
-
-      const musicAsset = new Contract(web3Settings.musicAssetAddress, MUSIC_ASSET_ABI, signer);
-      const predictedTokenId = await musicAsset.mintTrack.staticCall(
-        artistAddress,
-        upload.metadataUri,
-        splitterAddress,
-        asset.royaltyBps,
-      );
-
-      appendStatus('正在铸造 Music NFT...');
-      const mintTx = await musicAsset.mintTrack(
-        artistAddress,
-        upload.metadataUri,
-        splitterAddress,
-        asset.royaltyBps,
-      );
-      await mintTx.wait();
-
-      let premiumTxHash = '';
-      if (asset.accessModel === 'purchase' && web3Settings.platformHubAddress && asset.priceEth) {
-        appendStatus('正在配置 PlatformHub 购买门槛...');
-        const platformHub = new Contract(web3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
-        const premiumTx = await platformHub.setPremium(predictedTokenId, true, parseEther(asset.priceEth));
-        await premiumTx.wait();
-        premiumTxHash = premiumTx.hash;
-      }
+      await publishTx.wait();
 
       setUpload((prev) => ({
         ...prev,
-        splitterAddress,
-        mintTxHash: mintTx.hash,
-        premiumTxHash,
+        splitterAddress: predictedSplitterAddress,
+        publishTxHash: publishTx.hash,
         tokenId: predictedTokenId.toString(),
-        lastAction: 'NFT 铸造完成，可以向粉丝公布 metadata URI 与合约地址',
+        lastAction: '作品已发布到链上，可以开始测试购买与授权查询',
       }));
-      appendStatus('NFT 铸造完成，可以向粉丝公布 metadata URI 与合约地址');
+      setAccessCheck((prev) => ({
+        ...prev,
+        tokenId: predictedTokenId.toString(),
+        creator: artistAddress,
+        payoutReceiver: predictedSplitterAddress,
+        priceEth: requiresPurchase ? asset.priceEth : '0',
+        requiresPurchase,
+        active: true,
+        hasAccess: requiresPurchase ? null : true,
+        lastUpdated: '已根据发布结果预填作品编号，可直接切到购买与取回页签',
+      }));
+      appendStatus(`作品发布完成：Token #${predictedTokenId.toString()}`);
+      setActiveTab('flow');
     } catch (error) {
-      appendStatus(`铸造失败：${error instanceof Error ? error.message : String(error)}`);
+      appendStatus(`发布失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setBusyState('idle');
+    }
+  };
+
+  const handleRefreshAccess = async () => {
+    if (!walletProvider) {
+      appendStatus('请先连接钱包后再查询授权');
+      return;
+    }
+
+    const targetTokenId = accessCheck.tokenId || upload.tokenId;
+    if (!targetTokenId) {
+      appendStatus('请先填写要查询的 Token ID');
+      return;
+    }
+    if (!effectiveWeb3Settings.platformHubAddress) {
+      appendStatus('PlatformHub 地址为空，无法查询链上配置');
+      return;
+    }
+
+    setBusyState('checking-access');
+
+    try {
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const currentAddress = address || await signer.getAddress();
+      const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
+      const [creator, payoutReceiver, price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(targetTokenId);
+      const hasAccess = await platformHub.hasAccess(currentAddress, targetTokenId);
+      const [, platformFee, creatorProceeds] = await platformHub.paymentPreview(targetTokenId);
+
+      setAccessCheck({
+        tokenId: String(targetTokenId),
+        creator,
+        payoutReceiver,
+        priceEth: formatEther(price),
+        requiresPurchase,
+        active,
+        hasAccess,
+        platformFeeEth: formatEther(platformFee),
+        creatorProceedsEth: formatEther(creatorProceeds),
+        lastUpdated: `已查询 ${currentAddress.slice(0, 6)}... 的链上授权状态`,
+      });
+      appendStatus(`链上查询完成：Token #${targetTokenId}`);
+    } catch (error) {
+      appendStatus(`查询失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setBusyState('idle');
+    }
+  };
+
+  const handleBuyAccess = async () => {
+    if (!walletProvider) {
+      appendStatus('请先连接钱包后再购买');
+      return;
+    }
+
+    const targetTokenId = accessCheck.tokenId || upload.tokenId;
+    if (!targetTokenId) {
+      appendStatus('请先填写要购买的 Token ID');
+      return;
+    }
+    if (!effectiveWeb3Settings.platformHubAddress) {
+      appendStatus('PlatformHub 地址为空，无法发起购买');
+      return;
+    }
+
+    setBusyState('buying');
+
+    try {
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
+      const [, , price, requiresPurchase] = await platformHub.getTrackSaleConfig(targetTokenId);
+
+      if (!requiresPurchase) {
+        appendStatus('该作品当前为公开访问，不需要购买');
+        return;
+      }
+
+      appendStatus(`正在购买 Token #${targetTokenId} 的访问权...`);
+      const buyTx = await platformHub.buyAccess(targetTokenId, { value: price });
+      await buyTx.wait();
+
+      setUpload((prev) => ({
+        ...prev,
+        purchaseTxHash: buyTx.hash,
+        lastAction: `访问权购买成功：${buyTx.hash.slice(0, 10)}...`,
+      }));
+      appendStatus(`购买完成：${buyTx.hash}`);
+      await handleRefreshAccess();
+    } catch (error) {
+      appendStatus(`购买失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setBusyState('idle');
     }
@@ -495,8 +609,8 @@ export default function MusicWorkshop() {
     { label: '准备封面与文案', done: !!coverFile && !!asset.title },
     { label: '上传音频 / 封面到 Pinata', done: !!upload.audioCid },
     { label: '上传 metadata JSON', done: !!upload.metadataCid },
-    { label: '创建版税分账并铸造 NFT', done: !!upload.mintTxHash },
-    { label: '配置购买门槛', done: asset.accessModel === 'open' || !!upload.premiumTxHash },
+    { label: '通过 PlatformHub 发布作品', done: !!upload.publishTxHash },
+    { label: '测试链上购买 / 授权查询', done: asset.accessModel === 'open' || !!upload.purchaseTxHash },
   ];
 
   const header = (
@@ -504,7 +618,7 @@ export default function MusicWorkshop() {
       <div className={styles.headerCopy}>
         <div className={styles.title}>Creators Workshop</div>
         <div className={styles.subtitle}>
-          在一个独立窗口里完成歌手发布流程：整理作品素材、接入 Pinata、存储到 IPFS、创建版税分账并铸造 NFT。
+          在一个独立窗口里完成歌手发布流程：整理作品素材、接入 Pinata、存储到 IPFS，并通过 PlatformHub 一次性完成分账部署、NFT 铸造和销售配置。
         </div>
       </div>
       <div className={styles.headerActions}>
@@ -525,7 +639,7 @@ export default function MusicWorkshop() {
           <div className={styles.main}>
             <section className={styles.hero}>
               <div className={styles.badgeRow}>
-                <span className={styles.badge}>Chain: {web3Settings?.chainName || 'Sepolia'}</span>
+                <span className={styles.badge}>Chain: {effectiveWeb3Settings.chainName}</span>
                 <span className={styles.badge}>Access: {asset.accessModel === 'purchase' ? 'Purchase Required' : 'Open Access'}</span>
                 <span className={styles.badge}>Pinata: {pinataSettings?.useSignedUploads ? 'Signed URL' : 'JWT Upload'}</span>
               </div>
@@ -728,33 +842,50 @@ export default function MusicWorkshop() {
             {activeTab === 'mint' && (
               <div className={styles.gridTwo}>
                 <section className={styles.card}>
-                  <div className={styles.cardTitle}>5. 合约配置</div>
+                  <div className={styles.cardTitle}>5. 合约配置与发布</div>
+                  <div className={styles.cardSub}>
+                    当前链路使用 `PlatformHub.publishTrack(...)` 一次完成 splitter 部署、MusicAsset 铸造和销售配置，桌面端不再手动串三笔交易。
+                  </div>
                   <div className={styles.fieldGrid}>
                     <div className={styles.fieldGridTwo}>
                       <label className={styles.label}>
                         链名称
-                        <input className={styles.input} value={web3Settings?.chainName || ''} onChange={(e) => setByPath('services.web3Publishing.chainName', e.target.value)} />
+                        <input className={styles.input} value={web3Settings?.chainName || effectiveWeb3Settings.chainName} onChange={(e) => setByPath('services.web3Publishing.chainName', e.target.value)} />
                       </label>
                       <label className={styles.label}>
                         Chain ID
-                        <input className={styles.input} type="number" value={web3Settings?.chainId || 11155111} onChange={(e) => setByPath('services.web3Publishing.chainId', Number(e.target.value) || 11155111)} />
+                        <input className={styles.input} type="number" value={web3Settings?.chainId || effectiveWeb3Settings.chainId} onChange={(e) => setByPath('services.web3Publishing.chainId', Number(e.target.value) || DEFAULT_SEPOLIA_CONTRACTS.chainId)} />
                       </label>
                     </div>
                     <label className={styles.label}>
+                      Explorer URL
+                      <input className={styles.input} value={web3Settings?.explorerUrl || effectiveWeb3Settings.explorerUrl} onChange={(e) => setByPath('services.web3Publishing.explorerUrl', e.target.value)} placeholder="https://sepolia.etherscan.io" />
+                    </label>
+                    <label className={styles.label}>
                       MusicAsset 地址
-                      <input className={styles.input} value={web3Settings?.musicAssetAddress || ''} onChange={(e) => setByPath('services.web3Publishing.musicAssetAddress', e.target.value)} placeholder="0xYOUR_MUSIC_ASSET" />
+                      <input className={styles.input} value={web3Settings?.musicAssetAddress || effectiveWeb3Settings.musicAssetAddress} onChange={(e) => setByPath('services.web3Publishing.musicAssetAddress', e.target.value)} placeholder="0xYOUR_MUSIC_ASSET" />
                     </label>
                     <label className={styles.label}>
                       RoyaltySplitterFactory 地址
-                      <input className={styles.input} value={web3Settings?.royaltySplitterFactoryAddress || ''} onChange={(e) => setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} placeholder="0xYOUR_SPLITTER_FACTORY" />
+                      <input className={styles.input} value={web3Settings?.royaltySplitterFactoryAddress || effectiveWeb3Settings.royaltySplitterFactoryAddress} onChange={(e) => setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} placeholder="0xYOUR_SPLITTER_FACTORY" />
                     </label>
                     <label className={styles.label}>
                       PlatformHub 地址
-                      <input className={styles.input} value={web3Settings?.platformHubAddress || ''} onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} placeholder="0xYOUR_PLATFORM_HUB" />
+                      <input className={styles.input} value={web3Settings?.platformHubAddress || effectiveWeb3Settings.platformHubAddress} onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} placeholder="0xYOUR_PLATFORM_HUB" />
                     </label>
+                    <div className={styles.fieldGridTwo}>
+                      <label className={styles.label}>
+                        默认版税（BPS）
+                        <input className={styles.input} type="number" value={web3Settings?.defaultRoyaltyBps || effectiveWeb3Settings.defaultRoyaltyBps} onChange={(e) => setByPath('services.web3Publishing.defaultRoyaltyBps', Number(e.target.value) || DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps)} />
+                      </label>
+                      <label className={styles.label}>
+                        平台费（BPS，只读）
+                        <input className={styles.input} type="number" value={effectiveWeb3Settings.platformFeeBps} readOnly />
+                      </label>
+                    </div>
                     <div className={styles.row}>
-                      <button className={styles.primaryButton} onClick={handleMint} disabled={busyState !== 'idle'}>
-                        创建 Splitter 并铸造 NFT
+                      <button className={styles.primaryButton} onClick={handlePublish} disabled={busyState !== 'idle'}>
+                        通过 PlatformHub 发布作品
                       </button>
                     </div>
                   </div>
@@ -762,7 +893,7 @@ export default function MusicWorkshop() {
 
                 <section className={styles.card}>
                   <div className={styles.cardTitle}>6. 版税分账配置</div>
-                  <div className={styles.cardSub}>这里先配置收益分账地址和权重。示例里仍沿用当前合约的 `createSplitter(address[], shares[])` 方式。</div>
+                  <div className={styles.cardSub}>PlatformHub 会把这里的分账地址和权重交给 `RoyaltySplitterFactory`，并把生成的 splitter 作为 ERC-2981 版税接收方。</div>
                   <div className={styles.fieldGrid}>
                     {royaltySplits.map((item) => (
                       <div key={item.id} className={styles.splitRow}>
@@ -782,48 +913,72 @@ export default function MusicWorkshop() {
             {activeTab === 'flow' && (
               <div className={styles.gridTwo}>
                 <section className={styles.card}>
-                  <div className={styles.cardTitle}>创作者内容应如何存储到链和 IPFS</div>
-                  <div className={styles.flowList}>
-                    <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>A. 公开元数据</div>
-                      <div className={styles.flowStepBody}>
-                        封面、标题、歌手、简介、试听信息、作品属性和发行策略应进入 metadata JSON，作为 tokenURI 的核心内容。
-                      </div>
+                  <div className={styles.cardTitle}>7. 购买与授权测试</div>
+                  <div className={styles.cardSub}>这里直接接入 Sepolia 上的 `buyAccess(tokenId)` 与 `hasAccess(account, tokenId)`，方便你在桌面端验证真实购买流程。</div>
+                  <div className={styles.fieldGrid}>
+                    <label className={styles.label}>
+                      Token ID
+                      <input className={styles.input} value={accessCheck.tokenId} onChange={(e) => setAccessCheck((prev) => ({ ...prev, tokenId: e.target.value }))} placeholder="输入要查询或购买的 Token ID" />
+                    </label>
+                    <div className={styles.row}>
+                      <button className={styles.ghostButton} onClick={() => setAccessCheck((prev) => ({ ...prev, tokenId: upload.tokenId || prev.tokenId }))}>
+                        使用刚发布的 Token
+                      </button>
+                      <button className={styles.primaryButton} onClick={handleRefreshAccess} disabled={busyState !== 'idle'}>
+                        查询链上授权
+                      </button>
+                      <button className={styles.primaryButton} onClick={handleBuyAccess} disabled={busyState !== 'idle'}>
+                        购买访问权
+                      </button>
                     </div>
-                    <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>B. 音频文件存储</div>
-                      <div className={styles.flowStepBody}>
-                        公开作品可以把完整音频直接 pin 到 IPFS。付费作品更推荐先在客户端或后端加密音频，再把密文 pin 到 IPFS，把解密权限交给后端或授权服务。
+                    <div className={styles.flowList}>
+                      <div className={styles.flowStep}>
+                        <div className={styles.flowStepTitle}>当前查询结果</div>
+                        <div className={styles.flowStepBody}>
+                          Token #{accessCheck.tokenId || 'pending'}{'\n'}
+                          Requires purchase: {String(accessCheck.requiresPurchase)}{'\n'}
+                          Active: {String(accessCheck.active)}{'\n'}
+                          Has access: {String(accessCheck.hasAccess)}
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>C. 链上职责</div>
-                      <div className={styles.flowStepBody}>
-                        链上只负责 tokenURI、版税、分账和购买门槛。不要把完整音频本体直接写到链上，成本高且没有必要。
+                      <div className={styles.flowStep}>
+                        <div className={styles.flowStepTitle}>价格与分账</div>
+                        <div className={styles.flowStepBody}>
+                          Price: {accessCheck.priceEth || 'pending'} ETH{'\n'}
+                          Platform fee: {accessCheck.platformFeeEth || 'pending'} ETH{'\n'}
+                          Creator proceeds: {accessCheck.creatorProceedsEth || 'pending'} ETH
+                        </div>
+                      </div>
+                      <div className={styles.flowStep}>
+                        <div className={styles.flowStepTitle}>链上地址</div>
+                        <div className={styles.flowStepBody}>
+                          Creator: {accessCheck.creator || 'pending'}{'\n'}
+                          Splitter: {accessCheck.payoutReceiver || 'pending'}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </section>
 
                 <section className={styles.card}>
-                  <div className={styles.cardTitle}>用户购买后如何便利地获取资源</div>
+                  <div className={styles.cardTitle}>8. 链上 + IPFS + 后端的真实分工</div>
                   <div className={styles.flowList}>
                     <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>1. 用户在 PlatformHub 上购买权限</div>
+                      <div className={styles.flowStepTitle}>1. 链上存什么</div>
                       <div className={styles.flowStepBody}>
-                        前端调用 `buyAccess(tokenId)`。合约只负责收款、分账与写入 `hasAccess(user, tokenId)`。
+                        链上只保存 tokenURI、版税接收方、分账地址、售价、是否需要购买，以及 `hasAccess(user, tokenId)` 这类授权结果。
                       </div>
                     </div>
                     <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>2. 后端验证链上权限</div>
+                      <div className={styles.flowStepTitle}>2. IPFS 存什么</div>
                       <div className={styles.flowStepBody}>
-                        外围服务器读取链上状态，确认用户已购买或拥有 NFT，再返回 Pinata signed gateway URL，或者返回音频解密密钥。
+                        metadata JSON、封面和音频正文放在 IPFS。公开作品可直接放明文音频，付费作品更推荐放加密后的音频对象。
                       </div>
                     </div>
                     <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>3. 客户端拉取完整音频</div>
+                      <div className={styles.flowStepTitle}>3. 后端怎么参与</div>
                       <div className={styles.flowStepBody}>
-                        如果资源是公开 IPFS 文件，客户端直接通过网关下载；如果资源是加密文件，客户端用后端颁发的密钥完成解密再播放。
+                        你的外围服务器用 SIWE 识别用户身份，读取 `hasAccess`、`ownerOf` 等链上状态，通过后再发放 Pinata signed URL 或音频解密材料。
                       </div>
                     </div>
                   </div>
@@ -862,6 +1017,17 @@ export default function MusicWorkshop() {
                     Token #{upload.tokenId || 'pending'}{'\n'}
                     {upload.splitterAddress || 'splitter pending'}
                   </div>
+                </div>
+                <div className={styles.statusItem}>
+                  <div className={styles.statusTitle}>Publish / Purchase Tx</div>
+                  <div className={`${styles.statusValue} ${styles.monospace}`}>
+                    {upload.publishTxHash || 'publish pending'}{'\n'}
+                    {upload.purchaseTxHash || 'purchase pending'}
+                  </div>
+                </div>
+                <div className={styles.statusItem}>
+                  <div className={styles.statusTitle}>授权查询</div>
+                  <div className={styles.statusValue}>{accessCheck.lastUpdated}</div>
                 </div>
               </div>
             </section>

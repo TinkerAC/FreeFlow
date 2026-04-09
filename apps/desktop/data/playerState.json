@@ -1,1 +1,1 @@
-{"queue":{"queue":[],"indexList":[],"currentIndex":0},"playbackMode":"loop","audioSrc":"http://localhost:5173/app_window.html","isPlaying":false,"isLoading":false,"currentTime":0,"volume":0.5}
+{"queue":{"queue":[],"indexList":[],"currentIndex":0},"playbackMode":"loop","audioSrc":"http://localhost:3000/app_window/index.html","isPlaying":false,"isLoading":false,"currentTime":0,"volume":0.5}

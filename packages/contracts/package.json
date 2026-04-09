@@ -6,6 +6,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "deploy:sepolia": "hardhat run scripts/deploy-suite.js --network sepolia",
+    "smoke:sepolia": "hardhat run scripts/smoke-test-suite.js --network sepolia",
     "hello:deploy:sepolia": "hardhat run scripts/deploy-hello.js --network sepolia",
     "hello:call:sepolia": "hardhat run scripts/call-hello.js --network sepolia"
   },

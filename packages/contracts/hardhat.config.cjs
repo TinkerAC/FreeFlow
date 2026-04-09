@@ -80,7 +80,12 @@ module.exports = {
   solidity: {
     version: "0.8.26",
     settings: {
-      evmVersion: "cancun"
+      evmVersion: "cancun",
+      optimizer: {
+        enabled: true,
+        runs: 200
+      },
+      viaIR: true
     }
   },
   networks
