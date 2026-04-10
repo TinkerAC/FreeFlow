@@ -19,6 +19,17 @@ enum ResourceType {
   POST
 }
 
+enum CreatorReleaseStatus {
+  DRAFT
+  ASSETS_PENDING
+  ASSETS_UPLOADED
+  METADATA_UPLOADED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
 model User {
   id                   String                 @id @default(cuid())
   displayName          String?                @db.VarChar(64)
@@ -30,6 +41,7 @@ model User {
   authSessions         AuthSession[]
   uploadedStorageItems StorageObject[]
   ownedResources       Resource[]             @relation("ResourceOwner")
+  creatorReleases      CreatorRelease[]
   comments             Comment[]
   commentReactions     CommentReaction[]
   commentReports       CommentReport[]        @relation("CommentReporter")
@@ -113,6 +125,60 @@ model StorageObject {
 
   @@index([uploaderUserId, createdAt])
   @@map("storage_objects")
+}
+
+model CreatorRelease {
+  id                            String               @id @default(cuid())
+  creatorUserId                 String
+  title                         String               @db.VarChar(255)
+  artistName                    String?              @db.VarChar(255)
+  albumName                     String?              @db.VarChar(255)
+  genreLabel                    String?              @db.VarChar(255)
+  slug                          String               @db.VarChar(255)
+  description                   String?              @db.Text
+  status                        CreatorReleaseStatus @default(DRAFT)
+  currentStage                  String               @default("editor") @db.VarChar(32)
+  accessModel                   String               @default("purchase") @db.VarChar(32)
+  previewSeconds                Int                  @default(30)
+  priceEth                      String               @default("0") @db.VarChar(64)
+  royaltyBps                    Int                  @default(1000)
+  audioSourceName               String?              @db.VarChar(255)
+  audioSourcePath               String?              @db.Text
+  coverSourceName               String?              @db.VarChar(255)
+  coverSourcePath               String?              @db.Text
+  audioCid                      String?              @db.VarChar(255)
+  audioGatewayUrl               String?              @db.Text
+  coverCid                      String?              @db.VarChar(255)
+  coverGatewayUrl               String?              @db.Text
+  metadataCid                   String?              @db.VarChar(255)
+  metadataUri                   String?              @db.Text
+  metadataGatewayUrl            String?              @db.Text
+  splitterAddress               String?              @db.VarChar(42)
+  publishTxHash                 String?              @db.VarChar(100)
+  purchaseTxHash                String?              @db.VarChar(100)
+  tokenId                       String?              @db.VarChar(128)
+  chainId                       Int?
+  chainName                     String?              @db.VarChar(64)
+  explorerUrl                   String?              @db.Text
+  musicAssetAddress             String?              @db.VarChar(42)
+  royaltySplitterFactoryAddress String?              @db.VarChar(42)
+  platformHubAddress            String?              @db.VarChar(42)
+  metadataDocument              Json?
+  royaltySplits                 Json?
+  activityLog                   Json?
+  statusMessage                 String?              @db.VarChar(255)
+  latestError                   String?              @db.Text
+  publishedAt                   DateTime?
+  lastActivityAt                DateTime             @default(now())
+  createdAt                     DateTime             @default(now())
+  updatedAt                     DateTime             @updatedAt
+  creator                       User                 @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+
+  @@index([creatorUserId, updatedAt])
+  @@index([creatorUserId, status, updatedAt])
+  @@index([chainId, tokenId])
+  @@index([creatorUserId, slug])
+  @@map("creator_releases")
 }
 
 model Resource {

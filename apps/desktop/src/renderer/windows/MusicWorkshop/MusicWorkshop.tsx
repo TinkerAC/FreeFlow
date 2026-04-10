@@ -4,141 +4,61 @@ import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3mo
 import { useSettingsContext } from '@renderer/core/config/SettingsContext';
 import {
   buildSiweMessage,
-  getPinataConfig,
+  createCreatorRelease,
   getWeb25Session,
+  getPinataConfig,
+  listCreatorReleases,
   logoutWeb25,
   requestSiweNonce,
+  updateCreatorRelease,
   uploadFileToWeb25Pinata,
   verifySiweSession,
+  type CreatorReleaseDashboard,
+  type CreatorReleaseRecord,
+  type CreatorReleaseSplit,
   type PinataConfigPayload,
   type Web25Session,
 } from '@renderer/core/web25/client';
 import { DEFAULT_SEPOLIA_CONTRACTS, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
+import {
+  buildMetadataDocument,
+  DEFAULT_ACCESS_CHECK_STATE,
+  defaultSplits,
+  EMPTY_DASHBOARD,
+  filteredReleases,
+  formatBytes,
+  formatRelativeTime,
+  PANELS,
+  RELEASE_FILTERS,
+  releaseStatusLabel,
+  replaceReleaseInDashboard,
+  slugify,
+  type AccessCheckState,
+  type AccessModel,
+  type AutosaveState,
+  type BusyState,
+  type ReleaseFilter,
+  type ReleasePanel,
+} from './workshopHelpers';
 import styles from './MusicWorkshop.module.css';
 import './MusicWorkshop.css';
 
-type WorkshopTab = 'assets' | 'storage' | 'mint' | 'flow';
-type AccessModel = 'open' | 'purchase';
-
-type AssetState = {
-  title: string;
-  artist: string;
-  album: string;
-  genre: string;
-  description: string;
-  accessModel: AccessModel;
-  previewSeconds: number;
-  priceEth: string;
-  royaltyBps: number;
-};
-
-type SplitRecipient = {
-  id: string;
-  label: string;
-  address: string;
-  share: number;
-};
-
-type UploadState = {
-  audioCid: string;
-  audioGatewayUrl: string;
-  coverCid: string;
-  coverGatewayUrl: string;
-  metadataCid: string;
-  metadataUri: string;
-  metadataGatewayUrl: string;
-  lastAction: string;
-  splitterAddress: string;
-  publishTxHash: string;
-  purchaseTxHash: string;
-  tokenId: string;
-};
-
-type AccessCheckState = {
-  tokenId: string;
-  creator: string;
-  payoutReceiver: string;
-  priceEth: string;
-  requiresPurchase: boolean | null;
-  active: boolean | null;
-  hasAccess: boolean | null;
-  platformFeeEth: string;
-  creatorProceedsEth: string;
-  lastUpdated: string;
-};
-
-const TABS: Array<{ value: WorkshopTab; label: string }> = [
-  { value: 'assets', label: '作品准备' },
-  { value: 'storage', label: 'Pinata / IPFS' },
-  { value: 'mint', label: '铸造与分账' },
-  { value: 'flow', label: '购买与取回' },
-];
-
-const DEFAULT_ASSET_STATE: AssetState = {
-  title: '',
-  artist: '',
-  album: '',
-  genre: '',
-  description: '',
-  accessModel: 'purchase',
-  previewSeconds: 30,
-  priceEth: '0.015',
-  royaltyBps: 1000,
-};
-
-const DEFAULT_UPLOAD_STATE: UploadState = {
-  audioCid: '',
-  audioGatewayUrl: '',
-  coverCid: '',
-  coverGatewayUrl: '',
-  metadataCid: '',
-  metadataUri: '',
-  metadataGatewayUrl: '',
-  lastAction: '等待创作者添加作品素材',
-  splitterAddress: '',
-  publishTxHash: '',
-  purchaseTxHash: '',
-  tokenId: '',
-};
-
-const DEFAULT_ACCESS_CHECK_STATE: AccessCheckState = {
-  tokenId: '',
-  creator: '',
-  payoutReceiver: '',
-  priceEth: '',
-  requiresPurchase: null,
-  active: null,
-  hasAccess: null,
-  platformFeeEth: '',
-  creatorProceedsEth: '',
-  lastUpdated: '尚未查询购买权限',
-};
-
-function makeId(prefix: string) {
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+function releaseTone(status: CreatorReleaseRecord['status']) {
+  if (status === 'PUBLISHED') return styles.statusSuccess;
+  if (status === 'FAILED') return styles.statusDanger;
+  if (status === 'PUBLISHING' || status === 'ASSETS_PENDING') return styles.statusWarning;
+  return styles.statusNeutral;
 }
 
-function formatBytes(size?: number) {
-  if (!size) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let value = size;
-  let unitIndex = 0;
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-
-  return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
-}
-
-function slugify(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'untitled-track';
+function updateSplit(
+  splits: CreatorReleaseSplit[],
+  index: number,
+  patch: Partial<CreatorReleaseSplit>,
+) {
+  const next = [...splits];
+  next[index] = { ...next[index], ...patch };
+  return next;
 }
 
 export default function MusicWorkshop() {
@@ -147,28 +67,26 @@ export default function MusicWorkshop() {
   const { walletProvider } = useWeb3ModalProvider();
   const { settings, setByPath } = useSettingsContext();
 
-  const [activeTab, setActiveTab] = React.useState<WorkshopTab>('assets');
-  const [asset, setAsset] = React.useState<AssetState>(DEFAULT_ASSET_STATE);
+  const [dashboard, setDashboard] = React.useState<CreatorReleaseDashboard>(EMPTY_DASHBOARD);
+  const [selectedRelease, setSelectedRelease] = React.useState<CreatorReleaseRecord | null>(null);
+  const [releaseFilter, setReleaseFilter] = React.useState<ReleaseFilter>('all');
+  const [activePanel, setActivePanel] = React.useState<ReleasePanel>('editor');
   const [audioFile, setAudioFile] = React.useState<File | null>(null);
   const [coverFile, setCoverFile] = React.useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = React.useState('');
-  const [upload, setUpload] = React.useState<UploadState>(DEFAULT_UPLOAD_STATE);
   const [accessCheck, setAccessCheck] = React.useState<AccessCheckState>(DEFAULT_ACCESS_CHECK_STATE);
-  const [statusLog, setStatusLog] = React.useState<string[]>(['等待创作者开始发布流程']);
-  const [royaltySplits, setRoyaltySplits] = React.useState<SplitRecipient[]>([
-    { id: makeId('split'), label: 'Primary artist', address: '', share: 100 },
-  ]);
-  const [busyState, setBusyState] = React.useState<'idle' | 'uploading-assets' | 'uploading-metadata' | 'publishing' | 'checking-access' | 'buying'>('idle');
+  const [busyState, setBusyState] = React.useState<BusyState>('idle');
+  const [autosaveState, setAutosaveState] = React.useState<AutosaveState>('idle');
   const [authBusy, setAuthBusy] = React.useState(false);
   const [web25Session, setWeb25Session] = React.useState<Web25Session | null>(null);
   const [pinataConfig, setPinataConfig] = React.useState<PinataConfigPayload | null>(null);
 
+  const skipAutosaveRef = React.useRef(false);
   const web25BackendBaseUrl = settings?.services.web25Backend.baseUrl?.trim() || 'http://localhost:8787';
   const web3Settings = settings?.services.web3Publishing;
   const effectiveWeb3Settings = React.useMemo(() => ({
     chainId: web3Settings?.chainId || DEFAULT_SEPOLIA_CONTRACTS.chainId,
     chainName: web3Settings?.chainName || DEFAULT_SEPOLIA_CONTRACTS.chainName,
-    rpcUrl: web3Settings?.rpcUrl || DEFAULT_SEPOLIA_CONTRACTS.rpcUrl,
     explorerUrl: web3Settings?.explorerUrl || DEFAULT_SEPOLIA_CONTRACTS.explorerUrl,
     musicAssetAddress: web3Settings?.musicAssetAddress || DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress,
     royaltySplitterFactoryAddress: web3Settings?.royaltySplitterFactoryAddress || DEFAULT_SEPOLIA_CONTRACTS.royaltySplitterFactoryAddress,
@@ -178,28 +96,27 @@ export default function MusicWorkshop() {
   }), [web3Settings]);
 
   React.useEffect(() => {
-    if (!coverFile) {
-      setCoverPreviewUrl('');
-      return;
-    }
+    const preview = coverFile ? URL.createObjectURL(coverFile) : (selectedRelease?.coverGatewayUrl || '');
+    setCoverPreviewUrl(preview);
+    if (!coverFile || !preview.startsWith('blob:')) return undefined;
+    return () => URL.revokeObjectURL(preview);
+  }, [coverFile, selectedRelease?.coverGatewayUrl]);
 
-    const objectUrl = URL.createObjectURL(coverFile);
-    setCoverPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [coverFile]);
+  React.useEffect(() => {
+    setAudioFile(null);
+    setCoverFile(null);
+    setAccessCheck((prev) => ({ ...DEFAULT_ACCESS_CHECK_STATE, tokenId: selectedRelease?.tokenId || prev.tokenId }));
+    if (selectedRelease) setActivePanel((selectedRelease.currentStage as ReleasePanel) || 'editor');
+  }, [selectedRelease?.id]);
 
-  const appendStatus = React.useCallback((message: string) => {
-    setStatusLog((prev) => [message, ...prev].slice(0, 8));
-    setUpload((prev) => ({ ...prev, lastAction: message }));
+  const applyServerRelease = React.useCallback((release: CreatorReleaseRecord) => {
+    skipAutosaveRef.current = true;
+    setSelectedRelease(release);
+    setDashboard((prev) => replaceReleaseInDashboard(prev, release));
   }, []);
 
-  const refreshWeb25State = React.useCallback(async (silent = false) => {
-    if (!web25BackendBaseUrl) {
-      setWeb25Session(null);
-      setPinataConfig(null);
-      return;
-    }
-
+  const refreshWeb25State = React.useCallback(async () => {
+    if (!web25BackendBaseUrl) return;
     try {
       const [sessionPayload, pinataPayload] = await Promise.all([
         getWeb25Session(web25BackendBaseUrl),
@@ -207,156 +124,152 @@ export default function MusicWorkshop() {
       ]);
       setWeb25Session(sessionPayload.session);
       setPinataConfig(pinataPayload);
-    } catch (error) {
+    } catch {
       setWeb25Session(null);
       setPinataConfig(null);
-      if (!silent) {
-        appendStatus(`后端不可用：${error instanceof Error ? error.message : String(error)}`);
-      }
     }
-  }, [appendStatus, web25BackendBaseUrl]);
+  }, [web25BackendBaseUrl]);
 
-  React.useEffect(() => {
-    void refreshWeb25State(true);
-  }, [refreshWeb25State]);
-
-  const updateAsset = <K extends keyof AssetState>(key: K, value: AssetState[K]) => {
-    setAsset((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const updateSplit = (id: string, patch: Partial<SplitRecipient>) => {
-    setRoyaltySplits((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-  };
-
-  const addSplit = () => {
-    setRoyaltySplits((prev) => [...prev, { id: makeId('split'), label: `Collaborator ${prev.length}`, address: '', share: 0 }]);
-  };
-
-  const removeSplit = (id: string) => {
-    setRoyaltySplits((prev) => prev.length > 1 ? prev.filter((item) => item.id !== id) : prev);
-  };
-
-  const hydrateMetadataFromFile = React.useCallback(async (file: File) => {
-    const maybePath = (file as File & { path?: string }).path;
-    if (!maybePath) {
-      if (!asset.title) updateAsset('title', file.name.replace(/\.[^.]+$/, ''));
+  const refreshDashboard = React.useCallback(async (preferredReleaseId?: string | null) => {
+    if (!web25Session || !web25BackendBaseUrl) {
+      setDashboard(EMPTY_DASHBOARD);
+      setSelectedRelease(null);
       return;
     }
 
-    const metadata = await window.mainApi.creatorsWorkshopApi.readMetadata(maybePath);
-    setAsset((prev) => ({
-      ...prev,
-      title: metadata.title || prev.title || file.name.replace(/\.[^.]+$/, ''),
-      artist: metadata.artist || prev.artist,
-      album: metadata.album || prev.album,
-      genre: Array.isArray(metadata.genre) ? metadata.genre.join(', ') : (metadata.genre || prev.genre),
-    }));
-  }, [asset.title]);
-
-  const onAudioSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setAudioFile(file);
-    appendStatus(`已载入音频文件：${file.name}`);
-    await hydrateMetadataFromFile(file);
-  };
-
-  const onCoverSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setCoverFile(file);
-    appendStatus(`已载入封面文件：${file.name}`);
-  };
-
-  const metadataDocument = React.useMemo(() => {
-    return {
-      name: asset.title || 'Untitled Track',
-      description: asset.description || 'Published from FreeFlow Creators Workshop',
-      image: upload.coverCid ? `ipfs://${upload.coverCid}` : '',
-      external_url: upload.metadataGatewayUrl || '',
-      attributes: [
-        { trait_type: 'Artist', value: asset.artist || 'Unknown Artist' },
-        { trait_type: 'Album', value: asset.album || 'Single' },
-        { trait_type: 'Genre', value: asset.genre || 'Unspecified' },
-        { trait_type: 'Access Model', value: asset.accessModel === 'purchase' ? 'Purchase Required' : 'Open Access' },
-        { trait_type: 'Preview Seconds', value: asset.previewSeconds },
-        { trait_type: 'Royalty BPS', value: asset.royaltyBps },
-      ],
-      properties: {
-        media: {
-          audio: upload.audioCid ? {
-            uri: `ipfs://${upload.audioCid}`,
-            gateway: upload.audioGatewayUrl,
-            mimeType: audioFile?.type || 'audio/mpeg',
-            access: asset.accessModel,
-          } : null,
-          cover: upload.coverCid ? {
-            uri: `ipfs://${upload.coverCid}`,
-            gateway: upload.coverGatewayUrl,
-            mimeType: coverFile?.type || 'image/png',
-          } : null,
-        },
-        commerce: {
-          unlockPriceEth: asset.accessModel === 'purchase' ? asset.priceEth : '0',
-          platformHubAddress: effectiveWeb3Settings.platformHubAddress || '0xYOUR_PLATFORM_HUB',
-        },
-        provenance: {
-          storageProvider: 'Pinata',
-          pinataGroupId: pinataConfig?.groupIdConfigured ? 'configured-on-server' : '',
-          chainName: effectiveWeb3Settings.chainName,
-          musicAssetAddress: effectiveWeb3Settings.musicAssetAddress || '0xYOUR_MUSIC_ASSET',
-        },
-      },
-    };
-  }, [asset, audioFile, coverFile, effectiveWeb3Settings, pinataConfig, upload]);
-
-  const curlPreview = React.useMemo(() => {
-    return [
-      `curl --request POST "${web25BackendBaseUrl.replace(/\/$/, '')}/api/v1/storage/pinata/files" \\`,
-      '  --header "Authorization: Bearer <SIWE_SESSION_TOKEN>" \\',
-      `  --form "name=${slugify(asset.title || 'untitled-track')}" \\`,
-      '  --form \'keyvalues={"kind":"audio"}\' \\',
-      '  --form "file=@./your-audio-file.mp3"',
-    ].join('\n');
-  }, [asset.title, web25BackendBaseUrl]);
-
-  const uploadFileToPinata = async (file: File, name: string, keyvalues: Record<string, string>) => {
-    if (!web25BackendBaseUrl) {
-      throw new Error('Web2.5 后端地址为空');
+    setBusyState('loading-dashboard');
+    try {
+      const payload = await listCreatorReleases(web25BackendBaseUrl);
+      setDashboard(payload);
+      const next = payload.releases.find((item) => item.id === preferredReleaseId)
+        ?? payload.releases.find((item) => item.id === selectedRelease?.id)
+        ?? payload.releases[0]
+        ?? null;
+      skipAutosaveRef.current = true;
+      setSelectedRelease(next);
+    } finally {
+      setBusyState('idle');
     }
+  }, [selectedRelease?.id, web25BackendBaseUrl, web25Session]);
+
+  React.useEffect(() => { void refreshWeb25State(); }, [refreshWeb25State]);
+  React.useEffect(() => {
     if (!web25Session) {
-      throw new Error('请先完成 SIWE 登录');
+      setDashboard(EMPTY_DASHBOARD);
+      setSelectedRelease(null);
+      return;
     }
+    void refreshDashboard();
+  }, [refreshDashboard, web25Session]);
 
-    return await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
-      file,
-      name,
-      keyvalues,
+  const metadataDocument = React.useMemo(
+    () => selectedRelease
+      ? buildMetadataDocument(selectedRelease, {
+        pinataConfig,
+        chainName: effectiveWeb3Settings.chainName,
+        platformHubAddress: effectiveWeb3Settings.platformHubAddress,
+        musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
+        audioMimeType: audioFile?.type,
+        coverMimeType: coverFile?.type,
+      })
+      : null,
+    [audioFile?.type, coverFile?.type, effectiveWeb3Settings.chainName, effectiveWeb3Settings.musicAssetAddress, effectiveWeb3Settings.platformHubAddress, pinataConfig, selectedRelease],
+  );
+
+  const autosavePayload = React.useMemo(() => {
+    if (!selectedRelease) return null;
+    return {
+      title: selectedRelease.title,
+      artistName: selectedRelease.artistName,
+      albumName: selectedRelease.albumName,
+      genreLabel: selectedRelease.genreLabel,
+      slug: selectedRelease.slug || slugify(selectedRelease.title),
+      description: selectedRelease.description,
+      currentStage: activePanel,
+      accessModel: selectedRelease.accessModel,
+      previewSeconds: selectedRelease.previewSeconds,
+      priceEth: selectedRelease.priceEth,
+      royaltyBps: selectedRelease.royaltyBps,
+      audioSourceName: selectedRelease.audioSourceName,
+      audioSourcePath: selectedRelease.audioSourcePath,
+      coverSourceName: selectedRelease.coverSourceName,
+      coverSourcePath: selectedRelease.coverSourcePath,
+      audioCid: selectedRelease.audioCid,
+      audioGatewayUrl: selectedRelease.audioGatewayUrl,
+      coverCid: selectedRelease.coverCid,
+      coverGatewayUrl: selectedRelease.coverGatewayUrl,
+      metadataCid: selectedRelease.metadataCid,
+      metadataUri: selectedRelease.metadataUri,
+      metadataGatewayUrl: selectedRelease.metadataGatewayUrl,
+      splitterAddress: selectedRelease.splitterAddress,
+      publishTxHash: selectedRelease.publishTxHash,
+      purchaseTxHash: selectedRelease.purchaseTxHash,
+      tokenId: selectedRelease.tokenId,
+      chainId: effectiveWeb3Settings.chainId,
+      chainName: effectiveWeb3Settings.chainName,
+      explorerUrl: effectiveWeb3Settings.explorerUrl,
+      musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
+      royaltySplitterFactoryAddress: effectiveWeb3Settings.royaltySplitterFactoryAddress,
+      platformHubAddress: effectiveWeb3Settings.platformHubAddress,
+      royaltySplits: selectedRelease.royaltySplits,
+      metadataDocument,
+      latestError: selectedRelease.latestError,
+      statusMessage: selectedRelease.statusMessage,
+    };
+  }, [activePanel, effectiveWeb3Settings, metadataDocument, selectedRelease]);
+
+  React.useEffect(() => {
+    if (!selectedRelease || !web25Session || !autosavePayload || !web25BackendBaseUrl) return undefined;
+    if (skipAutosaveRef.current) {
+      skipAutosaveRef.current = false;
+      return undefined;
+    }
+    const timer = window.setTimeout(async () => {
+      try {
+        setAutosaveState('saving');
+        const updated = await updateCreatorRelease(web25BackendBaseUrl, selectedRelease.id, autosavePayload);
+        applyServerRelease(updated);
+        setAutosaveState('saved');
+      } catch {
+        setAutosaveState('error');
+      }
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [applyServerRelease, autosavePayload, selectedRelease, web25BackendBaseUrl, web25Session]);
+
+  const patchRelease = React.useCallback(async (patch: Record<string, unknown>) => {
+    if (!selectedRelease || !web25BackendBaseUrl) throw new Error('No active release');
+    const updated = await updateCreatorRelease(web25BackendBaseUrl, selectedRelease.id, patch);
+    applyServerRelease(updated);
+    return updated;
+  }, [applyServerRelease, selectedRelease, web25BackendBaseUrl]);
+
+  const updateLocal = React.useCallback((patch: Partial<CreatorReleaseRecord>) => {
+    setSelectedRelease((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
+  const handleCreateRelease = async () => {
+    if (!web25Session) return;
+    const created = await createCreatorRelease(web25BackendBaseUrl, {
+      artistName: address || undefined,
+      accessModel: 'purchase',
+    });
+    applyServerRelease({
+      ...created,
+      royaltySplits: created.royaltySplits.length ? created.royaltySplits : defaultSplits(address),
     });
   };
 
   const handleSiweLogin = async () => {
-    if (!walletProvider) {
-      appendStatus('请先连接钱包');
-      return;
-    }
-    if (!web25BackendBaseUrl) {
-      appendStatus('请先配置 Web2.5 后端地址');
-      return;
-    }
-
+    if (!walletProvider || !web25BackendBaseUrl) return;
     setAuthBusy(true);
-
     try {
-      const ethersProvider = new BrowserProvider(walletProvider);
-      const signer = await ethersProvider.getSigner();
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
       const signerAddress = address || await signer.getAddress();
-      const network = await ethersProvider.getNetwork();
+      const network = await provider.getNetwork();
       const chainId = Number(network.chainId);
-      const noncePayload = await requestSiweNonce(web25BackendBaseUrl, {
-        address: signerAddress,
-        chainId,
-      });
+      const noncePayload = await requestSiweNonce(web25BackendBaseUrl, { address: signerAddress, chainId });
       const message = buildSiweMessage({
         domain: noncePayload.domain,
         address: signerAddress,
@@ -368,16 +281,9 @@ export default function MusicWorkshop() {
         issuedAt: new Date().toISOString(),
       });
       const signature = await signer.signMessage(message);
-      const verifiedPayload = await verifySiweSession(web25BackendBaseUrl, {
-        message,
-        signature,
-      });
-
-      setWeb25Session(verifiedPayload.session);
-      appendStatus(`SIWE 登录成功：${verifiedPayload.session.address.slice(0, 10)}...`);
-      await refreshWeb25State(true);
-    } catch (error) {
-      appendStatus(`SIWE 登录失败：${error instanceof Error ? error.message : String(error)}`);
+      const verified = await verifySiweSession(web25BackendBaseUrl, { message, signature });
+      setWeb25Session(verified.session);
+      await refreshDashboard();
     } finally {
       setAuthBusy(false);
     }
@@ -385,222 +291,256 @@ export default function MusicWorkshop() {
 
   const handleSiweLogout = async () => {
     if (!web25BackendBaseUrl) return;
-
     setAuthBusy(true);
     try {
       await logoutWeb25(web25BackendBaseUrl);
       setWeb25Session(null);
-      appendStatus('已退出 Web2.5 会话');
-    } catch (error) {
-      appendStatus(`退出会话失败：${error instanceof Error ? error.message : String(error)}`);
+      setDashboard(EMPTY_DASHBOARD);
+      setSelectedRelease(null);
     } finally {
       setAuthBusy(false);
     }
   };
 
+  const hydrateMetadataFromFile = React.useCallback(async (file: File) => {
+    const path = (file as File & { path?: string }).path;
+    if (!path) return { title: file.name.replace(/\.[^.]+$/, ''), artist: '', album: '', genre: '' };
+    const metadata = await window.mainApi.creatorsWorkshopApi.readMetadata(path);
+    return {
+      title: metadata.title || file.name.replace(/\.[^.]+$/, ''),
+      artist: metadata.artist || '',
+      album: metadata.album || '',
+      genre: Array.isArray(metadata.genre) ? metadata.genre.join(', ') : (metadata.genre || ''),
+    };
+  }, []);
+
+  const onAudioSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedRelease) return;
+    setAudioFile(file);
+    const metadata = await hydrateMetadataFromFile(file);
+    updateLocal({
+      audioSourceName: file.name,
+      audioSourcePath: (file as File & { path?: string }).path || null,
+      title: selectedRelease.title || metadata.title,
+      slug: slugify(selectedRelease.title || metadata.title),
+      artistName: selectedRelease.artistName || metadata.artist,
+      albumName: selectedRelease.albumName || metadata.album,
+      genreLabel: selectedRelease.genreLabel || metadata.genre,
+      statusMessage: `已挂载音频 ${file.name}`,
+    });
+  };
+
+  const onCoverSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    updateLocal({
+      coverSourceName: file.name,
+      coverSourcePath: (file as File & { path?: string }).path || null,
+      statusMessage: `已挂载封面 ${file.name}`,
+    });
+  };
+
+  const normalizeSplits = React.useCallback((fallbackAddress: string) => {
+    const source = selectedRelease?.royaltySplits.length ? selectedRelease.royaltySplits : defaultSplits(fallbackAddress);
+    const normalized = source
+      .map((item) => ({ ...item, address: item.address.trim(), share: Number(item.share || 0) }))
+      .filter((item) => item.address && item.share > 0);
+    return normalized.length ? normalized : defaultSplits(fallbackAddress);
+  }, [selectedRelease?.royaltySplits]);
+
   const handleUploadAssets = async () => {
-    if (!audioFile) {
-      appendStatus('请先添加音频文件');
-      return;
-    }
-
+    if (!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioCid)) return;
     setBusyState('uploading-assets');
-
     try {
-      let nextCoverCid = upload.coverCid;
-      let nextCoverGateway = upload.coverGatewayUrl;
-
+      await patchRelease({ status: 'ASSETS_PENDING', currentStage: 'storage', latestError: null, activityEntry: { message: 'Started asset upload', level: 'info' } });
+      let coverCid = selectedRelease.coverCid;
+      let coverGatewayUrl = selectedRelease.coverGatewayUrl;
       if (coverFile) {
-        appendStatus('正在将封面上传到 Pinata...');
-        const coverResult = await uploadFileToPinata(
-          coverFile,
-          `${slugify(asset.title || coverFile.name)}-cover`,
-          { kind: 'cover', artist: asset.artist || 'unknown' },
-        );
-        nextCoverCid = coverResult.cid;
-        nextCoverGateway = coverResult.gatewayUrl;
+        const result = await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
+          file: coverFile,
+          name: `${slugify(selectedRelease.title || coverFile.name)}-cover`,
+          keyvalues: { kind: 'cover', releaseId: selectedRelease.id, artist: selectedRelease.artistName || 'unknown' },
+        });
+        coverCid = result.cid;
+        coverGatewayUrl = result.gatewayUrl;
       }
-
-      appendStatus('正在将音频上传到 Pinata...');
-      const audioResult = await uploadFileToPinata(
-        audioFile,
-        `${slugify(asset.title || audioFile.name)}-audio`,
-        { kind: 'audio', artist: asset.artist || 'unknown' },
-      );
-
-      setUpload((prev) => ({
-        ...prev,
-        audioCid: audioResult.cid,
-        audioGatewayUrl: audioResult.gatewayUrl,
-        coverCid: nextCoverCid,
-        coverGatewayUrl: nextCoverGateway,
-        lastAction: '音频与封面已上传到 Pinata',
-      }));
-      appendStatus('音频与封面已上传到 Pinata');
-      setActiveTab('storage');
+      let audioCid = selectedRelease.audioCid;
+      let audioGatewayUrl = selectedRelease.audioGatewayUrl;
+      if (audioFile) {
+        const result = await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
+          file: audioFile,
+          name: `${slugify(selectedRelease.title || audioFile.name)}-audio`,
+          keyvalues: { kind: 'audio', releaseId: selectedRelease.id, artist: selectedRelease.artistName || 'unknown' },
+        });
+        audioCid = result.cid;
+        audioGatewayUrl = result.gatewayUrl;
+      }
+      await patchRelease({
+        status: 'ASSETS_UPLOADED',
+        currentStage: 'storage',
+        audioCid,
+        audioGatewayUrl,
+        coverCid,
+        coverGatewayUrl,
+        audioSourceName: audioFile?.name || selectedRelease.audioSourceName,
+        audioSourcePath: (audioFile as (File & { path?: string }) | null)?.path || selectedRelease.audioSourcePath,
+        coverSourceName: coverFile?.name || selectedRelease.coverSourceName,
+        coverSourcePath: (coverFile as (File & { path?: string }) | null)?.path || selectedRelease.coverSourcePath,
+        latestError: null,
+        statusMessage: '音频与封面已上传到 Pinata',
+        activityEntry: { message: 'Assets uploaded', level: 'success' },
+      });
     } catch (error) {
-      appendStatus(`上传失败：${error instanceof Error ? error.message : String(error)}`);
+      await patchRelease({
+        status: 'FAILED',
+        latestError: error instanceof Error ? error.message : String(error),
+        statusMessage: '素材上传失败',
+        activityEntry: { message: `Asset upload failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
+      }).catch((): void => {});
     } finally {
       setBusyState('idle');
     }
   };
 
   const handleUploadMetadata = async () => {
-    if (!upload.audioCid) {
-      appendStatus('请先上传音频文件到 Pinata');
-      return;
-    }
-
+    if (!selectedRelease || !metadataDocument || !selectedRelease.audioCid) return;
     setBusyState('uploading-metadata');
     try {
-      appendStatus('正在上传 metadata JSON...');
       const metadataFile = new File(
         [JSON.stringify(metadataDocument, null, 2)],
-        `${slugify(asset.title || 'untitled-track')}-metadata.json`,
+        `${slugify(selectedRelease.title || 'untitled-track')}-metadata.json`,
         { type: 'application/json' },
       );
-
-      const metadataResult = await uploadFileToPinata(
-        metadataFile,
-        `${slugify(asset.title || 'untitled-track')}-metadata`,
-        { kind: 'metadata', artist: asset.artist || 'unknown' },
-      );
-
-      const metadataCid = metadataResult.cid;
-      setUpload((prev) => ({
-        ...prev,
-        metadataCid,
-        metadataUri: `ipfs://${metadataCid}`,
-        metadataGatewayUrl: metadataResult.gatewayUrl,
-        lastAction: 'metadata 已上传，可以进入链上发布阶段',
-      }));
-      appendStatus('metadata 已上传，可以进入链上发布阶段');
-      setActiveTab('mint');
+      const result = await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
+        file: metadataFile,
+        name: `${slugify(selectedRelease.title || 'untitled-track')}-metadata`,
+        keyvalues: { kind: 'metadata', releaseId: selectedRelease.id, artist: selectedRelease.artistName || 'unknown' },
+      });
+      await patchRelease({
+        status: 'METADATA_UPLOADED',
+        currentStage: 'publish',
+        metadataCid: result.cid,
+        metadataUri: `ipfs://${result.cid}`,
+        metadataGatewayUrl: result.gatewayUrl,
+        metadataDocument,
+        latestError: null,
+        statusMessage: 'Metadata 已上传',
+        activityEntry: { message: `Metadata uploaded: ${result.cid}`, level: 'success' },
+      });
+      setActivePanel('publish');
     } catch (error) {
-      appendStatus(`metadata 上传失败：${error instanceof Error ? error.message : String(error)}`);
+      await patchRelease({
+        status: 'FAILED',
+        latestError: error instanceof Error ? error.message : String(error),
+        statusMessage: 'Metadata 上传失败',
+        activityEntry: { message: `Metadata upload failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
+      }).catch((): void => {});
     } finally {
       setBusyState('idle');
     }
   };
 
-  const normalizeSplits = (fallbackAddress: string) => {
-    const normalizedSplits = royaltySplits
-      .map((item) => ({
-        ...item,
-        address: item.address.trim(),
-        share: Number(item.share || 0),
-      }))
-      .filter((item) => item.address && item.share > 0);
-
-    return normalizedSplits.length
-      ? normalizedSplits
-      : [{ id: makeId('split'), label: 'Primary artist', address: fallbackAddress, share: 100 }];
-  };
-
   const handlePublish = async () => {
-    if (!walletProvider) {
-      appendStatus('请先连接钱包');
-      return;
-    }
-
-    if (!upload.metadataUri) {
-      appendStatus('请先上传 metadata JSON');
-      return;
-    }
-
-    if (!effectiveWeb3Settings.platformHubAddress) {
-      appendStatus('PlatformHub 地址为空，无法发布作品');
-      return;
-    }
-
+    if (!selectedRelease || !walletProvider || !selectedRelease.metadataUri || !effectiveWeb3Settings.platformHubAddress) return;
     setBusyState('publishing');
-
     try {
-      const ethersProvider = new BrowserProvider(walletProvider);
-      const signer = await ethersProvider.getSigner();
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
       const artistAddress = address || await signer.getAddress();
-      const finalSplits = normalizeSplits(artistAddress);
-      const requiresPurchase = asset.accessModel === 'purchase';
-      const priceWei = requiresPurchase ? parseEther(asset.priceEth || '0') : BigInt(0);
+      const splits = normalizeSplits(artistAddress);
+      const requiresPurchase = selectedRelease.accessModel === 'purchase';
+      const priceWei = requiresPurchase ? parseEther(selectedRelease.priceEth || '0') : BigInt(0);
       const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
 
-      appendStatus('正在通过 PlatformHub 一次性发布作品...');
-      const [predictedTokenId, predictedSplitterAddress] = await platformHub.publishTrack.staticCall(
-        upload.metadataUri,
-        asset.royaltyBps,
+      await patchRelease({
+        status: 'PUBLISHING',
+        currentStage: 'publish',
+        latestError: null,
+        chainId: effectiveWeb3Settings.chainId,
+        chainName: effectiveWeb3Settings.chainName,
+        explorerUrl: effectiveWeb3Settings.explorerUrl,
+        musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
+        royaltySplitterFactoryAddress: effectiveWeb3Settings.royaltySplitterFactoryAddress,
+        platformHubAddress: effectiveWeb3Settings.platformHubAddress,
+        royaltySplits: splits,
+        activityEntry: { message: 'Waiting for wallet confirmation', level: 'info' },
+      });
+
+      const [predictedTokenId, predictedSplitter] = await platformHub.publishTrack.staticCall(
+        selectedRelease.metadataUri,
+        selectedRelease.royaltyBps,
         requiresPurchase,
         priceWei,
         true,
-        finalSplits.map((item) => item.address),
-        finalSplits.map((item) => item.share),
+        splits.map((item) => item.address),
+        splits.map((item) => item.share),
       );
       const publishTx = await platformHub.publishTrack(
-        upload.metadataUri,
-        asset.royaltyBps,
+        selectedRelease.metadataUri,
+        selectedRelease.royaltyBps,
         requiresPurchase,
         priceWei,
         true,
-        finalSplits.map((item) => item.address),
-        finalSplits.map((item) => item.share),
+        splits.map((item) => item.address),
+        splits.map((item) => item.share),
       );
-      await publishTx.wait();
-
-      setUpload((prev) => ({
-        ...prev,
-        splitterAddress: predictedSplitterAddress,
+      await patchRelease({
+        status: 'PUBLISHING',
         publishTxHash: publishTx.hash,
-        tokenId: predictedTokenId.toString(),
-        lastAction: '作品已发布到链上，可以开始测试购买与授权查询',
-      }));
+        statusMessage: '链上交易已发出，等待确认',
+        activityEntry: { message: `Publish tx submitted: ${publishTx.hash}`, level: 'info' },
+      });
+      await publishTx.wait();
+      const tokenId = predictedTokenId.toString();
+      await patchRelease({
+        status: 'PUBLISHED',
+        currentStage: 'access',
+        splitterAddress: predictedSplitter,
+        publishTxHash: publishTx.hash,
+        tokenId,
+        latestError: null,
+        statusMessage: `作品已发布：Token #${tokenId}`,
+        activityEntry: { message: `Published token #${tokenId}`, level: 'success' },
+      });
       setAccessCheck((prev) => ({
         ...prev,
-        tokenId: predictedTokenId.toString(),
+        tokenId,
         creator: artistAddress,
-        payoutReceiver: predictedSplitterAddress,
-        priceEth: requiresPurchase ? asset.priceEth : '0',
+        payoutReceiver: predictedSplitter,
+        priceEth: requiresPurchase ? selectedRelease.priceEth : '0',
         requiresPurchase,
         active: true,
         hasAccess: requiresPurchase ? null : true,
-        lastUpdated: '已根据发布结果预填作品编号，可直接切到购买与取回页签',
+        lastUpdated: '已根据发布结果预填作品编号',
       }));
-      appendStatus(`作品发布完成：Token #${predictedTokenId.toString()}`);
-      setActiveTab('flow');
+      setActivePanel('access');
     } catch (error) {
-      appendStatus(`发布失败：${error instanceof Error ? error.message : String(error)}`);
+      await patchRelease({
+        status: 'FAILED',
+        latestError: error instanceof Error ? error.message : String(error),
+        statusMessage: '链上发布失败',
+        activityEntry: { message: `Publish failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
+      }).catch((): void => {});
     } finally {
       setBusyState('idle');
     }
   };
 
   const handleRefreshAccess = async () => {
-    if (!walletProvider) {
-      appendStatus('请先连接钱包后再查询授权');
-      return;
-    }
-
-    const targetTokenId = accessCheck.tokenId || upload.tokenId;
-    if (!targetTokenId) {
-      appendStatus('请先填写要查询的 Token ID');
-      return;
-    }
-    if (!effectiveWeb3Settings.platformHubAddress) {
-      appendStatus('PlatformHub 地址为空，无法查询链上配置');
-      return;
-    }
-
+    if (!walletProvider || !selectedRelease?.tokenId || !effectiveWeb3Settings.platformHubAddress) return;
     setBusyState('checking-access');
-
     try {
-      const ethersProvider = new BrowserProvider(walletProvider);
-      const signer = await ethersProvider.getSigner();
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
       const currentAddress = address || await signer.getAddress();
       const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
-      const [creator, payoutReceiver, price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(targetTokenId);
-      const hasAccess = await platformHub.hasAccess(currentAddress, targetTokenId);
-      const [, platformFee, creatorProceeds] = await platformHub.paymentPreview(targetTokenId);
-
+      const [creator, payoutReceiver, price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(selectedRelease.tokenId);
+      const hasAccess = await platformHub.hasAccess(currentAddress, selectedRelease.tokenId);
+      const [, platformFee, creatorProceeds] = await platformHub.paymentPreview(selectedRelease.tokenId);
       setAccessCheck({
-        tokenId: String(targetTokenId),
+        tokenId: selectedRelease.tokenId,
         creator,
         payoutReceiver,
         priceEth: formatEther(price),
@@ -609,86 +549,54 @@ export default function MusicWorkshop() {
         hasAccess,
         platformFeeEth: formatEther(platformFee),
         creatorProceedsEth: formatEther(creatorProceeds),
-        lastUpdated: `已查询 ${currentAddress.slice(0, 6)}... 的链上授权状态`,
+        lastUpdated: `已查询 ${currentAddress.slice(0, 6)}... 的授权状态`,
       });
-      appendStatus(`链上查询完成：Token #${targetTokenId}`);
-    } catch (error) {
-      appendStatus(`查询失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setBusyState('idle');
     }
   };
 
   const handleBuyAccess = async () => {
-    if (!walletProvider) {
-      appendStatus('请先连接钱包后再购买');
-      return;
-    }
-
-    const targetTokenId = accessCheck.tokenId || upload.tokenId;
-    if (!targetTokenId) {
-      appendStatus('请先填写要购买的 Token ID');
-      return;
-    }
-    if (!effectiveWeb3Settings.platformHubAddress) {
-      appendStatus('PlatformHub 地址为空，无法发起购买');
-      return;
-    }
-
+    if (!walletProvider || !selectedRelease?.tokenId || !effectiveWeb3Settings.platformHubAddress) return;
     setBusyState('buying');
-
     try {
-      const ethersProvider = new BrowserProvider(walletProvider);
-      const signer = await ethersProvider.getSigner();
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
       const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
-      const [, , price, requiresPurchase] = await platformHub.getTrackSaleConfig(targetTokenId);
-
-      if (!requiresPurchase) {
-        appendStatus('该作品当前为公开访问，不需要购买');
-        return;
-      }
-
-      appendStatus(`正在购买 Token #${targetTokenId} 的访问权...`);
-      const buyTx = await platformHub.buyAccess(targetTokenId, { value: price });
+      const [, , price, requiresPurchase] = await platformHub.getTrackSaleConfig(selectedRelease.tokenId);
+      if (!requiresPurchase) return;
+      const buyTx = await platformHub.buyAccess(selectedRelease.tokenId, { value: price });
       await buyTx.wait();
-
-      setUpload((prev) => ({
-        ...prev,
+      await patchRelease({
         purchaseTxHash: buyTx.hash,
-        lastAction: `访问权购买成功：${buyTx.hash.slice(0, 10)}...`,
-      }));
-      appendStatus(`购买完成：${buyTx.hash}`);
+        statusMessage: `访问权购买成功：${buyTx.hash.slice(0, 10)}...`,
+        activityEntry: { message: `Access purchased: ${buyTx.hash}`, level: 'success' },
+      });
       await handleRefreshAccess();
-    } catch (error) {
-      appendStatus(`购买失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setBusyState('idle');
     }
   };
 
-  const steps = [
-    { label: '选择音频文件', done: !!audioFile },
-    { label: '准备封面与文案', done: !!coverFile && !!asset.title },
-    { label: '上传音频 / 封面到 Pinata', done: !!upload.audioCid },
-    { label: '上传 metadata JSON', done: !!upload.metadataCid },
-    { label: '通过 PlatformHub 发布作品', done: !!upload.publishTxHash },
-    { label: '测试链上购买 / 授权查询', done: asset.accessModel === 'open' || !!upload.purchaseTxHash },
-  ];
+  const visibleReleases = React.useMemo(() => filteredReleases(dashboard.releases, releaseFilter), [dashboard.releases, releaseFilter]);
+  const activeSplits = selectedRelease ? (selectedRelease.royaltySplits.length ? selectedRelease.royaltySplits : defaultSplits(address)) : [];
+  const needsAudioReattach = !!selectedRelease?.audioSourceName && !audioFile && !selectedRelease.audioCid;
+  const needsCoverReattach = !!selectedRelease?.coverSourceName && !coverFile && !selectedRelease.coverCid;
 
   const header = (
     <div className={styles.header}>
       <div className={styles.headerCopy}>
         <div className={styles.title}>Creators Workshop</div>
-        <div className={styles.subtitle}>
-          在一个独立窗口里完成歌手发布流程：整理作品素材、接入 Pinata、存储到 IPFS，并通过 PlatformHub 一次性完成分账部署、NFT 铸造和销售配置。
-        </div>
+        <div className={styles.subtitle}>服务器负责草稿、恢复、发布记录；链上和 IPFS 负责最终结果。</div>
       </div>
-        <div className={styles.headerActions}>
-          <button className={styles.ghostButton} onClick={() => setActiveTab('flow')}>
-            查看发行流程
-          </button>
+      <div className={styles.headerActions}>
+        <button className={styles.ghostButton} onClick={() => void refreshDashboard(selectedRelease?.id)} disabled={!web25Session || busyState !== 'idle'}>刷新</button>
+        <button className={styles.primaryButton} onClick={() => void handleCreateRelease()} disabled={!web25Session}>新建项目</button>
+        <button className={styles.ghostButton} onClick={() => (web25Session ? void handleSiweLogout() : void handleSiweLogin())} disabled={authBusy}>
+          {authBusy ? '处理中…' : (web25Session ? '退出会话' : 'SIWE 登录')}
+        </button>
         <button className={styles.walletButton} onClick={() => open()}>
-          {isConnected ? `钱包已连接 ${address?.slice(0, 6)}...` : '连接创作者钱包'}
+          {isConnected ? `钱包 ${address?.slice(0, 6)}...` : '连接钱包'}
         </button>
       </div>
     </div>
@@ -697,431 +605,238 @@ export default function MusicWorkshop() {
   return (
     <div className={styles.window}>
       <ViewShell header={header} padded={false} hideScrollbar className={styles.shell}>
-        <div className={styles.body}>
-          <div className={styles.main}>
-            <section className={styles.hero}>
-              <div className={styles.badgeRow}>
-                <span className={styles.badge}>Chain: {effectiveWeb3Settings.chainName}</span>
-                <span className={styles.badge}>Access: {asset.accessModel === 'purchase' ? 'Purchase Required' : 'Open Access'}</span>
-                <span className={styles.badge}>Pinata: Server Controlled</span>
-                <span className={styles.badge}>SIWE: {web25Session ? 'Authenticated' : 'Not Signed In'}</span>
-              </div>
-              <div className={styles.heroGrid}>
-                <div className={styles.heroStat}>
-                  <div className={styles.heroLabel}>当前作品</div>
-                  <div className={styles.heroValue}>{asset.title || 'Untitled Draft'}</div>
-                </div>
-                <div className={styles.heroStat}>
-                  <div className={styles.heroLabel}>Metadata URI</div>
-                  <div className={`${styles.heroValue} ${styles.monospace}`}>{upload.metadataUri || 'ipfs://pending'}</div>
-                </div>
-                <div className={styles.heroStat}>
-                  <div className={styles.heroLabel}>最近动作</div>
-                  <div className={styles.heroValue}>{upload.lastAction}</div>
-                </div>
+        <div className={styles.layout}>
+          <aside className={styles.sidebar}>
+            <section className={styles.sidebarCard}>
+              <div className={styles.sectionHeading}>概览</div>
+              <div className={styles.metricGrid}>
+                <div className={styles.metricCard}><div className={styles.metricLabel}>项目</div><div className={styles.metricValue}>{dashboard.summary.total}</div></div>
+                <div className={styles.metricCard}><div className={styles.metricLabel}>进行中</div><div className={styles.metricValue}>{dashboard.summary.inProgress}</div></div>
+                <div className={styles.metricCard}><div className={styles.metricLabel}>已发布</div><div className={styles.metricValue}>{dashboard.summary.published}</div></div>
+                <div className={styles.metricCard}><div className={styles.metricLabel}>失败</div><div className={styles.metricValue}>{dashboard.summary.failed}</div></div>
               </div>
             </section>
-
-            <div className={styles.tabs}>
-              {TABS.map((tab) => (
-                <button
-                  key={tab.value}
-                  className={`${styles.tabButton} ${activeTab === tab.value ? styles.tabActive : ''}`}
-                  onClick={() => setActiveTab(tab.value)}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {activeTab === 'assets' && (
-              <div className={styles.gridTwo}>
-                <section className={styles.card}>
-                  <div className={styles.cardTitle}>1. 作品素材</div>
-                  <div className={styles.cardSub}>选择完整音频和封面图。组件会优先读取本地音频标签来预填标题、歌手和专辑信息。</div>
-
-                  <div className={styles.assetPicker}>
-                    <div className={styles.row}>
-                      <label className={styles.primaryButton}>
-                        选择音频文件
-                        <input hidden type="file" accept="audio/*,.mp3,.flac,.wav,.ogg,.m4a" onChange={onAudioSelected} />
-                      </label>
-                      {audioFile && <span className={styles.hint}>{audioFile.name}</span>}
-                    </div>
-                    <div className={styles.assetMeta}>
-                      <span>{audioFile ? formatBytes(audioFile.size) : '尚未选择音频文件'}</span>
-                      <span>{audioFile?.type || 'audio/*'}</span>
-                    </div>
-                  </div>
-
-                  <div className={styles.assetPicker}>
-                    <div className={styles.row}>
-                      <label className={styles.ghostButton}>
-                        选择封面图
-                        <input hidden type="file" accept="image/*,.png,.jpg,.jpeg,.webp" onChange={onCoverSelected} />
-                      </label>
-                      {coverFile && <span className={styles.hint}>{coverFile.name}</span>}
-                    </div>
-                    {coverPreviewUrl ? (
-                      <img className={styles.coverPreview} src={coverPreviewUrl} alt="cover preview" />
-                    ) : (
-                      <div className={styles.assetPicker}>
-                        <span className={styles.hint}>封面将被写入 metadata.image 并作为 NFT 展示图。</span>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                <section className={styles.card}>
-                  <div className={styles.cardTitle}>2. 作品信息</div>
-                  <div className={styles.fieldGrid}>
-                    <div className={styles.fieldGridTwo}>
-                      <label className={styles.label}>
-                        标题
-                        <input className={styles.input} value={asset.title} onChange={(e) => updateAsset('title', e.target.value)} placeholder="例如：Midnight in Hangzhou" />
-                      </label>
-                      <label className={styles.label}>
-                        歌手
-                        <input className={styles.input} value={asset.artist} onChange={(e) => updateAsset('artist', e.target.value)} placeholder="Creator name" />
-                      </label>
-                    </div>
-                    <div className={styles.fieldGridTwo}>
-                      <label className={styles.label}>
-                        专辑
-                        <input className={styles.input} value={asset.album} onChange={(e) => updateAsset('album', e.target.value)} placeholder="Single / Album name" />
-                      </label>
-                      <label className={styles.label}>
-                        流派
-                        <input className={styles.input} value={asset.genre} onChange={(e) => updateAsset('genre', e.target.value)} placeholder="Ambient, Pop, Folk..." />
-                      </label>
-                    </div>
-                    <label className={styles.label}>
-                      作品描述
-                      <textarea className={styles.textarea} value={asset.description} onChange={(e) => updateAsset('description', e.target.value)} placeholder="写给收藏者看的发布说明、灵感来源、制作名单等" />
-                    </label>
-                    <div className={styles.fieldGridTwo}>
-                      <label className={styles.label}>
-                        访问模式
-                        <select className={styles.select} value={asset.accessModel} onChange={(e) => updateAsset('accessModel', e.target.value as AccessModel)}>
-                          <option value="purchase">购买后完整获取</option>
-                          <option value="open">公开可访问</option>
-                        </select>
-                      </label>
-                      <label className={styles.label}>
-                        试听时长（秒）
-                        <input className={styles.input} type="number" min={10} max={120} value={asset.previewSeconds} onChange={(e) => updateAsset('previewSeconds', Number(e.target.value) || 30)} />
-                      </label>
-                    </div>
-                    <div className={styles.fieldGridTwo}>
-                      <label className={styles.label}>
-                        购买价格（ETH）
-                        <input className={styles.input} value={asset.priceEth} onChange={(e) => updateAsset('priceEth', e.target.value)} placeholder="0.015" />
-                      </label>
-                      <label className={styles.label}>
-                        ERC-2981 版税（BPS）
-                        <input className={styles.input} type="number" min={0} max={10000} value={asset.royaltyBps} onChange={(e) => updateAsset('royaltyBps', Number(e.target.value) || 0)} />
-                      </label>
-                    </div>
-                    <div className={styles.row}>
-                      <button className={styles.primaryButton} onClick={handleUploadAssets} disabled={busyState !== 'idle'}>
-                        上传音频与封面
-                      </button>
-                      <button className={styles.ghostButton} onClick={() => setActiveTab('storage')}>
-                        先去看 Pinata 配置
-                      </button>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {activeTab === 'storage' && (
-              <div className={styles.gridTwo}>
-                <section className={styles.card}>
-                  <div className={styles.cardTitle}>3. Pinata 配置</div>
-                  <div className={styles.cardSub}>
-                    Pinata JWT 已迁移到 Web2.5 后端统一托管。桌面端只保留后端地址和 SIWE 会话，不再直连 Pinata。
-                  </div>
-                  <div className={styles.fieldGrid}>
-                    <label className={styles.label}>
-                      Web2.5 Backend URL
-                      <input
-                        className={styles.input}
-                        value={web25BackendBaseUrl}
-                        onChange={(e) => setByPath('services.web25Backend.baseUrl', e.target.value)}
-                        placeholder="http://localhost:8787"
-                      />
-                    </label>
-                    <div className={styles.fieldGridTwo}>
-                      <label className={styles.label}>
-                        Gateway
-                        <input
-                          className={styles.input}
-                          value={pinataConfig?.gatewayBaseUrl || ''}
-                          readOnly
-                          placeholder="由后端返回"
-                        />
-                      </label>
-                      <label className={styles.label}>
-                        当前网络
-                        <input
-                          className={styles.input}
-                          value={pinataConfig?.network || ''}
-                          readOnly
-                          placeholder="由后端返回"
-                        />
-                      </label>
-                    </div>
-                    <div className={styles.fieldGridTwo}>
-                      <label className={styles.label}>
-                        SIWE 会话
-                        <input
-                          className={styles.input}
-                          value={web25Session ? `${web25Session.address.slice(0, 10)}...` : '未登录'}
-                          readOnly
-                        />
-                      </label>
-                      <label className={styles.label}>
-                        Upload Limit
-                        <input
-                          className={styles.input}
-                          value={pinataConfig ? formatBytes(pinataConfig.maxFileSizeBytes) : ''}
-                          readOnly
-                          placeholder="由后端返回"
-                        />
-                      </label>
-                    </div>
-                    <div className={styles.row}>
-                      <button className={styles.ghostButton} onClick={handleSiweLogin} disabled={authBusy}>
-                        {authBusy ? '登录中…' : (web25Session ? '重新进行 SIWE 登录' : '进行 SIWE 登录')}
-                      </button>
-                      <button className={styles.ghostButton} onClick={handleSiweLogout} disabled={authBusy || !web25Session}>
-                        退出后端会话
-                      </button>
-                    </div>
-                    <div className={styles.row}>
-                      <button className={styles.primaryButton} onClick={handleUploadAssets} disabled={busyState !== 'idle'}>
-                        重新上传素材
-                      </button>
-                      <button className={styles.primaryButton} onClick={handleUploadMetadata} disabled={busyState !== 'idle'}>
-                        上传 Metadata JSON
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
-                <section className={styles.card}>
-                  <div className={styles.cardTitle}>4. Metadata 与上传请求预览</div>
-                  <div className={styles.cardSub}>这部分展示实际会被铸造成 tokenURI 的 JSON 内容，以及按 Pinata 文档方式组织的上传请求示例。</div>
-                  <div className={`${styles.code} ${styles.monospace}`}>{JSON.stringify(metadataDocument, null, 2)}</div>
-                  <div className={styles.separator} />
-                  <div className={`${styles.code} ${styles.monospace}`}>{curlPreview}</div>
-                </section>
-              </div>
-            )}
-
-            {activeTab === 'mint' && (
-              <div className={styles.gridTwo}>
-                <section className={styles.card}>
-                  <div className={styles.cardTitle}>5. 合约配置与发布</div>
-                  <div className={styles.cardSub}>
-                    当前链路使用 `PlatformHub.publishTrack(...)` 一次完成 splitter 部署、MusicAsset 铸造和销售配置，桌面端不再手动串三笔交易。
-                  </div>
-                  <div className={styles.fieldGrid}>
-                    <div className={styles.fieldGridTwo}>
-                      <label className={styles.label}>
-                        链名称
-                        <input className={styles.input} value={web3Settings?.chainName || effectiveWeb3Settings.chainName} onChange={(e) => setByPath('services.web3Publishing.chainName', e.target.value)} />
-                      </label>
-                      <label className={styles.label}>
-                        Chain ID
-                        <input className={styles.input} type="number" value={web3Settings?.chainId || effectiveWeb3Settings.chainId} onChange={(e) => setByPath('services.web3Publishing.chainId', Number(e.target.value) || DEFAULT_SEPOLIA_CONTRACTS.chainId)} />
-                      </label>
-                    </div>
-                    <label className={styles.label}>
-                      Explorer URL
-                      <input className={styles.input} value={web3Settings?.explorerUrl || effectiveWeb3Settings.explorerUrl} onChange={(e) => setByPath('services.web3Publishing.explorerUrl', e.target.value)} placeholder="https://sepolia.etherscan.io" />
-                    </label>
-                    <label className={styles.label}>
-                      MusicAsset 地址
-                      <input className={styles.input} value={web3Settings?.musicAssetAddress || effectiveWeb3Settings.musicAssetAddress} onChange={(e) => setByPath('services.web3Publishing.musicAssetAddress', e.target.value)} placeholder="0xYOUR_MUSIC_ASSET" />
-                    </label>
-                    <label className={styles.label}>
-                      RoyaltySplitterFactory 地址
-                      <input className={styles.input} value={web3Settings?.royaltySplitterFactoryAddress || effectiveWeb3Settings.royaltySplitterFactoryAddress} onChange={(e) => setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} placeholder="0xYOUR_SPLITTER_FACTORY" />
-                    </label>
-                    <label className={styles.label}>
-                      PlatformHub 地址
-                      <input className={styles.input} value={web3Settings?.platformHubAddress || effectiveWeb3Settings.platformHubAddress} onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} placeholder="0xYOUR_PLATFORM_HUB" />
-                    </label>
-                    <div className={styles.fieldGridTwo}>
-                      <label className={styles.label}>
-                        默认版税（BPS）
-                        <input className={styles.input} type="number" value={web3Settings?.defaultRoyaltyBps || effectiveWeb3Settings.defaultRoyaltyBps} onChange={(e) => setByPath('services.web3Publishing.defaultRoyaltyBps', Number(e.target.value) || DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps)} />
-                      </label>
-                      <label className={styles.label}>
-                        平台费（BPS，只读）
-                        <input className={styles.input} type="number" value={effectiveWeb3Settings.platformFeeBps} readOnly />
-                      </label>
-                    </div>
-                    <div className={styles.row}>
-                      <button className={styles.primaryButton} onClick={handlePublish} disabled={busyState !== 'idle'}>
-                        通过 PlatformHub 发布作品
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
-                <section className={styles.card}>
-                  <div className={styles.cardTitle}>6. 版税分账配置</div>
-                  <div className={styles.cardSub}>PlatformHub 会把这里的分账地址和权重交给 `RoyaltySplitterFactory`，并把生成的 splitter 作为 ERC-2981 版税接收方。</div>
-                  <div className={styles.fieldGrid}>
-                    {royaltySplits.map((item) => (
-                      <div key={item.id} className={styles.splitRow}>
-                        <input className={styles.input} value={item.address} onChange={(e) => updateSplit(item.id, { address: e.target.value })} placeholder={`${item.label} wallet address`} />
-                        <input className={styles.input} type="number" min={0} max={100} value={item.share} onChange={(e) => updateSplit(item.id, { share: Number(e.target.value) || 0 })} placeholder="share" />
-                        <button className={styles.dangerButton} onClick={() => removeSplit(item.id)}>移除</button>
-                      </div>
-                    ))}
-                    <div className={styles.row}>
-                      <button className={styles.ghostButton} onClick={addSplit}>添加分账人</button>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {activeTab === 'flow' && (
-              <div className={styles.gridTwo}>
-                <section className={styles.card}>
-                  <div className={styles.cardTitle}>7. 购买与授权测试</div>
-                  <div className={styles.cardSub}>这里直接接入 Sepolia 上的 `buyAccess(tokenId)` 与 `hasAccess(account, tokenId)`，方便你在桌面端验证真实购买流程。</div>
-                  <div className={styles.fieldGrid}>
-                    <label className={styles.label}>
-                      Token ID
-                      <input className={styles.input} value={accessCheck.tokenId} onChange={(e) => setAccessCheck((prev) => ({ ...prev, tokenId: e.target.value }))} placeholder="输入要查询或购买的 Token ID" />
-                    </label>
-                    <div className={styles.row}>
-                      <button className={styles.ghostButton} onClick={() => setAccessCheck((prev) => ({ ...prev, tokenId: upload.tokenId || prev.tokenId }))}>
-                        使用刚发布的 Token
-                      </button>
-                      <button className={styles.primaryButton} onClick={handleRefreshAccess} disabled={busyState !== 'idle'}>
-                        查询链上授权
-                      </button>
-                      <button className={styles.primaryButton} onClick={handleBuyAccess} disabled={busyState !== 'idle'}>
-                        购买访问权
-                      </button>
-                    </div>
-                    <div className={styles.flowList}>
-                      <div className={styles.flowStep}>
-                        <div className={styles.flowStepTitle}>当前查询结果</div>
-                        <div className={styles.flowStepBody}>
-                          Token #{accessCheck.tokenId || 'pending'}{'\n'}
-                          Requires purchase: {String(accessCheck.requiresPurchase)}{'\n'}
-                          Active: {String(accessCheck.active)}{'\n'}
-                          Has access: {String(accessCheck.hasAccess)}
-                        </div>
-                      </div>
-                      <div className={styles.flowStep}>
-                        <div className={styles.flowStepTitle}>价格与分账</div>
-                        <div className={styles.flowStepBody}>
-                          Price: {accessCheck.priceEth || 'pending'} ETH{'\n'}
-                          Platform fee: {accessCheck.platformFeeEth || 'pending'} ETH{'\n'}
-                          Creator proceeds: {accessCheck.creatorProceedsEth || 'pending'} ETH
-                        </div>
-                      </div>
-                      <div className={styles.flowStep}>
-                        <div className={styles.flowStepTitle}>链上地址</div>
-                        <div className={styles.flowStepBody}>
-                          Creator: {accessCheck.creator || 'pending'}{'\n'}
-                          Splitter: {accessCheck.payoutReceiver || 'pending'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section className={styles.card}>
-                  <div className={styles.cardTitle}>8. 链上 + IPFS + 后端的真实分工</div>
-                  <div className={styles.flowList}>
-                    <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>1. 链上存什么</div>
-                      <div className={styles.flowStepBody}>
-                        链上只保存 tokenURI、版税接收方、分账地址、售价、是否需要购买，以及 `hasAccess(user, tokenId)` 这类授权结果。
-                      </div>
-                    </div>
-                    <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>2. IPFS 存什么</div>
-                      <div className={styles.flowStepBody}>
-                        metadata JSON、封面和音频正文放在 IPFS。公开作品可直接放明文音频，付费作品更推荐放加密后的音频对象。
-                      </div>
-                    </div>
-                    <div className={styles.flowStep}>
-                      <div className={styles.flowStepTitle}>3. 后端怎么参与</div>
-                      <div className={styles.flowStepBody}>
-                        你的外围服务器用 SIWE 识别用户身份，读取 `hasAccess`、`ownerOf` 等链上状态，通过后再发放 Pinata signed URL 或音频解密材料。
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            )}
-          </div>
-
-          <aside className={styles.aside}>
-            <section className={styles.asideCard}>
-              <div className={styles.cardTitle}>发布检查清单</div>
-              <div className={styles.checklist}>
-                {steps.map((step) => (
-                  <div key={step.label} className={styles.checkItem}>
-                    <span className={`${styles.dot} ${step.done ? styles.dotDone : ''}`} />
-                    <span>{step.label}</span>
-                  </div>
+            <section className={styles.sidebarCard}>
+              <div className={styles.sectionHeading}>筛选</div>
+              <div className={styles.filterRow}>
+                {RELEASE_FILTERS.map((filter) => (
+                  <button key={filter.value} className={`${styles.filterButton} ${releaseFilter === filter.value ? styles.filterButtonActive : ''}`} onClick={() => setReleaseFilter(filter.value)}>{filter.label}</button>
                 ))}
               </div>
             </section>
-
-            <section className={styles.asideCard}>
-              <div className={styles.cardTitle}>IPFS 与链上结果</div>
-              <div className={styles.statusList}>
-                <div className={styles.statusItem}>
-                  <div className={styles.statusTitle}>Audio CID</div>
-                  <div className={`${styles.statusValue} ${styles.monospace}`}>{upload.audioCid || 'pending'}</div>
-                </div>
-                <div className={styles.statusItem}>
-                  <div className={styles.statusTitle}>Metadata URI</div>
-                  <div className={`${styles.statusValue} ${styles.monospace}`}>{upload.metadataUri || 'ipfs://pending'}</div>
-                </div>
-                <div className={styles.statusItem}>
-                  <div className={styles.statusTitle}>Token ID / Splitter</div>
-                  <div className={`${styles.statusValue} ${styles.monospace}`}>
-                    Token #{upload.tokenId || 'pending'}{'\n'}
-                    {upload.splitterAddress || 'splitter pending'}
-                  </div>
-                </div>
-                <div className={styles.statusItem}>
-                  <div className={styles.statusTitle}>Publish / Purchase Tx</div>
-                  <div className={`${styles.statusValue} ${styles.monospace}`}>
-                    {upload.publishTxHash || 'publish pending'}{'\n'}
-                    {upload.purchaseTxHash || 'purchase pending'}
-                  </div>
-                </div>
-                <div className={styles.statusItem}>
-                  <div className={styles.statusTitle}>授权查询</div>
-                  <div className={styles.statusValue}>{accessCheck.lastUpdated}</div>
-                </div>
-              </div>
-            </section>
-
-            <section className={styles.asideCard}>
-              <div className={styles.cardTitle}>流程日志</div>
-              <div className={styles.statusList}>
-                {statusLog.map((item) => (
-                  <div key={item} className={styles.statusItem}>
-                    <div className={styles.statusValue}>{item}</div>
-                  </div>
+            <section className={styles.sidebarCard}>
+              <div className={styles.sectionHeading}>项目列表</div>
+              {!web25Session && <div className={styles.emptyBody}>登录后可追踪发布流程和已发布内容。</div>}
+              <div className={styles.releaseList}>
+                {visibleReleases.map((release) => (
+                  <button key={release.id} className={`${styles.releaseCard} ${selectedRelease?.id === release.id ? styles.releaseCardActive : ''}`} onClick={() => { skipAutosaveRef.current = true; setSelectedRelease(release); }}>
+                    <div className={styles.releaseCardTop}>
+                      <div className={styles.releaseTitle}>{release.title || 'Untitled Draft'}</div>
+                      <span className={`${styles.statusBadge} ${releaseTone(release.status)}`}>{releaseStatusLabel(release.status)}</span>
+                    </div>
+                    <div className={styles.releaseMeta}><span>{release.artistName || 'Unknown artist'}</span><span>{formatRelativeTime(release.updatedAt)}</span></div>
+                    <div className={styles.releaseMeta}><span>{release.tokenId ? `Token #${release.tokenId}` : '未上链'}</span><span>{release.metadataCid ? 'Metadata 就绪' : 'Metadata 待生成'}</span></div>
+                  </button>
                 ))}
               </div>
+            </section>
+          </aside>
+          <main className={styles.workspace}>
+            {!selectedRelease && <section className={styles.emptyWorkspace}><div className={styles.emptyTitle}>没有选中的项目</div><div className={styles.emptyBody}>先完成 SIWE 登录，再创建或选择一个发布项目。</div></section>}
+            {selectedRelease && (
+              <>
+                <section className={styles.hero}>
+                  <div className={styles.heroMain}>
+                    <div className={styles.heroEyebrow}>当前项目</div>
+                    <div className={styles.heroTitleRow}>
+                      <h1 className={styles.heroTitle}>{selectedRelease.title || 'Untitled Draft'}</h1>
+                      <span className={`${styles.statusBadge} ${releaseTone(selectedRelease.status)}`}>{releaseStatusLabel(selectedRelease.status)}</span>
+                    </div>
+                    <div className={styles.heroSub}>{selectedRelease.artistName || 'Unknown artist'} · {selectedRelease.accessModel === 'purchase' ? '购买后访问' : '公开访问'} · 最近活动 {formatRelativeTime(selectedRelease.lastActivityAt)}</div>
+                  </div>
+                  <div className={styles.heroStats}>
+                    <div className={styles.heroStat}><div className={styles.heroStatLabel}>自动保存</div><div className={styles.heroStatValue}>{autosaveState === 'saving' ? '保存中' : autosaveState === 'error' ? '失败' : autosaveState === 'saved' ? '已同步' : '空闲'}</div></div>
+                    <div className={styles.heroStat}><div className={styles.heroStatLabel}>最近动作</div><div className={styles.heroStatValue}>{selectedRelease.statusMessage || '继续编辑项目'}</div></div>
+                  </div>
+                </section>
+
+                <div className={styles.panelTabs}>
+                  {PANELS.map((panel) => (
+                    <button key={panel.value} className={`${styles.panelTab} ${activePanel === panel.value ? styles.panelTabActive : ''}`} onClick={() => { setActivePanel(panel.value); updateLocal({ currentStage: panel.value }); }}>
+                      {panel.label}
+                    </button>
+                  ))}
+                </div>
+
+                {activePanel === 'editor' && (
+                  <div className={styles.panelGrid}>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>项目元信息</div>
+                      <div className={styles.formGrid}>
+                        <div className={styles.formRowTwo}>
+                          <label className={styles.label}>标题<input className={styles.input} value={selectedRelease.title} onChange={(e) => updateLocal({ title: e.target.value, slug: slugify(e.target.value) })} /></label>
+                          <label className={styles.label}>歌手<input className={styles.input} value={selectedRelease.artistName || ''} onChange={(e) => updateLocal({ artistName: e.target.value })} /></label>
+                        </div>
+                        <div className={styles.formRowTwo}>
+                          <label className={styles.label}>专辑<input className={styles.input} value={selectedRelease.albumName || ''} onChange={(e) => updateLocal({ albumName: e.target.value })} /></label>
+                          <label className={styles.label}>流派<input className={styles.input} value={selectedRelease.genreLabel || ''} onChange={(e) => updateLocal({ genreLabel: e.target.value })} /></label>
+                        </div>
+                        <label className={styles.label}>描述<textarea className={styles.textarea} value={selectedRelease.description || ''} onChange={(e) => updateLocal({ description: e.target.value })} /></label>
+                        <div className={styles.formRowTwo}>
+                          <label className={styles.label}>访问模式<select className={styles.select} value={selectedRelease.accessModel} onChange={(e) => updateLocal({ accessModel: e.target.value as AccessModel })}><option value="purchase">购买后完整获取</option><option value="open">公开可访问</option></select></label>
+                          <label className={styles.label}>试听秒数<input className={styles.input} type="number" value={selectedRelease.previewSeconds} onChange={(e) => updateLocal({ previewSeconds: Number(e.target.value) || 0 })} /></label>
+                        </div>
+                        <div className={styles.formRowTwo}>
+                          <label className={styles.label}>价格 ETH<input className={styles.input} value={selectedRelease.priceEth} onChange={(e) => updateLocal({ priceEth: e.target.value })} /></label>
+                          <label className={styles.label}>版税 BPS<input className={styles.input} type="number" value={selectedRelease.royaltyBps} onChange={(e) => updateLocal({ royaltyBps: Number(e.target.value) || 0 })} /></label>
+                        </div>
+                      </div>
+                    </section>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>素材挂载</div>
+                      <div className={styles.assetBox}>
+                        <div className={styles.assetHeader}><div><div className={styles.assetTitle}>音频</div><div className={styles.assetHint}>{selectedRelease.audioSourceName || audioFile?.name || '未选择'}</div></div><label className={styles.primaryButton}>选择音频<input hidden type="file" accept="audio/*,.mp3,.flac,.wav,.ogg,.m4a" onChange={onAudioSelected} /></label></div>
+                        <div className={styles.assetMetaRow}><span>{audioFile ? formatBytes(audioFile.size) : (selectedRelease.audioCid ? '已记录上传结果' : '等待挂载')}</span><span>{audioFile?.type || 'audio/*'}</span></div>
+                      </div>
+                      <div className={styles.assetBox}>
+                        <div className={styles.assetHeader}><div><div className={styles.assetTitle}>封面</div><div className={styles.assetHint}>{selectedRelease.coverSourceName || coverFile?.name || '未选择'}</div></div><label className={styles.ghostButton}>选择封面<input hidden type="file" accept="image/*,.png,.jpg,.jpeg,.webp" onChange={onCoverSelected} /></label></div>
+                        {coverPreviewUrl ? <img className={styles.coverPreview} src={coverPreviewUrl} alt="cover preview" /> : <div className={styles.assetPlaceholder}>封面会被写入 metadata.image。</div>}
+                      </div>
+                      <div className={styles.noticeList}>
+                        {needsAudioReattach && <div className={styles.noticeWarning}>刷新后音频文件对象丢失，需要重新挂载。</div>}
+                        {needsCoverReattach && <div className={styles.noticeWarning}>刷新后封面文件对象丢失，需要重新挂载。</div>}
+                        {!needsAudioReattach && !needsCoverReattach && <div className={styles.noticeInfo}>本地文件状态与服务端记录一致。</div>}
+                      </div>
+                    </section>
+                  </div>
+                )}
+
+                {activePanel === 'storage' && (
+                  <div className={styles.panelGrid}>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>存储控制台</div>
+                      <div className={styles.formGrid}>
+                        <label className={styles.label}>Web2.5 Backend URL<input className={styles.input} value={web25BackendBaseUrl} onChange={(e) => setByPath('services.web25Backend.baseUrl', e.target.value)} /></label>
+                        <div className={styles.formRowTwo}>
+                          <label className={styles.label}>Gateway<input className={styles.input} value={pinataConfig?.gatewayBaseUrl || ''} readOnly /></label>
+                          <label className={styles.label}>Network<input className={styles.input} value={pinataConfig?.network || ''} readOnly /></label>
+                        </div>
+                        <div className={styles.formRowTwo}>
+                          <label className={styles.label}>SIWE 会话<input className={styles.input} value={web25Session ? `${web25Session.address.slice(0, 10)}...` : '未登录'} readOnly /></label>
+                          <label className={styles.label}>Upload Limit<input className={styles.input} value={pinataConfig ? formatBytes(pinataConfig.maxFileSizeBytes) : ''} readOnly /></label>
+                        </div>
+                        <div className={styles.actionRow}>
+                          <button className={styles.primaryButton} onClick={() => void handleUploadAssets()} disabled={!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioCid) || busyState !== 'idle'}>上传素材</button>
+                          <button className={styles.primaryButton} onClick={() => void handleUploadMetadata()} disabled={!selectedRelease?.audioCid || !metadataDocument || busyState !== 'idle'}>上传 Metadata</button>
+                        </div>
+                      </div>
+                    </section>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>Metadata 预览</div>
+                      <div className={`${styles.codeBlock} ${styles.monospace}`}>{metadataDocument ? JSON.stringify(metadataDocument, null, 2) : '请先完善项目信息并上传音频素材。'}</div>
+                    </section>
+                  </div>
+                )}
+
+                {activePanel === 'publish' && (
+                  <div className={styles.panelGrid}>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>链上配置</div>
+                      <div className={styles.formGrid}>
+                        <div className={styles.formRowTwo}>
+                          <label className={styles.label}>链名称<input className={styles.input} value={web3Settings?.chainName || effectiveWeb3Settings.chainName} onChange={(e) => setByPath('services.web3Publishing.chainName', e.target.value)} /></label>
+                          <label className={styles.label}>Chain ID<input className={styles.input} type="number" value={web3Settings?.chainId || effectiveWeb3Settings.chainId} onChange={(e) => setByPath('services.web3Publishing.chainId', Number(e.target.value) || DEFAULT_SEPOLIA_CONTRACTS.chainId)} /></label>
+                        </div>
+                        <label className={styles.label}>Explorer URL<input className={styles.input} value={web3Settings?.explorerUrl || effectiveWeb3Settings.explorerUrl} onChange={(e) => setByPath('services.web3Publishing.explorerUrl', e.target.value)} /></label>
+                        <label className={styles.label}>MusicAsset<input className={styles.input} value={web3Settings?.musicAssetAddress || effectiveWeb3Settings.musicAssetAddress} onChange={(e) => setByPath('services.web3Publishing.musicAssetAddress', e.target.value)} /></label>
+                        <label className={styles.label}>RoyaltySplitterFactory<input className={styles.input} value={web3Settings?.royaltySplitterFactoryAddress || effectiveWeb3Settings.royaltySplitterFactoryAddress} onChange={(e) => setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} /></label>
+                        <label className={styles.label}>PlatformHub<input className={styles.input} value={web3Settings?.platformHubAddress || effectiveWeb3Settings.platformHubAddress} onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} /></label>
+                        <div className={styles.actionRow}><button className={styles.primaryButton} onClick={() => void handlePublish()} disabled={!selectedRelease?.metadataUri || !walletProvider || busyState !== 'idle'}>发布到链上</button></div>
+                      </div>
+                    </section>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>分账列表</div>
+                      <div className={styles.splitList}>
+                        {activeSplits.map((item, index) => (
+                          <div key={item.id} className={styles.splitRow}>
+                            <input className={styles.input} value={item.address} onChange={(e) => updateLocal({ royaltySplits: updateSplit(activeSplits, index, { address: e.target.value }) })} placeholder={`${item.label} wallet address`} />
+                            <input className={styles.input} type="number" min={0} max={100} value={item.share} onChange={(e) => updateLocal({ royaltySplits: updateSplit(activeSplits, index, { share: Number(e.target.value) || 0 }) })} />
+                            <button className={styles.dangerButton} onClick={() => updateLocal({ royaltySplits: activeSplits.length > 1 ? activeSplits.filter((split) => split.id !== item.id) : activeSplits })}>移除</button>
+                          </div>
+                        ))}
+                        <div className={styles.actionRow}><button className={styles.ghostButton} onClick={() => updateLocal({ royaltySplits: [...activeSplits, { id: `split-${Date.now()}`, label: `Collaborator ${activeSplits.length + 1}`, address: '', share: 0 }] })}>添加分账人</button></div>
+                      </div>
+                    </section>
+                  </div>
+                )}
+
+                {activePanel === 'access' && (
+                  <div className={styles.panelGrid}>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>授权验证</div>
+                      <div className={styles.formGrid}>
+                        <label className={styles.label}>Token ID<input className={styles.input} value={accessCheck.tokenId || selectedRelease.tokenId || ''} onChange={(e) => setAccessCheck((prev) => ({ ...prev, tokenId: e.target.value }))} /></label>
+                        <div className={styles.actionRow}>
+                          <button className={styles.ghostButton} onClick={() => setAccessCheck((prev) => ({ ...prev, tokenId: selectedRelease.tokenId || prev.tokenId }))}>使用当前 Token</button>
+                          <button className={styles.primaryButton} onClick={() => void handleRefreshAccess()} disabled={busyState !== 'idle' || !selectedRelease.tokenId}>查询授权</button>
+                          <button className={styles.primaryButton} onClick={() => void handleBuyAccess()} disabled={busyState !== 'idle' || !selectedRelease.tokenId}>购买访问权</button>
+                        </div>
+                        <div className={styles.infoGrid}>
+                          <div className={styles.infoCard}><div className={styles.infoLabel}>当前授权</div><div className={styles.infoBody}>Token #{accessCheck.tokenId || 'pending'}{'\n'}Requires purchase: {String(accessCheck.requiresPurchase)}{'\n'}Active: {String(accessCheck.active)}{'\n'}Has access: {String(accessCheck.hasAccess)}</div></div>
+                          <div className={styles.infoCard}><div className={styles.infoLabel}>价格与分账</div><div className={styles.infoBody}>Price: {accessCheck.priceEth || 'pending'} ETH{'\n'}Platform fee: {accessCheck.platformFeeEth || 'pending'} ETH{'\n'}Creator proceeds: {accessCheck.creatorProceedsEth || 'pending'} ETH</div></div>
+                          <div className={styles.infoCard}><div className={styles.infoLabel}>链上地址</div><div className={styles.infoBody}>Creator: {accessCheck.creator || 'pending'}{'\n'}Splitter: {accessCheck.payoutReceiver || 'pending'}</div></div>
+                        </div>
+                      </div>
+                    </section>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>边界说明</div>
+                      <div className={styles.infoGrid}>
+                        <div className={styles.infoCard}><div className={styles.infoLabel}>服务器</div><div className={styles.infoBody}>记录草稿、上传状态、失败原因、已发布列表与恢复上下文。</div></div>
+                        <div className={styles.infoCard}><div className={styles.infoLabel}>IPFS</div><div className={styles.infoBody}>保存 metadata、封面和音频等内容寻址对象。</div></div>
+                        <div className={styles.infoCard}><div className={styles.infoLabel}>链上</div><div className={styles.infoBody}>保存 tokenURI、授权规则、价格和分账接收方。</div></div>
+                      </div>
+                    </section>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
+
+          <aside className={styles.inspector}>
+            <section className={styles.sidebarCard}>
+              <div className={styles.sectionHeading}>恢复检查</div>
+              {selectedRelease ? (
+                <div className={styles.noticeList}>
+                  <div className={styles.noticeInfo}>{selectedRelease.statusMessage || '等待下一步操作'}</div>
+                  {selectedRelease.latestError && <div className={styles.noticeDanger}>{selectedRelease.latestError}</div>}
+                  {needsAudioReattach && <div className={styles.noticeWarning}>音频文件已脱离本地内存，需要重新挂载。</div>}
+                  {needsCoverReattach && <div className={styles.noticeWarning}>封面文件已脱离本地内存，需要重新挂载。</div>}
+                </div>
+              ) : <div className={styles.emptyBody}>选择项目后查看恢复信息。</div>}
+            </section>
+            <section className={styles.sidebarCard}>
+              <div className={styles.sectionHeading}>产物索引</div>
+              {selectedRelease ? (
+                <div className={styles.statusList}>
+                  <div className={styles.statusItem}><div className={styles.statusTitle}>Audio CID</div><div className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.audioCid || 'pending'}</div></div>
+                  <div className={styles.statusItem}><div className={styles.statusTitle}>Metadata URI</div><div className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.metadataUri || 'ipfs://pending'}</div></div>
+                  <div className={styles.statusItem}><div className={styles.statusTitle}>Token / Splitter</div><div className={`${styles.statusValue} ${styles.monospace}`}>Token #{selectedRelease.tokenId || 'pending'}{'\n'}{selectedRelease.splitterAddress || 'splitter pending'}</div></div>
+                  <div className={styles.statusItem}><div className={styles.statusTitle}>Publish / Purchase Tx</div><div className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.publishTxHash || 'publish pending'}{'\n'}{selectedRelease.purchaseTxHash || 'purchase pending'}</div></div>
+                </div>
+              ) : <div className={styles.emptyBody}>暂无项目。</div>}
+            </section>
+            <section className={styles.sidebarCard}>
+              <div className={styles.sectionHeading}>活动日志</div>
+              {selectedRelease ? (
+                <div className={styles.logList}>
+                  {(selectedRelease.activityLog.length ? selectedRelease.activityLog : [{ message: selectedRelease.statusMessage || '等待活动', level: 'info' as const, at: selectedRelease.updatedAt }]).map((entry) => (
+                    <div key={`${entry.at}-${entry.message}`} className={styles.logItem}>
+                      <div className={styles.logMeta}><span className={`${styles.statusBadge} ${entry.level === 'error' ? styles.statusDanger : entry.level === 'success' ? styles.statusSuccess : styles.statusNeutral}`}>{entry.level}</span><span>{formatRelativeTime(entry.at)}</span></div>
+                      <div className={styles.logMessage}>{entry.message}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : <div className={styles.emptyBody}>暂无日志。</div>}
             </section>
           </aside>
         </div>

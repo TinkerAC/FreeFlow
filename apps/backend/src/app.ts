@@ -1,6 +1,7 @@
 import express from 'express';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { pinataRouter } from './modules/pinata/pinata.routes.js';
+import { releaseRouter } from './modules/releases/release.routes.js';
 import { systemRouter } from './modules/system/system.routes.js';
 import { applyCors } from './http/middleware/cors.js';
 import { attachRequestContext } from './http/middleware/request-context.js';
@@ -17,6 +18,7 @@ export function createApp() {
 
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/storage/pinata', pinataRouter);
+  app.use('/api/v1/releases', releaseRouter);
   app.use('/api/v1/system', systemRouter);
 
   app.get('/', (_req, res) => {

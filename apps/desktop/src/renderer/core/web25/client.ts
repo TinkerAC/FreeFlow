@@ -50,6 +50,86 @@ export type PinataConfigPayload = {
   maxFileSizeBytes: number;
 };
 
+export type CreatorReleaseStatus =
+  | 'DRAFT'
+  | 'ASSETS_PENDING'
+  | 'ASSETS_UPLOADED'
+  | 'METADATA_UPLOADED'
+  | 'PUBLISHING'
+  | 'PUBLISHED'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export type CreatorReleaseActivity = {
+  message: string;
+  level: 'info' | 'success' | 'warning' | 'error';
+  at: string;
+};
+
+export type CreatorReleaseSplit = {
+  id: string;
+  label: string;
+  address: string;
+  share: number;
+};
+
+export type CreatorReleaseRecord = {
+  id: string;
+  creatorUserId: string;
+  title: string;
+  artistName: string | null;
+  albumName: string | null;
+  genreLabel: string | null;
+  slug: string;
+  description: string | null;
+  status: CreatorReleaseStatus;
+  currentStage: string;
+  accessModel: 'open' | 'purchase';
+  previewSeconds: number;
+  priceEth: string;
+  royaltyBps: number;
+  audioSourceName: string | null;
+  audioSourcePath: string | null;
+  coverSourceName: string | null;
+  coverSourcePath: string | null;
+  audioCid: string | null;
+  audioGatewayUrl: string | null;
+  coverCid: string | null;
+  coverGatewayUrl: string | null;
+  metadataCid: string | null;
+  metadataUri: string | null;
+  metadataGatewayUrl: string | null;
+  splitterAddress: string | null;
+  publishTxHash: string | null;
+  purchaseTxHash: string | null;
+  tokenId: string | null;
+  chainId: number | null;
+  chainName: string | null;
+  explorerUrl: string | null;
+  musicAssetAddress: string | null;
+  royaltySplitterFactoryAddress: string | null;
+  platformHubAddress: string | null;
+  metadataDocument: unknown | null;
+  royaltySplits: CreatorReleaseSplit[];
+  activityLog: CreatorReleaseActivity[];
+  statusMessage: string | null;
+  latestError: string | null;
+  publishedAt: string | null;
+  lastActivityAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreatorReleaseDashboard = {
+  summary: {
+    total: number;
+    published: number;
+    failed: number;
+    inProgress: number;
+  };
+  releases: CreatorReleaseRecord[];
+};
+
 let sessionToken: string | null = null;
 
 function joinUrl(baseUrl: string, path: string) {
@@ -186,6 +266,53 @@ export async function uploadFileToWeb25Pinata(
     {
       method: 'POST',
       body: formData,
+    },
+  );
+}
+
+export async function listCreatorReleases(baseUrl: string) {
+  return await requestWeb25<CreatorReleaseDashboard>(
+    baseUrl,
+    '/api/v1/releases',
+  );
+}
+
+export async function createCreatorRelease(
+  baseUrl: string,
+  input: {
+    title?: string;
+    artistName?: string;
+    accessModel?: 'open' | 'purchase';
+  } = {},
+) {
+  return await requestWeb25<CreatorReleaseRecord>(
+    baseUrl,
+    '/api/v1/releases',
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function getCreatorRelease(baseUrl: string, releaseId: string) {
+  return await requestWeb25<CreatorReleaseRecord>(
+    baseUrl,
+    `/api/v1/releases/${releaseId}`,
+  );
+}
+
+export async function updateCreatorRelease(
+  baseUrl: string,
+  releaseId: string,
+  input: Record<string, unknown>,
+) {
+  return await requestWeb25<CreatorReleaseRecord>(
+    baseUrl,
+    `/api/v1/releases/${releaseId}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input),
     },
   );
 }
