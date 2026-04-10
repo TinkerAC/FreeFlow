@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CommentStatus {
+  PUBLISHED
+  HIDDEN
+  DELETED
+}
+
+enum ResourceType {
+  TRACK
+  ALBUM
+  POST
+}
+
+model User {
+  id                   String                 @id @default(cuid())
+  displayName          String?                @db.VarChar(64)
+  avatarUrl            String?                @db.Text
+  primaryWalletAddress String                 @db.VarChar(42)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  walletIdentities     WalletIdentity[]
+  authSessions         AuthSession[]
+  uploadedStorageItems StorageObject[]
+  ownedResources       Resource[]             @relation("ResourceOwner")
+  comments             Comment[]
+  commentReactions     CommentReaction[]
+  commentReports       CommentReport[]        @relation("CommentReporter")
+  moderationLogs       CommentModerationLog[] @relation("CommentModerator")
+
+  @@index([primaryWalletAddress])
+  @@map("users")
+}
+
+model WalletIdentity {
+  id                  String        @id @default(cuid())
+  userId              String
+  address             String        @db.VarChar(42)
+  addressLower        String        @db.VarChar(42)
+  chainId             Int
+  isPrimary           Boolean       @default(false)
+  verifiedAt          DateTime
+  lastAuthenticatedAt DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authSessions        AuthSession[]
+
+  @@unique([addressLower, chainId])
+  @@index([userId])
+  @@map("wallet_identities")
+}
+
+model SiweNonce {
+  id                   String   @id @default(cuid())
+  nonceHash            String   @unique @db.Char(64)
+  requestedAddress     String?  @db.VarChar(42)
+  requestedAddressLower String? @db.VarChar(42)
+  requestedChainId     Int?
+  expiresAt            DateTime
+  consumedAt           DateTime?
+  createdAt            DateTime @default(now())
+
+  @@index([expiresAt])
+  @@index([requestedAddressLower, requestedChainId])
+  @@map("siwe_nonces")
+}
+
+model AuthSession {
+  id               String         @id @default(cuid())
+  userId           String
+  walletIdentityId String
+  tokenHash        String         @unique @db.Char(64)
+  address          String         @db.VarChar(42)
+  chainId          Int
+  domain           String         @db.VarChar(255)
+  uri              String         @db.Text
+  issuedAt         DateTime
+  verifiedAt       DateTime
+  expiresAt        DateTime
+  lastSeenAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime       @default(now())
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletIdentity   WalletIdentity @relation(fields: [walletIdentityId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([walletIdentityId])
+  @@index([expiresAt, revokedAt])
+  @@map("auth_sessions")
+}
+
+model StorageObject {
+  id             String   @id @default(cuid())
+  uploaderUserId String
+  cid            String   @unique @db.VarChar(255)
+  pinataId       String?  @db.VarChar(255)
+  name           String   @db.VarChar(255)
+  size           Int
+  mimeType       String   @db.VarChar(255)
+  gatewayUrl     String   @db.Text
+  network        String   @db.VarChar(32)
+  groupId        String?  @db.VarChar(255)
+  createdAt      DateTime @default(now())
+  uploader       User     @relation(fields: [uploaderUserId], references: [id], onDelete: Cascade)
+
+  @@index([uploaderUserId, createdAt])
+  @@map("storage_objects")
+}
+
+model Resource {
+  id                   String       @id @default(cuid())
+  type                 ResourceType
+  chainId              Int?
+  contractAddress      String?      @db.VarChar(42)
+  contractAddressLower String?      @db.VarChar(42)
+  tokenId              String?      @db.VarChar(128)
+  contentCid           String?      @db.VarChar(255)
+  title                String?      @db.VarChar(255)
+  ownerUserId          String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  owner                User?        @relation("ResourceOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  comments             Comment[]
+
+  @@unique([chainId, contractAddressLower, tokenId])
+  @@index([contentCid])
+  @@index([ownerUserId])
+  @@map("resources")
+}
+
+model Comment {
+  id             String                 @id @default(cuid())
+  resourceId     String
+  userId         String
+  parentId       String?
+  body           String                 @db.Text
+  status         CommentStatus          @default(PUBLISHED)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  deletedAt      DateTime?
+  resource       Resource               @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent         Comment?               @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies        Comment[]              @relation("CommentReplies")
+  reactions      CommentReaction[]
+  reports        CommentReport[]
+  moderationLogs CommentModerationLog[]
+
+  @@index([resourceId, createdAt])
+  @@index([parentId, createdAt])
+  @@index([userId, createdAt])
+  @@map("comments")
+}
+
+model CommentReaction {
+  id           String   @id @default(cuid())
+  commentId    String
+  userId       String
+  reactionType String   @db.VarChar(32)
+  createdAt    DateTime @default(now())
+  comment      Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, reactionType])
+  @@index([userId])
+  @@map("comment_reactions")
+}
+
+model CommentReport {
+  id             String   @id @default(cuid())
+  commentId      String
+  reporterUserId String
+  reason         String   @db.VarChar(64)
+  details        String?  @db.Text
+  status         String   @default("open") @db.VarChar(32)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  comment        Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter       User     @relation("CommentReporter", fields: [reporterUserId], references: [id], onDelete: Cascade)
+
+  @@index([commentId])
+  @@index([reporterUserId])
+  @@map("comment_reports")
+}
+
+model CommentModerationLog {
+  id              String   @id @default(cuid())
+  commentId       String
+  moderatorUserId String?
+  action          String   @db.VarChar(32)
+  note            String?  @db.Text
+  createdAt       DateTime @default(now())
+  comment         Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  moderator       User?    @relation("CommentModerator", fields: [moderatorUserId], references: [id], onDelete: SetNull)
+
+  @@index([commentId, createdAt])
+  @@index([moderatorUserId])
+  @@map("comment_moderation_logs")
+}

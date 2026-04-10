@@ -7,3 +7,7 @@ export function createOpaqueToken(bytes = 32) {
 export function createRequestId() {
   return crypto.randomUUID();
 }
+
+export function sha256Hex(input: string) {
+  return crypto.createHash('sha256').update(input).digest('hex');
+}

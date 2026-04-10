@@ -3,6 +3,9 @@
   "private": true,
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
       "sqlite3"
     ]
   },
@@ -10,6 +13,9 @@
     "dev:web": "pnpm --filter web run dev",
     "dev:desktop": "pnpm --filter freeflow run dev",
     "dev:backend": "pnpm --filter freeflow-web25-backend run dev",
-    "build:backend": "pnpm --filter freeflow-web25-backend run build"
+    "build:backend": "pnpm --filter freeflow-web25-backend run build",
+    "db:backend:migrate:dev": "pnpm --filter freeflow-web25-backend run prisma:migrate:dev",
+    "db:backend:migrate:deploy": "pnpm --filter freeflow-web25-backend run prisma:migrate:deploy",
+    "db:backend:studio": "pnpm --filter freeflow-web25-backend run prisma:studio"
   }
 }

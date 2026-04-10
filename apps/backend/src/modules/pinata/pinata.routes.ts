@@ -38,6 +38,7 @@ pinataRouter.post('/files', requireAuth, async (req, res, next) => {
       filename: parsedMultipart.file.filename,
       mimeType: parsedMultipart.file.mimeType,
       displayName: parsedFields.name ?? parsedMultipart.file.filename,
+      uploaderUserId: req.authSession!.userId,
       ...(keyvalues ? { keyvalues } : {}),
     };
 

@@ -14,13 +14,15 @@ export const attachSession: RequestHandler = (req, _res, next) => {
   const cookieToken = parseCookieHeader(req.header('cookie') ?? undefined)[env.sessionCookieName];
   const sessionToken = bearerToken ?? cookieToken ?? null;
 
-  if (sessionToken) {
-    const session = authService.getSession(sessionToken);
-    if (session) {
-      req.authToken = sessionToken;
-      req.authSession = session;
+  void (async () => {
+    if (sessionToken) {
+      const session = await authService.getSession(sessionToken);
+      if (session) {
+        req.authToken = sessionToken;
+        req.authSession = session;
+      }
     }
-  }
-
-  next();
+  })()
+    .then(() => next())
+    .catch(next);
 };

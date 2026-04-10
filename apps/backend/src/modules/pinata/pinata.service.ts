@@ -1,5 +1,6 @@
 import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
+import { pinataRepository } from './pinata.repository.js';
 
 type UploadInput = {
   buffer: Buffer;
@@ -7,6 +8,7 @@ type UploadInput = {
   mimeType: string;
   displayName: string;
   keyvalues?: Record<string, string>;
+  uploaderUserId: string;
 };
 
 type PinataUploadResponse = {
@@ -75,7 +77,7 @@ export class PinataService {
       throw new AppError(502, 'Pinata response missing cid', 'PINATA_RESPONSE_INVALID', payload);
     }
 
-    return {
+    const uploadedFile = {
       cid,
       id: typedResult?.id ?? null,
       name: typedResult?.name ?? input.displayName,
@@ -84,6 +86,20 @@ export class PinataService {
       createdAt: typedResult?.createdAt ?? typedResult?.created_at ?? new Date().toISOString(),
       gatewayUrl: `${env.pinataGatewayBaseUrl.replace(/\/$/, '')}/${cid}`,
     };
+
+    await pinataRepository.recordStorageObject({
+      uploaderUserId: input.uploaderUserId,
+      cid: uploadedFile.cid,
+      pinataId: uploadedFile.id,
+      name: uploadedFile.name,
+      size: uploadedFile.size,
+      mimeType: uploadedFile.mimeType,
+      gatewayUrl: uploadedFile.gatewayUrl,
+      network: env.pinataNetwork,
+      ...(env.pinataGroupId ? { groupId: env.pinataGroupId } : {}),
+    });
+
+    return uploadedFile;
   }
 }
 

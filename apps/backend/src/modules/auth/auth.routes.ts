@@ -9,10 +9,10 @@ export const authRouter = Router();
 
 authRouter.use(attachSession);
 
-authRouter.post('/siwe/nonce', (req, res, next) => {
+authRouter.post('/siwe/nonce', async (req, res, next) => {
   try {
     const parsed = IssueNonceSchema.parse(req.body ?? {});
-    const payload = authService.issueNonce({
+    const payload = await authService.issueNonce({
       address: parsed.address,
       chainId: parsed.chainId,
     });
@@ -25,10 +25,10 @@ authRouter.post('/siwe/nonce', (req, res, next) => {
   }
 });
 
-authRouter.post('/siwe/verify', (req, res, next) => {
+authRouter.post('/siwe/verify', async (req, res, next) => {
   try {
     const parsed = VerifySiweSchema.parse(req.body ?? {});
-    const result = authService.verify(parsed);
+    const result = await authService.verify(parsed);
 
     res.cookie(env.sessionCookieName, result.sessionToken, {
       httpOnly: true,
@@ -60,9 +60,9 @@ authRouter.get('/session', (req, res) => {
   });
 });
 
-authRouter.post('/logout', (req, res, next) => {
+authRouter.post('/logout', async (req, res, next) => {
   try {
-    authService.revokeSession(req.authToken);
+    await authService.revokeSession(req.authToken);
     res.clearCookie(env.sessionCookieName, {
       httpOnly: true,
       sameSite: env.cookieSameSite,

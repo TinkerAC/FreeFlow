@@ -2,41 +2,59 @@ import { getAddress } from 'ethers';
 import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
 import { createOpaqueToken } from '../../lib/crypto.js';
-import { TtlStore } from '../../lib/ttl-store.js';
+import { authRepository, type PersistedAuthSession } from './auth.repository.js';
 import { parseSiweMessage, verifySiweSignature } from './siwe.js';
 import type { AuthSession } from './auth.types.js';
 
 type NonceRecord = {
-  nonce: string;
-  address?: string;
-  chainId?: number;
-  createdAt: string;
+  requestedAddress?: string | null;
+  requestedChainId?: number | null;
 };
 
-const nonceStore = new TtlStore<NonceRecord>();
-const sessionStore = new TtlStore<AuthSession>();
+function mapSession(session: PersistedAuthSession): AuthSession {
+  return {
+    sessionId: session.id,
+    userId: session.userId,
+    walletIdentityId: session.walletIdentityId,
+    address: session.address,
+    chainId: session.chainId,
+    domain: session.domain,
+    uri: session.uri,
+    issuedAt: session.issuedAt.toISOString(),
+    verifiedAt: session.verifiedAt.toISOString(),
+    expiresAt: session.expiresAt.toISOString(),
+  };
+}
+
+async function pruneExpiredArtifactsSafely() {
+  try {
+    await authRepository.pruneExpiredAuthArtifacts();
+  } catch {
+    // Housekeeping should not block auth requests.
+  }
+}
 
 export class AuthService {
-  issueNonce(input: { address: string | undefined; chainId: number | undefined }) {
+  constructor() {
+    const cleanupTimer = setInterval(() => {
+      void pruneExpiredArtifactsSafely();
+    }, 10 * 60 * 1000);
+
+    cleanupTimer.unref?.();
+  }
+
+  async issueNonce(input: { address: string | undefined; chainId: number | undefined }) {
     const nonce = createOpaqueToken(16).slice(0, 20);
     const normalizedAddress = input.address ? getAddress(input.address) : undefined;
-    const nonceRecord: NonceRecord = {
-      nonce,
-      createdAt: new Date().toISOString(),
-    };
 
-    if (normalizedAddress) {
-      nonceRecord.address = normalizedAddress;
-    }
-    if (input.chainId !== undefined) {
-      nonceRecord.chainId = input.chainId;
-    }
-
-    nonceStore.set(
+    await authRepository.createNonce({
       nonce,
-      nonceRecord,
-      env.nonceTtlMs,
-    );
+      ...(normalizedAddress ? { requestedAddress: normalizedAddress } : {}),
+      ...(input.chainId !== undefined ? { requestedChainId: input.chainId } : {}),
+      expiresAt: new Date(Date.now() + env.nonceTtlMs),
+    });
+
+    void pruneExpiredArtifactsSafely();
 
     return {
       nonce,
@@ -48,20 +66,29 @@ export class AuthService {
     };
   }
 
-  verify(input: { message: string; signature: string }) {
+  async verify(input: { message: string; signature: string }) {
     const parsedMessage = parseSiweMessage(input.message);
     const recoveredAddress = verifySiweSignature(input.message, input.signature);
-    const storedNonce = nonceStore.take(parsedMessage.nonce);
+    const storedNonce = await authRepository.consumeNonce(parsedMessage.nonce);
 
     if (!storedNonce) {
       throw new AppError(401, 'Nonce is missing or expired', 'NONCE_EXPIRED');
     }
 
-    if (storedNonce.address && storedNonce.address !== parsedMessage.address) {
+    const nonceRecord: NonceRecord = {
+      requestedAddress: storedNonce.requestedAddress,
+      requestedChainId: storedNonce.requestedChainId,
+    };
+
+    if (nonceRecord.requestedAddress && nonceRecord.requestedAddress !== parsedMessage.address) {
       throw new AppError(401, 'Nonce/address mismatch', 'NONCE_ADDRESS_MISMATCH');
     }
 
-    if (storedNonce.chainId && storedNonce.chainId !== parsedMessage.chainId) {
+    if (
+      nonceRecord.requestedChainId !== undefined &&
+      nonceRecord.requestedChainId !== null &&
+      nonceRecord.requestedChainId !== parsedMessage.chainId
+    ) {
       throw new AppError(401, 'Nonce/chain mismatch', 'NONCE_CHAIN_MISMATCH');
     }
 
@@ -106,35 +133,46 @@ export class AuthService {
       }
     }
 
-    const sessionId = createOpaqueToken(32);
-    const verifiedAt = new Date().toISOString();
-    const session: AuthSession = {
-      sessionId,
+    const verifiedAt = new Date();
+    const sessionToken = createOpaqueToken(32);
+    const identity = await authRepository.upsertVerifiedWallet({
       address: parsedMessage.address,
       chainId: parsedMessage.chainId,
-      nonce: parsedMessage.nonce,
+      verifiedAt,
+    });
+
+    const session = await authRepository.createSession({
+      sessionToken,
+      userId: identity.user.id,
+      walletIdentityId: identity.walletIdentity.id,
+      address: parsedMessage.address,
+      chainId: parsedMessage.chainId,
       domain: parsedMessage.domain,
       uri: parsedMessage.uri,
-      issuedAt: parsedMessage.issuedAt,
+      issuedAt: new Date(issuedAt),
       verifiedAt,
-    };
-
-    sessionStore.set(sessionId, session, env.sessionTtlMs);
+      expiresAt: new Date(verifiedAt.getTime() + env.sessionTtlMs),
+    });
 
     return {
-      sessionToken: sessionId,
-      session,
+      sessionToken,
+      session: mapSession(session),
     };
   }
 
-  getSession(sessionToken?: string | null) {
+  async getSession(sessionToken?: string | null) {
     if (!sessionToken) return null;
-    return sessionStore.get(sessionToken);
+
+    const session = await authRepository.findActiveSessionByToken(sessionToken);
+    if (!session) return null;
+
+    void authRepository.recordSessionSeen(session.id, new Date()).catch(() => undefined);
+    return mapSession(session);
   }
 
-  revokeSession(sessionToken?: string | null) {
+  async revokeSession(sessionToken?: string | null) {
     if (!sessionToken) return;
-    sessionStore.delete(sessionToken);
+    await authRepository.revokeSessionByToken(sessionToken);
   }
 }
 

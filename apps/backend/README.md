@@ -5,22 +5,44 @@ Node.js backend for SIWE authentication and server-controlled Pinata uploads.
 ## Responsibilities
 
 - SIWE nonce issuance and signature verification
-- Opaque session management for desktop/web clients
+- PostgreSQL-backed users, wallet identities, SIWE nonces, and sessions
 - Server-side Pinata upload proxy
-- Centralized control of Pinata JWT, gateway, network, and upload limits
+- Persistent storage metadata for uploaded Pinata objects
+- Foundation tables for resources, comments, reactions, reports, and moderation logs
 
 ## Quick start
 
 1. Copy `.env.example` to `.env`.
-2. Set `PINATA_JWT`.
-3. Build and start:
+2. Set `DATABASE_URL` and `PINATA_JWT`.
+3. Generate the Prisma client and apply migrations.
+4. Build and start:
 
 ```bash
+docker compose -f apps/backend/docker-compose.postgres.yml up -d
+pnpm --filter freeflow-web25-backend run prisma:generate
+pnpm --filter freeflow-web25-backend run prisma:migrate:dev
 pnpm --filter freeflow-web25-backend run build
 pnpm --filter freeflow-web25-backend run start
 ```
 
 The backend loads `apps/backend/.env` during startup before validating the environment schema.
+
+## Data model
+
+Prisma schema lives in `apps/backend/prisma/schema.prisma`.
+
+Core persisted entities:
+
+- `User`
+- `WalletIdentity`
+- `SiweNonce`
+- `AuthSession`
+- `StorageObject`
+- `Resource`
+- `Comment`
+- `CommentReaction`
+- `CommentReport`
+- `CommentModerationLog`
 
 ## API
 
