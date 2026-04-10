@@ -1,6 +1,6 @@
 import type { AuthSession as DbAuthSession, Prisma, SiweNonce, User, WalletIdentity } from '@prisma/client';
-import { prisma } from '../../lib/prisma.js';
-import { sha256Hex } from '../../lib/crypto.js';
+import { sha256Hex } from '../../core/utils/crypto.js';
+import { prisma } from '../../infra/database/prisma.js';
 
 type UserWithWalletIdentity = {
   user: User;
@@ -29,6 +29,9 @@ async function touchPrimaryWallet(
   });
 }
 
+/**
+ * 认证仓储层负责和数据库交互，不承载 SIWE 校验或 HTTP 协议逻辑。
+ */
 export class AuthRepository {
   async createNonce(input: {
     nonce: string;
@@ -99,6 +102,7 @@ export class AuthRepository {
     const addressLower = lowerCaseAddress(input.address);
 
     return prisma.$transaction(async (tx) => {
+      // 同一个链上地址只允许映射到唯一的钱包身份记录。
       const existingWallet = await tx.walletIdentity.findUnique({
         where: {
           addressLower_chainId: {

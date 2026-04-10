@@ -1,7 +1,10 @@
 import { Router } from 'express';
-import { checkDatabaseHealth } from '../../lib/prisma.js';
-import { toAppError } from '../../lib/app-error.js';
+import { toAppError } from '../../core/errors/app-error.js';
+import { checkDatabaseHealth } from '../../infra/database/prisma.js';
 
+/**
+ * 系统级接口，主要用于健康检查和运维探针。
+ */
 export const systemRouter = Router();
 
 systemRouter.get('/health', async (_req, res, next) => {

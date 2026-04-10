@@ -1,9 +1,12 @@
 import { Router } from 'express';
-import { attachSession } from '../auth/session.middleware.js';
-import { requireAuth } from '../auth/require-auth.js';
+import { attachSession } from '../../security/session/attach-session.js';
+import { requireAuth } from '../../security/session/require-auth.js';
 import { CreateCreatorReleaseSchema, UpdateCreatorReleaseSchema } from './release.schemas.js';
 import { releaseService } from './release.service.js';
 
+/**
+ * 发行管理模块的 HTTP 入口。
+ */
 export const releaseRouter = Router();
 
 releaseRouter.use(attachSession);

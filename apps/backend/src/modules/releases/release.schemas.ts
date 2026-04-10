@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+/**
+ * 发行模块输入模型。
+ * 这里主要负责把前端传入的数据边界固定下来，避免 service 层处理半脏数据。
+ */
 const CreatorReleaseStatusSchema = z.enum([
   'DRAFT',
   'ASSETS_PENDING',

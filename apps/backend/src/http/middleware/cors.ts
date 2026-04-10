@@ -7,6 +7,10 @@ function isAllowedOrigin(origin: string | undefined) {
   return env.allowedOrigins.includes(origin);
 }
 
+/**
+ * 统一处理跨域策略。
+ * 当前策略是白名单透传，请求通过后把真实 origin 回写给浏览器。
+ */
 export const applyCors: RequestHandler = (req, res, next) => {
   const origin = req.headers.origin;
 

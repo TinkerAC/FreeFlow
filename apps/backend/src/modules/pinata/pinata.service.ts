@@ -1,5 +1,5 @@
 import { env } from '../../config/env.js';
-import { AppError } from '../../lib/app-error.js';
+import { AppError } from '../../core/errors/app-error.js';
 import { pinataRepository } from './pinata.repository.js';
 
 type UploadInput = {
@@ -22,6 +22,10 @@ type PinataUploadResponse = {
   createdAt?: string;
 };
 
+/**
+ * Pinata 服务层。
+ * 负责调用第三方上传接口，并把结果转换为项目内部稳定的数据结构。
+ */
 export class PinataService {
   getPublicConfig() {
     return {

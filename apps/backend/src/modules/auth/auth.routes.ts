@@ -1,10 +1,21 @@
 import { Router } from 'express';
 import { env } from '../../config/env.js';
-import { AppError } from '../../lib/app-error.js';
+import { AppError } from '../../core/errors/app-error.js';
+import { attachSession } from '../../security/session/attach-session.js';
 import { IssueNonceSchema, VerifySiweSchema } from './auth.schemas.js';
 import { authService } from './auth.service.js';
-import { attachSession } from './session.middleware.js';
 
+const sessionCookieOptions = {
+  httpOnly: true,
+  sameSite: env.cookieSameSite,
+  secure: env.cookieSecure,
+  path: '/' as const,
+};
+
+/**
+ * 认证模块的 HTTP 入口。
+ * 路由层只负责参数解析、Cookie 协议和响应格式，不负责认证规则本身。
+ */
 export const authRouter = Router();
 
 authRouter.use(attachSession);
@@ -31,11 +42,8 @@ authRouter.post('/siwe/verify', async (req, res, next) => {
     const result = await authService.verify(parsed);
 
     res.cookie(env.sessionCookieName, result.sessionToken, {
-      httpOnly: true,
-      sameSite: env.cookieSameSite,
-      secure: env.cookieSecure,
+      ...sessionCookieOptions,
       maxAge: env.sessionTtlMs,
-      path: '/',
     });
 
     res.status(201).json({
@@ -64,10 +72,7 @@ authRouter.post('/logout', async (req, res, next) => {
   try {
     await authService.revokeSession(req.authToken);
     res.clearCookie(env.sessionCookieName, {
-      httpOnly: true,
-      sameSite: env.cookieSameSite,
-      secure: env.cookieSecure,
-      path: '/',
+      ...sessionCookieOptions,
     });
     res.json({
       ok: true,

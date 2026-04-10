@@ -1,5 +1,9 @@
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../infra/database/prisma.js';
 
+/**
+ * 存储对象仓储层。
+ * 负责把第三方存储结果同步进本地数据库，方便后续审计和追踪。
+ */
 export class PinataRepository {
   async recordStorageObject(input: {
     uploaderUserId: string;

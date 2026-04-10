@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 import { Busboy, type BusboyFileStream } from '@fastify/busboy';
-import { AppError } from './app-error.js';
+import { AppError } from '../../core/errors/app-error.js';
 
 export type ParsedMultipartFile = {
   fieldName: string;
@@ -21,6 +21,10 @@ type ParseMultipartOptions = {
   maxFields?: number;
 };
 
+/**
+ * 解析单文件 multipart/form-data 请求。
+ * 当前后端上传能力比较聚焦，因此显式限制为 1 个文件，避免协议能力失控。
+ */
 export async function parseMultipart(
   request: IncomingMessage,
   options: ParseMultipartOptions,

@@ -1,12 +1,32 @@
 import { Router } from 'express';
-import { AppError } from '../../lib/app-error.js';
-import { parseMultipart } from '../../lib/multipart.js';
 import { env } from '../../config/env.js';
+import { AppError } from '../../core/errors/app-error.js';
+import { parseMultipart } from '../../http/parsers/multipart.js';
+import { attachSession } from '../../security/session/attach-session.js';
+import { requireAuth } from '../../security/session/require-auth.js';
 import { PinataFieldSchema } from './pinata.schemas.js';
 import { pinataService } from './pinata.service.js';
-import { attachSession } from '../auth/session.middleware.js';
-import { requireAuth } from '../auth/require-auth.js';
 
+function parseKeyvalues(rawKeyvalues?: string) {
+  if (!rawKeyvalues) return undefined;
+
+  try {
+    const parsed = JSON.parse(rawKeyvalues) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('keyvalues must be a JSON object');
+    }
+
+    return Object.fromEntries(
+      Object.entries(parsed as Record<string, unknown>).map(([key, value]) => [key, String(value)]),
+    );
+  } catch {
+    throw new AppError(400, 'keyvalues must be a valid JSON object', 'INVALID_KEYVALUES');
+  }
+}
+
+/**
+ * Pinata 文件上传模块的 HTTP 入口。
+ */
 export const pinataRouter = Router();
 
 pinataRouter.use(attachSession);
@@ -29,9 +49,7 @@ pinataRouter.post('/files', requireAuth, async (req, res, next) => {
     }
 
     const parsedFields = PinataFieldSchema.parse(parsedMultipart.fields);
-    const keyvalues = parsedFields.keyvalues
-      ? JSON.parse(parsedFields.keyvalues) as Record<string, string>
-      : undefined;
+    const keyvalues = parseKeyvalues(parsedFields.keyvalues);
 
     const uploadInput = {
       buffer: parsedMultipart.file.buffer,

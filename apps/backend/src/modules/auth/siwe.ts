@@ -1,7 +1,11 @@
 import { getAddress, verifyMessage } from 'ethers';
 import { z } from 'zod';
-import { AppError } from '../../lib/app-error.js';
+import { AppError } from '../../core/errors/app-error.js';
 
+/**
+ * 按 SIWE 协议约束服务端真正依赖的字段。
+ * 这里不追求完整镜像规范，只覆盖当前登录流程需要验证的内容。
+ */
 const ParsedSiweSchema = z.object({
   domain: z.string().min(1),
   address: z.string().min(1),
@@ -30,6 +34,10 @@ const FIELD_MAP: Record<string, keyof Omit<ParsedSiweMessage, 'resources' | 'sta
   'Request ID': 'requestId',
 };
 
+/**
+ * 解析 EIP-4361 文本消息。
+ * 由于客户端最终签名的是字符串，因此服务端需要显式按协议格式拆解。
+ */
 export function parseSiweMessage(message: string): ParsedSiweMessage {
   const normalized = message.replace(/\r\n/g, '\n');
   const lines = normalized.split('\n');
@@ -88,6 +96,7 @@ export function parseSiweMessage(message: string): ParsedSiweMessage {
     const rawFieldName = fieldMatch[1];
     const rawValue = fieldMatch[2];
     if (!rawFieldName || !rawValue) continue;
+
     const mappedName = FIELD_MAP[rawFieldName];
     if (!mappedName) continue;
     rawFields[mappedName] = mappedName === 'chainId' ? Number(rawValue) : rawValue.trim();
@@ -111,6 +120,9 @@ export function parseSiweMessage(message: string): ParsedSiweMessage {
   return parsed.data;
 }
 
+/**
+ * 校验钱包签名是否真的对应消息中的地址。
+ */
 export function verifySiweSignature(message: string, signature: string) {
   try {
     return getAddress(verifyMessage(message, signature));
@@ -119,6 +131,9 @@ export function verifySiweSignature(message: string, signature: string) {
   }
 }
 
+/**
+ * 生成标准化 SIWE 消息，主要供测试或服务端辅助场景使用。
+ */
 export function buildSiweMessage(input: {
   domain: string;
   address: string;

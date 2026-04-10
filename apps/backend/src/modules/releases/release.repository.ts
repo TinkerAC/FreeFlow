@@ -1,6 +1,10 @@
 import { Prisma, ResourceType } from '@prisma/client';
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../infra/database/prisma.js';
 
+/**
+ * Release 仓储层。
+ * 所有和发行实体相关的数据库读写都收敛在这里，避免 service 直接拼 Prisma 语句。
+ */
 export class ReleaseRepository {
   async listByCreatorUserId(creatorUserId: string) {
     return prisma.creatorRelease.findMany({
@@ -92,5 +96,9 @@ export class ReleaseRepository {
     });
   }
 }
+
+export type PersistedCreatorRelease = Awaited<ReturnType<ReleaseRepository['findByIdForCreator']>> extends infer T
+  ? Exclude<T, null>
+  : never;
 
 export const releaseRepository = new ReleaseRepository();

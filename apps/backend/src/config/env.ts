@@ -1,7 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { z } from 'zod';
-import { AppError } from '../lib/app-error.js';
+import { AppError } from '../core/errors/app-error.js';
 
+/**
+ * 以最小依赖读取 `.env` 文件。
+ * 这里只做兼容性足够的解析，避免在基础配置阶段再引入额外运行时依赖。
+ */
 const loadEnvFile = (fileUrl: URL) => {
   if (!existsSync(fileUrl)) return;
 
@@ -22,7 +26,7 @@ const loadEnvFile = (fileUrl: URL) => {
     if (
       value.length >= 2 &&
       ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'")))
+        (value.startsWith('\'') && value.endsWith('\'')))
     ) {
       value = value.slice(1, -1);
     }
@@ -33,6 +37,9 @@ const loadEnvFile = (fileUrl: URL) => {
 
 loadEnvFile(new URL('../../.env', import.meta.url));
 
+/**
+ * 统一解析布尔环境变量，兼容常见的文本写法。
+ */
 const boolFromEnv = z.preprocess((value) => {
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return value;
@@ -42,6 +49,9 @@ const boolFromEnv = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+/**
+ * 将逗号分隔的字符串解析成字符串数组。
+ */
 const csvString = z.preprocess((value) => {
   if (typeof value !== 'string') return [];
   return value
@@ -50,6 +60,9 @@ const csvString = z.preprocess((value) => {
     .filter(Boolean);
 }, z.array(z.string()));
 
+/**
+ * 将逗号分隔的字符串解析成正整数数组。
+ */
 const csvNumber = z.preprocess((value) => {
   if (typeof value !== 'string') return [];
   return value
@@ -58,6 +71,10 @@ const csvNumber = z.preprocess((value) => {
     .filter((item) => Number.isFinite(item));
 }, z.array(z.number().int().positive()));
 
+/**
+ * 所有后端运行参数都在这里做集中校验。
+ * 启动即失败要比运行中带着错误配置继续工作安全得多。
+ */
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(8787),
@@ -89,6 +106,9 @@ if (!parsed.success) {
   throw new AppError(500, `Invalid backend environment: ${issues}`, 'INVALID_ENVIRONMENT');
 }
 
+/**
+ * 对外只暴露已经归一化过的配置，业务代码不再直接读取 `process.env`。
+ */
 export const env = {
   nodeEnv: parsed.data.NODE_ENV,
   port: parsed.data.PORT,
