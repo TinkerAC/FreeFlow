@@ -9,7 +9,12 @@
     height: 100%;
     transition: grid-template-columns .24s ease;
     overflow: hidden;
-    background: transparent; /* 由各子面板自绘表面色 */
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in oklab, rgb(var(--md-sys-color-surface-dim)) 92%, rgb(var(--md-sys-color-primary)) 8%),
+            rgb(var(--md-sys-color-surface-dim))
+        );
 }
 
 .left {

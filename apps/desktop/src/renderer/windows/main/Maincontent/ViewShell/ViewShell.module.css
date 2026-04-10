@@ -4,8 +4,7 @@
     display: grid;
     grid-template-rows: auto 1fr; /* 头部（可选） + 滚动区 */
 
-    /* Material You: 高级卡片效果 + 微光 */
-    background: rgb(var(--md-sys-color-surface-container-low));
+    background: rgb(var(--md-sys-color-surface-container));
     color: rgb(var(--md-sys-color-on-surface));
     border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.2);
     border-radius: var(--radius-lg);
@@ -49,7 +48,7 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    background: rgb(var(--md-sys-color-surface-container));
+    background: rgb(var(--md-sys-color-surface-container-high));
     border-bottom: 1px solid rgba(var(--md-sys-color-outline-variant), 0.15);
 }
 

@@ -34,31 +34,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       let s = await configContext.getAll().catch(() => defaultSettings);
-
-      // 每日随机色检查
-      if (s.theme.autoDailySeed) {
-        const today = dayKey(new Date());
-        if (s.theme.lastDailySeedDate !== today) {
-          const newSeed = generateDailySeed(today);
-          console.log('[Settings] Generating daily seed:', newSeed);
-          
-          // 更新配置
-          // 注意：这里我们并行触发更新，但为了立即生效，我们手动更新本地 s 对象
-          Promise.all([
-            configContext.set('theme.seed', newSeed),
-            configContext.set('theme.lastDailySeedDate', today)
-          ]).catch(console.error);
-
-          s = {
-            ...s,
-            theme: {
-              ...s.theme,
-              seed: newSeed,
-              lastDailySeedDate: today
-            }
-          };
-        }
-      }
+      s = await refreshDailySeedIfNeeded(s);
 
       setSettings(s);
       applyAllSettings(s);
@@ -128,12 +104,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
       const delay = Math.max(1000, next.getTime() - now.getTime());
       timer = setTimeout(() => {
-        setSettings((prev) => {
-          if (!prev) return prev;
-          applyAllSettings(prev);
-          return { ...prev };
-        });
-        scheduleNext();
+        void (async () => {
+          if (!settings) return;
+          const nextSettings = await refreshDailySeedIfNeeded(settings);
+          setSettings(nextSettings);
+          applyAllSettings(nextSettings);
+        })()
+          .catch((error) => {
+            console.error('[Settings] Failed to refresh daily seed', error);
+          })
+          .finally(() => {
+            scheduleNext();
+          });
       }, delay);
     };
 
@@ -144,7 +126,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(timer);
       }
     };
-  }, [autoDailySeedEnabled, hasSettings, themeSource]);
+  }, [autoDailySeedEnabled, hasSettings, settings, themeSource]);
 
   return <SettingsCtx.Provider value={value}>{children}</SettingsCtx.Provider>;
 }
@@ -174,6 +156,36 @@ function dayKey(d: Date): string {
   const m = `${d.getMonth() + 1}`.padStart(2, '0');
   const day = `${d.getDate()}`.padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+async function refreshDailySeedIfNeeded(current: Settings): Promise<Settings> {
+  if (current.theme.source !== 'material-you' || !current.theme.autoDailySeed) {
+    return current;
+  }
+
+  const today = dayKey(new Date());
+  if (current.theme.lastDailySeedDate === today) {
+    return current;
+  }
+
+  const newSeed = generateDailySeed(today);
+  console.log('[Settings] Generating daily seed:', newSeed);
+
+  Promise.all([
+    configContext.set('theme.seed', newSeed),
+    configContext.set('theme.lastDailySeedDate', today),
+  ]).catch((error) => {
+    console.error('[Settings] Failed to persist daily seed update', error);
+  });
+
+  return {
+    ...current,
+    theme: {
+      ...current.theme,
+      seed: newSeed,
+      lastDailySeedDate: today,
+    },
+  };
 }
 
 /**
@@ -232,7 +244,7 @@ function hslToHex(h: number, s: number, l: number): string {
 
   const toHex = (n: number) => {
     const hex = Math.round((n + m) * 255).toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
+    return hex.length === 1 ? `0${hex}` : hex;
   };
 
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;

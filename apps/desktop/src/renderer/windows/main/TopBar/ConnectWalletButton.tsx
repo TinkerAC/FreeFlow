@@ -3,16 +3,19 @@ import React from 'react';
 import styles from './TopBar.module.css';
 
 export default function Web3Button() {
-  const { open } = useWeb3Modal() 
+  const { open } = useWeb3Modal()
   const { address, isConnected } = useWeb3ModalAccount()
 
   return (
-    <button 
-      onClick={() => open()} 
+    <button
+      onClick={() => open()}
       className={styles.iconBtn}
       title={isConnected ? `已连接: ${address?.slice(0, 6)}...` : '链接 Web3 钱包'}
     >
-      <i className="fa-solid fa-wallet" style={isConnected ? { color: '#1DB954' } : {}} />
+      <i
+        className="fa-solid fa-wallet"
+        style={isConnected ? { color: 'rgb(var(--md-sys-color-primary))' } : undefined}
+      />
     </button>
   )
 }

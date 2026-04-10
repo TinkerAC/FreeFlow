@@ -30,7 +30,7 @@ export default function MainContentSwitch({
 
   const render = (entry: ReturnType<typeof useNavigation>['currentEntry']) => {
     if (!entry)
-      return <div style={{ padding: 16, opacity: 0.7 }}>加载中...</div>;
+      return <div style={{ padding: 16, opacity: 0.7, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>加载中...</div>;
 
     switch (entry.view) {
       case ViewType.PLAYLIST:
@@ -39,7 +39,7 @@ export default function MainContentSwitch({
             player={player}
             musicLibraryController={musicLibraryController}
           />
-        ) : <div style={{ padding: 16 }}>加载中...</div>;
+        ) : <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>加载中...</div>;
       case ViewType.SEARCH_RESULTS:
         return player ? (
           <SearchResultView
@@ -47,13 +47,13 @@ export default function MainContentSwitch({
             fusionSearchResult={searchResults}
             musicLibraryController={musicLibraryController}
           />
-        ) : <div style={{ padding: 16 }}>加载中...</div>;
+        ) : <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>加载中...</div>;
       case ViewType.PROFILE:
         return <ProfileView />;
       case ViewType.LYRIC:
-        return player ? <LyricView player={player} /> : <div style={{ padding: 16 }}>加载中...</div>;
+        return player ? <LyricView player={player} /> : <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>加载中...</div>;
       case ViewType.DEBUG:
-        return player ? <DebugView player={player} /> : <div style={{ padding: 16 }}>加载中...</div>;
+        return player ? <DebugView player={player} /> : <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>加载中...</div>;
       case ViewType.SETTINGS:
         return <SettingsView />;
       case ViewType.WEB3:
@@ -66,10 +66,10 @@ export default function MainContentSwitch({
             musicLibraryController={musicLibraryController}
           />
         ) : (
-          <div style={{ padding: 16, color: '#f87171' }}>无歌曲数据</div>
+          <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-error))' }}>无歌曲数据</div>
         );
       default:
-        return <div style={{ padding: 16, opacity: 0.7 }}>未知视图</div>;
+        return <div style={{ padding: 16, opacity: 0.7, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>未知视图</div>;
     }
   };
 

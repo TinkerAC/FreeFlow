@@ -4,7 +4,6 @@
     height: 100%;
     display: grid;
     grid-template-rows: auto auto 1fr; /* 头部 + 工具栏 + 列表滚动 */
-    /* Material You: 高级卡片效果 + 微光 */
     background: rgb(var(--md-sys-color-surface-container-low));
     color: rgb(var(--md-sys-color-on-surface));
     border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.2);

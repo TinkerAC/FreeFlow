@@ -1,5 +1,6 @@
 import type { Settings } from '@src/shared/settings/schema';
 import { applyMaterialYou } from '@renderer/theme/MaterialYou';
+import { getPresetSeed } from '@renderer/theme/presets';
 
 export type EffectiveThemeMode = 'light' | 'dark';
 
@@ -17,21 +18,7 @@ export function applyAllSettings(s: Settings) {
   const eff = resolveMode(s.theme.mode);
 
   // 2) 主题来源
-  if (s.theme.source === 'material-you') {
-    const seed = getEffectiveSeed(s);
-    applyMaterialYou(seed, eff);
-  } else {
-    // 预设系统：保留原有方案（示例以主色为主，可继续扩展）
-    const root = document.documentElement.style;
-    const preset = s.theme.preset;
-    const primaryByPreset: Record<string, string> = {
-      classic: '99 102 241', // #6366F1
-      spotify: '30 215 96',  // #1ED760
-      netease: '198 40 40',  // 红
-    };
-    const rgb = primaryByPreset[preset] || primaryByPreset.classic;
-    root.setProperty('--md-sys-color-primary', rgb);
-  }
+  applyMaterialYou(getEffectiveSeed(s), eff);
 
   // 3) UI 密度（示例）
   document.documentElement.style.setProperty('--icon-size', s.ui.density === 'compact' ? '16px' : '18px');
@@ -45,10 +32,7 @@ export function applyAllSettings(s: Settings) {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const fn = () => {
       const m = mq.matches ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', m);
-      if (s.theme.source === 'material-you') {
-        applyMaterialYou(getEffectiveSeed(s), m);
-      }
+      applyMaterialYou(getEffectiveSeed(s), m);
     };
     mq.addEventListener?.('change', fn);
     removeMqListener = () => mq.removeEventListener?.('change', fn);
@@ -62,6 +46,9 @@ export function applyAllSettings(s: Settings) {
  * 现在直接返回用户配置的 seed，每日更新逻辑由 SettingsContext 在启动时处理。
  */
 function getEffectiveSeed(s: Settings): string {
+  if (s.theme.source === 'preset') {
+    return getPresetSeed(s.theme.preset);
+  }
   return s.theme.seed || '#4f46e5';
 }
 

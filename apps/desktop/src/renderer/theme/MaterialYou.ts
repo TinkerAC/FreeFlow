@@ -68,23 +68,23 @@ export function applyMaterialYou(seedHex: string, mode: Mode, target: HTMLElemen
   const neutralPalette = theme.palettes.neutral;
 
   if (mode === 'dark') {
-    // Dark mode: 更暗的表面
-    set('--md-sys-color-surface-dim', neutralPalette.tone(6));
-    set('--md-sys-color-surface-bright', neutralPalette.tone(24));
-    set('--md-sys-color-surface-container-lowest', neutralPalette.tone(4));
-    set('--md-sys-color-surface-container-low', neutralPalette.tone(10));
-    set('--md-sys-color-surface-container', neutralPalette.tone(12));
-    set('--md-sys-color-surface-container-high', neutralPalette.tone(17));
-    set('--md-sys-color-surface-container-highest', neutralPalette.tone(22));
+    // Dark mode: 拉开 tone 间距，避免 surface 与 low/container 在量化后撞色
+    set('--md-sys-color-surface-dim', neutralPalette.tone(4));
+    set('--md-sys-color-surface-bright', neutralPalette.tone(26));
+    set('--md-sys-color-surface-container-lowest', neutralPalette.tone(6));
+    set('--md-sys-color-surface-container-low', neutralPalette.tone(12));
+    set('--md-sys-color-surface-container', neutralPalette.tone(16));
+    set('--md-sys-color-surface-container-high', neutralPalette.tone(20));
+    set('--md-sys-color-surface-container-highest', neutralPalette.tone(24));
   } else {
-    // Light mode: 更明亮、更有高级感的表面
-    set('--md-sys-color-surface-dim', neutralPalette.tone(90));
-    set('--md-sys-color-surface-bright', neutralPalette.tone(99));
-    set('--md-sys-color-surface-container-lowest', neutralPalette.tone(100)); // 纯白
-    set('--md-sys-color-surface-container-low', neutralPalette.tone(98));    // 接近白
-    set('--md-sys-color-surface-container', neutralPalette.tone(96));        // 标准容器
-    set('--md-sys-color-surface-container-high', neutralPalette.tone(94));   // 稍深容器
-    set('--md-sys-color-surface-container-highest', neutralPalette.tone(92)); // 最深容器
+    // Light mode: 使用更清晰的层级，避免 background/surface/low 过于接近
+    set('--md-sys-color-surface-dim', neutralPalette.tone(87));
+    set('--md-sys-color-surface-bright', neutralPalette.tone(98));
+    set('--md-sys-color-surface-container-lowest', neutralPalette.tone(100));
+    set('--md-sys-color-surface-container-low', neutralPalette.tone(97));
+    set('--md-sys-color-surface-container', neutralPalette.tone(94));
+    set('--md-sys-color-surface-container-high', neutralPalette.tone(92));
+    set('--md-sys-color-surface-container-highest', neutralPalette.tone(90));
   }
 
   target.setAttribute('data-brand', 'material');

@@ -6,8 +6,7 @@
     display: grid;
     grid-template-rows: auto 1fr;
     position: relative;
-    /* Material You: 高级卡片效果 + 微光 */
-    background: rgb(var(--md-sys-color-surface-container-low));
+    background: rgb(var(--md-sys-color-surface-container-high));
     color: rgb(var(--md-sys-color-on-surface));
     overflow: hidden; /* 关键：把滚动交给 body */
     border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.2);
@@ -52,7 +51,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 14px;
-    background: rgb(var(--md-sys-color-surface-container));
+    background: rgb(var(--md-sys-color-surface-container-highest));
     border-bottom: 1px solid rgba(var(--md-sys-color-outline-variant), 0.15);
 }
 

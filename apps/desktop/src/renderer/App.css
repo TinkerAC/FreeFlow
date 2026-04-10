@@ -4,7 +4,6 @@ html, body, #app, .App {
     display: flex;
     flex-direction: column;
     overflow: hidden; /* 关键：页面不滚动 */
-    background-color: black;
 }
 
 .App {

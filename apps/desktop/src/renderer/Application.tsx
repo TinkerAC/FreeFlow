@@ -97,7 +97,7 @@ const ApplicationContent: React.FC = () => {
   }
 
   return (
-    <div className="App h-full w-full flex flex-col bg-black">
+    <div className="App h-full w-full flex flex-col">
       <audio ref={audioRef} hidden preload="auto" />
 
       <AppFrame

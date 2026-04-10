@@ -32,3 +32,44 @@ export const PRESET_SEEDS = {
 } as const;
 
 export type PresetName = keyof typeof PRESET_SEEDS;
+
+const PRESET_LABELS: Record<PresetName, string> = {
+  classic: 'Classic',
+  spotify: 'Spotify',
+  netease: 'Netease',
+  indigo: 'Indigo',
+  blue: 'Blue',
+  cyan: 'Cyan',
+  green: 'Green',
+  lime: 'Lime',
+  amber: 'Amber',
+  orange: 'Orange',
+  red: 'Red',
+  pink: 'Pink',
+  purple: 'Purple',
+  deepPurple: 'Deep Purple',
+  indigoDeep: 'Indigo Deep',
+  lightBlue: 'Light Blue',
+  teal: 'Teal',
+  lightGreen: 'Light Green',
+  limeDeep: 'Lime Deep',
+  yellow: 'Yellow',
+  amberDeep: 'Amber Deep',
+  deepOrange: 'Deep Orange',
+  brown: 'Brown',
+  blueGrey: 'Blue Grey',
+};
+
+export function formatPresetLabel(name: PresetName) {
+  return PRESET_LABELS[name];
+}
+
+export function getPresetSeed(name: PresetName | string) {
+  return PRESET_SEEDS[name as PresetName] ?? PRESET_SEEDS.classic;
+}
+
+export const THEME_PRESET_OPTIONS = (Object.keys(PRESET_SEEDS) as PresetName[]).map((value) => ({
+  value,
+  label: formatPresetLabel(value),
+  hex: PRESET_SEEDS[value],
+}));

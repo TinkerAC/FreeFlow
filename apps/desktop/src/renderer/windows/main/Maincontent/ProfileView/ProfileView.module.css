@@ -96,8 +96,8 @@
 .avatarMask {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, .45);
-    color: #fff;
+    background: rgba(var(--md-sys-color-scrim), .45);
+    color: rgb(var(--md-sys-color-inverse-on-surface));
     display: grid;
     place-items: center;
     font-size: 12px;
@@ -209,8 +209,8 @@
 }
 
 .btnDanger {
-    color: #fff;
-    background: rgb(var(--md-sys-color-error, 220 38 38));
+    color: rgb(var(--md-sys-color-on-error));
+    background: rgb(var(--md-sys-color-error));
 }
 
 .btnDanger:hover {
@@ -225,7 +225,7 @@
     background: linear-gradient(
             to right,
             rgb(var(--md-sys-color-primary)),
-            color-mix(in oklab, rgb(var(--md-sys-color-primary)) 70%, rgb(120 90 255))
+            color-mix(in oklab, rgb(var(--md-sys-color-primary)) 70%, rgb(var(--md-sys-color-tertiary)))
     );
     color: rgb(var(--md-sys-color-on-primary));
     font-weight: 800;
@@ -257,15 +257,15 @@
 }
 
 .toastOk {
-    color: #0f5132;
-    background: #d1e7dd;
-    border: 1px solid #badbcc;
+    color: rgb(var(--md-sys-color-on-secondary-container));
+    background: rgb(var(--md-sys-color-secondary-container));
+    border: 1px solid color-mix(in oklab, rgb(var(--md-sys-color-secondary)) 36%, rgb(var(--md-sys-color-secondary-container)));
 }
 
 .toastErr {
-    color: #842029;
-    background: #f8d7da;
-    border: 1px solid #f5c2c7;
+    color: rgb(var(--md-sys-color-on-error-container));
+    background: rgb(var(--md-sys-color-error-container));
+    border: 1px solid color-mix(in oklab, rgb(var(--md-sys-color-error)) 36%, rgb(var(--md-sys-color-error-container)));
 }
 
 /* 页脚 */
