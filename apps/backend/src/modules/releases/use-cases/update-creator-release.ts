@@ -47,13 +47,21 @@ function buildReleaseUpdateData(
   if (input.audioSourcePath !== undefined) data.audioSourcePath = toNullableString(input.audioSourcePath);
   if (input.coverSourceName !== undefined) data.coverSourceName = toNullableString(input.coverSourceName);
   if (input.coverSourcePath !== undefined) data.coverSourcePath = toNullableString(input.coverSourcePath);
-  if (input.audioCid !== undefined) data.audioCid = toNullableString(input.audioCid);
-  if (input.audioGatewayUrl !== undefined) data.audioGatewayUrl = toNullableString(input.audioGatewayUrl);
-  if (input.coverCid !== undefined) data.coverCid = toNullableString(input.coverCid);
-  if (input.coverGatewayUrl !== undefined) data.coverGatewayUrl = toNullableString(input.coverGatewayUrl);
-  if (input.metadataCid !== undefined) data.metadataCid = toNullableString(input.metadataCid);
-  if (input.metadataUri !== undefined) data.metadataUri = toNullableString(input.metadataUri);
-  if (input.metadataGatewayUrl !== undefined) data.metadataGatewayUrl = toNullableString(input.metadataGatewayUrl);
+  if (input.audioStorageObjectId !== undefined) {
+    data.audioStorageObject = input.audioStorageObjectId
+      ? { connect: { id: input.audioStorageObjectId } }
+      : { disconnect: true };
+  }
+  if (input.coverStorageObjectId !== undefined) {
+    data.coverStorageObject = input.coverStorageObjectId
+      ? { connect: { id: input.coverStorageObjectId } }
+      : { disconnect: true };
+  }
+  if (input.metadataStorageObjectId !== undefined) {
+    data.metadataStorageObject = input.metadataStorageObjectId
+      ? { connect: { id: input.metadataStorageObjectId } }
+      : { disconnect: true };
+  }
   if (input.splitterAddress !== undefined) data.splitterAddress = toNullableString(input.splitterAddress);
   if (input.publishTxHash !== undefined) data.publishTxHash = toNullableString(input.publishTxHash);
   if (input.purchaseTxHash !== undefined) data.purchaseTxHash = toNullableString(input.purchaseTxHash);
@@ -86,6 +94,29 @@ function buildReleaseUpdateData(
   return data;
 }
 
+async function assertStorageObjectBelongsToCreator(
+  creatorUserId: string,
+  storageObjectId: string | null | undefined,
+) {
+  if (!storageObjectId) return;
+
+  const storageObject = await releaseRepository.findStorageObjectForUser(creatorUserId, storageObjectId);
+  if (!storageObject) {
+    throw new AppError(400, 'Storage object not found for creator', 'STORAGE_OBJECT_NOT_FOUND');
+  }
+}
+
+async function assertStorageLinksBelongToCreator(
+  creatorUserId: string,
+  input: UpdateCreatorReleaseInput,
+) {
+  await Promise.all([
+    assertStorageObjectBelongsToCreator(creatorUserId, input.audioStorageObjectId),
+    assertStorageObjectBelongsToCreator(creatorUserId, input.coverStorageObjectId),
+    assertStorageObjectBelongsToCreator(creatorUserId, input.metadataStorageObjectId),
+  ]);
+}
+
 async function syncPublishedTrackResource(
   creatorUserId: string,
   release: PersistedCreatorRelease,
@@ -104,7 +135,7 @@ async function syncPublishedTrackResource(
     chainId: release.chainId,
     contractAddress: release.musicAssetAddress,
     tokenId: release.tokenId,
-    contentCid: release.metadataCid,
+    contentCid: release.metadataStorageObject?.cid ?? null,
     title: release.title,
   });
 }
@@ -121,6 +152,8 @@ export async function updateCreatorRelease(
   if (!existing) {
     throw new AppError(404, 'Release not found', 'RELEASE_NOT_FOUND');
   }
+
+  await assertStorageLinksBelongToCreator(creatorUserId, input);
 
   const data = buildReleaseUpdateData(existing, input);
   const updated = await releaseRepository.updateForCreator(creatorUserId, releaseId, data);

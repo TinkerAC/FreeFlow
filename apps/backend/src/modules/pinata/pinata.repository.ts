@@ -18,7 +18,10 @@ export class PinataRepository {
   }) {
     return prisma.storageObject.upsert({
       where: {
-        cid: input.cid,
+        uploaderUserId_cid: {
+          uploaderUserId: input.uploaderUserId,
+          cid: input.cid,
+        },
       },
       update: {
         uploaderUserId: input.uploaderUserId,

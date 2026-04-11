@@ -1,6 +1,12 @@
 import { Prisma, ResourceType } from '@prisma/client';
 import { prisma } from '../../infra/database/prisma.js';
 
+const releaseInclude = {
+  audioStorageObject: true,
+  coverStorageObject: true,
+  metadataStorageObject: true,
+} satisfies Prisma.CreatorReleaseInclude;
+
 /**
  * Release 仓储层。
  * 所有和发行实体相关的数据库读写都收敛在这里，避免 service 直接拼 Prisma 语句。
@@ -15,6 +21,7 @@ export class ReleaseRepository {
         { updatedAt: 'desc' },
         { createdAt: 'desc' },
       ],
+      include: releaseInclude,
     });
   }
 
@@ -24,6 +31,7 @@ export class ReleaseRepository {
         id: releaseId,
         creatorUserId,
       },
+      include: releaseInclude,
     });
   }
 
@@ -40,6 +48,7 @@ export class ReleaseRepository {
           },
         },
       },
+      include: releaseInclude,
     });
   }
 
@@ -54,6 +63,16 @@ export class ReleaseRepository {
         id: existing.id,
       },
       data,
+      include: releaseInclude,
+    });
+  }
+
+  async findStorageObjectForUser(userId: string, storageObjectId: string) {
+    return prisma.storageObject.findFirst({
+      where: {
+        id: storageObjectId,
+        uploaderUserId: userId,
+      },
     });
   }
 

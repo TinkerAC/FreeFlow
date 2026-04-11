@@ -80,13 +80,9 @@ COMMENT ON COLUMN "creator_releases"."audioSourceName" IS '本地音频源文件
 COMMENT ON COLUMN "creator_releases"."audioSourcePath" IS '桌面端工作流记录的本地音频路径。';
 COMMENT ON COLUMN "creator_releases"."coverSourceName" IS '本地封面源文件名。';
 COMMENT ON COLUMN "creator_releases"."coverSourcePath" IS '桌面端工作流记录的本地封面路径。';
-COMMENT ON COLUMN "creator_releases"."audioCid" IS '上传后音频资源的 IPFS CID。';
-COMMENT ON COLUMN "creator_releases"."audioGatewayUrl" IS '上传后音频资源的网关地址。';
-COMMENT ON COLUMN "creator_releases"."coverCid" IS '上传后封面资源的 IPFS CID。';
-COMMENT ON COLUMN "creator_releases"."coverGatewayUrl" IS '上传后封面资源的网关地址。';
-COMMENT ON COLUMN "creator_releases"."metadataCid" IS '上传后元数据文档的 IPFS CID。';
-COMMENT ON COLUMN "creator_releases"."metadataUri" IS '链上发布使用的 token metadata URI。';
-COMMENT ON COLUMN "creator_releases"."metadataGatewayUrl" IS '元数据文档的网关地址。';
+COMMENT ON COLUMN "creator_releases"."audioStorageObjectId" IS '关联的音频存储对象 ID，用于恢复上传文件详情和预览。';
+COMMENT ON COLUMN "creator_releases"."coverStorageObjectId" IS '关联的封面存储对象 ID，用于恢复上传文件详情和预览。';
+COMMENT ON COLUMN "creator_releases"."metadataStorageObjectId" IS '关联的 metadata 存储对象 ID，用于恢复上传文件详情和预览。';
 COMMENT ON COLUMN "creator_releases"."splitterAddress" IS '该发行对应的版税分账合约地址。';
 COMMENT ON COLUMN "creator_releases"."publishTxHash" IS '发布交易哈希。';
 COMMENT ON COLUMN "creator_releases"."purchaseTxHash" IS '后端记录的购买交易哈希。';

@@ -35,6 +35,7 @@ export type SiweNoncePayload = {
 export type PinataUploadPayload = {
   cid: string;
   id: string | null;
+  storageObjectId: string;
   name: string;
   size: number;
   mimeType: string;
@@ -73,6 +74,19 @@ export type CreatorReleaseSplit = {
   share: number;
 };
 
+export type StorageObjectRecord = {
+  id: string;
+  cid: string;
+  pinataId: string | null;
+  name: string;
+  size: number;
+  mimeType: string;
+  gatewayUrl: string;
+  network: string;
+  groupId: string | null;
+  createdAt: string;
+};
+
 export type CreatorReleaseRecord = {
   id: string;
   creatorUserId: string;
@@ -92,13 +106,12 @@ export type CreatorReleaseRecord = {
   audioSourcePath: string | null;
   coverSourceName: string | null;
   coverSourcePath: string | null;
-  audioCid: string | null;
-  audioGatewayUrl: string | null;
-  coverCid: string | null;
-  coverGatewayUrl: string | null;
-  metadataCid: string | null;
-  metadataUri: string | null;
-  metadataGatewayUrl: string | null;
+  audioStorageObjectId: string | null;
+  coverStorageObjectId: string | null;
+  metadataStorageObjectId: string | null;
+  audioStorageObject: StorageObjectRecord | null;
+  coverStorageObject: StorageObjectRecord | null;
+  metadataStorageObject: StorageObjectRecord | null;
   splitterAddress: string | null;
   publishTxHash: string | null;
   purchaseTxHash: string | null;

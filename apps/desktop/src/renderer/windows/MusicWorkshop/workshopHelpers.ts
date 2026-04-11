@@ -183,6 +183,10 @@ export function releaseStatusTone(status: CreatorReleaseRecord['status']) {
   }
 }
 
+export function metadataUriForRelease(release: CreatorReleaseRecord) {
+  return release.metadataStorageObject ? `ipfs://${release.metadataStorageObject.cid}` : '';
+}
+
 export function defaultSplits(address?: string): CreatorReleaseSplit[] {
   return [
     {
@@ -208,8 +212,8 @@ export function buildMetadataDocument(
   return {
     name: release.title || 'Untitled Track',
     description: release.description || 'Published from FreeFlow Creators Workshop',
-    image: release.coverCid ? `ipfs://${release.coverCid}` : '',
-    external_url: release.metadataGatewayUrl || '',
+    image: release.coverStorageObject ? `ipfs://${release.coverStorageObject.cid}` : '',
+    external_url: release.metadataStorageObject?.gatewayUrl || '',
     attributes: [
       { trait_type: 'Artist', value: release.artistName || 'Unknown Artist' },
       { trait_type: 'Album', value: release.albumName || 'Single' },
@@ -220,19 +224,19 @@ export function buildMetadataDocument(
     ],
     properties: {
       media: {
-        audio: release.audioCid
+        audio: release.audioStorageObject
           ? {
-            uri: `ipfs://${release.audioCid}`,
-            gateway: release.audioGatewayUrl,
-            mimeType: input.audioMimeType || 'audio/mpeg',
+            uri: `ipfs://${release.audioStorageObject.cid}`,
+            gateway: release.audioStorageObject.gatewayUrl,
+            mimeType: input.audioMimeType || release.audioStorageObject.mimeType || 'audio/mpeg',
             access: release.accessModel,
           }
           : null,
-        cover: release.coverCid
+        cover: release.coverStorageObject
           ? {
-            uri: `ipfs://${release.coverCid}`,
-            gateway: release.coverGatewayUrl,
-            mimeType: input.coverMimeType || 'image/png',
+            uri: `ipfs://${release.coverStorageObject.cid}`,
+            gateway: release.coverStorageObject.gatewayUrl,
+            mimeType: input.coverMimeType || release.coverStorageObject.mimeType || 'image/png',
           }
           : null,
       },

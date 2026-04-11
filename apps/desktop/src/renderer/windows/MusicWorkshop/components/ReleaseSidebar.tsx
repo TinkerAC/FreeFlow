@@ -58,7 +58,7 @@ export default function ReleaseSidebar({ controller }: ReleaseSidebarProps) {
               </div>
               <div className={styles.releaseMeta}>
                 <span>{release.tokenId ? `Token #${release.tokenId}` : '未上链'}</span>
-                <span>{release.metadataCid ? 'Metadata 就绪' : 'Metadata 待生成'}</span>
+                <span>{release.metadataStorageObject ? 'Metadata 就绪' : 'Metadata 待生成'}</span>
               </div>
             </button>
           ))}

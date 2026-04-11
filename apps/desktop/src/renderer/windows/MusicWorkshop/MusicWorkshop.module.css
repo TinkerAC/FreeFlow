@@ -388,6 +388,24 @@
     border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.3);
 }
 
+.uploadedAudio {
+    width: 100%;
+    margin-top: 12px;
+}
+
+.uploadedLink {
+    display: inline-flex;
+    margin-top: 12px;
+    color: rgb(var(--md-sys-color-primary));
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.uploadedLink:hover {
+    text-decoration: underline;
+}
+
 .noticeInfo,
 .noticeWarning,
 .noticeDanger {

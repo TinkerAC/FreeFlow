@@ -142,7 +142,7 @@ CREATE TABLE "comment_moderation_logs" (
 CREATE UNIQUE INDEX "wallet_identities_addressLower_chainId_key" ON "wallet_identities"("addressLower", "chainId");
 CREATE UNIQUE INDEX "siwe_nonces_nonceHash_key" ON "siwe_nonces"("nonceHash");
 CREATE UNIQUE INDEX "auth_sessions_tokenHash_key" ON "auth_sessions"("tokenHash");
-CREATE UNIQUE INDEX "storage_objects_cid_key" ON "storage_objects"("cid");
+CREATE UNIQUE INDEX "storage_objects_uploaderUserId_cid_key" ON "storage_objects"("uploaderUserId", "cid");
 CREATE UNIQUE INDEX "resources_chainId_contractAddressLower_tokenId_key" ON "resources"("chainId", "contractAddressLower", "tokenId");
 CREATE UNIQUE INDEX "comment_reactions_commentId_userId_reactionType_key" ON "comment_reactions"("commentId", "userId", "reactionType");
 
@@ -154,6 +154,7 @@ CREATE INDEX "auth_sessions_userId_idx" ON "auth_sessions"("userId");
 CREATE INDEX "auth_sessions_walletIdentityId_idx" ON "auth_sessions"("walletIdentityId");
 CREATE INDEX "auth_sessions_expiresAt_revokedAt_idx" ON "auth_sessions"("expiresAt", "revokedAt");
 CREATE INDEX "storage_objects_uploaderUserId_createdAt_idx" ON "storage_objects"("uploaderUserId", "createdAt");
+CREATE INDEX "storage_objects_cid_idx" ON "storage_objects"("cid");
 CREATE INDEX "resources_contentCid_idx" ON "resources"("contentCid");
 CREATE INDEX "resources_ownerUserId_idx" ON "resources"("ownerUserId");
 CREATE INDEX "comments_resourceId_createdAt_idx" ON "comments"("resourceId", "createdAt");

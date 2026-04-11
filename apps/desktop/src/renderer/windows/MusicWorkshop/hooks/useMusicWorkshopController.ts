@@ -28,6 +28,7 @@ import {
   defaultSplits,
   EMPTY_DASHBOARD,
   filteredReleases,
+  metadataUriForRelease,
   type ReleaseFilter,
   type ReleasePanel,
   replaceReleaseInDashboard,
@@ -71,11 +72,11 @@ export function useMusicWorkshopController() {
   }), [web3Settings]);
 
   React.useEffect(() => {
-    const preview = coverFile ? URL.createObjectURL(coverFile) : (selectedRelease?.coverGatewayUrl || '');
+    const preview = coverFile ? URL.createObjectURL(coverFile) : (selectedRelease?.coverStorageObject?.gatewayUrl || '');
     setCoverPreviewUrl(preview);
     if (!coverFile || !preview.startsWith('blob:')) return undefined;
     return () => URL.revokeObjectURL(preview);
-  }, [coverFile, selectedRelease?.coverGatewayUrl]);
+  }, [coverFile, selectedRelease?.coverStorageObject?.gatewayUrl]);
 
   React.useEffect(() => {
     setAudioFile(null);
@@ -184,13 +185,9 @@ export function useMusicWorkshopController() {
       audioSourcePath: selectedRelease.audioSourcePath,
       coverSourceName: selectedRelease.coverSourceName,
       coverSourcePath: selectedRelease.coverSourcePath,
-      audioCid: selectedRelease.audioCid,
-      audioGatewayUrl: selectedRelease.audioGatewayUrl,
-      coverCid: selectedRelease.coverCid,
-      coverGatewayUrl: selectedRelease.coverGatewayUrl,
-      metadataCid: selectedRelease.metadataCid,
-      metadataUri: selectedRelease.metadataUri,
-      metadataGatewayUrl: selectedRelease.metadataGatewayUrl,
+      audioStorageObjectId: selectedRelease.audioStorageObjectId,
+      coverStorageObjectId: selectedRelease.coverStorageObjectId,
+      metadataStorageObjectId: selectedRelease.metadataStorageObjectId,
       splitterAddress: selectedRelease.splitterAddress,
       publishTxHash: selectedRelease.publishTxHash,
       purchaseTxHash: selectedRelease.purchaseTxHash,
@@ -352,7 +349,7 @@ export function useMusicWorkshopController() {
   }, [selectedRelease?.royaltySplits]);
 
   const handleUploadAssets = React.useCallback(async () => {
-    if (!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioCid)) return;
+    if (!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioStorageObjectId)) return;
     setBusyState('uploading-assets');
     try {
       await patchRelease({
@@ -362,8 +359,7 @@ export function useMusicWorkshopController() {
         activityEntry: { message: 'Started asset upload', level: 'info' },
       });
 
-      let coverCid = selectedRelease.coverCid;
-      let coverGatewayUrl = selectedRelease.coverGatewayUrl;
+      let coverStorageObjectId = selectedRelease.coverStorageObjectId;
       if (coverFile) {
         const result = await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
           file: coverFile,
@@ -374,12 +370,10 @@ export function useMusicWorkshopController() {
             artist: selectedRelease.artistName || 'unknown',
           },
         });
-        coverCid = result.cid;
-        coverGatewayUrl = result.gatewayUrl;
+        coverStorageObjectId = result.storageObjectId;
       }
 
-      let audioCid = selectedRelease.audioCid;
-      let audioGatewayUrl = selectedRelease.audioGatewayUrl;
+      let audioStorageObjectId = selectedRelease.audioStorageObjectId;
       if (audioFile) {
         const result = await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
           file: audioFile,
@@ -390,17 +384,14 @@ export function useMusicWorkshopController() {
             artist: selectedRelease.artistName || 'unknown',
           },
         });
-        audioCid = result.cid;
-        audioGatewayUrl = result.gatewayUrl;
+        audioStorageObjectId = result.storageObjectId;
       }
 
       await patchRelease({
         status: 'ASSETS_UPLOADED',
         currentStage: 'storage',
-        audioCid,
-        audioGatewayUrl,
-        coverCid,
-        coverGatewayUrl,
+        audioStorageObjectId,
+        coverStorageObjectId,
         audioSourceName: audioFile?.name || selectedRelease.audioSourceName,
         audioSourcePath: (audioFile as (File & { path?: string }) | null)?.path || selectedRelease.audioSourcePath,
         coverSourceName: coverFile?.name || selectedRelease.coverSourceName,
@@ -422,7 +413,7 @@ export function useMusicWorkshopController() {
   }, [audioFile, coverFile, patchRelease, selectedRelease, web25BackendBaseUrl, web25Session]);
 
   const handleUploadMetadata = React.useCallback(async () => {
-    if (!selectedRelease || !metadataDocument || !selectedRelease.audioCid) return;
+    if (!selectedRelease || !metadataDocument || !selectedRelease.audioStorageObjectId) return;
     setBusyState('uploading-metadata');
     try {
       const metadataFile = new File(
@@ -442,9 +433,7 @@ export function useMusicWorkshopController() {
       await patchRelease({
         status: 'METADATA_UPLOADED',
         currentStage: 'publish',
-        metadataCid: result.cid,
-        metadataUri: `ipfs://${result.cid}`,
-        metadataGatewayUrl: result.gatewayUrl,
+        metadataStorageObjectId: result.storageObjectId,
         metadataDocument,
         latestError: null,
         statusMessage: 'Metadata 已上传',
@@ -464,7 +453,9 @@ export function useMusicWorkshopController() {
   }, [metadataDocument, patchRelease, selectedRelease, web25BackendBaseUrl]);
 
   const handlePublish = React.useCallback(async () => {
-    if (!selectedRelease || !walletProvider || !selectedRelease.metadataUri || !effectiveWeb3Settings.platformHubAddress) return;
+    if (!selectedRelease || !walletProvider || !selectedRelease.metadataStorageObject || !effectiveWeb3Settings.platformHubAddress) return;
+    const metadataUri = metadataUriForRelease(selectedRelease);
+    if (!metadataUri) return;
     setBusyState('publishing');
     try {
       const provider = new BrowserProvider(walletProvider);
@@ -490,7 +481,7 @@ export function useMusicWorkshopController() {
       });
 
       const [predictedTokenId, predictedSplitter] = await platformHub.publishTrack.staticCall(
-        selectedRelease.metadataUri,
+        metadataUri,
         selectedRelease.royaltyBps,
         requiresPurchase,
         priceWei,
@@ -499,7 +490,7 @@ export function useMusicWorkshopController() {
         splits.map((item) => item.share),
       );
       const publishTx = await platformHub.publishTrack(
-        selectedRelease.metadataUri,
+        metadataUri,
         selectedRelease.royaltyBps,
         requiresPurchase,
         priceWei,
@@ -611,8 +602,8 @@ export function useMusicWorkshopController() {
     [address, selectedRelease],
   );
 
-  const needsAudioReattach = !!selectedRelease?.audioSourceName && !audioFile && !selectedRelease.audioCid;
-  const needsCoverReattach = !!selectedRelease?.coverSourceName && !coverFile && !selectedRelease.coverCid;
+  const needsAudioReattach = !!selectedRelease?.audioSourceName && !audioFile && !selectedRelease.audioStorageObject;
+  const needsCoverReattach = !!selectedRelease?.coverSourceName && !coverFile && !selectedRelease.coverStorageObject;
 
   const updateSplitAt = React.useCallback((index: number, patch: Partial<CreatorReleaseRecord['royaltySplits'][number]>) => {
     if (!selectedRelease) return;
@@ -679,6 +670,7 @@ export function useMusicWorkshopController() {
     needsCoverReattach,
     setReleaseFilter,
     setActivePanel,
+    setAccessCheck,
     updateLocalRelease,
     handleCreateRelease,
     handleSiweLogin,

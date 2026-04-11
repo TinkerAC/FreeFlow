@@ -30,13 +30,9 @@ CREATE TABLE "creator_releases" (
     "audioSourcePath" TEXT,
     "coverSourceName" VARCHAR(255),
     "coverSourcePath" TEXT,
-    "audioCid" VARCHAR(255),
-    "audioGatewayUrl" TEXT,
-    "coverCid" VARCHAR(255),
-    "coverGatewayUrl" TEXT,
-    "metadataCid" VARCHAR(255),
-    "metadataUri" TEXT,
-    "metadataGatewayUrl" TEXT,
+    "audioStorageObjectId" TEXT,
+    "coverStorageObjectId" TEXT,
+    "metadataStorageObjectId" TEXT,
     "splitterAddress" VARCHAR(42),
     "publishTxHash" VARCHAR(100),
     "purchaseTxHash" VARCHAR(100),
@@ -72,5 +68,23 @@ CREATE INDEX "creator_releases_chainId_tokenId_idx" ON "creator_releases"("chain
 -- CreateIndex
 CREATE INDEX "creator_releases_creatorUserId_slug_idx" ON "creator_releases"("creatorUserId", "slug");
 
+-- CreateIndex
+CREATE INDEX "creator_releases_audioStorageObjectId_idx" ON "creator_releases"("audioStorageObjectId");
+
+-- CreateIndex
+CREATE INDEX "creator_releases_coverStorageObjectId_idx" ON "creator_releases"("coverStorageObjectId");
+
+-- CreateIndex
+CREATE INDEX "creator_releases_metadataStorageObjectId_idx" ON "creator_releases"("metadataStorageObjectId");
+
 -- AddForeignKey
 ALTER TABLE "creator_releases" ADD CONSTRAINT "creator_releases_creatorUserId_fkey" FOREIGN KEY ("creatorUserId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "creator_releases" ADD CONSTRAINT "creator_releases_audioStorageObjectId_fkey" FOREIGN KEY ("audioStorageObjectId") REFERENCES "storage_objects"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "creator_releases" ADD CONSTRAINT "creator_releases_coverStorageObjectId_fkey" FOREIGN KEY ("coverStorageObjectId") REFERENCES "storage_objects"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "creator_releases" ADD CONSTRAINT "creator_releases_metadataStorageObjectId_fkey" FOREIGN KEY ("metadataStorageObjectId") REFERENCES "storage_objects"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

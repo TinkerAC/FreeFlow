@@ -193,32 +193,42 @@ model AuthSession {
 /// 通过 Pinata 上传并在本地记录的文件对象。
 model StorageObject {
   /// 存储对象记录 ID。
-  id             String   @id @default(cuid())
+  id               String           @id @default(cuid())
   /// 通过后端代理上传该对象的用户 ID。
-  uploaderUserId String
+  uploaderUserId   String
   /// Pinata 返回的 IPFS CID。
-  cid            String   @unique @db.VarChar(255)
+  cid              String           @db.VarChar(255)
   /// Pinata 服务侧文件 ID。
-  pinataId       String?  @db.VarChar(255)
+  pinataId         String?          @db.VarChar(255)
   /// 原始上传文件名。
-  name           String   @db.VarChar(255)
+  name             String           @db.VarChar(255)
   /// 文件大小，单位字节。
-  size           Int
+  size             Int
   /// 上传文件的 MIME 类型。
-  mimeType       String   @db.VarChar(255)
+  mimeType         String           @db.VarChar(255)
   /// 当前用于访问 CID 的网关地址。
-  gatewayUrl     String   @db.Text
+  gatewayUrl       String           @db.Text
   /// Pinata 网络可见性，例如 public 或 private。
-  network        String   @db.VarChar(32)
+  network          String           @db.VarChar(32)
   /// 上传时使用的 Pinata group ID。
-  groupId        String?  @db.VarChar(255)
+  groupId          String?          @db.VarChar(255)
   /// 上传记录创建时间。
-  createdAt      DateTime @default(now())
+  createdAt        DateTime         @default(now())
   /// 上传该对象的用户。
-  uploader       User     @relation(fields: [uploaderUserId], references: [id], onDelete: Cascade)
+  uploader         User             @relation(fields: [uploaderUserId], references: [id], onDelete: Cascade)
+  /// 作为发行音频素材被引用的发行记录。
+  audioReleases    CreatorRelease[] @relation("CreatorReleaseAudioObject")
+  /// 作为发行封面素材被引用的发行记录。
+  coverReleases    CreatorRelease[] @relation("CreatorReleaseCoverObject")
+  /// 作为发行 metadata 文件被引用的发行记录。
+  metadataReleases CreatorRelease[] @relation("CreatorReleaseMetadataObject")
 
+  // 同一用户同一 CID 只保留一条上传记录，允许不同用户上传相同内容。
+  @@unique([uploaderUserId, cid])
   // 支持按用户查看上传历史。
   @@index([uploaderUserId, createdAt])
+  // 支持按 CID 查询存储对象。
+  @@index([cid])
   @@map("storage_objects")
 }
 
@@ -260,20 +270,12 @@ model CreatorRelease {
   coverSourceName               String?              @db.VarChar(255)
   /// 桌面端工作流记录的本地封面路径。
   coverSourcePath               String?              @db.Text
-  /// 上传后音频资源的 IPFS CID。
-  audioCid                      String?              @db.VarChar(255)
-  /// 上传后音频资源的网关地址。
-  audioGatewayUrl               String?              @db.Text
-  /// 上传后封面资源的 IPFS CID。
-  coverCid                      String?              @db.VarChar(255)
-  /// 上传后封面资源的网关地址。
-  coverGatewayUrl               String?              @db.Text
-  /// 上传后元数据文档的 IPFS CID。
-  metadataCid                   String?              @db.VarChar(255)
-  /// 链上发布使用的 token metadata URI。
-  metadataUri                   String?              @db.Text
-  /// 元数据文档的网关地址。
-  metadataGatewayUrl            String?              @db.Text
+  /// 关联的音频存储对象 ID，用于恢复上传文件详情和预览。
+  audioStorageObjectId          String?
+  /// 关联的封面存储对象 ID，用于恢复上传文件详情和预览。
+  coverStorageObjectId          String?
+  /// 关联的 metadata 存储对象 ID，用于恢复上传文件详情和预览。
+  metadataStorageObjectId       String?
   /// 该发行对应的版税分账合约地址。
   splitterAddress               String?              @db.VarChar(42)
   /// 发布交易哈希。
@@ -314,6 +316,12 @@ model CreatorRelease {
   updatedAt                     DateTime             @updatedAt
   /// 拥有并编辑该发行的创作者用户。
   creator                       User                 @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  /// 关联的音频存储对象。
+  audioStorageObject            StorageObject?       @relation("CreatorReleaseAudioObject", fields: [audioStorageObjectId], references: [id], onDelete: Restrict)
+  /// 关联的封面存储对象。
+  coverStorageObject            StorageObject?       @relation("CreatorReleaseCoverObject", fields: [coverStorageObjectId], references: [id], onDelete: Restrict)
+  /// 关联的 metadata 存储对象。
+  metadataStorageObject         StorageObject?       @relation("CreatorReleaseMetadataObject", fields: [metadataStorageObjectId], references: [id], onDelete: Restrict)
 
   // 支持创作者工作台按更新时间排序。
   @@index([creatorUserId, updatedAt])
@@ -323,6 +331,12 @@ model CreatorRelease {
   @@index([chainId, tokenId])
   // 支持创作者维度的 slug 查询。
   @@index([creatorUserId, slug])
+  // 支持按音频存储对象反查发行。
+  @@index([audioStorageObjectId])
+  // 支持按封面存储对象反查发行。
+  @@index([coverStorageObjectId])
+  // 支持按 metadata 存储对象反查发行。
+  @@index([metadataStorageObjectId])
   @@map("creator_releases")
 }
 

@@ -56,8 +56,8 @@ export default function EditorPanel({ controller }: EditorPanelProps) {
             </label>
           </div>
           <div className={styles.assetMetaRow}>
-            <span>{controller.audioFile ? formatBytes(controller.audioFile.size) : (release.audioCid ? '已记录上传结果' : '等待挂载')}</span>
-            <span>{controller.audioFile?.type || 'audio/*'}</span>
+            <span>{controller.audioFile ? formatBytes(controller.audioFile.size) : (release.audioStorageObject ? formatBytes(release.audioStorageObject.size) : '等待挂载')}</span>
+            <span>{controller.audioFile?.type || release.audioStorageObject?.mimeType || 'audio/*'}</span>
           </div>
         </div>
 

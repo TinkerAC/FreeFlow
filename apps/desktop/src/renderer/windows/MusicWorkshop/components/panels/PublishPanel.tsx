@@ -1,5 +1,6 @@
 import React from 'react';
 import type { MusicWorkshopController } from '../../hooks/useMusicWorkshopController';
+import { metadataUriForRelease } from '../../workshopHelpers';
 import styles from '../../MusicWorkshop.module.css';
 
 type PublishPanelProps = {
@@ -24,7 +25,7 @@ export default function PublishPanel({ controller }: PublishPanelProps) {
           <label className={styles.label}>RoyaltySplitterFactory<input className={styles.input} value={controller.web3Settings?.royaltySplitterFactoryAddress || controller.effectiveWeb3Settings.royaltySplitterFactoryAddress} onChange={(e) => controller.setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} /></label>
           <label className={styles.label}>PlatformHub<input className={styles.input} value={controller.web3Settings?.platformHubAddress || controller.effectiveWeb3Settings.platformHubAddress} onChange={(e) => controller.setByPath('services.web3Publishing.platformHubAddress', e.target.value)} /></label>
           <div className={styles.actionRow}>
-            <button className={styles.primaryButton} onClick={() => void controller.handlePublish()} disabled={!release.metadataUri || !controller.effectiveWeb3Settings.platformHubAddress || controller.busyState !== 'idle'}>发布到链上</button>
+            <button className={styles.primaryButton} onClick={() => void controller.handlePublish()} disabled={!metadataUriForRelease(release) || !controller.effectiveWeb3Settings.platformHubAddress || controller.busyState !== 'idle'}>发布到链上</button>
           </div>
         </div>
       </section>

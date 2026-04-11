@@ -271,7 +271,7 @@ export const Settings = z.object({
       signedUploadUrl: '',
     },
     web25Backend: {
-      baseUrl: 'http://localhost:8787',
+      baseUrl: 'http://localhost:8788',
     },
     web3Publishing: {
       chainId: DEFAULT_SEPOLIA_CONTRACTS.chainId,

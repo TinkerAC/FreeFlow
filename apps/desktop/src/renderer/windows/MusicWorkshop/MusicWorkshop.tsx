@@ -33,6 +33,7 @@ import {
   filteredReleases,
   formatBytes,
   formatRelativeTime,
+  metadataUriForRelease,
   PANELS,
   RELEASE_FILTERS,
   type ReleaseFilter,
@@ -96,11 +97,11 @@ export default function MusicWorkshop() {
   }), [web3Settings]);
 
   React.useEffect(() => {
-    const preview = coverFile ? URL.createObjectURL(coverFile) : (selectedRelease?.coverGatewayUrl || '');
+    const preview = coverFile ? URL.createObjectURL(coverFile) : (selectedRelease?.coverStorageObject?.gatewayUrl || '');
     setCoverPreviewUrl(preview);
     if (!coverFile || !preview.startsWith('blob:')) return undefined;
     return () => URL.revokeObjectURL(preview);
-  }, [coverFile, selectedRelease?.coverGatewayUrl]);
+  }, [coverFile, selectedRelease?.coverStorageObject?.gatewayUrl]);
 
   React.useEffect(() => {
     setAudioFile(null);
@@ -196,13 +197,9 @@ export default function MusicWorkshop() {
       audioSourcePath: selectedRelease.audioSourcePath,
       coverSourceName: selectedRelease.coverSourceName,
       coverSourcePath: selectedRelease.coverSourcePath,
-      audioCid: selectedRelease.audioCid,
-      audioGatewayUrl: selectedRelease.audioGatewayUrl,
-      coverCid: selectedRelease.coverCid,
-      coverGatewayUrl: selectedRelease.coverGatewayUrl,
-      metadataCid: selectedRelease.metadataCid,
-      metadataUri: selectedRelease.metadataUri,
-      metadataGatewayUrl: selectedRelease.metadataGatewayUrl,
+      audioStorageObjectId: selectedRelease.audioStorageObjectId,
+      coverStorageObjectId: selectedRelease.coverStorageObjectId,
+      metadataStorageObjectId: selectedRelease.metadataStorageObjectId,
       splitterAddress: selectedRelease.splitterAddress,
       publishTxHash: selectedRelease.publishTxHash,
       purchaseTxHash: selectedRelease.purchaseTxHash,
@@ -353,7 +350,7 @@ export default function MusicWorkshop() {
   }, [selectedRelease?.royaltySplits]);
 
   const handleUploadAssets = async () => {
-    if (!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioCid)) return;
+    if (!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioStorageObjectId)) return;
     setBusyState('uploading-assets');
     try {
       await patchRelease({
@@ -362,35 +359,29 @@ export default function MusicWorkshop() {
         latestError: null,
         activityEntry: { message: 'Started asset upload', level: 'info' },
       });
-      let coverCid = selectedRelease.coverCid;
-      let coverGatewayUrl = selectedRelease.coverGatewayUrl;
+      let coverStorageObjectId = selectedRelease.coverStorageObjectId;
       if (coverFile) {
         const result = await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
           file: coverFile,
           name: `${slugify(selectedRelease.title || coverFile.name)}-cover`,
           keyvalues: { kind: 'cover', releaseId: selectedRelease.id, artist: selectedRelease.artistName || 'unknown' },
         });
-        coverCid = result.cid;
-        coverGatewayUrl = result.gatewayUrl;
+        coverStorageObjectId = result.storageObjectId;
       }
-      let audioCid = selectedRelease.audioCid;
-      let audioGatewayUrl = selectedRelease.audioGatewayUrl;
+      let audioStorageObjectId = selectedRelease.audioStorageObjectId;
       if (audioFile) {
         const result = await uploadFileToWeb25Pinata(web25BackendBaseUrl, {
           file: audioFile,
           name: `${slugify(selectedRelease.title || audioFile.name)}-audio`,
           keyvalues: { kind: 'audio', releaseId: selectedRelease.id, artist: selectedRelease.artistName || 'unknown' },
         });
-        audioCid = result.cid;
-        audioGatewayUrl = result.gatewayUrl;
+        audioStorageObjectId = result.storageObjectId;
       }
       await patchRelease({
         status: 'ASSETS_UPLOADED',
         currentStage: 'storage',
-        audioCid,
-        audioGatewayUrl,
-        coverCid,
-        coverGatewayUrl,
+        audioStorageObjectId,
+        coverStorageObjectId,
         audioSourceName: audioFile?.name || selectedRelease.audioSourceName,
         audioSourcePath: (audioFile as (File & { path?: string }) | null)?.path || selectedRelease.audioSourcePath,
         coverSourceName: coverFile?.name || selectedRelease.coverSourceName,
@@ -416,7 +407,7 @@ export default function MusicWorkshop() {
   };
 
   const handleUploadMetadata = async () => {
-    if (!selectedRelease || !metadataDocument || !selectedRelease.audioCid) return;
+    if (!selectedRelease || !metadataDocument || !selectedRelease.audioStorageObjectId) return;
     setBusyState('uploading-metadata');
     try {
       const metadataFile = new File(
@@ -432,9 +423,7 @@ export default function MusicWorkshop() {
       await patchRelease({
         status: 'METADATA_UPLOADED',
         currentStage: 'publish',
-        metadataCid: result.cid,
-        metadataUri: `ipfs://${result.cid}`,
-        metadataGatewayUrl: result.gatewayUrl,
+        metadataStorageObjectId: result.storageObjectId,
         metadataDocument,
         latestError: null,
         statusMessage: 'Metadata 已上传',
@@ -458,7 +447,9 @@ export default function MusicWorkshop() {
   };
 
   const handlePublish = async () => {
-    if (!selectedRelease || !walletProvider || !selectedRelease.metadataUri || !effectiveWeb3Settings.platformHubAddress) return;
+    if (!selectedRelease || !walletProvider || !selectedRelease.metadataStorageObject || !effectiveWeb3Settings.platformHubAddress) return;
+    const metadataUri = metadataUriForRelease(selectedRelease);
+    if (!metadataUri) return;
     setBusyState('publishing');
     try {
       const provider = new BrowserProvider(walletProvider);
@@ -484,7 +475,7 @@ export default function MusicWorkshop() {
       });
 
       const [predictedTokenId, predictedSplitter] = await platformHub.publishTrack.staticCall(
-        selectedRelease.metadataUri,
+        metadataUri,
         selectedRelease.royaltyBps,
         requiresPurchase,
         priceWei,
@@ -493,7 +484,7 @@ export default function MusicWorkshop() {
         splits.map((item) => item.share),
       );
       const publishTx = await platformHub.publishTrack(
-        selectedRelease.metadataUri,
+        metadataUri,
         selectedRelease.royaltyBps,
         requiresPurchase,
         priceWei,
@@ -599,8 +590,8 @@ export default function MusicWorkshop() {
 
   const visibleReleases = React.useMemo(() => filteredReleases(dashboard.releases, releaseFilter), [dashboard.releases, releaseFilter]);
   const activeSplits = selectedRelease ? (selectedRelease.royaltySplits.length ? selectedRelease.royaltySplits : defaultSplits(address)) : [];
-  const needsAudioReattach = !!selectedRelease?.audioSourceName && !audioFile && !selectedRelease.audioCid;
-  const needsCoverReattach = !!selectedRelease?.coverSourceName && !coverFile && !selectedRelease.coverCid;
+  const needsAudioReattach = !!selectedRelease?.audioSourceName && !audioFile && !selectedRelease.audioStorageObject;
+  const needsCoverReattach = !!selectedRelease?.coverSourceName && !coverFile && !selectedRelease.coverStorageObject;
 
   const header = (
     <div className={styles.header}>
@@ -682,7 +673,7 @@ export default function MusicWorkshop() {
                       <span>{release.artistName || 'Unknown artist'}</span><span>{formatRelativeTime(release.updatedAt)}</span>
                     </div>
                     <div className={styles.releaseMeta}>
-                      <span>{release.tokenId ? `Token #${release.tokenId}` : '未上链'}</span><span>{release.metadataCid ? 'Metadata 就绪' : 'Metadata 待生成'}</span>
+                      <span>{release.tokenId ? `Token #${release.tokenId}` : '未上链'}</span><span>{release.metadataStorageObject ? 'Metadata 就绪' : 'Metadata 待生成'}</span>
                     </div>
                   </button>
                 ))}
@@ -796,7 +787,7 @@ export default function MusicWorkshop() {
                                                                                  onChange={onAudioSelected} /></label>
                         </div>
                         <div className={styles.assetMetaRow}>
-                          <span>{audioFile ? formatBytes(audioFile.size) : (selectedRelease.audioCid ? '已记录上传结果' : '等待挂载')}</span><span>{audioFile?.type || 'audio/*'}</span>
+                          <span>{audioFile ? formatBytes(audioFile.size) : (selectedRelease.audioStorageObject ? formatBytes(selectedRelease.audioStorageObject.size) : '等待挂载')}</span><span>{audioFile?.type || selectedRelease.audioStorageObject?.mimeType || 'audio/*'}</span>
                         </div>
                       </div>
                       <div className={styles.assetBox}>
@@ -851,12 +842,60 @@ export default function MusicWorkshop() {
                         </div>
                         <div className={styles.actionRow}>
                           <button className={styles.primaryButton} onClick={() => void handleUploadAssets()}
-                                  disabled={!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioCid) || busyState !== 'idle'}>上传素材
+                                  disabled={!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioStorageObjectId) || busyState !== 'idle'}>上传素材
                           </button>
                           <button className={styles.primaryButton} onClick={() => void handleUploadMetadata()}
-                                  disabled={!selectedRelease?.audioCid || !metadataDocument || busyState !== 'idle'}>上传
+                                  disabled={!selectedRelease?.audioStorageObjectId || !metadataDocument || busyState !== 'idle'}>上传
                             Metadata
                           </button>
+                        </div>
+                      </div>
+                    </section>
+                    <section className={styles.card}>
+                      <div className={styles.cardTitle}>已上传内容</div>
+                      <div className={styles.formGrid}>
+                        <div className={styles.assetBox}>
+                          <div className={styles.assetTitle}>音频预览</div>
+                          {selectedRelease.audioStorageObject ? (
+                            <>
+                              <audio controls className={styles.uploadedAudio} src={selectedRelease.audioStorageObject.gatewayUrl} />
+                              <div className={styles.assetMetaRow}>
+                                <span>{selectedRelease.audioStorageObject.name}</span>
+                                <span>{formatBytes(selectedRelease.audioStorageObject.size)}</span>
+                              </div>
+                              <div className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.audioStorageObject.cid}</div>
+                            </>
+                          ) : (
+                            <div className={styles.assetPlaceholder}>音频上传后可在这里试听。</div>
+                          )}
+                        </div>
+                        <div className={styles.assetBox}>
+                          <div className={styles.assetTitle}>封面预览</div>
+                          {selectedRelease.coverStorageObject ? (
+                            <>
+                              <img className={styles.coverPreview} src={selectedRelease.coverStorageObject.gatewayUrl} alt="已上传封面" />
+                              <div className={styles.assetMetaRow}>
+                                <span>{selectedRelease.coverStorageObject.name}</span>
+                                <span>{formatBytes(selectedRelease.coverStorageObject.size)}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className={styles.assetPlaceholder}>封面上传后可在这里查看。</div>
+                          )}
+                        </div>
+                        <div className={styles.assetBox}>
+                          <div className={styles.assetTitle}>Metadata 文件</div>
+                          {selectedRelease.metadataStorageObject ? (
+                            <>
+                              <a className={styles.uploadedLink} href={selectedRelease.metadataStorageObject.gatewayUrl} target="_blank" rel="noreferrer">打开 metadata JSON</a>
+                              <div className={styles.assetMetaRow}>
+                                <span>{selectedRelease.metadataStorageObject.name}</span>
+                                <span>{metadataUriForRelease(selectedRelease)}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className={styles.assetPlaceholder}>Metadata 上传后可在这里打开。</div>
+                          )}
                         </div>
                       </div>
                     </section>
@@ -895,7 +934,7 @@ export default function MusicWorkshop() {
                                                                           onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} /></label>
                         <div className={styles.actionRow}>
                           <button className={styles.primaryButton} onClick={() => void handlePublish()}
-                                  disabled={!selectedRelease?.metadataUri || !walletProvider || busyState !== 'idle'}>发布到链上
+                                  disabled={!selectedRelease?.metadataStorageObject || !walletProvider || busyState !== 'idle'}>发布到链上
                           </button>
                         </div>
                       </div>
@@ -1022,12 +1061,12 @@ export default function MusicWorkshop() {
                   <div className={styles.statusItem}>
                     <div className={styles.statusTitle}>Audio CID</div>
                     <div
-                      className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.audioCid || 'pending'}</div>
+                      className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.audioStorageObject?.cid || 'pending'}</div>
                   </div>
                   <div className={styles.statusItem}>
                     <div className={styles.statusTitle}>Metadata URI</div>
                     <div
-                      className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.metadataUri || 'ipfs://pending'}</div>
+                      className={`${styles.statusValue} ${styles.monospace}`}>{metadataUriForRelease(selectedRelease) || 'ipfs://pending'}</div>
                   </div>
                   <div className={styles.statusItem}>
                     <div className={styles.statusTitle}>Token / Splitter</div>

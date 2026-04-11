@@ -6,6 +6,23 @@ export type ReleaseActivityEntry = {
   at: string;
 };
 
+function mapStorageObject(record: PersistedCreatorRelease['audioStorageObject']) {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    cid: record.cid,
+    pinataId: record.pinataId,
+    name: record.name,
+    size: record.size,
+    mimeType: record.mimeType,
+    gatewayUrl: record.gatewayUrl,
+    network: record.network,
+    groupId: record.groupId,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
 /**
  * 兜底解析数据库中的活动日志 JSON，避免脏数据直接污染接口响应。
  */
@@ -44,13 +61,12 @@ export function mapReleaseRecord(record: PersistedCreatorRelease) {
     audioSourcePath: record.audioSourcePath,
     coverSourceName: record.coverSourceName,
     coverSourcePath: record.coverSourcePath,
-    audioCid: record.audioCid,
-    audioGatewayUrl: record.audioGatewayUrl,
-    coverCid: record.coverCid,
-    coverGatewayUrl: record.coverGatewayUrl,
-    metadataCid: record.metadataCid,
-    metadataUri: record.metadataUri,
-    metadataGatewayUrl: record.metadataGatewayUrl,
+    audioStorageObjectId: record.audioStorageObjectId,
+    coverStorageObjectId: record.coverStorageObjectId,
+    metadataStorageObjectId: record.metadataStorageObjectId,
+    audioStorageObject: mapStorageObject(record.audioStorageObject),
+    coverStorageObject: mapStorageObject(record.coverStorageObject),
+    metadataStorageObject: mapStorageObject(record.metadataStorageObject),
     splitterAddress: record.splitterAddress,
     publishTxHash: record.publishTxHash,
     purchaseTxHash: record.purchaseTxHash,

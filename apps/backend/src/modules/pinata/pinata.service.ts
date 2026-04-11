@@ -91,7 +91,7 @@ export class PinataService {
       gatewayUrl: `${env.pinataGatewayBaseUrl.replace(/\/$/, '')}/${cid}`,
     };
 
-    await pinataRepository.recordStorageObject({
+    const storageObject = await pinataRepository.recordStorageObject({
       uploaderUserId: input.uploaderUserId,
       cid: uploadedFile.cid,
       pinataId: uploadedFile.id,
@@ -103,7 +103,10 @@ export class PinataService {
       ...(env.pinataGroupId ? { groupId: env.pinataGroupId } : {}),
     });
 
-    return uploadedFile;
+    return {
+      ...uploadedFile,
+      storageObjectId: storageObject.id,
+    };
   }
 }
 

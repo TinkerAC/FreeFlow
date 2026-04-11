@@ -1,6 +1,6 @@
 import React from 'react';
 import type { MusicWorkshopController } from '../hooks/useMusicWorkshopController';
-import { formatRelativeTime, releaseStatusTone } from '../workshopHelpers';
+import { formatRelativeTime, metadataUriForRelease, releaseStatusTone } from '../workshopHelpers';
 import { statusToneClass } from './statusTone';
 import styles from '../MusicWorkshop.module.css';
 
@@ -29,8 +29,8 @@ export default function WorkshopInspector({ controller }: WorkshopInspectorProps
         <div className={styles.sectionHeading}>产物索引</div>
         {release ? (
           <div className={styles.statusList}>
-            <div className={styles.statusItem}><div className={styles.statusTitle}>Audio CID</div><div className={`${styles.statusValue} ${styles.monospace}`}>{release.audioCid || 'pending'}</div></div>
-            <div className={styles.statusItem}><div className={styles.statusTitle}>Metadata URI</div><div className={`${styles.statusValue} ${styles.monospace}`}>{release.metadataUri || 'ipfs://pending'}</div></div>
+            <div className={styles.statusItem}><div className={styles.statusTitle}>Audio CID</div><div className={`${styles.statusValue} ${styles.monospace}`}>{release.audioStorageObject?.cid || 'pending'}</div></div>
+            <div className={styles.statusItem}><div className={styles.statusTitle}>Metadata URI</div><div className={`${styles.statusValue} ${styles.monospace}`}>{metadataUriForRelease(release) || 'ipfs://pending'}</div></div>
             <div className={styles.statusItem}><div className={styles.statusTitle}>Token / Splitter</div><div className={`${styles.statusValue} ${styles.monospace}`}>Token #{release.tokenId || 'pending'}{'\n'}{release.splitterAddress || 'splitter pending'}</div></div>
             <div className={styles.statusItem}><div className={styles.statusTitle}>Publish / Purchase Tx</div><div className={`${styles.statusValue} ${styles.monospace}`}>{release.publishTxHash || 'publish pending'}{'\n'}{release.purchaseTxHash || 'purchase pending'}</div></div>
           </div>
