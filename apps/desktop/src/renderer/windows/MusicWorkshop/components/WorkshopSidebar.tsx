@@ -1,28 +1,54 @@
 import React from 'react';
+import type { CreatorReleaseRecord } from '@renderer/core/web25/client';
 import type { MusicWorkshopController } from '../hooks/useMusicWorkshopController';
-import { formatRelativeTime, RELEASE_FILTERS, releaseStatusLabel, releaseStatusTone } from '../workshopHelpers';
+import {
+  formatRelativeTime,
+  RELEASE_FILTERS,
+  releaseStatusLabel,
+  releaseStatusTone,
+  type WorkshopSection,
+  WORKSHOP_NAV_ITEMS,
+} from '../workshopHelpers';
 import { statusToneClass } from './statusTone';
 import styles from '../MusicWorkshop.module.css';
 
-type ReleaseSidebarProps = {
+type WorkshopSidebarProps = {
   controller: MusicWorkshopController;
+  activeSection: WorkshopSection;
+  onSelectSection: (section: WorkshopSection) => void;
+  onSelectRelease: (release: CreatorReleaseRecord) => void;
 };
 
-export default function ReleaseSidebar({ controller }: ReleaseSidebarProps) {
+export default function WorkshopSidebar({
+  controller,
+  activeSection,
+  onSelectSection,
+  onSelectRelease,
+}: WorkshopSidebarProps) {
   return (
-    <aside className={styles.sidebar}>
-      <section className={styles.sidebarCard}>
-        <div className={styles.sectionHeading}>概览</div>
-        <div className={styles.metricGrid}>
-          <div className={styles.metricCard}><div className={styles.metricLabel}>项目</div><div className={styles.metricValue}>{controller.dashboard.summary.total}</div></div>
-          <div className={styles.metricCard}><div className={styles.metricLabel}>进行中</div><div className={styles.metricValue}>{controller.dashboard.summary.inProgress}</div></div>
-          <div className={styles.metricCard}><div className={styles.metricLabel}>已发布</div><div className={styles.metricValue}>{controller.dashboard.summary.published}</div></div>
-          <div className={styles.metricCard}><div className={styles.metricLabel}>失败</div><div className={styles.metricValue}>{controller.dashboard.summary.failed}</div></div>
+    <aside className={styles.sideNav}>
+      <section className={styles.sideSection}>
+        <div className={styles.sideSectionTitle}>业务菜单</div>
+        <div className={styles.navList}>
+          {WORKSHOP_NAV_ITEMS.map((item) => {
+            const disabled = item.requiresRelease && !controller.selectedRelease;
+            return (
+              <button
+                key={item.value}
+                className={`${styles.navButton} ${activeSection === item.value ? styles.navButtonActive : ''}`}
+                onClick={() => onSelectSection(item.value)}
+                disabled={disabled}
+              >
+                <span className={styles.navLabel}>{item.label}</span>
+                <span className={styles.navHint}>{item.description}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      <section className={styles.sidebarCard}>
-        <div className={styles.sectionHeading}>筛选</div>
+      <section className={styles.sideSection}>
+        <div className={styles.sideSectionTitle}>项目筛选</div>
         <div className={styles.filterRow}>
           {RELEASE_FILTERS.map((filter) => (
             <button
@@ -36,15 +62,20 @@ export default function ReleaseSidebar({ controller }: ReleaseSidebarProps) {
         </div>
       </section>
 
-      <section className={styles.sidebarCard}>
-        <div className={styles.sectionHeading}>项目列表</div>
-        {!controller.web25Session && <div className={styles.emptyBody}>登录后可追踪发布流程和已发布内容。</div>}
+      <section className={`${styles.sideSection} ${styles.releaseSection}`}>
+        <div className={styles.sideSectionHeader}>
+          <div className={styles.sideSectionTitle}>项目列表</div>
+          <span className={styles.sideCount}>{controller.visibleReleases.length}</span>
+        </div>
+
+        {!controller.web25Session && <div className={styles.emptyBody}>登录后管理草稿、素材和发布记录。</div>}
+
         <div className={styles.releaseList}>
           {controller.visibleReleases.map((release) => (
             <button
               key={release.id}
               className={`${styles.releaseCard} ${controller.selectedRelease?.id === release.id ? styles.releaseCardActive : ''}`}
-              onClick={() => controller.handleSelectRelease(release)}
+              onClick={() => onSelectRelease(release)}
             >
               <div className={styles.releaseCardTop}>
                 <div className={styles.releaseTitle}>{release.title || 'Untitled Draft'}</div>

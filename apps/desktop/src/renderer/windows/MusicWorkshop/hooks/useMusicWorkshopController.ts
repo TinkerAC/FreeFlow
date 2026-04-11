@@ -29,6 +29,7 @@ import {
   EMPTY_DASHBOARD,
   filteredReleases,
   metadataUriForRelease,
+  normalizeReleasePanel,
   type ReleaseFilter,
   type ReleasePanel,
   replaceReleaseInDashboard,
@@ -83,7 +84,7 @@ export function useMusicWorkshopController() {
     setCoverFile(null);
     setAccessCheck((prev) => ({ ...DEFAULT_ACCESS_CHECK_STATE, tokenId: selectedRelease?.tokenId || prev.tokenId }));
     if (selectedRelease) {
-      setActivePanel((selectedRelease.currentStage as ReleasePanel) || 'editor');
+      setActivePanel(normalizeReleasePanel(selectedRelease.currentStage));
     }
   }, [selectedRelease?.id]);
 
