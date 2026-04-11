@@ -11,6 +11,19 @@ export default function PublishPanel({ controller }: PublishPanelProps) {
   const release = controller.selectedRelease;
   if (!release) return null;
 
+  const requiresPurchase = release.accessModel === 'purchase';
+  const priceNumber = Number(release.priceEth);
+  const hasValidPurchasePrice = !requiresPurchase || (Number.isFinite(priceNumber) && priceNumber > 0);
+  const publishDisabledReason = !metadataUriForRelease(release)
+    ? '需要先上传 Metadata'
+    : !controller.effectiveWeb3Settings.platformHubAddress
+      ? '需要配置 PlatformHub 地址'
+      : !hasValidPurchasePrice
+        ? '购买模式需要填写大于 0 的 ETH 价格'
+        : controller.busyState !== 'idle'
+          ? '当前有任务正在执行'
+          : '';
+
   return (
     <div className={styles.panelGrid}>
       <section className={styles.card}>
@@ -24,8 +37,9 @@ export default function PublishPanel({ controller }: PublishPanelProps) {
           <label className={styles.label}>MusicAsset<input className={styles.input} value={controller.web3Settings?.musicAssetAddress || controller.effectiveWeb3Settings.musicAssetAddress} onChange={(e) => controller.setByPath('services.web3Publishing.musicAssetAddress', e.target.value)} /></label>
           <label className={styles.label}>RoyaltySplitterFactory<input className={styles.input} value={controller.web3Settings?.royaltySplitterFactoryAddress || controller.effectiveWeb3Settings.royaltySplitterFactoryAddress} onChange={(e) => controller.setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} /></label>
           <label className={styles.label}>PlatformHub<input className={styles.input} value={controller.web3Settings?.platformHubAddress || controller.effectiveWeb3Settings.platformHubAddress} onChange={(e) => controller.setByPath('services.web3Publishing.platformHubAddress', e.target.value)} /></label>
+          {publishDisabledReason && <div className={styles.noticeWarning}>{publishDisabledReason}</div>}
           <div className={styles.actionRow}>
-            <button className={styles.primaryButton} onClick={() => void controller.handlePublish()} disabled={!metadataUriForRelease(release) || !controller.effectiveWeb3Settings.platformHubAddress || controller.busyState !== 'idle'}>发布到链上</button>
+            <button className={styles.primaryButton} onClick={() => void controller.handlePublish()} disabled={!!publishDisabledReason}>发布到链上</button>
           </div>
         </div>
       </section>

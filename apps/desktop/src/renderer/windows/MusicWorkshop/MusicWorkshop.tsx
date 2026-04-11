@@ -457,22 +457,11 @@ export default function MusicWorkshop() {
       const artistAddress = address || await signer.getAddress();
       const splits = normalizeSplits(artistAddress);
       const requiresPurchase = selectedRelease.accessModel === 'purchase';
-      const priceWei = requiresPurchase ? parseEther(selectedRelease.priceEth || '0') : BigInt(0);
+      const priceWei = requiresPurchase ? parseEther(selectedRelease.priceEth.trim() || '0') : BigInt(0);
+      if (requiresPurchase && priceWei <= BigInt(0)) {
+        throw new Error('购买模式需要填写大于 0 的 ETH 价格，或将访问模式改为公开可访问');
+      }
       const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
-
-      await patchRelease({
-        status: 'PUBLISHING',
-        currentStage: 'publish',
-        latestError: null,
-        chainId: effectiveWeb3Settings.chainId,
-        chainName: effectiveWeb3Settings.chainName,
-        explorerUrl: effectiveWeb3Settings.explorerUrl,
-        musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
-        royaltySplitterFactoryAddress: effectiveWeb3Settings.royaltySplitterFactoryAddress,
-        platformHubAddress: effectiveWeb3Settings.platformHubAddress,
-        royaltySplits: splits,
-        activityEntry: { message: 'Waiting for wallet confirmation', level: 'info' },
-      });
 
       const [predictedTokenId, predictedSplitter] = await platformHub.publishTrack.staticCall(
         metadataUri,
@@ -483,6 +472,21 @@ export default function MusicWorkshop() {
         splits.map((item) => item.address),
         splits.map((item) => item.share),
       );
+
+      await patchRelease({
+        status: 'PUBLISHING',
+        currentStage: 'publish',
+        latestError: null,
+        statusMessage: '等待钱包确认链上发布交易',
+        chainId: effectiveWeb3Settings.chainId,
+        chainName: effectiveWeb3Settings.chainName,
+        explorerUrl: effectiveWeb3Settings.explorerUrl,
+        musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
+        royaltySplitterFactoryAddress: effectiveWeb3Settings.royaltySplitterFactoryAddress,
+        platformHubAddress: effectiveWeb3Settings.platformHubAddress,
+        royaltySplits: splits,
+      });
+
       const publishTx = await platformHub.publishTrack(
         metadataUri,
         selectedRelease.royaltyBps,
@@ -592,6 +596,19 @@ export default function MusicWorkshop() {
   const activeSplits = selectedRelease ? (selectedRelease.royaltySplits.length ? selectedRelease.royaltySplits : defaultSplits(address)) : [];
   const needsAudioReattach = !!selectedRelease?.audioSourceName && !audioFile && !selectedRelease.audioStorageObject;
   const needsCoverReattach = !!selectedRelease?.coverSourceName && !coverFile && !selectedRelease.coverStorageObject;
+  const publishRequiresPurchase = selectedRelease?.accessModel === 'purchase';
+  const publishPriceNumber = Number(selectedRelease?.priceEth);
+  const publishDisabledReason = !selectedRelease?.metadataStorageObject
+    ? '需要先上传 Metadata'
+    : !walletProvider
+      ? '需要连接钱包'
+      : !effectiveWeb3Settings.platformHubAddress
+        ? '需要配置 PlatformHub 地址'
+        : publishRequiresPurchase && (!Number.isFinite(publishPriceNumber) || publishPriceNumber <= 0)
+          ? '购买模式需要填写大于 0 的 ETH 价格'
+          : busyState !== 'idle'
+            ? '当前有任务正在执行'
+            : '';
 
   const header = (
     <div className={styles.header}>
@@ -930,11 +947,12 @@ export default function MusicWorkshop() {
                                                                                      value={web3Settings?.royaltySplitterFactoryAddress || effectiveWeb3Settings.royaltySplitterFactoryAddress}
                                                                                      onChange={(e) => setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} /></label>
                         <label className={styles.label}>PlatformHub<input className={styles.input}
-                                                                          value={web3Settings?.platformHubAddress || effectiveWeb3Settings.platformHubAddress}
-                                                                          onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} /></label>
+                                                                           value={web3Settings?.platformHubAddress || effectiveWeb3Settings.platformHubAddress}
+                                                                           onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} /></label>
+                        {publishDisabledReason && <div className={styles.noticeWarning}>{publishDisabledReason}</div>}
                         <div className={styles.actionRow}>
                           <button className={styles.primaryButton} onClick={() => void handlePublish()}
-                                  disabled={!selectedRelease?.metadataStorageObject || !walletProvider || busyState !== 'idle'}>发布到链上
+                                  disabled={!!publishDisabledReason}>发布到链上
                           </button>
                         </div>
                       </div>

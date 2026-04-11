@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 
 const AUTO_GENERATED_SLUG_PREFIXES = ['untitled-track-', 'untitled-draft-'];
+const STATUS_MESSAGE_MAX_LENGTH = 255;
 
 /**
  * 生成对 URL 和前端展示都比较友好的 release slug。
@@ -27,6 +28,18 @@ export function normalizeNullableString(value: string | null | undefined) {
  */
 export function toNullableString(value: string | null) {
   return value === null ? null : (value.trim() || null);
+}
+
+/**
+ * `statusMessage` 是短状态摘要，数据库列限制为 255 字符。
+ * 完整发布日志保存在 `activityLog` / `latestError`，这里不让长日志阻断发布流程。
+ */
+export function toNullableStatusMessage(value: string | null) {
+  const normalized = toNullableString(value);
+  if (!normalized) return normalized;
+  return normalized.length > STATUS_MESSAGE_MAX_LENGTH
+    ? normalized.slice(0, STATUS_MESSAGE_MAX_LENGTH)
+    : normalized;
 }
 
 /**

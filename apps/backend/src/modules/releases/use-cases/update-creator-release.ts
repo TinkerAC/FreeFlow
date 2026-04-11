@@ -2,7 +2,13 @@ import { Prisma } from '@prisma/client';
 import { AppError } from '../../../core/errors/app-error.js';
 import { mapReleaseRecord, parseActivityLog } from '../release.mapper.js';
 import { releaseRepository } from '../release.repository.js';
-import { asJsonValue, shouldRegenerateAutoSlug, slugifyReleaseValue, toNullableString } from '../release.utils.js';
+import {
+  asJsonValue,
+  shouldRegenerateAutoSlug,
+  slugifyReleaseValue,
+  toNullableStatusMessage,
+  toNullableString,
+} from '../release.utils.js';
 import type { PersistedCreatorRelease } from '../release.repository.js';
 import type { UpdateCreatorReleaseInput } from '../release.schemas.js';
 
@@ -76,14 +82,14 @@ function buildReleaseUpdateData(
   if (input.platformHubAddress !== undefined) data.platformHubAddress = toNullableString(input.platformHubAddress);
   if (input.metadataDocument !== undefined) data.metadataDocument = asJsonValue(input.metadataDocument);
   if (input.royaltySplits !== undefined) data.royaltySplits = asJsonValue(input.royaltySplits);
-  if (input.statusMessage !== undefined) data.statusMessage = toNullableString(input.statusMessage);
+  if (input.statusMessage !== undefined) data.statusMessage = toNullableStatusMessage(input.statusMessage);
   if (input.latestError !== undefined) data.latestError = toNullableString(input.latestError);
 
   if (input.activityEntry) {
     // 活动日志只保留最近 30 条，避免单条记录无限膨胀。
     data.activityLog = nextActivityLog.slice(0, 30) as Prisma.InputJsonValue;
     if (input.statusMessage === undefined) {
-      data.statusMessage = input.activityEntry.message;
+      data.statusMessage = toNullableStatusMessage(input.activityEntry.message);
     }
   }
 

@@ -405,8 +405,12 @@ export function useMusicWorkshopController() {
         status: 'FAILED',
         latestError: error instanceof Error ? error.message : String(error),
         statusMessage: '素材上传失败',
-        activityEntry: { message: `Asset upload failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
-      }).catch((): void => {});
+        activityEntry: {
+          message: `Asset upload failed: ${error instanceof Error ? error.message : String(error)}`,
+          level: 'error',
+        },
+      }).catch((): void => {
+      });
     } finally {
       setBusyState('idle');
     }
@@ -445,8 +449,12 @@ export function useMusicWorkshopController() {
         status: 'FAILED',
         latestError: error instanceof Error ? error.message : String(error),
         statusMessage: 'Metadata 上传失败',
-        activityEntry: { message: `Metadata upload failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
-      }).catch((): void => {});
+        activityEntry: {
+          message: `Metadata upload failed: ${error instanceof Error ? error.message : String(error)}`,
+          level: 'error',
+        },
+      }).catch((): void => {
+      });
     } finally {
       setBusyState('idle');
     }
@@ -463,22 +471,11 @@ export function useMusicWorkshopController() {
       const artistAddress = address || await signer.getAddress();
       const splits = normalizeSplits(artistAddress);
       const requiresPurchase = selectedRelease.accessModel === 'purchase';
-      const priceWei = requiresPurchase ? parseEther(selectedRelease.priceEth || '0') : BigInt(0);
+      const priceWei = requiresPurchase ? parseEther(selectedRelease.priceEth.trim() || '0') : BigInt(0);
+      if (requiresPurchase && priceWei <= BigInt(0)) {
+        throw new Error('购买模式需要填写大于 0 的 ETH 价格，或将访问模式改为公开可访问');
+      }
       const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
-
-      await patchRelease({
-        status: 'PUBLISHING',
-        currentStage: 'publish',
-        latestError: null,
-        chainId: effectiveWeb3Settings.chainId,
-        chainName: effectiveWeb3Settings.chainName,
-        explorerUrl: effectiveWeb3Settings.explorerUrl,
-        musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
-        royaltySplitterFactoryAddress: effectiveWeb3Settings.royaltySplitterFactoryAddress,
-        platformHubAddress: effectiveWeb3Settings.platformHubAddress,
-        royaltySplits: splits,
-        activityEntry: { message: 'Waiting for wallet confirmation', level: 'info' },
-      });
 
       const [predictedTokenId, predictedSplitter] = await platformHub.publishTrack.staticCall(
         metadataUri,
@@ -489,6 +486,21 @@ export function useMusicWorkshopController() {
         splits.map((item) => item.address),
         splits.map((item) => item.share),
       );
+
+      await patchRelease({
+        status: 'PUBLISHING',
+        currentStage: 'publish',
+        latestError: null,
+        statusMessage: '等待钱包确认链上发布交易',
+        chainId: effectiveWeb3Settings.chainId,
+        chainName: effectiveWeb3Settings.chainName,
+        explorerUrl: effectiveWeb3Settings.explorerUrl,
+        musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
+        royaltySplitterFactoryAddress: effectiveWeb3Settings.royaltySplitterFactoryAddress,
+        platformHubAddress: effectiveWeb3Settings.platformHubAddress,
+        royaltySplits: splits,
+      });
+
       const publishTx = await platformHub.publishTrack(
         metadataUri,
         selectedRelease.royaltyBps,
@@ -533,8 +545,12 @@ export function useMusicWorkshopController() {
         status: 'FAILED',
         latestError: error instanceof Error ? error.message : String(error),
         statusMessage: '链上发布失败',
-        activityEntry: { message: `Publish failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
-      }).catch((): void => {});
+        activityEntry: {
+          message: `Publish failed: ${error instanceof Error ? error.message : String(error)}`,
+          level: 'error',
+        },
+      }).catch((): void => {
+      });
     } finally {
       setBusyState('idle');
     }

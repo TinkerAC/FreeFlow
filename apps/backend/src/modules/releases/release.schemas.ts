@@ -18,7 +18,7 @@ const CreatorReleaseStatusSchema = z.enum([
 const ReleaseAccessModelSchema = z.enum(['open', 'purchase']);
 
 export const ReleaseActivityEntrySchema = z.object({
-  message: z.string().min(1).max(255),
+  message: z.string().min(1).max(20_000),
   level: z.enum(['info', 'success', 'warning', 'error']).default('info'),
   at: z.string().datetime().optional(),
 });

@@ -1,3 +1,5 @@
+import { ZodError } from 'zod';
+
 /**
  * 统一的应用错误模型。
  * 业务层和基础设施层只需要描述错误语义，HTTP 层再统一决定状态码和响应结构。
@@ -21,6 +23,9 @@ export class AppError extends Error {
  */
 export function toAppError(error: unknown) {
   if (error instanceof AppError) return error;
+  if (error instanceof ZodError) {
+    return new AppError(400, 'Request validation failed', 'VALIDATION_ERROR', error.issues);
+  }
   if (error instanceof Error) {
     return new AppError(500, error.message, 'UNEXPECTED_ERROR');
   }

@@ -18,7 +18,7 @@ const loadEnvFile = (fileUrl: URL) => {
 
     const separatorIndex = line.indexOf('=');
     if (separatorIndex <= 0) continue;
-
+aa
     const key = line.slice(0, separatorIndex).trim();
     if (!key || process.env[key] !== undefined) continue;
 
