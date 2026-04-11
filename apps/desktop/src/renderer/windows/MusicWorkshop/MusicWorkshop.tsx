@@ -5,24 +5,28 @@ import { useSettingsContext } from '@renderer/core/config/SettingsContext';
 import {
   buildSiweMessage,
   createCreatorRelease,
-  getWeb25Session,
+  type CreatorReleaseDashboard,
+  type CreatorReleaseRecord,
+  type CreatorReleaseSplit,
   getPinataConfig,
+  getWeb25Session,
   listCreatorReleases,
   logoutWeb25,
+  type PinataConfigPayload,
   requestSiweNonce,
   updateCreatorRelease,
   uploadFileToWeb25Pinata,
   verifySiweSession,
-  type CreatorReleaseDashboard,
-  type CreatorReleaseRecord,
-  type CreatorReleaseSplit,
-  type PinataConfigPayload,
   type Web25Session,
 } from '@renderer/core/web25/client';
 import { DEFAULT_SEPOLIA_CONTRACTS, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import {
+  type AccessCheckState,
+  type AccessModel,
+  type AutosaveState,
   buildMetadataDocument,
+  type BusyState,
   DEFAULT_ACCESS_CHECK_STATE,
   defaultSplits,
   EMPTY_DASHBOARD,
@@ -31,15 +35,11 @@ import {
   formatRelativeTime,
   PANELS,
   RELEASE_FILTERS,
+  type ReleaseFilter,
+  type ReleasePanel,
   releaseStatusLabel,
   replaceReleaseInDashboard,
   slugify,
-  type AccessCheckState,
-  type AccessModel,
-  type AutosaveState,
-  type BusyState,
-  type ReleaseFilter,
-  type ReleasePanel,
 } from './workshopHelpers';
 import styles from './MusicWorkshop.module.css';
 import './MusicWorkshop.css';
@@ -152,7 +152,9 @@ export default function MusicWorkshop() {
     }
   }, [selectedRelease?.id, web25BackendBaseUrl, web25Session]);
 
-  React.useEffect(() => { void refreshWeb25State(); }, [refreshWeb25State]);
+  React.useEffect(() => {
+    void refreshWeb25State();
+  }, [refreshWeb25State]);
   React.useEffect(() => {
     if (!web25Session) {
       setDashboard(EMPTY_DASHBOARD);
@@ -354,7 +356,12 @@ export default function MusicWorkshop() {
     if (!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioCid)) return;
     setBusyState('uploading-assets');
     try {
-      await patchRelease({ status: 'ASSETS_PENDING', currentStage: 'storage', latestError: null, activityEntry: { message: 'Started asset upload', level: 'info' } });
+      await patchRelease({
+        status: 'ASSETS_PENDING',
+        currentStage: 'storage',
+        latestError: null,
+        activityEntry: { message: 'Started asset upload', level: 'info' },
+      });
       let coverCid = selectedRelease.coverCid;
       let coverGatewayUrl = selectedRelease.coverGatewayUrl;
       if (coverFile) {
@@ -397,8 +404,12 @@ export default function MusicWorkshop() {
         status: 'FAILED',
         latestError: error instanceof Error ? error.message : String(error),
         statusMessage: '素材上传失败',
-        activityEntry: { message: `Asset upload failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
-      }).catch((): void => {});
+        activityEntry: {
+          message: `Asset upload failed: ${error instanceof Error ? error.message : String(error)}`,
+          level: 'error',
+        },
+      }).catch((): void => {
+      });
     } finally {
       setBusyState('idle');
     }
@@ -435,8 +446,12 @@ export default function MusicWorkshop() {
         status: 'FAILED',
         latestError: error instanceof Error ? error.message : String(error),
         statusMessage: 'Metadata 上传失败',
-        activityEntry: { message: `Metadata upload failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
-      }).catch((): void => {});
+        activityEntry: {
+          message: `Metadata upload failed: ${error instanceof Error ? error.message : String(error)}`,
+          level: 'error',
+        },
+      }).catch((): void => {
+      });
     } finally {
       setBusyState('idle');
     }
@@ -521,8 +536,12 @@ export default function MusicWorkshop() {
         status: 'FAILED',
         latestError: error instanceof Error ? error.message : String(error),
         statusMessage: '链上发布失败',
-        activityEntry: { message: `Publish failed: ${error instanceof Error ? error.message : String(error)}`, level: 'error' },
-      }).catch((): void => {});
+        activityEntry: {
+          message: `Publish failed: ${error instanceof Error ? error.message : String(error)}`,
+          level: 'error',
+        },
+      }).catch((): void => {
+      });
     } finally {
       setBusyState('idle');
     }
@@ -590,9 +609,14 @@ export default function MusicWorkshop() {
         <div className={styles.subtitle}>服务器负责草稿、恢复、发布记录；链上和 IPFS 负责最终结果。</div>
       </div>
       <div className={styles.headerActions}>
-        <button className={styles.ghostButton} onClick={() => void refreshDashboard(selectedRelease?.id)} disabled={!web25Session || busyState !== 'idle'}>刷新</button>
-        <button className={styles.primaryButton} onClick={() => void handleCreateRelease()} disabled={!web25Session}>新建项目</button>
-        <button className={styles.ghostButton} onClick={() => (web25Session ? void handleSiweLogout() : void handleSiweLogin())} disabled={authBusy}>
+        <button className={styles.ghostButton} onClick={() => void refreshDashboard(selectedRelease?.id)}
+                disabled={!web25Session || busyState !== 'idle'}>刷新
+        </button>
+        <button className={styles.primaryButton} onClick={() => void handleCreateRelease()}
+                disabled={!web25Session}>新建项目
+        </button>
+        <button className={styles.ghostButton}
+                onClick={() => (web25Session ? void handleSiweLogout() : void handleSiweLogin())} disabled={authBusy}>
           {authBusy ? '处理中…' : (web25Session ? '退出会话' : 'SIWE 登录')}
         </button>
         <button className={styles.walletButton} onClick={() => open()}>
@@ -610,17 +634,31 @@ export default function MusicWorkshop() {
             <section className={styles.sidebarCard}>
               <div className={styles.sectionHeading}>概览</div>
               <div className={styles.metricGrid}>
-                <div className={styles.metricCard}><div className={styles.metricLabel}>项目</div><div className={styles.metricValue}>{dashboard.summary.total}</div></div>
-                <div className={styles.metricCard}><div className={styles.metricLabel}>进行中</div><div className={styles.metricValue}>{dashboard.summary.inProgress}</div></div>
-                <div className={styles.metricCard}><div className={styles.metricLabel}>已发布</div><div className={styles.metricValue}>{dashboard.summary.published}</div></div>
-                <div className={styles.metricCard}><div className={styles.metricLabel}>失败</div><div className={styles.metricValue}>{dashboard.summary.failed}</div></div>
+                <div className={styles.metricCard}>
+                  <div className={styles.metricLabel}>项目</div>
+                  <div className={styles.metricValue}>{dashboard.summary.total}</div>
+                </div>
+                <div className={styles.metricCard}>
+                  <div className={styles.metricLabel}>进行中</div>
+                  <div className={styles.metricValue}>{dashboard.summary.inProgress}</div>
+                </div>
+                <div className={styles.metricCard}>
+                  <div className={styles.metricLabel}>已发布</div>
+                  <div className={styles.metricValue}>{dashboard.summary.published}</div>
+                </div>
+                <div className={styles.metricCard}>
+                  <div className={styles.metricLabel}>失败</div>
+                  <div className={styles.metricValue}>{dashboard.summary.failed}</div>
+                </div>
               </div>
             </section>
             <section className={styles.sidebarCard}>
               <div className={styles.sectionHeading}>筛选</div>
               <div className={styles.filterRow}>
                 {RELEASE_FILTERS.map((filter) => (
-                  <button key={filter.value} className={`${styles.filterButton} ${releaseFilter === filter.value ? styles.filterButtonActive : ''}`} onClick={() => setReleaseFilter(filter.value)}>{filter.label}</button>
+                  <button key={filter.value}
+                          className={`${styles.filterButton} ${releaseFilter === filter.value ? styles.filterButtonActive : ''}`}
+                          onClick={() => setReleaseFilter(filter.value)}>{filter.label}</button>
                 ))}
               </div>
             </section>
@@ -629,20 +667,33 @@ export default function MusicWorkshop() {
               {!web25Session && <div className={styles.emptyBody}>登录后可追踪发布流程和已发布内容。</div>}
               <div className={styles.releaseList}>
                 {visibleReleases.map((release) => (
-                  <button key={release.id} className={`${styles.releaseCard} ${selectedRelease?.id === release.id ? styles.releaseCardActive : ''}`} onClick={() => { skipAutosaveRef.current = true; setSelectedRelease(release); }}>
+                  <button key={release.id}
+                          className={`${styles.releaseCard} ${selectedRelease?.id === release.id ? styles.releaseCardActive : ''}`}
+                          onClick={() => {
+                            skipAutosaveRef.current = true;
+                            setSelectedRelease(release);
+                          }}>
                     <div className={styles.releaseCardTop}>
                       <div className={styles.releaseTitle}>{release.title || 'Untitled Draft'}</div>
-                      <span className={`${styles.statusBadge} ${releaseTone(release.status)}`}>{releaseStatusLabel(release.status)}</span>
+                      <span
+                        className={`${styles.statusBadge} ${releaseTone(release.status)}`}>{releaseStatusLabel(release.status)}</span>
                     </div>
-                    <div className={styles.releaseMeta}><span>{release.artistName || 'Unknown artist'}</span><span>{formatRelativeTime(release.updatedAt)}</span></div>
-                    <div className={styles.releaseMeta}><span>{release.tokenId ? `Token #${release.tokenId}` : '未上链'}</span><span>{release.metadataCid ? 'Metadata 就绪' : 'Metadata 待生成'}</span></div>
+                    <div className={styles.releaseMeta}>
+                      <span>{release.artistName || 'Unknown artist'}</span><span>{formatRelativeTime(release.updatedAt)}</span>
+                    </div>
+                    <div className={styles.releaseMeta}>
+                      <span>{release.tokenId ? `Token #${release.tokenId}` : '未上链'}</span><span>{release.metadataCid ? 'Metadata 就绪' : 'Metadata 待生成'}</span>
+                    </div>
                   </button>
                 ))}
               </div>
             </section>
           </aside>
           <main className={styles.workspace}>
-            {!selectedRelease && <section className={styles.emptyWorkspace}><div className={styles.emptyTitle}>没有选中的项目</div><div className={styles.emptyBody}>先完成 SIWE 登录，再创建或选择一个发布项目。</div></section>}
+            {!selectedRelease && <section className={styles.emptyWorkspace}>
+              <div className={styles.emptyTitle}>没有选中的项目</div>
+              <div className={styles.emptyBody}>先完成 SIWE 登录，再创建或选择一个发布项目。</div>
+            </section>}
             {selectedRelease && (
               <>
                 <section className={styles.hero}>
@@ -650,19 +701,34 @@ export default function MusicWorkshop() {
                     <div className={styles.heroEyebrow}>当前项目</div>
                     <div className={styles.heroTitleRow}>
                       <h1 className={styles.heroTitle}>{selectedRelease.title || 'Untitled Draft'}</h1>
-                      <span className={`${styles.statusBadge} ${releaseTone(selectedRelease.status)}`}>{releaseStatusLabel(selectedRelease.status)}</span>
+                      <span
+                        className={`${styles.statusBadge} ${releaseTone(selectedRelease.status)}`}>{releaseStatusLabel(selectedRelease.status)}</span>
                     </div>
-                    <div className={styles.heroSub}>{selectedRelease.artistName || 'Unknown artist'} · {selectedRelease.accessModel === 'purchase' ? '购买后访问' : '公开访问'} · 最近活动 {formatRelativeTime(selectedRelease.lastActivityAt)}</div>
+                    <div
+                      className={styles.heroSub}>{selectedRelease.artistName || 'Unknown artist'} · {selectedRelease.accessModel === 'purchase' ? '购买后访问' : '公开访问'} ·
+                      最近活动 {formatRelativeTime(selectedRelease.lastActivityAt)}</div>
                   </div>
                   <div className={styles.heroStats}>
-                    <div className={styles.heroStat}><div className={styles.heroStatLabel}>自动保存</div><div className={styles.heroStatValue}>{autosaveState === 'saving' ? '保存中' : autosaveState === 'error' ? '失败' : autosaveState === 'saved' ? '已同步' : '空闲'}</div></div>
-                    <div className={styles.heroStat}><div className={styles.heroStatLabel}>最近动作</div><div className={styles.heroStatValue}>{selectedRelease.statusMessage || '继续编辑项目'}</div></div>
+                    <div className={styles.heroStat}>
+                      <div className={styles.heroStatLabel}>自动保存</div>
+                      <div
+                        className={styles.heroStatValue}>{autosaveState === 'saving' ? '保存中' : autosaveState === 'error' ? '失败' : autosaveState === 'saved' ? '已同步' : '空闲'}</div>
+                    </div>
+                    <div className={styles.heroStat}>
+                      <div className={styles.heroStatLabel}>最近动作</div>
+                      <div className={styles.heroStatValue}>{selectedRelease.statusMessage || '继续编辑项目'}</div>
+                    </div>
                   </div>
                 </section>
 
                 <div className={styles.panelTabs}>
                   {PANELS.map((panel) => (
-                    <button key={panel.value} className={`${styles.panelTab} ${activePanel === panel.value ? styles.panelTabActive : ''}`} onClick={() => { setActivePanel(panel.value); updateLocal({ currentStage: panel.value }); }}>
+                    <button key={panel.value}
+                            className={`${styles.panelTab} ${activePanel === panel.value ? styles.panelTabActive : ''}`}
+                            onClick={() => {
+                              setActivePanel(panel.value);
+                              updateLocal({ currentStage: panel.value });
+                            }}>
                       {panel.label}
                     </button>
                   ))}
@@ -674,38 +740,87 @@ export default function MusicWorkshop() {
                       <div className={styles.cardTitle}>项目元信息</div>
                       <div className={styles.formGrid}>
                         <div className={styles.formRowTwo}>
-                          <label className={styles.label}>标题<input className={styles.input} value={selectedRelease.title} onChange={(e) => updateLocal({ title: e.target.value, slug: slugify(e.target.value) })} /></label>
-                          <label className={styles.label}>歌手<input className={styles.input} value={selectedRelease.artistName || ''} onChange={(e) => updateLocal({ artistName: e.target.value })} /></label>
+                          <label className={styles.label}>标题<input className={styles.input}
+                                                                     value={selectedRelease.title}
+                                                                     onChange={(e) => updateLocal({
+                                                                       title: e.target.value,
+                                                                       slug: slugify(e.target.value),
+                                                                     })} /></label>
+                          <label className={styles.label}>歌手<input className={styles.input}
+                                                                     value={selectedRelease.artistName || ''}
+                                                                     onChange={(e) => updateLocal({ artistName: e.target.value })} /></label>
                         </div>
                         <div className={styles.formRowTwo}>
-                          <label className={styles.label}>专辑<input className={styles.input} value={selectedRelease.albumName || ''} onChange={(e) => updateLocal({ albumName: e.target.value })} /></label>
-                          <label className={styles.label}>流派<input className={styles.input} value={selectedRelease.genreLabel || ''} onChange={(e) => updateLocal({ genreLabel: e.target.value })} /></label>
+                          <label className={styles.label}>专辑<input className={styles.input}
+                                                                     value={selectedRelease.albumName || ''}
+                                                                     onChange={(e) => updateLocal({ albumName: e.target.value })} /></label>
+                          <label className={styles.label}>流派<input className={styles.input}
+                                                                     value={selectedRelease.genreLabel || ''}
+                                                                     onChange={(e) => updateLocal({ genreLabel: e.target.value })} /></label>
                         </div>
-                        <label className={styles.label}>描述<textarea className={styles.textarea} value={selectedRelease.description || ''} onChange={(e) => updateLocal({ description: e.target.value })} /></label>
+                        <label className={styles.label}>描述<textarea className={styles.textarea}
+                                                                      value={selectedRelease.description || ''}
+                                                                      onChange={(e) => updateLocal({ description: e.target.value })} /></label>
                         <div className={styles.formRowTwo}>
-                          <label className={styles.label}>访问模式<select className={styles.select} value={selectedRelease.accessModel} onChange={(e) => updateLocal({ accessModel: e.target.value as AccessModel })}><option value="purchase">购买后完整获取</option><option value="open">公开可访问</option></select></label>
-                          <label className={styles.label}>试听秒数<input className={styles.input} type="number" value={selectedRelease.previewSeconds} onChange={(e) => updateLocal({ previewSeconds: Number(e.target.value) || 0 })} /></label>
+                          <label className={styles.label}>访问模式<select className={styles.select}
+                                                                          value={selectedRelease.accessModel}
+                                                                          onChange={(e) => updateLocal({ accessModel: e.target.value as AccessModel })}>
+                            <option value="purchase">购买后完整获取</option>
+                            <option value="open">公开可访问</option>
+                          </select></label>
+                          <label className={styles.label}>试听秒数<input className={styles.input} type="number"
+                                                                         value={selectedRelease.previewSeconds}
+                                                                         onChange={(e) => updateLocal({ previewSeconds: Number(e.target.value) || 0 })} /></label>
                         </div>
                         <div className={styles.formRowTwo}>
-                          <label className={styles.label}>价格 ETH<input className={styles.input} value={selectedRelease.priceEth} onChange={(e) => updateLocal({ priceEth: e.target.value })} /></label>
-                          <label className={styles.label}>版税 BPS<input className={styles.input} type="number" value={selectedRelease.royaltyBps} onChange={(e) => updateLocal({ royaltyBps: Number(e.target.value) || 0 })} /></label>
+                          <label className={styles.label}>价格 ETH<input className={styles.input}
+                                                                         value={selectedRelease.priceEth}
+                                                                         onChange={(e) => updateLocal({ priceEth: e.target.value })} /></label>
+                          <label className={styles.label}>版税 BPS<input className={styles.input} type="number"
+                                                                         value={selectedRelease.royaltyBps}
+                                                                         onChange={(e) => updateLocal({ royaltyBps: Number(e.target.value) || 0 })} /></label>
                         </div>
                       </div>
                     </section>
                     <section className={styles.card}>
                       <div className={styles.cardTitle}>素材挂载</div>
                       <div className={styles.assetBox}>
-                        <div className={styles.assetHeader}><div><div className={styles.assetTitle}>音频</div><div className={styles.assetHint}>{selectedRelease.audioSourceName || audioFile?.name || '未选择'}</div></div><label className={styles.primaryButton}>选择音频<input hidden type="file" accept="audio/*,.mp3,.flac,.wav,.ogg,.m4a" onChange={onAudioSelected} /></label></div>
-                        <div className={styles.assetMetaRow}><span>{audioFile ? formatBytes(audioFile.size) : (selectedRelease.audioCid ? '已记录上传结果' : '等待挂载')}</span><span>{audioFile?.type || 'audio/*'}</span></div>
+                        <div className={styles.assetHeader}>
+                          <div>
+                            <div className={styles.assetTitle}>音频</div>
+                            <div
+                              className={styles.assetHint}>{selectedRelease.audioSourceName || audioFile?.name || '未选择'}</div>
+                          </div>
+                          <label className={styles.primaryButton}>选择音频<input hidden type="file"
+                                                                                 accept="audio/*,.mp3,.flac,.wav,.ogg,.m4a"
+                                                                                 onChange={onAudioSelected} /></label>
+                        </div>
+                        <div className={styles.assetMetaRow}>
+                          <span>{audioFile ? formatBytes(audioFile.size) : (selectedRelease.audioCid ? '已记录上传结果' : '等待挂载')}</span><span>{audioFile?.type || 'audio/*'}</span>
+                        </div>
                       </div>
                       <div className={styles.assetBox}>
-                        <div className={styles.assetHeader}><div><div className={styles.assetTitle}>封面</div><div className={styles.assetHint}>{selectedRelease.coverSourceName || coverFile?.name || '未选择'}</div></div><label className={styles.ghostButton}>选择封面<input hidden type="file" accept="image/*,.png,.jpg,.jpeg,.webp" onChange={onCoverSelected} /></label></div>
-                        {coverPreviewUrl ? <img className={styles.coverPreview} src={coverPreviewUrl} alt="cover preview" /> : <div className={styles.assetPlaceholder}>封面会被写入 metadata.image。</div>}
+                        <div className={styles.assetHeader}>
+                          <div>
+                            <div className={styles.assetTitle}>封面</div>
+                            <div
+                              className={styles.assetHint}>{selectedRelease.coverSourceName || coverFile?.name || '未选择'}</div>
+                          </div>
+                          <label className={styles.ghostButton}>选择封面<input hidden type="file"
+                                                                               accept="image/*,.png,.jpg,.jpeg,.webp"
+                                                                               onChange={onCoverSelected} /></label>
+                        </div>
+                        {coverPreviewUrl ?
+                          <img className={styles.coverPreview} src={coverPreviewUrl} alt="cover preview" /> :
+                          <div className={styles.assetPlaceholder}>封面会被写入 metadata.image。</div>}
                       </div>
                       <div className={styles.noticeList}>
-                        {needsAudioReattach && <div className={styles.noticeWarning}>刷新后音频文件对象丢失，需要重新挂载。</div>}
-                        {needsCoverReattach && <div className={styles.noticeWarning}>刷新后封面文件对象丢失，需要重新挂载。</div>}
-                        {!needsAudioReattach && !needsCoverReattach && <div className={styles.noticeInfo}>本地文件状态与服务端记录一致。</div>}
+                        {needsAudioReattach &&
+                          <div className={styles.noticeWarning}>刷新后音频文件对象丢失，需要重新挂载。</div>}
+                        {needsCoverReattach &&
+                          <div className={styles.noticeWarning}>刷新后封面文件对象丢失，需要重新挂载。</div>}
+                        {!needsAudioReattach && !needsCoverReattach &&
+                          <div className={styles.noticeInfo}>本地文件状态与服务端记录一致。</div>}
                       </div>
                     </section>
                   </div>
@@ -716,24 +831,39 @@ export default function MusicWorkshop() {
                     <section className={styles.card}>
                       <div className={styles.cardTitle}>存储控制台</div>
                       <div className={styles.formGrid}>
-                        <label className={styles.label}>Web2.5 Backend URL<input className={styles.input} value={web25BackendBaseUrl} onChange={(e) => setByPath('services.web25Backend.baseUrl', e.target.value)} /></label>
+                        <label className={styles.label}>Web2.5 Backend URL<input className={styles.input}
+                                                                                 value={web25BackendBaseUrl}
+                                                                                 onChange={(e) => setByPath('services.web25Backend.baseUrl', e.target.value)} /></label>
                         <div className={styles.formRowTwo}>
-                          <label className={styles.label}>Gateway<input className={styles.input} value={pinataConfig?.gatewayBaseUrl || ''} readOnly /></label>
-                          <label className={styles.label}>Network<input className={styles.input} value={pinataConfig?.network || ''} readOnly /></label>
+                          <label className={styles.label}>Gateway<input className={styles.input}
+                                                                        value={pinataConfig?.gatewayBaseUrl || ''}
+                                                                        readOnly /></label>
+                          <label className={styles.label}>Network<input className={styles.input}
+                                                                        value={pinataConfig?.network || ''} readOnly /></label>
                         </div>
                         <div className={styles.formRowTwo}>
-                          <label className={styles.label}>SIWE 会话<input className={styles.input} value={web25Session ? `${web25Session.address.slice(0, 10)}...` : '未登录'} readOnly /></label>
-                          <label className={styles.label}>Upload Limit<input className={styles.input} value={pinataConfig ? formatBytes(pinataConfig.maxFileSizeBytes) : ''} readOnly /></label>
+                          <label className={styles.label}>SIWE 会话<input className={styles.input}
+                                                                          value={web25Session ? `${web25Session.address.slice(0, 10)}...` : '未登录'}
+                                                                          readOnly /></label>
+                          <label className={styles.label}>Upload Limit<input className={styles.input}
+                                                                             value={pinataConfig ? formatBytes(pinataConfig.maxFileSizeBytes) : ''}
+                                                                             readOnly /></label>
                         </div>
                         <div className={styles.actionRow}>
-                          <button className={styles.primaryButton} onClick={() => void handleUploadAssets()} disabled={!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioCid) || busyState !== 'idle'}>上传素材</button>
-                          <button className={styles.primaryButton} onClick={() => void handleUploadMetadata()} disabled={!selectedRelease?.audioCid || !metadataDocument || busyState !== 'idle'}>上传 Metadata</button>
+                          <button className={styles.primaryButton} onClick={() => void handleUploadAssets()}
+                                  disabled={!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioCid) || busyState !== 'idle'}>上传素材
+                          </button>
+                          <button className={styles.primaryButton} onClick={() => void handleUploadMetadata()}
+                                  disabled={!selectedRelease?.audioCid || !metadataDocument || busyState !== 'idle'}>上传
+                            Metadata
+                          </button>
                         </div>
                       </div>
                     </section>
                     <section className={styles.card}>
                       <div className={styles.cardTitle}>Metadata 预览</div>
-                      <div className={`${styles.codeBlock} ${styles.monospace}`}>{metadataDocument ? JSON.stringify(metadataDocument, null, 2) : '请先完善项目信息并上传音频素材。'}</div>
+                      <div
+                        className={`${styles.codeBlock} ${styles.monospace}`}>{metadataDocument ? JSON.stringify(metadataDocument, null, 2) : '请先完善项目信息并上传音频素材。'}</div>
                     </section>
                   </div>
                 )}
@@ -744,14 +874,30 @@ export default function MusicWorkshop() {
                       <div className={styles.cardTitle}>链上配置</div>
                       <div className={styles.formGrid}>
                         <div className={styles.formRowTwo}>
-                          <label className={styles.label}>链名称<input className={styles.input} value={web3Settings?.chainName || effectiveWeb3Settings.chainName} onChange={(e) => setByPath('services.web3Publishing.chainName', e.target.value)} /></label>
-                          <label className={styles.label}>Chain ID<input className={styles.input} type="number" value={web3Settings?.chainId || effectiveWeb3Settings.chainId} onChange={(e) => setByPath('services.web3Publishing.chainId', Number(e.target.value) || DEFAULT_SEPOLIA_CONTRACTS.chainId)} /></label>
+                          <label className={styles.label}>链名称<input className={styles.input}
+                                                                       value={web3Settings?.chainName || effectiveWeb3Settings.chainName}
+                                                                       onChange={(e) => setByPath('services.web3Publishing.chainName', e.target.value)} /></label>
+                          <label className={styles.label}>Chain ID<input className={styles.input} type="number"
+                                                                         value={web3Settings?.chainId || effectiveWeb3Settings.chainId}
+                                                                         onChange={(e) => setByPath('services.web3Publishing.chainId', Number(e.target.value) || DEFAULT_SEPOLIA_CONTRACTS.chainId)} /></label>
                         </div>
-                        <label className={styles.label}>Explorer URL<input className={styles.input} value={web3Settings?.explorerUrl || effectiveWeb3Settings.explorerUrl} onChange={(e) => setByPath('services.web3Publishing.explorerUrl', e.target.value)} /></label>
-                        <label className={styles.label}>MusicAsset<input className={styles.input} value={web3Settings?.musicAssetAddress || effectiveWeb3Settings.musicAssetAddress} onChange={(e) => setByPath('services.web3Publishing.musicAssetAddress', e.target.value)} /></label>
-                        <label className={styles.label}>RoyaltySplitterFactory<input className={styles.input} value={web3Settings?.royaltySplitterFactoryAddress || effectiveWeb3Settings.royaltySplitterFactoryAddress} onChange={(e) => setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} /></label>
-                        <label className={styles.label}>PlatformHub<input className={styles.input} value={web3Settings?.platformHubAddress || effectiveWeb3Settings.platformHubAddress} onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} /></label>
-                        <div className={styles.actionRow}><button className={styles.primaryButton} onClick={() => void handlePublish()} disabled={!selectedRelease?.metadataUri || !walletProvider || busyState !== 'idle'}>发布到链上</button></div>
+                        <label className={styles.label}>Explorer URL<input className={styles.input}
+                                                                           value={web3Settings?.explorerUrl || effectiveWeb3Settings.explorerUrl}
+                                                                           onChange={(e) => setByPath('services.web3Publishing.explorerUrl', e.target.value)} /></label>
+                        <label className={styles.label}>MusicAsset<input className={styles.input}
+                                                                         value={web3Settings?.musicAssetAddress || effectiveWeb3Settings.musicAssetAddress}
+                                                                         onChange={(e) => setByPath('services.web3Publishing.musicAssetAddress', e.target.value)} /></label>
+                        <label className={styles.label}>RoyaltySplitterFactory<input className={styles.input}
+                                                                                     value={web3Settings?.royaltySplitterFactoryAddress || effectiveWeb3Settings.royaltySplitterFactoryAddress}
+                                                                                     onChange={(e) => setByPath('services.web3Publishing.royaltySplitterFactoryAddress', e.target.value)} /></label>
+                        <label className={styles.label}>PlatformHub<input className={styles.input}
+                                                                          value={web3Settings?.platformHubAddress || effectiveWeb3Settings.platformHubAddress}
+                                                                          onChange={(e) => setByPath('services.web3Publishing.platformHubAddress', e.target.value)} /></label>
+                        <div className={styles.actionRow}>
+                          <button className={styles.primaryButton} onClick={() => void handlePublish()}
+                                  disabled={!selectedRelease?.metadataUri || !walletProvider || busyState !== 'idle'}>发布到链上
+                          </button>
+                        </div>
                       </div>
                     </section>
                     <section className={styles.card}>
@@ -759,12 +905,27 @@ export default function MusicWorkshop() {
                       <div className={styles.splitList}>
                         {activeSplits.map((item, index) => (
                           <div key={item.id} className={styles.splitRow}>
-                            <input className={styles.input} value={item.address} onChange={(e) => updateLocal({ royaltySplits: updateSplit(activeSplits, index, { address: e.target.value }) })} placeholder={`${item.label} wallet address`} />
-                            <input className={styles.input} type="number" min={0} max={100} value={item.share} onChange={(e) => updateLocal({ royaltySplits: updateSplit(activeSplits, index, { share: Number(e.target.value) || 0 }) })} />
-                            <button className={styles.dangerButton} onClick={() => updateLocal({ royaltySplits: activeSplits.length > 1 ? activeSplits.filter((split) => split.id !== item.id) : activeSplits })}>移除</button>
+                            <input className={styles.input} value={item.address}
+                                   onChange={(e) => updateLocal({ royaltySplits: updateSplit(activeSplits, index, { address: e.target.value }) })}
+                                   placeholder={`${item.label} wallet address`} />
+                            <input className={styles.input} type="number" min={0} max={100} value={item.share}
+                                   onChange={(e) => updateLocal({ royaltySplits: updateSplit(activeSplits, index, { share: Number(e.target.value) || 0 }) })} />
+                            <button className={styles.dangerButton}
+                                    onClick={() => updateLocal({ royaltySplits: activeSplits.length > 1 ? activeSplits.filter((split) => split.id !== item.id) : activeSplits })}>移除
+                            </button>
                           </div>
                         ))}
-                        <div className={styles.actionRow}><button className={styles.ghostButton} onClick={() => updateLocal({ royaltySplits: [...activeSplits, { id: `split-${Date.now()}`, label: `Collaborator ${activeSplits.length + 1}`, address: '', share: 0 }] })}>添加分账人</button></div>
+                        <div className={styles.actionRow}>
+                          <button className={styles.ghostButton} onClick={() => updateLocal({
+                            royaltySplits: [...activeSplits, {
+                              id: `split-${Date.now()}`,
+                              label: `Collaborator ${activeSplits.length + 1}`,
+                              address: '',
+                              share: 0,
+                            }],
+                          })}>添加分账人
+                          </button>
+                        </div>
                       </div>
                     </section>
                   </div>
@@ -775,25 +936,62 @@ export default function MusicWorkshop() {
                     <section className={styles.card}>
                       <div className={styles.cardTitle}>授权验证</div>
                       <div className={styles.formGrid}>
-                        <label className={styles.label}>Token ID<input className={styles.input} value={accessCheck.tokenId || selectedRelease.tokenId || ''} onChange={(e) => setAccessCheck((prev) => ({ ...prev, tokenId: e.target.value }))} /></label>
+                        <label className={styles.label}>Token ID<input className={styles.input}
+                                                                       value={accessCheck.tokenId || selectedRelease.tokenId || ''}
+                                                                       onChange={(e) => setAccessCheck((prev) => ({
+                                                                         ...prev,
+                                                                         tokenId: e.target.value,
+                                                                       }))} /></label>
                         <div className={styles.actionRow}>
-                          <button className={styles.ghostButton} onClick={() => setAccessCheck((prev) => ({ ...prev, tokenId: selectedRelease.tokenId || prev.tokenId }))}>使用当前 Token</button>
-                          <button className={styles.primaryButton} onClick={() => void handleRefreshAccess()} disabled={busyState !== 'idle' || !selectedRelease.tokenId}>查询授权</button>
-                          <button className={styles.primaryButton} onClick={() => void handleBuyAccess()} disabled={busyState !== 'idle' || !selectedRelease.tokenId}>购买访问权</button>
+                          <button className={styles.ghostButton} onClick={() => setAccessCheck((prev) => ({
+                            ...prev,
+                            tokenId: selectedRelease.tokenId || prev.tokenId,
+                          }))}>使用当前 Token
+                          </button>
+                          <button className={styles.primaryButton} onClick={() => void handleRefreshAccess()}
+                                  disabled={busyState !== 'idle' || !selectedRelease.tokenId}>查询授权
+                          </button>
+                          <button className={styles.primaryButton} onClick={() => void handleBuyAccess()}
+                                  disabled={busyState !== 'idle' || !selectedRelease.tokenId}>购买访问权
+                          </button>
                         </div>
                         <div className={styles.infoGrid}>
-                          <div className={styles.infoCard}><div className={styles.infoLabel}>当前授权</div><div className={styles.infoBody}>Token #{accessCheck.tokenId || 'pending'}{'\n'}Requires purchase: {String(accessCheck.requiresPurchase)}{'\n'}Active: {String(accessCheck.active)}{'\n'}Has access: {String(accessCheck.hasAccess)}</div></div>
-                          <div className={styles.infoCard}><div className={styles.infoLabel}>价格与分账</div><div className={styles.infoBody}>Price: {accessCheck.priceEth || 'pending'} ETH{'\n'}Platform fee: {accessCheck.platformFeeEth || 'pending'} ETH{'\n'}Creator proceeds: {accessCheck.creatorProceedsEth || 'pending'} ETH</div></div>
-                          <div className={styles.infoCard}><div className={styles.infoLabel}>链上地址</div><div className={styles.infoBody}>Creator: {accessCheck.creator || 'pending'}{'\n'}Splitter: {accessCheck.payoutReceiver || 'pending'}</div></div>
+                          <div className={styles.infoCard}>
+                            <div className={styles.infoLabel}>当前授权</div>
+                            <div className={styles.infoBody}>Token #{accessCheck.tokenId || 'pending'}{'\n'}Requires
+                              purchase: {String(accessCheck.requiresPurchase)}{'\n'}Active: {String(accessCheck.active)}{'\n'}Has
+                              access: {String(accessCheck.hasAccess)}</div>
+                          </div>
+                          <div className={styles.infoCard}>
+                            <div className={styles.infoLabel}>价格与分账</div>
+                            <div className={styles.infoBody}>Price: {accessCheck.priceEth || 'pending'} ETH{'\n'}Platform
+                              fee: {accessCheck.platformFeeEth || 'pending'} ETH{'\n'}Creator
+                              proceeds: {accessCheck.creatorProceedsEth || 'pending'} ETH
+                            </div>
+                          </div>
+                          <div className={styles.infoCard}>
+                            <div className={styles.infoLabel}>链上地址</div>
+                            <div
+                              className={styles.infoBody}>Creator: {accessCheck.creator || 'pending'}{'\n'}Splitter: {accessCheck.payoutReceiver || 'pending'}</div>
+                          </div>
                         </div>
                       </div>
                     </section>
                     <section className={styles.card}>
                       <div className={styles.cardTitle}>边界说明</div>
                       <div className={styles.infoGrid}>
-                        <div className={styles.infoCard}><div className={styles.infoLabel}>服务器</div><div className={styles.infoBody}>记录草稿、上传状态、失败原因、已发布列表与恢复上下文。</div></div>
-                        <div className={styles.infoCard}><div className={styles.infoLabel}>IPFS</div><div className={styles.infoBody}>保存 metadata、封面和音频等内容寻址对象。</div></div>
-                        <div className={styles.infoCard}><div className={styles.infoLabel}>链上</div><div className={styles.infoBody}>保存 tokenURI、授权规则、价格和分账接收方。</div></div>
+                        <div className={styles.infoCard}>
+                          <div className={styles.infoLabel}>服务器</div>
+                          <div className={styles.infoBody}>记录草稿、上传状态、失败原因、已发布列表与恢复上下文。</div>
+                        </div>
+                        <div className={styles.infoCard}>
+                          <div className={styles.infoLabel}>IPFS</div>
+                          <div className={styles.infoBody}>保存 metadata、封面和音频等内容寻址对象。</div>
+                        </div>
+                        <div className={styles.infoCard}>
+                          <div className={styles.infoLabel}>链上</div>
+                          <div className={styles.infoBody}>保存 tokenURI、授权规则、价格和分账接收方。</div>
+                        </div>
                       </div>
                     </section>
                   </div>
@@ -808,9 +1006,12 @@ export default function MusicWorkshop() {
               {selectedRelease ? (
                 <div className={styles.noticeList}>
                   <div className={styles.noticeInfo}>{selectedRelease.statusMessage || '等待下一步操作'}</div>
-                  {selectedRelease.latestError && <div className={styles.noticeDanger}>{selectedRelease.latestError}</div>}
-                  {needsAudioReattach && <div className={styles.noticeWarning}>音频文件已脱离本地内存，需要重新挂载。</div>}
-                  {needsCoverReattach && <div className={styles.noticeWarning}>封面文件已脱离本地内存，需要重新挂载。</div>}
+                  {selectedRelease.latestError &&
+                    <div className={styles.noticeDanger}>{selectedRelease.latestError}</div>}
+                  {needsAudioReattach &&
+                    <div className={styles.noticeWarning}>音频文件已脱离本地内存，需要重新挂载。</div>}
+                  {needsCoverReattach &&
+                    <div className={styles.noticeWarning}>封面文件已脱离本地内存，需要重新挂载。</div>}
                 </div>
               ) : <div className={styles.emptyBody}>选择项目后查看恢复信息。</div>}
             </section>
@@ -818,10 +1019,26 @@ export default function MusicWorkshop() {
               <div className={styles.sectionHeading}>产物索引</div>
               {selectedRelease ? (
                 <div className={styles.statusList}>
-                  <div className={styles.statusItem}><div className={styles.statusTitle}>Audio CID</div><div className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.audioCid || 'pending'}</div></div>
-                  <div className={styles.statusItem}><div className={styles.statusTitle}>Metadata URI</div><div className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.metadataUri || 'ipfs://pending'}</div></div>
-                  <div className={styles.statusItem}><div className={styles.statusTitle}>Token / Splitter</div><div className={`${styles.statusValue} ${styles.monospace}`}>Token #{selectedRelease.tokenId || 'pending'}{'\n'}{selectedRelease.splitterAddress || 'splitter pending'}</div></div>
-                  <div className={styles.statusItem}><div className={styles.statusTitle}>Publish / Purchase Tx</div><div className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.publishTxHash || 'publish pending'}{'\n'}{selectedRelease.purchaseTxHash || 'purchase pending'}</div></div>
+                  <div className={styles.statusItem}>
+                    <div className={styles.statusTitle}>Audio CID</div>
+                    <div
+                      className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.audioCid || 'pending'}</div>
+                  </div>
+                  <div className={styles.statusItem}>
+                    <div className={styles.statusTitle}>Metadata URI</div>
+                    <div
+                      className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.metadataUri || 'ipfs://pending'}</div>
+                  </div>
+                  <div className={styles.statusItem}>
+                    <div className={styles.statusTitle}>Token / Splitter</div>
+                    <div className={`${styles.statusValue} ${styles.monospace}`}>Token
+                      #{selectedRelease.tokenId || 'pending'}{'\n'}{selectedRelease.splitterAddress || 'splitter pending'}</div>
+                  </div>
+                  <div className={styles.statusItem}>
+                    <div className={styles.statusTitle}>Publish / Purchase Tx</div>
+                    <div
+                      className={`${styles.statusValue} ${styles.monospace}`}>{selectedRelease.publishTxHash || 'publish pending'}{'\n'}{selectedRelease.purchaseTxHash || 'purchase pending'}</div>
+                  </div>
                 </div>
               ) : <div className={styles.emptyBody}>暂无项目。</div>}
             </section>
@@ -829,9 +1046,15 @@ export default function MusicWorkshop() {
               <div className={styles.sectionHeading}>活动日志</div>
               {selectedRelease ? (
                 <div className={styles.logList}>
-                  {(selectedRelease.activityLog.length ? selectedRelease.activityLog : [{ message: selectedRelease.statusMessage || '等待活动', level: 'info' as const, at: selectedRelease.updatedAt }]).map((entry) => (
+                  {(selectedRelease.activityLog.length ? selectedRelease.activityLog : [{
+                    message: selectedRelease.statusMessage || '等待活动',
+                    level: 'info' as const,
+                    at: selectedRelease.updatedAt,
+                  }]).map((entry) => (
                     <div key={`${entry.at}-${entry.message}`} className={styles.logItem}>
-                      <div className={styles.logMeta}><span className={`${styles.statusBadge} ${entry.level === 'error' ? styles.statusDanger : entry.level === 'success' ? styles.statusSuccess : styles.statusNeutral}`}>{entry.level}</span><span>{formatRelativeTime(entry.at)}</span></div>
+                      <div className={styles.logMeta}><span
+                        className={`${styles.statusBadge} ${entry.level === 'error' ? styles.statusDanger : entry.level === 'success' ? styles.statusSuccess : styles.statusNeutral}`}>{entry.level}</span><span>{formatRelativeTime(entry.at)}</span>
+                      </div>
                       <div className={styles.logMessage}>{entry.message}</div>
                     </div>
                   ))}

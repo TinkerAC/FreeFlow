@@ -3,7 +3,7 @@ import winston from 'winston';
 const { combine, timestamp, json, printf, colorize } = winston.format;
 
 // 判断是否为开发环境
-const isDevelopment = process.env.NODE_ENV !== 'production';
+export const IS_DEVELOPMENT: boolean = process.env.NODE_ENV !== 'production';
 
 // 关键：这是我们为“开发环境”设计的易读格式
 const devFormat = combine(
@@ -39,10 +39,10 @@ const prodFormat = combine(
 // 创建你的 Root Logger
 const rootLogger = winston.createLogger({
   // 根据环境设置级别
-  level: isDevelopment ? 'debug' : 'info',
+  level: IS_DEVELOPMENT ? 'debug' : 'info',
 
   // 根据环境设置格式
-  format: isDevelopment ? devFormat : prodFormat,
+  format: IS_DEVELOPMENT ? devFormat : prodFormat,
 
   // 定义 Transports (输出目标)
   transports: [

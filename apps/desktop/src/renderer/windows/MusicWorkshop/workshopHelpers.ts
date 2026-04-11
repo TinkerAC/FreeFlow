@@ -169,6 +169,20 @@ export function releaseStatusLabel(status: CreatorReleaseRecord['status']) {
   }
 }
 
+export function releaseStatusTone(status: CreatorReleaseRecord['status']) {
+  switch (status) {
+    case 'PUBLISHED':
+      return 'success' as const;
+    case 'FAILED':
+      return 'danger' as const;
+    case 'PUBLISHING':
+    case 'ASSETS_PENDING':
+      return 'warning' as const;
+    default:
+      return 'neutral' as const;
+  }
+}
+
 export function defaultSplits(address?: string): CreatorReleaseSplit[] {
   return [
     {

@@ -7,7 +7,6 @@ import ProxyServerManager from '@main/core/AudioProxyServer';
 import { ConfigService } from '@main/core/configService';
 import LocalLibraryService from '@main/services/localLibraryService';
 import { sequelize } from '@main/database/seqimpl';
-import { is_hifini_cookies_expired } from '@main/services/AuthService';
 import { container } from '@main/di/di-container';
 import { DISymbol } from '@main/di/symbol';
 import IpcController from '@main/core/ipc/IpcController';
@@ -16,7 +15,7 @@ import ShortCutManager from '@main/core/ShortCutManager';
 import { getOperatingSystem } from '@src/utils/helpers';
 import chalk from 'chalk';
 import { OS } from '@src/shared/OS';
-import rootLogger from '@src/utils/logger';
+import rootLogger, { IS_DEVELOPMENT } from '@src/utils/logger';
 import { setAppMenu } from '@main/core/menu/Menu';
 import { Session } from '@main/database/seqimpl/Session';
 
@@ -26,13 +25,14 @@ const logger = rootLogger.child(
 
 
 // 全局异常兜底
-process.on('uncaughtException', (e) => console.error('[main] UncaughtException:', e));
-process.on('unhandledRejection', (e) => console.error('[main] UnhandledRejection:', e));
+process.on('uncaughtException', (e) => logger.error('UncaughtException:', e));
+process.on('unhandledRejection', (e) => logger.error('UnhandledRejection:', e));
 
 // 单实例锁
 const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-  console.log('Another instance is already running, quitting...');
+//如果未获取到锁，此时应该退出当前实例。在开发环境下，我们允许多实例运行。
+if (!gotTheLock && !IS_DEVELOPMENT) {
+  logger.info('Another instance is already running, quitting...');
   app.quit();
 } else {
   logger.info('App started');
@@ -49,7 +49,6 @@ if (!gotTheLock) {
 
   // 依赖注入获取服务实例
   const localLibraryService = container.get<LocalLibraryService>(DISymbol.LocalLibraryService);
-  const configService: ConfigService = container.get<ConfigService>(DISymbol.ConfigService);
   const proxyServerManager = container.get<ProxyServerManager>(DISymbol.ProxyServerManager);
   const ipcController = container.get<IpcController>(DISymbol.IpcController);
   const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
@@ -81,13 +80,6 @@ if (!gotTheLock) {
     ipcController.register();
     windowManager.ensure(WindowKey.WORKER);
 
-    // 检查 hifini Cookie 过期状态
-    const cookies = (configService.get('services.hifiniCookie') as { [key: string]: string }) ?? {};
-    console.log('cookies:', cookies);
-    if (await is_hifini_cookies_expired(cookies)) {
-      // mainWindow.webContents.send('notification', 'Hifini 登陆已过期，请重新登陆');
-      return console.warn('Hifini 已经死了.');
-    }
 
     // Windows 托盘
     trayManager.createTray();
@@ -102,7 +94,7 @@ if (!gotTheLock) {
       operating_system: getOperatingSystem(),
       app_version: app.getVersion(),
     }).then(() => {
-      console.info(
+      logger.info(
         chalk.green(
           `启动信息记录成功: ${startAt.toISOString()} ${getOperatingSystem()} ${app.getVersion()}`,
         ),

@@ -2,272 +2,488 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Web2.5 后端使用的 PostgreSQL 连接。
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+/// 评论的审核和可见状态。
 enum CommentStatus {
+  /// 正常展示给用户的评论。
   PUBLISHED
+  /// 被审核隐藏但仍保留记录的评论。
   HIDDEN
+  /// 已从产品界面删除的评论。
   DELETED
 }
 
+/// 可被评论、归属或索引的业务资源类型。
 enum ResourceType {
+  /// 单曲资源。
   TRACK
+  /// 专辑资源。
   ALBUM
+  /// 创作者动态或文章资源。
   POST
 }
 
+/// 创作者发行从草稿到链上发布的工作流状态。
 enum CreatorReleaseStatus {
+  /// 可编辑草稿，尚未开始上传或发布。
   DRAFT
+  /// 本地素材准备或上传中。
   ASSETS_PENDING
+  /// 音频和封面素材已上传。
   ASSETS_UPLOADED
+  /// 元数据 JSON 已上传。
   METADATA_UPLOADED
+  /// 链上发布交易处理中。
   PUBLISHING
+  /// 已发布，可同步为可评论资源。
   PUBLISHED
+  /// 发布流程失败，可重试或排查。
   FAILED
+  /// 创作者取消了发布流程。
   CANCELLED
 }
 
+/// 应用用户，一个用户可以绑定多个已验证钱包身份。
 model User {
+  /// 应用内部用户 ID。
   id                   String                 @id @default(cuid())
+  /// 用户公开展示名称。
   displayName          String?                @db.VarChar(64)
+  /// 用户头像地址。
   avatarUrl            String?                @db.Text
+  /// 当前主钱包地址，保留用户侧校验和大小写。
   primaryWalletAddress String                 @db.VarChar(42)
+  /// 用户记录创建时间。
   createdAt            DateTime               @default(now())
+  /// 用户记录最后更新时间。
   updatedAt            DateTime               @updatedAt
+  /// 该用户绑定的已验证钱包身份。
   walletIdentities     WalletIdentity[]
+  /// 该用户已签发的认证会话。
   authSessions         AuthSession[]
+  /// 该用户通过后端代理上传的存储对象。
   uploadedStorageItems StorageObject[]
+  /// 当前归属于该用户的已发布资源。
   ownedResources       Resource[]             @relation("ResourceOwner")
+  /// 该用户创建的发行草稿和发布记录。
   creatorReleases      CreatorRelease[]
+  /// 该用户发表的评论。
   comments             Comment[]
+  /// 该用户产生的评论反应。
   commentReactions     CommentReaction[]
+  /// 该用户提交的评论举报。
   commentReports       CommentReport[]        @relation("CommentReporter")
+  /// 该用户执行的评论审核记录。
   moderationLogs       CommentModerationLog[] @relation("CommentModerator")
 
+  // 支持按主钱包地址查询用户。
   @@index([primaryWalletAddress])
   @@map("users")
 }
 
+/// 已验证钱包身份，同一链上的同一地址只能归属一个用户。
 model WalletIdentity {
+  /// 钱包身份记录 ID。
   id                  String        @id @default(cuid())
+  /// 归属的应用用户 ID。
   userId              String
+  /// 钱包地址，保留用户侧校验和大小写。
   address             String        @db.VarChar(42)
+  /// 小写钱包地址，用于唯一约束和查询。
   addressLower        String        @db.VarChar(42)
+  /// 钱包验证时所在的 EVM 链 ID。
   chainId             Int
+  /// 是否为用户当前主钱包。
   isPrimary           Boolean       @default(false)
+  /// 钱包首次验证时间。
   verifiedAt          DateTime
+  /// 钱包最近一次完成认证的时间。
   lastAuthenticatedAt DateTime?
+  /// 钱包身份记录创建时间。
   createdAt           DateTime      @default(now())
+  /// 钱包身份记录最后更新时间。
   updatedAt           DateTime      @updatedAt
+  /// 归属的应用用户。
   user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 通过该钱包身份创建的认证会话。
   authSessions        AuthSession[]
 
+  // 确保同一链上的同一钱包地址只映射到一个身份。
   @@unique([addressLower, chainId])
+  // 支持列出某个用户绑定的全部钱包。
   @@index([userId])
   @@map("wallet_identities")
 }
 
+/// SIWE 登录一次性 nonce，数据库只保存哈希以降低重放风险。
 model SiweNonce {
-  id                   String   @id @default(cuid())
-  nonceHash            String   @unique @db.Char(64)
-  requestedAddress     String?  @db.VarChar(42)
-  requestedAddressLower String? @db.VarChar(42)
-  requestedChainId     Int?
-  expiresAt            DateTime
-  consumedAt           DateTime?
-  createdAt            DateTime @default(now())
+  /// nonce 记录 ID。
+  id                    String    @id @default(cuid())
+  /// 发给客户端 nonce 的 SHA-256 哈希。
+  nonceHash             String    @unique @db.Char(64)
+  /// 申请 nonce 时指定的钱包地址。
+  requestedAddress      String?   @db.VarChar(42)
+  /// 小写的钱包地址，用于查询。
+  requestedAddressLower String?   @db.VarChar(42)
+  /// 申请 nonce 时指定的链 ID。
+  requestedChainId      Int?
+  /// nonce 过期时间。
+  expiresAt             DateTime
+  /// nonce 被成功消费的时间。
+  consumedAt            DateTime?
+  /// nonce 记录创建时间。
+  createdAt             DateTime  @default(now())
 
+  // 支持清理过期 nonce。
   @@index([expiresAt])
+  // 支持按申请钱包上下文查询 nonce。
   @@index([requestedAddressLower, requestedChainId])
   @@map("siwe_nonces")
 }
 
+/// SIWE 验签成功后创建的服务端认证会话。
 model AuthSession {
+  /// 会话记录 ID。
   id               String         @id @default(cuid())
+  /// 已认证的应用用户 ID。
   userId           String
+  /// 创建该会话的钱包身份 ID。
   walletIdentityId String
+  /// 客户端 Cookie 中不透明会话令牌的 SHA-256 哈希。
   tokenHash        String         @unique @db.Char(64)
+  /// 验签时使用的钱包地址，保留原始大小写。
   address          String         @db.VarChar(42)
+  /// 验签时使用的 EVM 链 ID。
   chainId          Int
+  /// 本次会话接受的 SIWE domain。
   domain           String         @db.VarChar(255)
+  /// 本次会话接受的 SIWE URI。
   uri              String         @db.Text
+  /// SIWE 消息声明的签发时间。
   issuedAt         DateTime
+  /// 服务端验签成功时间。
   verifiedAt       DateTime
+  /// 会话过期时间。
   expiresAt        DateTime
+  /// 中间件最近一次观察到该会话的时间。
   lastSeenAt       DateTime?
+  /// 会话被撤销或过期维护任务标记的时间。
   revokedAt        DateTime?
+  /// 会话记录创建时间。
   createdAt        DateTime       @default(now())
+  /// 已认证的应用用户。
   user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 创建该会话的钱包身份。
   walletIdentity   WalletIdentity @relation(fields: [walletIdentityId], references: [id], onDelete: Cascade)
 
+  // 支持按用户列出和清理会话。
   @@index([userId])
+  // 支持钱包身份维度的审计查询。
   @@index([walletIdentityId])
+  // 支持会话过期扫描和维护任务。
   @@index([expiresAt, revokedAt])
   @@map("auth_sessions")
 }
 
+/// 通过 Pinata 上传并在本地记录的文件对象。
 model StorageObject {
+  /// 存储对象记录 ID。
   id             String   @id @default(cuid())
+  /// 通过后端代理上传该对象的用户 ID。
   uploaderUserId String
+  /// Pinata 返回的 IPFS CID。
   cid            String   @unique @db.VarChar(255)
+  /// Pinata 服务侧文件 ID。
   pinataId       String?  @db.VarChar(255)
+  /// 原始上传文件名。
   name           String   @db.VarChar(255)
+  /// 文件大小，单位字节。
   size           Int
+  /// 上传文件的 MIME 类型。
   mimeType       String   @db.VarChar(255)
+  /// 当前用于访问 CID 的网关地址。
   gatewayUrl     String   @db.Text
+  /// Pinata 网络可见性，例如 public 或 private。
   network        String   @db.VarChar(32)
+  /// 上传时使用的 Pinata group ID。
   groupId        String?  @db.VarChar(255)
+  /// 上传记录创建时间。
   createdAt      DateTime @default(now())
+  /// 上传该对象的用户。
   uploader       User     @relation(fields: [uploaderUserId], references: [id], onDelete: Cascade)
 
+  // 支持按用户查看上传历史。
   @@index([uploaderUserId, createdAt])
   @@map("storage_objects")
 }
 
+/// 创作者拥有的音乐发行草稿和链上发布流程记录。
 model CreatorRelease {
+  /// 发行记录 ID。
   id                            String               @id @default(cuid())
+  /// 拥有并编辑该发行的创作者用户 ID。
   creatorUserId                 String
+  /// 展示给创作者和听众的发行标题。
   title                         String               @db.VarChar(255)
+  /// 发行展示的艺人名称。
   artistName                    String?              @db.VarChar(255)
+  /// 所属专辑名称。
   albumName                     String?              @db.VarChar(255)
+  /// 创作者填写的风格或类型标签。
   genreLabel                    String?              @db.VarChar(255)
+  /// 创作者侧使用的草稿或访问 slug。
   slug                          String               @db.VarChar(255)
+  /// 发行的长文本描述。
   description                   String?              @db.Text
+  /// 素材上传、元数据上传和发布流程状态。
   status                        CreatorReleaseStatus @default(DRAFT)
+  /// 当前编辑步骤或前端工作流阶段。
   currentStage                  String               @default("editor") @db.VarChar(32)
+  /// 访问模式，目前由业务约束为 open 或 purchase。
   accessModel                   String               @default("purchase") @db.VarChar(32)
+  /// 付费访问时允许试听的秒数。
   previewSeconds                Int                  @default(30)
+  /// ETH 价格，使用十进制字符串避免浮点精度问题。
   priceEth                      String               @default("0") @db.VarChar(64)
+  /// 创作者版税比例，单位为基点。
   royaltyBps                    Int                  @default(1000)
+  /// 本地音频源文件名。
   audioSourceName               String?              @db.VarChar(255)
+  /// 桌面端工作流记录的本地音频路径。
   audioSourcePath               String?              @db.Text
+  /// 本地封面源文件名。
   coverSourceName               String?              @db.VarChar(255)
+  /// 桌面端工作流记录的本地封面路径。
   coverSourcePath               String?              @db.Text
+  /// 上传后音频资源的 IPFS CID。
   audioCid                      String?              @db.VarChar(255)
+  /// 上传后音频资源的网关地址。
   audioGatewayUrl               String?              @db.Text
+  /// 上传后封面资源的 IPFS CID。
   coverCid                      String?              @db.VarChar(255)
+  /// 上传后封面资源的网关地址。
   coverGatewayUrl               String?              @db.Text
+  /// 上传后元数据文档的 IPFS CID。
   metadataCid                   String?              @db.VarChar(255)
+  /// 链上发布使用的 token metadata URI。
   metadataUri                   String?              @db.Text
+  /// 元数据文档的网关地址。
   metadataGatewayUrl            String?              @db.Text
+  /// 该发行对应的版税分账合约地址。
   splitterAddress               String?              @db.VarChar(42)
+  /// 发布交易哈希。
   publishTxHash                 String?              @db.VarChar(100)
+  /// 后端记录的购买交易哈希。
   purchaseTxHash                String?              @db.VarChar(100)
+  /// 链上铸造得到的 token ID。
   tokenId                       String?              @db.VarChar(128)
+  /// 发行所在的 EVM 链 ID。
   chainId                       Int?
+  /// 客户端记录的人类可读链名称。
   chainName                     String?              @db.VarChar(64)
+  /// 发布交易或资产的区块浏览器地址。
   explorerUrl                   String?              @db.Text
+  /// 已发布音乐资产合约地址。
   musicAssetAddress             String?              @db.VarChar(42)
+  /// 发布时使用的版税分账工厂合约地址。
   royaltySplitterFactoryAddress String?              @db.VarChar(42)
+  /// 发布时使用的平台 Hub 合约地址。
   platformHubAddress            String?              @db.VarChar(42)
+  /// 上传到 IPFS 的完整元数据 JSON。
   metadataDocument              Json?
+  /// 版税接收人及份额配置。
   royaltySplits                 Json?
+  /// 最近的发行流程活动日志，业务层限制长度。
   activityLog                   Json?
+  /// 展示在创作者工作流中的短状态消息。
   statusMessage                 String?              @db.VarChar(255)
+  /// 最近一次流程或发布错误详情。
   latestError                   String?              @db.Text
+  /// 首次进入 PUBLISHED 状态的时间。
   publishedAt                   DateTime?
+  /// 最近一次有意义业务活动的时间。
   lastActivityAt                DateTime             @default(now())
+  /// 发行记录创建时间。
   createdAt                     DateTime             @default(now())
+  /// 发行记录最后更新时间。
   updatedAt                     DateTime             @updatedAt
+  /// 拥有并编辑该发行的创作者用户。
   creator                       User                 @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
 
+  // 支持创作者工作台按更新时间排序。
   @@index([creatorUserId, updatedAt])
+  // 支持按创作者和工作流状态筛选发行。
   @@index([creatorUserId, status, updatedAt])
+  // 支持按链和 token ID 查询已发布发行。
   @@index([chainId, tokenId])
+  // 支持创作者维度的 slug 查询。
   @@index([creatorUserId, slug])
   @@map("creator_releases")
 }
 
+/// 可被评论的已发布资源，通常由已发布发行同步生成。
 model Resource {
+  /// 资源记录 ID。
   id                   String       @id @default(cuid())
+  /// 资源业务类型。
   type                 ResourceType
+  /// 链上资源所在的 EVM 链 ID。
   chainId              Int?
+  /// 合约地址，保留原始大小写。
   contractAddress      String?      @db.VarChar(42)
+  /// 小写合约地址，用于唯一约束和查询。
   contractAddressLower String?      @db.VarChar(42)
+  /// NFT 或链上资源的 token ID。
   tokenId              String?      @db.VarChar(128)
+  /// 离线内容或元数据的主要 IPFS CID。
   contentCid           String?      @db.VarChar(255)
+  /// 资源在列表、资料页或评论区展示的标题。
   title                String?      @db.VarChar(255)
+  /// 当前后端可识别的资源拥有者用户 ID。
   ownerUserId          String?
+  /// 资源记录创建时间。
   createdAt            DateTime     @default(now())
+  /// 资源记录最后更新时间。
   updatedAt            DateTime     @updatedAt
+  /// 当前后端可识别的资源拥有者。
   owner                User?        @relation("ResourceOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  /// 挂在该资源下的评论。
   comments             Comment[]
 
+  // 确保同一链、合约和 token ID 只生成一个资源索引。
   @@unique([chainId, contractAddressLower, tokenId])
+  // 支持按 CID 查询资源。
   @@index([contentCid])
+  // 支持用户资料页和资源库查询。
   @@index([ownerUserId])
   @@map("resources")
 }
 
+/// 用户针对资源发表的讨论内容。
 model Comment {
+  /// 评论记录 ID。
   id             String                 @id @default(cuid())
+  /// 被评论的资源 ID。
   resourceId     String
+  /// 评论作者用户 ID。
   userId         String
+  /// 父级评论 ID，用于楼中楼回复。
   parentId       String?
+  /// 评论正文。
   body           String                 @db.Text
+  /// 评论审核和可见状态。
   status         CommentStatus          @default(PUBLISHED)
+  /// 评论创建时间。
   createdAt      DateTime               @default(now())
+  /// 评论最后编辑或审核更新时间。
   updatedAt      DateTime               @updatedAt
+  /// 评论软删除时间。
   deletedAt      DateTime?
+  /// 被评论的资源。
   resource       Resource               @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  /// 评论作者。
   user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 父级评论。
   parent         Comment?               @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  /// 该评论下的回复。
   replies        Comment[]              @relation("CommentReplies")
+  /// 该评论收到的反应。
   reactions      CommentReaction[]
+  /// 针对该评论的举报。
   reports        CommentReport[]
+  /// 针对该评论的审核日志。
   moderationLogs CommentModerationLog[]
 
+  // 支持资源评论流查询。
   @@index([resourceId, createdAt])
+  // 支持楼中楼回复分页。
   @@index([parentId, createdAt])
+  // 支持用户评论历史查询。
   @@index([userId, createdAt])
   @@map("comments")
 }
 
+/// 某个用户对某条评论的一次反应。
 model CommentReaction {
+  /// 评论反应记录 ID。
   id           String   @id @default(cuid())
+  /// 被反应的评论 ID。
   commentId    String
+  /// 产生反应的用户 ID。
   userId       String
+  /// 反应类型，由应用层控制枚举或表情代码。
   reactionType String   @db.VarChar(32)
+  /// 反应创建时间。
   createdAt    DateTime @default(now())
+  /// 被反应的评论。
   comment      Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  /// 产生反应的用户。
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // 防止同一用户对同一评论重复添加同一类型反应。
   @@unique([commentId, userId, reactionType])
+  // 支持用户反应历史查询。
   @@index([userId])
   @@map("comment_reactions")
 }
 
+/// 用户针对评论提交的审核举报。
 model CommentReport {
+  /// 举报记录 ID。
   id             String   @id @default(cuid())
+  /// 被举报的评论 ID。
   commentId      String
+  /// 提交举报的用户 ID。
   reporterUserId String
+  /// 机器可读的举报原因。
   reason         String   @db.VarChar(64)
+  /// 用户填写的补充举报说明。
   details        String?  @db.Text
+  /// 举报处理状态，目前由应用层控制。
   status         String   @default("open") @db.VarChar(32)
+  /// 举报创建时间。
   createdAt      DateTime @default(now())
+  /// 举报最后更新时间。
   updatedAt      DateTime @updatedAt
+  /// 被举报的评论。
   comment        Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  /// 提交举报的用户。
   reporter       User     @relation("CommentReporter", fields: [reporterUserId], references: [id], onDelete: Cascade)
 
+  // 支持按评论聚合审核队列。
   @@index([commentId])
+  // 支持举报人历史和滥用检查。
   @@index([reporterUserId])
   @@map("comment_reports")
 }
 
+/// 针对评论执行审核动作的审计日志。
 model CommentModerationLog {
+  /// 审核日志记录 ID。
   id              String   @id @default(cuid())
+  /// 被审核的评论 ID。
   commentId       String
+  /// 执行审核的用户 ID，系统任务产生时为空。
   moderatorUserId String?
+  /// 机器可读的审核动作。
   action          String   @db.VarChar(32)
+  /// 审核备注。
   note            String?  @db.Text
+  /// 审核动作记录时间。
   createdAt       DateTime @default(now())
+  /// 被审核的评论。
   comment         Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  /// 执行审核的用户，系统任务产生时为空。
   moderator       User?    @relation("CommentModerator", fields: [moderatorUserId], references: [id], onDelete: SetNull)
 
+  // 支持按评论查看审核时间线。
   @@index([commentId, createdAt])
+  // 支持审核员操作记录查询。
   @@index([moderatorUserId])
   @@map("comment_moderation_logs")
 }
