@@ -44,7 +44,12 @@ function buildReleaseUpdateData(
   if (input.genreLabel !== undefined) data.genreLabel = toNullableString(input.genreLabel);
   if (input.slug !== undefined) data.slug = slugifyReleaseValue(input.slug);
   if (input.description !== undefined) data.description = toNullableString(input.description);
-  if (input.status !== undefined) data.status = input.status;
+  if (input.status !== undefined) {
+    data.status = input.status;
+    if (input.status === CREATOR_RELEASE_PUBLISHED_STATUS && !existing.publishedAt) {
+      data.publishedAt = new Date();
+    }
+  }
   if (input.currentStage !== undefined) data.currentStage = input.currentStage.trim();
   if (input.accessModel !== undefined) data.accessModel = input.accessModel;
   if (input.previewSeconds !== undefined) data.previewSeconds = input.previewSeconds;
@@ -67,6 +72,18 @@ function buildReleaseUpdateData(
       ? { connect: { id: input.metadataStorageObjectId } }
       : { disconnect: true };
   }
+  if (input.chainId !== undefined) data.chainId = input.chainId ?? null;
+  if (input.chainName !== undefined) data.chainName = toNullableString(input.chainName);
+  if (input.explorerUrl !== undefined) data.explorerUrl = toNullableString(input.explorerUrl);
+  if (input.musicAssetAddress !== undefined) data.musicAssetAddress = toNullableString(input.musicAssetAddress);
+  if (input.royaltySplitterFactoryAddress !== undefined) {
+    data.royaltySplitterFactoryAddress = toNullableString(input.royaltySplitterFactoryAddress);
+  }
+  if (input.platformHubAddress !== undefined) data.platformHubAddress = toNullableString(input.platformHubAddress);
+  if (input.splitterAddress !== undefined) data.splitterAddress = toNullableString(input.splitterAddress);
+  if (input.publishTxHash !== undefined) data.publishTxHash = toNullableString(input.publishTxHash);
+  if (input.publishBlockNumber !== undefined) data.publishBlockNumber = input.publishBlockNumber;
+  if (input.tokenId !== undefined) data.tokenId = toNullableString(input.tokenId);
   if (input.metadataDocument !== undefined) data.metadataDocument = asJsonValue(input.metadataDocument);
   if (input.royaltySplits !== undefined) data.royaltySplits = asJsonValue(input.royaltySplits);
   if (input.statusMessage !== undefined) data.statusMessage = toNullableStatusMessage(input.statusMessage);
@@ -112,7 +129,8 @@ async function syncPublishedTrackResource(
 ) {
   if (
     release.status !== CREATOR_RELEASE_PUBLISHED_STATUS ||
-    !release.platformDeployment ||
+    !release.chainId ||
+    !release.musicAssetAddress ||
     !release.tokenId
   ) {
     return false;
@@ -121,9 +139,8 @@ async function syncPublishedTrackResource(
   await releaseRepository.upsertPublishedTrackResource({
     releaseId: release.id,
     creatorUserId,
-    platformDeploymentId: release.platformDeployment.id,
-    chainId: release.platformDeployment.chainId,
-    musicAssetAddress: release.platformDeployment.musicAssetAddress,
+    chainId: release.chainId,
+    musicAssetAddress: release.musicAssetAddress,
     tokenId: release.tokenId,
     contentCid: release.metadataStorageObject?.cid ?? null,
     title: release.title,

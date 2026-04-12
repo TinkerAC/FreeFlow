@@ -84,16 +84,6 @@ export type StorageObjectRecord = {
   createdAt: string;
 };
 
-export type PlatformDeploymentRecord = {
-  id: string;
-  chainId: number;
-  chainName: string | null;
-  deploymentKey: string;
-  musicAssetAddress: string;
-  royaltySplitterFactoryAddress: string;
-  platformHubAddress: string;
-};
-
 export type CreatorReleaseRecord = {
   id: string;
   creatorUserId: string;
@@ -119,10 +109,9 @@ export type CreatorReleaseRecord = {
   audioStorageObject: StorageObjectRecord | null;
   coverStorageObject: StorageObjectRecord | null;
   metadataStorageObject: StorageObjectRecord | null;
-  platformDeploymentId: string | null;
-  platformDeployment: PlatformDeploymentRecord | null;
   splitterAddress: string | null;
   publishTxHash: string | null;
+  publishBlockNumber: string | null;
   purchaseTxHash: string | null;
   tokenId: string | null;
   chainId: number | null;

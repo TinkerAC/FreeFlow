@@ -288,50 +288,6 @@ model StorageUpload {
   @@map("storage_uploads")
 }
 
-/// 平台在某条链上的一套合约部署。release 通过 deployment 关联平台确定信息。
-model PlatformContractDeployment {
-  /// 部署记录 ID。
-  id                                 String           @id @default(cuid())
-  /// EVM 链 ID。
-  chainId                            Int
-  /// 人类可读链名称。
-  chainName                          String?          @db.VarChar(64)
-  /// 部署版本或环境键，例如 default、v1、test。
-  deploymentKey                      String           @default("default") @db.VarChar(64)
-  /// 是否作为该链当前默认部署使用。
-  isActive                           Boolean          @default(true)
-  /// 已发布音乐资产合约地址。
-  musicAssetAddress                  String           @db.VarChar(42)
-  /// 小写音乐资产合约地址。
-  musicAssetAddressLower             String           @db.VarChar(42)
-  /// 版税分账工厂合约地址。
-  royaltySplitterFactoryAddress      String           @db.VarChar(42)
-  /// 小写版税分账工厂合约地址。
-  royaltySplitterFactoryAddressLower String           @db.VarChar(42)
-  /// 平台 Hub 合约地址。
-  platformHubAddress                 String           @db.VarChar(42)
-  /// 小写平台 Hub 合约地址。
-  platformHubAddressLower            String           @db.VarChar(42)
-  /// 部署交易哈希。
-  deploymentTxHash                   String?          @db.VarChar(100)
-  /// 部署开始生效的区块高度。
-  activeFromBlock                    BigInt?
-  /// 部署记录创建时间。
-  createdAt                          DateTime         @default(now())
-  /// 部署记录最后更新时间。
-  updatedAt                          DateTime         @updatedAt
-  /// 使用该部署发布的发行。
-  releases                           CreatorRelease[]
-  /// 使用该部署索引出的资源。
-  resources                          Resource[]
-
-  // 每条链同一个部署键只对应一套合约。
-  @@unique([chainId, deploymentKey])
-  // 支持查找当前活跃部署。
-  @@index([chainId, isActive])
-  @@map("platform_contract_deployments")
-}
-
 /// 创作者拥有的音乐发行草稿和链上发布流程记录。
 model CreatorRelease {
   /// 发行记录 ID。
@@ -372,8 +328,18 @@ model CreatorRelease {
   coverStorageObjectId    String?
   /// 关联的 metadata 内容对象 ID。
   metadataStorageObjectId String?
-  /// 发布时使用的平台合约部署 ID。
-  platformDeploymentId    String?
+  /// 发布链的 EVM 链 ID。
+  chainId                 Int?
+  /// 发布链名称。
+  chainName               String?                     @db.VarChar(64)
+  /// 区块浏览器地址前缀。
+  explorerUrl             String?                     @db.VarChar(255)
+  /// 已发布音乐资产合约地址。
+  musicAssetAddress       String?                     @db.VarChar(42)
+  /// 版税分账工厂合约地址。
+  royaltySplitterFactoryAddress String?               @db.VarChar(42)
+  /// 平台 Hub 合约地址。
+  platformHubAddress      String?                     @db.VarChar(42)
   /// 该发行对应的版税分账实例合约地址。
   splitterAddress         String?                     @db.VarChar(42)
   /// 发布交易哈希。
@@ -410,15 +376,13 @@ model CreatorRelease {
   coverStorageObject      StorageObject?              @relation("CreatorReleaseCoverObject", fields: [coverStorageObjectId], references: [id], onDelete: Restrict)
   /// 关联的 metadata 内容对象。
   metadataStorageObject   StorageObject?              @relation("CreatorReleaseMetadataObject", fields: [metadataStorageObjectId], references: [id], onDelete: Restrict)
-  /// 发布时使用的平台合约部署。
-  platformDeployment      PlatformContractDeployment? @relation(fields: [platformDeploymentId], references: [id], onDelete: Restrict)
   /// 已发布后同步出的资源索引。
   publishedResource       Resource?                   @relation("CreatorReleasePublishedResource", fields: [publishedResourceId], references: [id], onDelete: SetNull)
   /// 该发行产生的购买记录。
   purchases               Purchase[]
 
-  // 同一套平台合约部署下 token ID 只对应一个发行。
-  @@unique([platformDeploymentId, tokenId])
+  // 同一条链同一合约下 token ID 只对应一个发行。
+  @@unique([chainId, musicAssetAddress, tokenId])
   // 支持创作者工作台按更新时间排序。
   @@index([creatorUserId, updatedAt])
   // 支持按创作者和工作流状态筛选发行。
@@ -442,8 +406,6 @@ model Resource {
   resourceKey          String                      @unique @db.VarChar(255)
   /// 资源业务类型。
   type                 ResourceType
-  /// 关联的平台合约部署 ID。
-  platformDeploymentId String?
   /// 链上资源所在的 EVM 链 ID。
   chainId              Int?
   /// 合约地址，保留原始大小写。
@@ -462,8 +424,6 @@ model Resource {
   createdAt            DateTime                    @default(now())
   /// 资源记录最后更新时间。
   updatedAt            DateTime                    @updatedAt
-  /// 关联的平台合约部署。
-  platformDeployment   PlatformContractDeployment? @relation(fields: [platformDeploymentId], references: [id], onDelete: SetNull)
   /// 当前后端可识别的资源拥有者。
   owner                User?                       @relation("ResourceOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
   /// 由该资源反向关联的发行。

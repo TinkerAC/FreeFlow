@@ -20,7 +20,6 @@ const releaseInclude = {
   metadataStorageObject: {
     include: storageObjectInclude,
   },
-  platformDeployment: true,
   publishedResource: true,
 } satisfies Prisma.CreatorReleaseInclude;
 
@@ -100,7 +99,6 @@ export class ReleaseRepository {
   async upsertPublishedTrackResource(input: {
     releaseId: string;
     creatorUserId: string;
-    platformDeploymentId: string;
     chainId: number;
     musicAssetAddress: string;
     tokenId: string;
@@ -121,7 +119,6 @@ export class ReleaseRepository {
       },
       update: {
         type: ResourceType.TRACK,
-        platformDeploymentId: input.platformDeploymentId,
         chainId: input.chainId,
         contractAddress: input.musicAssetAddress,
         contractAddressLower,
@@ -133,7 +130,6 @@ export class ReleaseRepository {
       create: {
         resourceKey,
         type: ResourceType.TRACK,
-        platformDeploymentId: input.platformDeploymentId,
         chainId: input.chainId,
         contractAddress: input.musicAssetAddress,
         contractAddressLower,

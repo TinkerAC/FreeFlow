@@ -304,16 +304,6 @@ export const publishReleaseThunk = createAsyncThunk<
 
       const platformHub = new Contract(effectiveWeb3Settings.platformHubAddress, PLATFORM_HUB_ABI, signer);
 
-      const [predictedTokenId, predictedSplitter] = await platformHub.publishTrack.staticCall(
-        metadataUri,
-        release.royaltyBps,
-        requiresPurchase,
-        priceWei,
-        true,
-        splits.map((item) => item.address),
-        splits.map((item) => item.share),
-      );
-
       await updateCreatorRelease(baseUrl, release.id, {
         status: 'PUBLISHING',
         currentStage: 'publish',
@@ -345,32 +335,64 @@ export const publishReleaseThunk = createAsyncThunk<
         activityEntry: { message: `Publish tx submitted: ${publishTx.hash}`, level: 'info' },
       });
 
-      await publishTx.wait();
-      const tokenId = predictedTokenId.toString();
+      const publishReceipt = await publishTx.wait();
+      if (!publishReceipt) {
+        throw new Error('Publish transaction receipt not found');
+      }
+
+      let publishedTokenId: string | null = null;
+      let publishedCreator: string | null = null;
+      let publishedPayoutReceiver: string | null = null;
+      for (const log of publishReceipt.logs) {
+        try {
+          const parsedLog = platformHub.interface.parseLog(log);
+          if (!parsedLog || parsedLog.name !== 'TrackPublished') {
+            continue;
+          }
+          const tokenId = parsedLog.args[0]?.toString?.();
+          const creator = parsedLog.args[1];
+          const payoutReceiver = parsedLog.args[2];
+          if (!tokenId || typeof creator !== 'string' || typeof payoutReceiver !== 'string') {
+            continue;
+          }
+          publishedTokenId = tokenId;
+          publishedCreator = creator;
+          publishedPayoutReceiver = payoutReceiver;
+          break;
+        } catch {
+          continue;
+        }
+      }
+
+      if (!publishedTokenId || !publishedPayoutReceiver || !publishedCreator) {
+        throw new Error('Publish receipt missing TrackPublished event');
+      }
+
       const updated = await updateCreatorRelease(baseUrl, release.id, {
         status: 'PUBLISHED',
         currentStage: 'access',
-        splitterAddress: predictedSplitter,
+        splitterAddress: publishedPayoutReceiver,
         publishTxHash: publishTx.hash,
-        tokenId,
+        publishBlockNumber: publishReceipt.blockNumber,
+        tokenId: publishedTokenId,
         latestError: null,
-        statusMessage: `作品已发布：Token #${tokenId}`,
-        activityEntry: { message: `Published token #${tokenId}`, level: 'success' },
+        statusMessage: `作品已发布：Token #${publishedTokenId}`,
+        activityEntry: { message: `Published token #${publishedTokenId}`, level: 'success' },
       });
 
       return {
         release: updated,
         accessCheck: {
-          tokenId,
-          creator: artistAddress,
-          payoutReceiver: predictedSplitter,
+          tokenId: publishedTokenId,
+          creator: publishedCreator,
+          payoutReceiver: publishedPayoutReceiver,
           priceEth: requiresPurchase ? release.priceEth : '0',
           requiresPurchase,
           active: true,
           hasAccess: requiresPurchase ? null : true,
           platformFeeEth: '',
           creatorProceedsEth: '',
-          lastUpdated: '已根据发布结果预填作品编号',
+          lastUpdated: '已根据链上回执更新作品编号',
         },
       };
     } catch (error) {

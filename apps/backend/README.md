@@ -44,7 +44,7 @@ Core persisted entities:
 - `AuthSession`
 - `StorageObject`
 - `StorageUpload`
-- `PlatformContractDeployment`
+- `CreatorRelease`
 - `Resource`
 - `Purchase`
 - `Comment`

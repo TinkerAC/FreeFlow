@@ -11,6 +11,7 @@ export const DEFAULT_SEPOLIA_CONTRACTS = {
 } as const;
 
 export const PLATFORM_HUB_ABI = [
+  'event TrackPublished(uint256 indexed tokenId, address indexed creator, address indexed payoutReceiver, string tokenURI, bool requiresPurchase, uint256 price, bool active)',
   'function publishTrack(string tokenURI_, uint96 royaltyBps, bool requiresPurchase, uint256 price, bool saleActive, address[] payees, uint256[] shares) returns (uint256 tokenId, address splitter)',
   'function updateTrackSale(uint256 tokenId, bool requiresPurchase, bool active, uint256 price)',
   'function grantAccess(uint256 tokenId, address account)',

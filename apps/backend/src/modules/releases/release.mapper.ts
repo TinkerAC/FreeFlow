@@ -26,20 +26,6 @@ function mapStorageObject(record: PersistedCreatorRelease['audioStorageObject'])
   };
 }
 
-function mapPlatformDeployment(record: PersistedCreatorRelease['platformDeployment']) {
-  if (!record) return null;
-
-  return {
-    id: record.id,
-    chainId: record.chainId,
-    chainName: record.chainName,
-    deploymentKey: record.deploymentKey,
-    musicAssetAddress: record.musicAssetAddress,
-    royaltySplitterFactoryAddress: record.royaltySplitterFactoryAddress,
-    platformHubAddress: record.platformHubAddress,
-  };
-}
-
 /**
  * 兜底解析数据库中的活动日志 JSON，避免脏数据直接污染接口响应。
  */
@@ -82,17 +68,16 @@ export function mapReleaseRecord(record: PersistedCreatorRelease) {
     audioStorageObject: mapStorageObject(record.audioStorageObject),
     coverStorageObject: mapStorageObject(record.coverStorageObject),
     metadataStorageObject: mapStorageObject(record.metadataStorageObject),
-    platformDeploymentId: record.platformDeploymentId,
-    platformDeployment: mapPlatformDeployment(record.platformDeployment),
     splitterAddress: record.splitterAddress,
     publishTxHash: record.publishTxHash,
     publishBlockNumber: record.publishBlockNumber?.toString() ?? null,
     tokenId: record.tokenId,
-    chainId: record.platformDeployment?.chainId ?? null,
-    chainName: record.platformDeployment?.chainName ?? null,
-    musicAssetAddress: record.platformDeployment?.musicAssetAddress ?? null,
-    royaltySplitterFactoryAddress: record.platformDeployment?.royaltySplitterFactoryAddress ?? null,
-    platformHubAddress: record.platformDeployment?.platformHubAddress ?? null,
+    chainId: record.chainId ?? null,
+    chainName: record.chainName,
+    explorerUrl: record.explorerUrl,
+    musicAssetAddress: record.musicAssetAddress,
+    royaltySplitterFactoryAddress: record.royaltySplitterFactoryAddress,
+    platformHubAddress: record.platformHubAddress,
     publishedResourceId: record.publishedResourceId,
     metadataDocument: record.metadataDocument ?? null,
     royaltySplits: Array.isArray(record.royaltySplits) ? record.royaltySplits : [],
