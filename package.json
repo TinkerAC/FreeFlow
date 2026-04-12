@@ -14,8 +14,8 @@
     "dev:desktop": "pnpm --filter freeflow run dev",
     "dev:backend": "pnpm --filter freeflow-web25-backend run dev",
     "build:backend": "pnpm --filter freeflow-web25-backend run build",
-    "db:backend:migrate:dev": "pnpm --filter freeflow-web25-backend run prisma:migrate:dev",
-    "db:backend:migrate:deploy": "pnpm --filter freeflow-web25-backend run prisma:migrate:deploy",
+    "db:backend:push": "pnpm --filter freeflow-web25-backend run prisma:push",
+    "db:backend:comments": "pnpm --filter freeflow-web25-backend run prisma:comments",
     "db:backend:studio": "pnpm --filter freeflow-web25-backend run prisma:studio"
   }
 }

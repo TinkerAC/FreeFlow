@@ -15,6 +15,7 @@ const CreatorReleaseStatusSchema = z.enum([
   'CANCELLED',
 ]);
 
+const ClientEditableCreatorReleaseStatusSchema = CreatorReleaseStatusSchema.exclude(['PUBLISHED']);
 const ReleaseAccessModelSchema = z.enum(['open', 'purchase']);
 
 export const ReleaseActivityEntrySchema = z.object({
@@ -26,7 +27,7 @@ export const ReleaseActivityEntrySchema = z.object({
 export const ReleaseSplitRecipientSchema = z.object({
   id: z.string().min(1).max(64),
   label: z.string().min(1).max(64),
-  address: z.string().max(128),
+  address: z.string().trim().max(42),
   share: z.number().min(0).max(100),
 });
 
@@ -43,29 +44,17 @@ export const UpdateCreatorReleaseSchema = z.object({
   genreLabel: z.string().trim().max(255).optional().nullable(),
   slug: z.string().trim().min(1).max(255).optional(),
   description: z.string().trim().max(20_000).optional().nullable(),
-  status: CreatorReleaseStatusSchema.optional(),
+  status: ClientEditableCreatorReleaseStatusSchema.optional(),
   currentStage: z.string().trim().min(1).max(32).optional(),
   accessModel: ReleaseAccessModelSchema.optional(),
   previewSeconds: z.number().int().min(0).max(3600).optional(),
   priceEth: z.string().trim().max(64).optional(),
   royaltyBps: z.number().int().min(0).max(10_000).optional(),
   audioSourceName: z.string().trim().max(255).optional().nullable(),
-  audioSourcePath: z.string().trim().max(2048).optional().nullable(),
   coverSourceName: z.string().trim().max(255).optional().nullable(),
-  coverSourcePath: z.string().trim().max(2048).optional().nullable(),
   audioStorageObjectId: z.string().trim().min(1).optional().nullable(),
   coverStorageObjectId: z.string().trim().min(1).optional().nullable(),
   metadataStorageObjectId: z.string().trim().min(1).optional().nullable(),
-  splitterAddress: z.string().trim().max(42).optional().nullable(),
-  publishTxHash: z.string().trim().max(100).optional().nullable(),
-  purchaseTxHash: z.string().trim().max(100).optional().nullable(),
-  tokenId: z.string().trim().max(128).optional().nullable(),
-  chainId: z.number().int().optional().nullable(),
-  chainName: z.string().trim().max(64).optional().nullable(),
-  explorerUrl: z.string().trim().url().max(4096).optional().nullable(),
-  musicAssetAddress: z.string().trim().max(42).optional().nullable(),
-  royaltySplitterFactoryAddress: z.string().trim().max(42).optional().nullable(),
-  platformHubAddress: z.string().trim().max(42).optional().nullable(),
   metadataDocument: z.unknown().optional().nullable(),
   royaltySplits: z.array(ReleaseSplitRecipientSchema).optional().nullable(),
   activityEntry: ReleaseActivityEntrySchema.optional(),

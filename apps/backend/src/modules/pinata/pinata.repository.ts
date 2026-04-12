@@ -1,3 +1,4 @@
+import type { StorageNetwork } from '@prisma/client';
 import { prisma } from '../../infra/database/prisma.js';
 
 /**
@@ -12,38 +13,61 @@ export class PinataRepository {
     name: string;
     size: number;
     mimeType: string;
-    gatewayUrl: string;
-    network: string;
+    network: StorageNetwork;
     groupId?: string | null;
   }) {
-    return prisma.storageObject.upsert({
-      where: {
-        uploaderUserId_cid: {
-          uploaderUserId: input.uploaderUserId,
+    return prisma.$transaction(async (tx) => {
+      const storageObject = await tx.storageObject.upsert({
+        where: {
           cid: input.cid,
         },
-      },
-      update: {
+        update: {
+          size: input.size,
+          mimeType: input.mimeType,
+        },
+        create: {
+          cid: input.cid,
+          size: input.size,
+          mimeType: input.mimeType,
+        },
+      });
+
+      const uploadData = {
+        storageObjectId: storageObject.id,
         uploaderUserId: input.uploaderUserId,
         pinataId: input.pinataId ?? null,
-        name: input.name,
-        size: input.size,
-        mimeType: input.mimeType,
-        gatewayUrl: input.gatewayUrl,
+        originalName: input.name,
         network: input.network,
         groupId: input.groupId ?? null,
-      },
-      create: {
-        uploaderUserId: input.uploaderUserId,
-        cid: input.cid,
-        pinataId: input.pinataId ?? null,
-        name: input.name,
-        size: input.size,
-        mimeType: input.mimeType,
-        gatewayUrl: input.gatewayUrl,
-        network: input.network,
-        groupId: input.groupId ?? null,
-      },
+      };
+
+      if (input.pinataId) {
+        await tx.storageUpload.upsert({
+          where: {
+            pinataId: input.pinataId,
+          },
+          update: uploadData,
+          create: uploadData,
+        });
+      } else {
+        await tx.storageUpload.create({
+          data: uploadData,
+        });
+      }
+
+      return tx.storageObject.findUniqueOrThrow({
+        where: {
+          id: storageObject.id,
+        },
+        include: {
+          uploads: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+      });
     });
   }
 }

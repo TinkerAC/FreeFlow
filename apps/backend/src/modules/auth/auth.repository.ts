@@ -19,12 +19,12 @@ function lowerCaseAddress(address: string) {
 async function touchPrimaryWallet(
   tx: Prisma.TransactionClient,
   userId: string,
-  primaryWalletAddress: string,
+  primaryWalletIdentityId: string,
 ) {
   await tx.user.update({
     where: { id: userId },
     data: {
-      primaryWalletAddress,
+      primaryWalletIdentityId,
     },
   });
 }
@@ -125,11 +125,11 @@ export class AuthRepository {
           },
         });
 
-        if (existingWallet.isPrimary && existingWallet.user.primaryWalletAddress !== input.address) {
-          await touchPrimaryWallet(tx, existingWallet.user.id, input.address);
+        if (existingWallet.user.primaryWalletIdentityId !== existingWallet.id) {
+          await touchPrimaryWallet(tx, existingWallet.user.id, existingWallet.id);
         }
 
-        const user = existingWallet.isPrimary && existingWallet.user.primaryWalletAddress !== input.address
+        const user = existingWallet.user.primaryWalletIdentityId !== existingWallet.id
           ? await tx.user.findUniqueOrThrow({ where: { id: existingWallet.user.id } })
           : existingWallet.user;
 
@@ -140,9 +140,7 @@ export class AuthRepository {
       }
 
       const user = await tx.user.create({
-        data: {
-          primaryWalletAddress: input.address,
-        },
+        data: {},
       });
 
       const walletIdentity = await tx.walletIdentity.create({
@@ -151,14 +149,20 @@ export class AuthRepository {
           address: input.address,
           addressLower,
           chainId: input.chainId,
-          isPrimary: true,
           verifiedAt: input.verifiedAt,
           lastAuthenticatedAt: input.verifiedAt,
         },
       });
 
+      const updatedUser = await tx.user.update({
+        where: { id: user.id },
+        data: {
+          primaryWalletIdentityId: walletIdentity.id,
+        },
+      });
+
       return {
-        user,
+        user: updatedUser,
         walletIdentity,
       };
     });

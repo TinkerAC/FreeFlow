@@ -1,10 +1,27 @@
 import { Prisma, ResourceType } from '@prisma/client';
 import { prisma } from '../../infra/database/prisma.js';
 
+const storageObjectInclude = {
+  uploads: {
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: 1,
+  },
+} satisfies Prisma.StorageObjectInclude;
+
 const releaseInclude = {
-  audioStorageObject: true,
-  coverStorageObject: true,
-  metadataStorageObject: true,
+  audioStorageObject: {
+    include: storageObjectInclude,
+  },
+  coverStorageObject: {
+    include: storageObjectInclude,
+  },
+  metadataStorageObject: {
+    include: storageObjectInclude,
+  },
+  platformDeployment: true,
+  publishedResource: true,
 } satisfies Prisma.CreatorReleaseInclude;
 
 /**
@@ -71,41 +88,54 @@ export class ReleaseRepository {
     return prisma.storageObject.findFirst({
       where: {
         id: storageObjectId,
-        uploaderUserId: userId,
+        uploads: {
+          some: {
+            uploaderUserId: userId,
+          },
+        },
       },
     });
   }
 
   async upsertPublishedTrackResource(input: {
+    releaseId: string;
     creatorUserId: string;
+    platformDeploymentId: string;
     chainId: number;
-    contractAddress: string;
+    musicAssetAddress: string;
     tokenId: string;
     contentCid?: string | null;
     title?: string | null;
   }) {
-    const contractAddressLower = input.contractAddress.toLowerCase();
+    const contractAddressLower = input.musicAssetAddress.toLowerCase();
+    const resourceKey = [
+      'chain',
+      input.chainId,
+      contractAddressLower,
+      input.tokenId,
+    ].join(':');
 
-    await prisma.resource.upsert({
+    const resource = await prisma.resource.upsert({
       where: {
-        chainId_contractAddressLower_tokenId: {
-          chainId: input.chainId,
-          contractAddressLower,
-          tokenId: input.tokenId,
-        },
+        resourceKey,
       },
       update: {
         type: ResourceType.TRACK,
-        contractAddress: input.contractAddress,
+        platformDeploymentId: input.platformDeploymentId,
+        chainId: input.chainId,
+        contractAddress: input.musicAssetAddress,
         contractAddressLower,
+        tokenId: input.tokenId,
         contentCid: input.contentCid ?? null,
         title: input.title ?? null,
         ownerUserId: input.creatorUserId,
       },
       create: {
+        resourceKey,
         type: ResourceType.TRACK,
+        platformDeploymentId: input.platformDeploymentId,
         chainId: input.chainId,
-        contractAddress: input.contractAddress,
+        contractAddress: input.musicAssetAddress,
         contractAddressLower,
         tokenId: input.tokenId,
         contentCid: input.contentCid ?? null,
@@ -113,6 +143,17 @@ export class ReleaseRepository {
         ownerUserId: input.creatorUserId,
       },
     });
+
+    await prisma.creatorRelease.update({
+      where: {
+        id: input.releaseId,
+      },
+      data: {
+        publishedResourceId: resource.id,
+      },
+    });
+
+    return resource;
   }
 }
 

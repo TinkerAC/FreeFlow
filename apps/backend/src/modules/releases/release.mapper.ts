@@ -1,3 +1,4 @@
+import { env } from '../../config/env.js';
 import type { PersistedCreatorRelease } from './release.repository.js';
 
 export type ReleaseActivityEntry = {
@@ -9,17 +10,33 @@ export type ReleaseActivityEntry = {
 function mapStorageObject(record: PersistedCreatorRelease['audioStorageObject']) {
   if (!record) return null;
 
+  const latestUpload = record.uploads[0] ?? null;
+
   return {
     id: record.id,
     cid: record.cid,
-    pinataId: record.pinataId,
-    name: record.name,
+    pinataId: latestUpload?.pinataId ?? null,
+    name: latestUpload?.originalName ?? record.cid,
     size: record.size,
     mimeType: record.mimeType,
-    gatewayUrl: record.gatewayUrl,
-    network: record.network,
-    groupId: record.groupId,
+    gatewayUrl: `${env.pinataGatewayBaseUrl.replace(/\/$/, '')}/${record.cid}`,
+    network: latestUpload?.network ?? null,
+    groupId: latestUpload?.groupId ?? null,
     createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function mapPlatformDeployment(record: PersistedCreatorRelease['platformDeployment']) {
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    chainId: record.chainId,
+    chainName: record.chainName,
+    deploymentKey: record.deploymentKey,
+    musicAssetAddress: record.musicAssetAddress,
+    royaltySplitterFactoryAddress: record.royaltySplitterFactoryAddress,
+    platformHubAddress: record.platformHubAddress,
   };
 }
 
@@ -58,25 +75,25 @@ export function mapReleaseRecord(record: PersistedCreatorRelease) {
     priceEth: record.priceEth,
     royaltyBps: record.royaltyBps,
     audioSourceName: record.audioSourceName,
-    audioSourcePath: record.audioSourcePath,
     coverSourceName: record.coverSourceName,
-    coverSourcePath: record.coverSourcePath,
     audioStorageObjectId: record.audioStorageObjectId,
     coverStorageObjectId: record.coverStorageObjectId,
     metadataStorageObjectId: record.metadataStorageObjectId,
     audioStorageObject: mapStorageObject(record.audioStorageObject),
     coverStorageObject: mapStorageObject(record.coverStorageObject),
     metadataStorageObject: mapStorageObject(record.metadataStorageObject),
+    platformDeploymentId: record.platformDeploymentId,
+    platformDeployment: mapPlatformDeployment(record.platformDeployment),
     splitterAddress: record.splitterAddress,
     publishTxHash: record.publishTxHash,
-    purchaseTxHash: record.purchaseTxHash,
+    publishBlockNumber: record.publishBlockNumber?.toString() ?? null,
     tokenId: record.tokenId,
-    chainId: record.chainId,
-    chainName: record.chainName,
-    explorerUrl: record.explorerUrl,
-    musicAssetAddress: record.musicAssetAddress,
-    royaltySplitterFactoryAddress: record.royaltySplitterFactoryAddress,
-    platformHubAddress: record.platformHubAddress,
+    chainId: record.platformDeployment?.chainId ?? null,
+    chainName: record.platformDeployment?.chainName ?? null,
+    musicAssetAddress: record.platformDeployment?.musicAssetAddress ?? null,
+    royaltySplitterFactoryAddress: record.platformDeployment?.royaltySplitterFactoryAddress ?? null,
+    platformHubAddress: record.platformDeployment?.platformHubAddress ?? null,
+    publishedResourceId: record.publishedResourceId,
     metadataDocument: record.metadataDocument ?? null,
     royaltySplits: Array.isArray(record.royaltySplits) ? record.royaltySplits : [],
     activityLog: parseActivityLog(record.activityLog),

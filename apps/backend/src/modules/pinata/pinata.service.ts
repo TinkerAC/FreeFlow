@@ -117,7 +117,6 @@ export class PinataService {
       name: uploadedFile.name,
       size: uploadedFile.size,
       mimeType: uploadedFile.mimeType,
-      gatewayUrl: uploadedFile.gatewayUrl,
       network: env.pinataNetwork,
       ...(env.pinataGroupId ? { groupId: env.pinataGroupId } : {}),
     });
