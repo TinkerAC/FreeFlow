@@ -1,25 +1,25 @@
-require("@nomicfoundation/hardhat-ethers");
+require('@nomicfoundation/hardhat-ethers');
 
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const path = require('path');
 
 function loadEnvFromRepoRoot() {
-  const envPath = path.resolve(__dirname, "../../.env");
+  const envPath = path.resolve(__dirname, '../../.env');
 
   if (!fs.existsSync(envPath)) {
     return;
   }
 
-  const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
+  const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
 
   for (const line of lines) {
     const trimmed = line.trim();
 
-    if (!trimmed || trimmed.startsWith("#")) {
+    if (!trimmed || trimmed.startsWith('#')) {
       continue;
     }
 
-    const separatorIndex = trimmed.indexOf("=");
+    const separatorIndex = trimmed.indexOf('=');
 
     if (separatorIndex === -1) {
       continue;
@@ -35,7 +35,7 @@ function loadEnvFromRepoRoot() {
 
     if (
       (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
+      (value.startsWith('\'') && value.endsWith('\''))
     ) {
       value = value.slice(1, -1);
     }
@@ -51,42 +51,36 @@ function createNetwork(url) {
 
   return {
     url,
-    accounts: [PRIVATE_KEY]
+    accounts: [PRIVATE_KEY],
   };
 }
 
 loadEnvFromRepoRoot();
 
-const PRIVATE_KEY =
-  process.env.PRIVATE_KEY ||
-  process.env.POLYGON_PRIVATE_KEY ||
-  "0000000000000000000000000000000000000000000000000000000000000000";
-const DEFAULT_SEPOLIA_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
+const PRIVATE_KEY = process.env.POLYGON_PRIVATE_KEY ||
+  '0000000000000000000000000000000000000000000000000000000000000000';
+const DEFAULT_SEPOLIA_RPC_URL = 'https://ethereum-sepolia-rpc.publicnode.com';
 
 const networks = {};
 const sepolia = createNetwork(process.env.SEPOLIA_RPC_URL || DEFAULT_SEPOLIA_RPC_URL);
-const amoy = createNetwork(process.env.AMOY_RPC_URL || process.env.POLYGON_AMOY_RPC_URL);
 
 if (sepolia) {
   networks.sepolia = sepolia;
 }
 
-if (amoy) {
-  networks.amoy = amoy;
-}
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.26",
+    version: '0.8.26',
     settings: {
-      evmVersion: "cancun",
+      evmVersion: 'cancun',
       optimizer: {
         enabled: true,
-        runs: 200
+        runs: 200,
       },
-      viaIR: true
-    }
+      viaIR: true,
+    },
   },
-  networks
+  networks,
 };

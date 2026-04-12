@@ -343,6 +343,7 @@ export const publishReleaseThunk = createAsyncThunk<
       let publishedTokenId: string | null = null;
       let publishedCreator: string | null = null;
       let publishedPayoutReceiver: string | null = null;
+
       for (const log of publishReceipt.logs) {
         try {
           const parsedLog = platformHub.interface.parseLog(log);
@@ -364,8 +365,12 @@ export const publishReleaseThunk = createAsyncThunk<
         }
       }
 
-      if (!publishedTokenId || !publishedPayoutReceiver || !publishedCreator) {
+      if (!publishedTokenId || !publishedPayoutReceiver) {
         throw new Error('Publish receipt missing TrackPublished event');
+      }
+
+      if (!publishedCreator) {
+        publishedCreator = artistAddress;
       }
 
       const updated = await updateCreatorRelease(baseUrl, release.id, {
