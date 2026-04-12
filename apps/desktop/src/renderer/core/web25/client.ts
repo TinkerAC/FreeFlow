@@ -1,3 +1,10 @@
+import type {
+  CreatorReleaseClientUpdateStatus,
+  CreatorReleaseStatus,
+  ReleaseAccessModel,
+  ReleaseActivityLevel,
+} from '@freeflow/web25-shared';
+
 type ApiSuccessEnvelope<TData> = {
   ok: true;
   data: TData;
@@ -51,19 +58,9 @@ export type PinataConfigPayload = {
   maxFileSizeBytes: number;
 };
 
-export type CreatorReleaseStatus =
-  | 'DRAFT'
-  | 'ASSETS_PENDING'
-  | 'ASSETS_UPLOADED'
-  | 'METADATA_UPLOADED'
-  | 'PUBLISHING'
-  | 'PUBLISHED'
-  | 'FAILED'
-  | 'CANCELLED';
-
 export type CreatorReleaseActivity = {
   message: string;
-  level: 'info' | 'success' | 'warning' | 'error';
+  level: ReleaseActivityLevel;
   at: string;
 };
 
@@ -108,7 +105,7 @@ export type CreatorReleaseRecord = {
   description: string | null;
   status: CreatorReleaseStatus;
   currentStage: string;
-  accessModel: 'open' | 'purchase';
+  accessModel: ReleaseAccessModel;
   previewSeconds: number;
   priceEth: string;
   royaltyBps: number;
@@ -153,6 +150,16 @@ export type CreatorReleaseDashboard = {
     inProgress: number;
   };
   releases: CreatorReleaseRecord[];
+};
+
+export type UpdateCreatorReleasePayload = Record<string, unknown> & {
+  status?: CreatorReleaseClientUpdateStatus;
+  accessModel?: ReleaseAccessModel;
+  activityEntry?: {
+    message: string;
+    level?: ReleaseActivityLevel;
+    at?: string;
+  };
 };
 
 let sessionToken: string | null = null;
@@ -307,7 +314,7 @@ export async function createCreatorRelease(
   input: {
     title?: string;
     artistName?: string;
-    accessModel?: 'open' | 'purchase';
+    accessModel?: ReleaseAccessModel;
   } = {},
 ) {
   return await requestWeb25<CreatorReleaseRecord>(
@@ -330,7 +337,7 @@ export async function getCreatorRelease(baseUrl: string, releaseId: string) {
 export async function updateCreatorRelease(
   baseUrl: string,
   releaseId: string,
-  input: Record<string, unknown>,
+  input: UpdateCreatorReleasePayload,
 ) {
   return await requestWeb25<CreatorReleaseRecord>(
     baseUrl,

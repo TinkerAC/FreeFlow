@@ -1,6 +1,12 @@
+import {
+  CREATOR_RELEASE_FAILED_STATUS,
+  CREATOR_RELEASE_IN_PROGRESS_STATUSES,
+  CREATOR_RELEASE_PUBLISHED_STATUS,
+  type ReleaseAccessModel,
+} from '@freeflow/web25-shared';
 import type { CreatorReleaseDashboard, CreatorReleaseRecord, CreatorReleaseSplit, PinataConfigPayload } from '@renderer/core/web25/client';
 
-export type AccessModel = 'open' | 'purchase';
+export type AccessModel = ReleaseAccessModel;
 export type ReleasePanel = 'editor' | 'storage' | 'publish' | 'access';
 export type WorkshopSection = 'dashboard' | ReleasePanel | 'activity';
 export type BusyState =
@@ -26,6 +32,8 @@ export type AccessCheckState = {
   creatorProceedsEth: string;
   lastUpdated: string;
 };
+
+const IN_PROGRESS_STATUS_SET = new Set<CreatorReleaseRecord['status']>(CREATOR_RELEASE_IN_PROGRESS_STATUSES);
 
 export const DEFAULT_ACCESS_CHECK_STATE: AccessCheckState = {
   tokenId: '',
@@ -125,9 +133,9 @@ export function formatRelativeTime(iso: string | null) {
 export function summarizeDashboard(releases: CreatorReleaseRecord[]): CreatorReleaseDashboard['summary'] {
   return releases.reduce((acc, release) => {
     acc.total += 1;
-    if (release.status === 'PUBLISHED') acc.published += 1;
-    if (release.status === 'FAILED') acc.failed += 1;
-    if (['DRAFT', 'ASSETS_PENDING', 'ASSETS_UPLOADED', 'METADATA_UPLOADED', 'PUBLISHING'].includes(release.status)) {
+    if (release.status === CREATOR_RELEASE_PUBLISHED_STATUS) acc.published += 1;
+    if (release.status === CREATOR_RELEASE_FAILED_STATUS) acc.failed += 1;
+    if (IN_PROGRESS_STATUS_SET.has(release.status)) {
       acc.inProgress += 1;
     }
     return acc;
@@ -158,12 +166,11 @@ export function replaceReleaseInDashboard(
 export function filteredReleases(releases: CreatorReleaseRecord[], filter: ReleaseFilter) {
   switch (filter) {
     case 'published':
-      return releases.filter((release) => release.status === 'PUBLISHED');
+      return releases.filter((release) => release.status === CREATOR_RELEASE_PUBLISHED_STATUS);
     case 'failed':
-      return releases.filter((release) => release.status === 'FAILED');
+      return releases.filter((release) => release.status === CREATOR_RELEASE_FAILED_STATUS);
     case 'in-progress':
-      return releases.filter((release) =>
-        ['DRAFT', 'ASSETS_PENDING', 'ASSETS_UPLOADED', 'METADATA_UPLOADED', 'PUBLISHING'].includes(release.status));
+      return releases.filter((release) => IN_PROGRESS_STATUS_SET.has(release.status));
     default:
       return releases;
   }

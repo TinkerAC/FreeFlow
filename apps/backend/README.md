@@ -30,7 +30,7 @@ This backend is currently in schema-first development mode; schema changes are a
 
 ## Logging
 
-Logs are emitted as structured JSON with a `scope` field. Use `LOG_LEVEL` to control verbosity (`fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`). Set `LOG_PRISMA_QUERIES=true` only when debugging database SQL, because query parameters can contain sensitive data.
+Logs are emitted as readable structured lines, for example `19:44:24 [info] [http.request]: http request completed | requestId=... statusCode=200 durationMs=8.25`, while still carrying scoped fields. Use `LOG_LEVEL` to control verbosity (`fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`). Set `LOG_PRISMA_QUERIES=true` only when debugging database SQL, because query parameters can contain sensitive data.
 
 ## Data model
 

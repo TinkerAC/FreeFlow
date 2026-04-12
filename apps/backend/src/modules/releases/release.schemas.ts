@@ -1,26 +1,22 @@
 import { z } from 'zod';
+import {
+  CREATOR_RELEASE_CLIENT_UPDATE_STATUSES,
+  CREATOR_RELEASE_STATUSES,
+  RELEASE_ACCESS_MODELS,
+  RELEASE_ACTIVITY_LEVELS,
+} from '@freeflow/web25-shared';
 
 /**
  * 发行模块输入模型。
  * 这里主要负责把前端传入的数据边界固定下来，避免 service 层处理半脏数据。
  */
-const CreatorReleaseStatusSchema = z.enum([
-  'DRAFT',
-  'ASSETS_PENDING',
-  'ASSETS_UPLOADED',
-  'METADATA_UPLOADED',
-  'PUBLISHING',
-  'PUBLISHED',
-  'FAILED',
-  'CANCELLED',
-]);
-
-const ClientEditableCreatorReleaseStatusSchema = CreatorReleaseStatusSchema.exclude(['PUBLISHED']);
-const ReleaseAccessModelSchema = z.enum(['open', 'purchase']);
+const CreatorReleaseStatusSchema = z.enum(CREATOR_RELEASE_STATUSES);
+const ClientEditableCreatorReleaseStatusSchema = z.enum(CREATOR_RELEASE_CLIENT_UPDATE_STATUSES);
+const ReleaseAccessModelSchema = z.enum(RELEASE_ACCESS_MODELS);
 
 export const ReleaseActivityEntrySchema = z.object({
   message: z.string().min(1).max(20_000),
-  level: z.enum(['info', 'success', 'warning', 'error']).default('info'),
+  level: z.enum(RELEASE_ACTIVITY_LEVELS).default('info'),
   at: z.string().datetime().optional(),
 });
 

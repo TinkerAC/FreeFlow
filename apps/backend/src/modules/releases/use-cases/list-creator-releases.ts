@@ -1,13 +1,13 @@
+import {
+  CREATOR_RELEASE_FAILED_STATUS,
+  CREATOR_RELEASE_IN_PROGRESS_STATUSES,
+  CREATOR_RELEASE_PUBLISHED_STATUS,
+  type CreatorReleaseStatus,
+} from '@freeflow/web25-shared';
 import { mapReleaseRecord } from '../release.mapper.js';
 import { releaseRepository } from '../release.repository.js';
 
-const IN_PROGRESS_STATUSES = new Set([
-  'DRAFT',
-  'ASSETS_PENDING',
-  'ASSETS_UPLOADED',
-  'METADATA_UPLOADED',
-  'PUBLISHING',
-]);
+const IN_PROGRESS_STATUSES = new Set<CreatorReleaseStatus>(CREATOR_RELEASE_IN_PROGRESS_STATUSES);
 
 /**
  * 列出创作者的发行列表，并顺带返回前端常用的统计摘要。
@@ -18,8 +18,8 @@ export async function listCreatorReleases(creatorUserId: string) {
 
   const summary = releases.reduce((acc, release) => {
     acc.total += 1;
-    if (release.status === 'PUBLISHED') acc.published += 1;
-    if (release.status === 'FAILED') acc.failed += 1;
+    if (release.status === CREATOR_RELEASE_PUBLISHED_STATUS) acc.published += 1;
+    if (release.status === CREATOR_RELEASE_FAILED_STATUS) acc.failed += 1;
     if (IN_PROGRESS_STATUSES.has(release.status)) {
       acc.inProgress += 1;
     }

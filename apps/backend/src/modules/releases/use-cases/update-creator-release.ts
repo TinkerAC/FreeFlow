@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { CREATOR_RELEASE_PUBLISHED_STATUS } from '@freeflow/web25-shared';
 import { AppError } from '../../../core/errors/app-error.js';
 import { mapReleaseRecord, parseActivityLog } from '../release.mapper.js';
 import { releaseRepository } from '../release.repository.js';
@@ -110,7 +111,7 @@ async function syncPublishedTrackResource(
   release: PersistedCreatorRelease,
 ) {
   if (
-    release.status !== 'PUBLISHED' ||
+    release.status !== CREATOR_RELEASE_PUBLISHED_STATUS ||
     !release.platformDeployment ||
     !release.tokenId
   ) {
