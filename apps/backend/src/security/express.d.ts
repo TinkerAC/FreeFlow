@@ -1,4 +1,5 @@
 import type { AuthSession } from './auth-session.js';
+import type { ScopedLogger } from '../infra/logging/logger.js';
 
 declare global {
   namespace Express {
@@ -9,6 +10,7 @@ declare global {
       authSession?: AuthSession;
       authToken?: string;
       requestId?: string;
+      logger?: ScopedLogger;
     }
   }
 }

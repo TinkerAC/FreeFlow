@@ -1,6 +1,9 @@
 import { env } from '../../config/env.js';
 import { AppError } from '../../core/errors/app-error.js';
+import { createScopedLogger } from '../../infra/logging/logger.js';
 import { pinataRepository } from './pinata.repository.js';
+
+const pinataLogger = createScopedLogger('modules.pinata.service');
 
 type UploadInput = {
   buffer: Buffer;
@@ -38,6 +41,16 @@ export class PinataService {
   }
 
   async uploadFile(input: UploadInput) {
+    const startedAt = process.hrtime.bigint();
+    pinataLogger.info({
+      uploaderUserId: input.uploaderUserId,
+      filename: input.filename,
+      mimeType: input.mimeType,
+      sizeBytes: input.buffer.byteLength,
+      network: env.pinataNetwork,
+      groupIdConfigured: !!env.pinataGroupId,
+    }, 'pinata upload started');
+
     const fileBytes = Uint8Array.from(input.buffer);
     const formData = new FormData();
     formData.append('network', env.pinataNetwork);
@@ -66,6 +79,12 @@ export class PinataService {
 
     const payload = await response.json().catch(() => null) as { data?: PinataUploadResponse; error?: unknown } | null;
     if (!response.ok) {
+      pinataLogger.warn({
+        statusCode: response.status,
+        statusText: response.statusText,
+        pinataError: payload?.error ?? payload,
+      }, 'pinata upload rejected');
+
       throw new AppError(
         502,
         'Pinata upload failed',
@@ -102,6 +121,12 @@ export class PinataService {
       network: env.pinataNetwork,
       ...(env.pinataGroupId ? { groupId: env.pinataGroupId } : {}),
     });
+
+    pinataLogger.info({
+      cid: uploadedFile.cid,
+      storageObjectId: storageObject.id,
+      durationMs: Number((Number(process.hrtime.bigint() - startedAt) / 1_000_000).toFixed(2)),
+    }, 'pinata upload completed');
 
     return {
       ...uploadedFile,

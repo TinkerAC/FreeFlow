@@ -1,7 +1,19 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './infra/database/prisma.js';
+import { createScopedLogger, toErrorLogField } from './infra/logging/logger.js';
 import { startAuthMaintenance, stopAuthMaintenance } from './modules/auth/auth.maintenance.js';
+
+const lifecycleLogger = createScopedLogger('app.lifecycle');
+
+process.on('uncaughtException', (error) => {
+  lifecycleLogger.fatal(toErrorLogField(error), 'uncaught exception');
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  lifecycleLogger.fatal(toErrorLogField(reason), 'unhandled rejection');
+});
 
 /**
  * 启动入口只负责基础设施生命周期管理：
@@ -15,28 +27,37 @@ async function main() {
 
   const app = createApp();
   const server = app.listen(env.port, env.host, () => {
-    console.log(
-      `[freeflow-web25-backend] listening on http://${env.host}:${env.port}`,
-    );
+    lifecycleLogger.info({
+      host: env.host,
+      port: env.port,
+      url: `http://${env.host}:${env.port}`,
+    }, 'server listening');
+  });
+
+  server.on('error', (error) => {
+    lifecycleLogger.fatal(toErrorLogField(error), 'http server failed');
+    stopAuthMaintenance();
+    void disconnectDatabase().finally(() => process.exit(1));
   });
 
   const shutdown = (signal: string) => {
     if (shuttingDown) return;
     shuttingDown = true;
 
-    console.log(`[freeflow-web25-backend] received ${signal}, shutting down`);
+    lifecycleLogger.info({ signal }, 'shutdown signal received');
     stopAuthMaintenance();
 
     server.close((serverError) => {
       void disconnectDatabase()
         .catch((databaseError) => {
-          console.error('[freeflow-web25-backend] database disconnect failed', databaseError);
+          lifecycleLogger.error(toErrorLogField(databaseError), 'database disconnect failed');
         })
         .finally(() => {
           if (serverError) {
-            console.error('[freeflow-web25-backend] HTTP shutdown failed', serverError);
+            lifecycleLogger.error(toErrorLogField(serverError), 'http shutdown failed');
             process.exit(1);
           }
+          lifecycleLogger.info('shutdown completed');
           process.exit(0);
         });
     });
@@ -47,7 +68,7 @@ async function main() {
 }
 
 main().catch(async (error) => {
-  console.error('[freeflow-web25-backend] startup failed', error);
+  lifecycleLogger.fatal(toErrorLogField(error), 'startup failed');
   stopAuthMaintenance();
   await disconnectDatabase().catch(() => undefined);
   process.exit(1);

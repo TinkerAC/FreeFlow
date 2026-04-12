@@ -1,5 +1,8 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 import { AppError, toAppError } from '../../core/errors/app-error.js';
+import { createScopedLogger } from '../../infra/logging/logger.js';
+
+const fallbackLogger = createScopedLogger('http.error');
 
 /**
  * 将未匹配路由显式转换成统一错误，避免返回结构漂移。
@@ -14,11 +17,19 @@ export const notFoundHandler: RequestHandler = (req, _res, next) => {
  */
 export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   const appError = toAppError(error);
+  const level = appError.statusCode >= 500 ? 'error' : 'warn';
+  const requestLog = req.logger ?? fallbackLogger.child({
+    requestId: req.requestId ?? 'no-request-id',
+    method: req.method,
+    path: req.originalUrl,
+  });
 
-  console.error(
-    `[${req.requestId ?? 'no-request-id'}] ${appError.code}: ${appError.message}`,
-    appError.details ?? '',
-  );
+  requestLog[level]({
+    err: error instanceof Error ? error : appError,
+    errorCode: appError.code,
+    statusCode: appError.statusCode,
+    details: appError.details,
+  }, 'http request failed');
 
   res.status(appError.statusCode).json({
     ok: false,

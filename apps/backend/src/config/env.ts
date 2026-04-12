@@ -18,7 +18,7 @@ const loadEnvFile = (fileUrl: URL) => {
 
     const separatorIndex = line.indexOf('=');
     if (separatorIndex <= 0) continue;
-aa
+
     const key = line.slice(0, separatorIndex).trim();
     if (!key || process.env[key] !== undefined) continue;
 
@@ -77,6 +77,8 @@ const csvNumber = z.preprocess((value) => {
  */
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  LOG_PRISMA_QUERIES: boolFromEnv.default(false),
   PORT: z.coerce.number().int().min(1).max(65535).default(8787),
   HOST: z.string().default('0.0.0.0'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
@@ -111,6 +113,8 @@ if (!parsed.success) {
  */
 export const env = {
   nodeEnv: parsed.data.NODE_ENV,
+  logLevel: parsed.data.LOG_LEVEL,
+  logPrismaQueries: parsed.data.LOG_PRISMA_QUERIES,
   port: parsed.data.PORT,
   host: parsed.data.HOST,
   databaseUrl: parsed.data.DATABASE_URL,

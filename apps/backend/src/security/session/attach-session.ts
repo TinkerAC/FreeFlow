@@ -25,6 +25,11 @@ export const attachSession: RequestHandler = (req, _res, next) => {
     if (session) {
       req.authToken = sessionToken;
       req.authSession = session;
+      if (req.logger) {
+        req.logger = req.logger.child({
+          userId: session.userId,
+        });
+      }
     }
   })()
     .then(() => next())

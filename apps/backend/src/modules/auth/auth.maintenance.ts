@@ -1,6 +1,8 @@
 import { authRepository } from './auth.repository.js';
+import { createScopedLogger, toErrorLogField } from '../../infra/logging/logger.js';
 
 const AUTH_CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+const maintenanceLogger = createScopedLogger('jobs.auth.maintenance');
 
 let cleanupTimer: NodeJS.Timeout | null = null;
 
@@ -12,7 +14,7 @@ export async function runAuthMaintenance() {
   try {
     await authRepository.pruneExpiredAuthArtifacts();
   } catch (error) {
-    console.error('[freeflow-web25-backend] auth maintenance failed', error);
+    maintenanceLogger.error(toErrorLogField(error), 'auth maintenance failed');
   }
 }
 
@@ -21,6 +23,10 @@ export async function runAuthMaintenance() {
  */
 export function startAuthMaintenance() {
   if (cleanupTimer) return;
+
+  maintenanceLogger.info({
+    intervalMs: AUTH_CLEANUP_INTERVAL_MS,
+  }, 'auth maintenance started');
 
   cleanupTimer = setInterval(() => {
     void runAuthMaintenance();
@@ -37,4 +43,5 @@ export function stopAuthMaintenance() {
   if (!cleanupTimer) return;
   clearInterval(cleanupTimer);
   cleanupTimer = null;
+  maintenanceLogger.info('auth maintenance stopped');
 }

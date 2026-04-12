@@ -27,6 +27,10 @@ pnpm --filter freeflow-web25-backend run start
 
 The backend loads `apps/backend/.env` during startup before validating the environment schema.
 
+## Logging
+
+Logs are emitted as structured JSON with a `scope` field. Use `LOG_LEVEL` to control verbosity (`fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`). Set `LOG_PRISMA_QUERIES=true` only when debugging database SQL, because query parameters can contain sensitive data.
+
 ## Data model
 
 Prisma schema lives in `apps/backend/prisma/schema.prisma`.

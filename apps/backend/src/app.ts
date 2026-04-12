@@ -2,6 +2,7 @@ import express from 'express';
 import { applyCors } from './http/middleware/cors.js';
 import { errorHandler, notFoundHandler } from './http/middleware/error-handler.js';
 import { attachRequestContext } from './http/middleware/request-context.js';
+import { requestLogger } from './http/middleware/request-logger.js';
 import { registerHttpRoutes } from './http/routes/index.js';
 
 /**
@@ -13,6 +14,7 @@ export function createApp() {
 
   app.disable('x-powered-by');
   app.use(attachRequestContext);
+  app.use(requestLogger);
   app.use(applyCors);
   app.use(express.json({ limit: '256kb' }));
   app.use(express.urlencoded({ extended: false, limit: '32kb' }));

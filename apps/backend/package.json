@@ -14,11 +14,12 @@
     "typecheck": "pnpm run prisma:generate && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@prisma/client": "^6.7.0",
     "@fastify/busboy": "^2.1.1",
+    "@prisma/client": "^6.7.0",
     "ethers": "^6.16.0",
     "express": "^4.22.1",
     "pg": "^8.16.0",
+    "pino": "7.11.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
