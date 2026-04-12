@@ -83,7 +83,7 @@ export default function DashboardOverview({ controller, onOpenRelease, onCreateR
           <div className={styles.cardHeader}>
             <div>
               <div className={styles.cardTitle}>服务状态</div>
-              <div className={styles.cardSub}>后台、钱包、Pinata 与合约配置</div>
+              <div className={styles.cardSub}>后台、钱包与存储状态</div>
             </div>
           </div>
           <div className={styles.infoGrid}>
@@ -96,8 +96,8 @@ export default function DashboardOverview({ controller, onOpenRelease, onCreateR
               <div className={styles.infoBody}>{controller.pinataConfig?.gatewayBaseUrl || '未连接'}</div>
             </div>
             <div className={styles.infoCard}>
-              <div className={styles.infoLabel}>Chain</div>
-              <div className={styles.infoBody}>{controller.effectiveWeb3Settings.chainName} / {controller.effectiveWeb3Settings.chainId}</div>
+              <div className={styles.infoLabel}>部署策略</div>
+              <div className={styles.infoBody}>链与合约由服务端统一管理</div>
             </div>
             <div className={styles.infoCard}>
               <div className={styles.infoLabel}>Wallet</div>

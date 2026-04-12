@@ -37,7 +37,7 @@ const SECTION_COPY: Record<WorkshopSection, { title: string; subtitle: string }>
   },
   publish: {
     title: '链上发布',
-    subtitle: '配置合约、分账比例，并提交发布交易。',
+    subtitle: '确认分账比例，并提交发布交易。',
   },
   access: {
     title: '授权交易',

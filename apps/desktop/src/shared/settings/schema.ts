@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { AppIcon } from '@src/shared/hifiniCookies';
-import { DEFAULT_SEPOLIA_CONTRACTS } from '@src/shared/web3/freeflowContracts';
 
 /** ------- 主题 ------- */
 export const ThemeMode = z.enum(['light', 'dark', 'system']);
@@ -175,27 +174,6 @@ export const ServiceSettings = z.object({
   }).default({
     baseUrl: 'http://localhost:8787',
   }),
-  web3Publishing: z.object({
-    chainId: z.number().int().default(DEFAULT_SEPOLIA_CONTRACTS.chainId),
-    chainName: z.string().default(DEFAULT_SEPOLIA_CONTRACTS.chainName),
-    rpcUrl: z.string().default(DEFAULT_SEPOLIA_CONTRACTS.rpcUrl),
-    explorerUrl: z.string().default(DEFAULT_SEPOLIA_CONTRACTS.explorerUrl),
-    musicAssetAddress: z.string().default(DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress),
-    royaltySplitterFactoryAddress: z.string().default(DEFAULT_SEPOLIA_CONTRACTS.royaltySplitterFactoryAddress),
-    platformHubAddress: z.string().default(DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress),
-    defaultRoyaltyBps: z.number().int().min(0).max(10000).default(DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps),
-    platformFeeBps: z.number().int().min(0).max(10000).default(DEFAULT_SEPOLIA_CONTRACTS.platformFeeBps),
-  }).default({
-    chainId: DEFAULT_SEPOLIA_CONTRACTS.chainId,
-    chainName: DEFAULT_SEPOLIA_CONTRACTS.chainName,
-    rpcUrl: DEFAULT_SEPOLIA_CONTRACTS.rpcUrl,
-    explorerUrl: DEFAULT_SEPOLIA_CONTRACTS.explorerUrl,
-    musicAssetAddress: DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress,
-    royaltySplitterFactoryAddress: DEFAULT_SEPOLIA_CONTRACTS.royaltySplitterFactoryAddress,
-    platformHubAddress: DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress,
-    defaultRoyaltyBps: DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps,
-    platformFeeBps: DEFAULT_SEPOLIA_CONTRACTS.platformFeeBps,
-  }),
   ai: z.object({
     enabled: z.boolean().default(false),
     provider: z.enum(['gemini']).default('gemini'),
@@ -272,17 +250,6 @@ export const Settings = z.object({
     },
     web25Backend: {
       baseUrl: 'http://localhost:8788',
-    },
-    web3Publishing: {
-      chainId: DEFAULT_SEPOLIA_CONTRACTS.chainId,
-      chainName: DEFAULT_SEPOLIA_CONTRACTS.chainName,
-      rpcUrl: DEFAULT_SEPOLIA_CONTRACTS.rpcUrl,
-      explorerUrl: DEFAULT_SEPOLIA_CONTRACTS.explorerUrl,
-      musicAssetAddress: DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress,
-      royaltySplitterFactoryAddress: DEFAULT_SEPOLIA_CONTRACTS.royaltySplitterFactoryAddress,
-      platformHubAddress: DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress,
-      defaultRoyaltyBps: DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps,
-      platformFeeBps: DEFAULT_SEPOLIA_CONTRACTS.platformFeeBps,
     },
     ai: { enabled: false, provider: 'gemini', geminiApiKey: '', geminiModel: 'gemini-1.5-flash' },
   }),

@@ -73,7 +73,7 @@ export const WORKSHOP_NAV_ITEMS: Array<{
   { value: 'dashboard', label: '工作台', description: '项目总览、发布进度和服务状态' },
   { value: 'editor', label: '项目资料', description: '作品信息、定价和本地素材', requiresRelease: true },
   { value: 'storage', label: '素材存储', description: 'Pinata 上传、CID 和 Metadata', requiresRelease: true },
-  { value: 'publish', label: '链上发布', description: '合约配置、分账和铸造交易', requiresRelease: true },
+  { value: 'publish', label: '链上发布', description: '分账配置与发布交易', requiresRelease: true },
   { value: 'access', label: '授权交易', description: '购买权限、价格和链上授权', requiresRelease: true },
   { value: 'activity', label: '日志与产物', description: '恢复检查、交易哈希和活动记录', requiresRelease: true },
 ];

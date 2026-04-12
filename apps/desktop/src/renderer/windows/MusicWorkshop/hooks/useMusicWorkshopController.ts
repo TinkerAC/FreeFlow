@@ -5,72 +5,98 @@ import { useSettingsContext } from '@renderer/core/config/SettingsContext';
 import {
   buildSiweMessage,
   createCreatorRelease,
-  type CreatorReleaseDashboard,
   type CreatorReleaseRecord,
   getPinataConfig,
   getWeb25Session,
   listCreatorReleases,
   logoutWeb25,
-  type PinataConfigPayload,
   requestSiweNonce,
   updateCreatorRelease,
   uploadFileToWeb25Pinata,
   verifySiweSession,
-  type Web25Session,
 } from '@renderer/core/web25/client';
 import { DEFAULT_SEPOLIA_CONTRACTS, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import {
   type AccessCheckState,
-  type AutosaveState,
   buildMetadataDocument,
-  type BusyState,
   DEFAULT_ACCESS_CHECK_STATE,
   defaultSplits,
-  EMPTY_DASHBOARD,
   filteredReleases,
   metadataUriForRelease,
   normalizeReleasePanel,
-  type ReleaseFilter,
-  type ReleasePanel,
-  replaceReleaseInDashboard,
   slugify,
 } from '../workshopHelpers';
+import { workshopActions } from './workshopSlice';
+import { useMusicWorkshopDispatch, useMusicWorkshopSelector } from './workshopStore';
 
 export function useMusicWorkshopController() {
   const { open } = useWeb3Modal();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const { settings, setByPath } = useSettingsContext();
+  const dispatch = useMusicWorkshopDispatch();
 
-  const [dashboard, setDashboard] = React.useState<CreatorReleaseDashboard>(EMPTY_DASHBOARD);
-  const [selectedRelease, setSelectedRelease] = React.useState<CreatorReleaseRecord | null>(null);
-  const [releaseFilter, setReleaseFilter] = React.useState<ReleaseFilter>('all');
-  const [activePanel, setActivePanel] = React.useState<ReleasePanel>('editor');
+  const store = useMusicWorkshopSelector((state) => state.workshop);
+  const {
+    dashboard,
+    selectedRelease,
+    releaseFilter,
+    activePanel,
+    busyState,
+    autosaveState,
+    authBusy,
+    web25Session,
+    pinataConfig,
+  } = store;
+
+  const setReleaseFilter = React.useCallback((value: typeof releaseFilter) => {
+    dispatch(workshopActions.setReleaseFilter(value));
+  }, [dispatch]);
+
+  const setActivePanel = React.useCallback((value: typeof activePanel) => {
+    dispatch(workshopActions.setActivePanel(value));
+  }, [dispatch]);
+
+  const setBusyState = React.useCallback((value: typeof busyState) => {
+    dispatch(workshopActions.setBusyState(value));
+  }, [dispatch]);
+
+  const setAutosaveState = React.useCallback((value: typeof autosaveState) => {
+    dispatch(workshopActions.setAutosaveState(value));
+  }, [dispatch]);
+
+  const setAuthBusy = React.useCallback((value: boolean) => {
+    dispatch(workshopActions.setAuthBusy(value));
+  }, [dispatch]);
+
+  const setWeb25Session = React.useCallback((value: typeof web25Session) => {
+    dispatch(workshopActions.setWeb25Session(value));
+  }, [dispatch]);
+
+  const setPinataConfig = React.useCallback((value: typeof pinataConfig) => {
+    dispatch(workshopActions.setPinataConfig(value));
+  }, [dispatch]);
+
   const [audioFile, setAudioFile] = React.useState<File | null>(null);
   const [coverFile, setCoverFile] = React.useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = React.useState('');
   const [accessCheck, setAccessCheck] = React.useState<AccessCheckState>(DEFAULT_ACCESS_CHECK_STATE);
-  const [busyState, setBusyState] = React.useState<BusyState>('idle');
-  const [autosaveState, setAutosaveState] = React.useState<AutosaveState>('idle');
-  const [authBusy, setAuthBusy] = React.useState(false);
-  const [web25Session, setWeb25Session] = React.useState<Web25Session | null>(null);
-  const [pinataConfig, setPinataConfig] = React.useState<PinataConfigPayload | null>(null);
 
   // 当服务端回填最新 release 时，跳过一次自动保存，避免客户端立刻把旧快照写回去。
   const skipAutosaveRef = React.useRef(false);
   const web25BackendBaseUrl = settings?.services.web25Backend.baseUrl?.trim() || 'http://localhost:8787';
-  const web3Settings = settings?.services.web3Publishing;
 
   const effectiveWeb3Settings = React.useMemo(() => ({
-    chainId: web3Settings?.chainId || DEFAULT_SEPOLIA_CONTRACTS.chainId,
-    chainName: web3Settings?.chainName || DEFAULT_SEPOLIA_CONTRACTS.chainName,
-    explorerUrl: web3Settings?.explorerUrl || DEFAULT_SEPOLIA_CONTRACTS.explorerUrl,
-    musicAssetAddress: web3Settings?.musicAssetAddress || DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress,
-    royaltySplitterFactoryAddress: web3Settings?.royaltySplitterFactoryAddress || DEFAULT_SEPOLIA_CONTRACTS.royaltySplitterFactoryAddress,
-    platformHubAddress: web3Settings?.platformHubAddress || DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress,
-    defaultRoyaltyBps: web3Settings?.defaultRoyaltyBps || DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps,
-    platformFeeBps: web3Settings?.platformFeeBps || DEFAULT_SEPOLIA_CONTRACTS.platformFeeBps,
-  }), [web3Settings]);
+    chainId: selectedRelease?.platformDeployment?.chainId ?? DEFAULT_SEPOLIA_CONTRACTS.chainId,
+    chainName: selectedRelease?.platformDeployment?.chainName ?? DEFAULT_SEPOLIA_CONTRACTS.chainName,
+    explorerUrl: DEFAULT_SEPOLIA_CONTRACTS.explorerUrl,
+    musicAssetAddress: selectedRelease?.platformDeployment?.musicAssetAddress ?? DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress,
+    royaltySplitterFactoryAddress: selectedRelease?.platformDeployment?.royaltySplitterFactoryAddress
+      ?? DEFAULT_SEPOLIA_CONTRACTS.royaltySplitterFactoryAddress,
+    platformHubAddress: selectedRelease?.platformDeployment?.platformHubAddress ?? DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress,
+    defaultRoyaltyBps: DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps,
+    platformFeeBps: DEFAULT_SEPOLIA_CONTRACTS.platformFeeBps,
+  }), [selectedRelease?.platformDeployment]);
 
   React.useEffect(() => {
     const preview = coverFile ? URL.createObjectURL(coverFile) : (selectedRelease?.coverStorageObject?.gatewayUrl || '');
@@ -90,9 +116,8 @@ export function useMusicWorkshopController() {
 
   const applyServerRelease = React.useCallback((release: CreatorReleaseRecord) => {
     skipAutosaveRef.current = true;
-    setSelectedRelease(release);
-    setDashboard((prev) => replaceReleaseInDashboard(prev, release));
-  }, []);
+    dispatch(workshopActions.applyServerRelease(release));
+  }, [dispatch]);
 
   const refreshWeb25State = React.useCallback(async () => {
     if (!web25BackendBaseUrl) return;
@@ -112,25 +137,24 @@ export function useMusicWorkshopController() {
 
   const refreshDashboard = React.useCallback(async (preferredReleaseId?: string | null) => {
     if (!web25Session || !web25BackendBaseUrl) {
-      setDashboard(EMPTY_DASHBOARD);
-      setSelectedRelease(null);
+      dispatch(workshopActions.resetWorkspace());
       return;
     }
 
     setBusyState('loading-dashboard');
     try {
       const payload = await listCreatorReleases(web25BackendBaseUrl);
-      setDashboard(payload);
+      dispatch(workshopActions.setDashboard(payload));
       const next = payload.releases.find((item) => item.id === preferredReleaseId)
         ?? payload.releases.find((item) => item.id === selectedRelease?.id)
         ?? payload.releases[0]
         ?? null;
       skipAutosaveRef.current = true;
-      setSelectedRelease(next);
+      dispatch(workshopActions.setSelectedRelease(next));
     } finally {
       setBusyState('idle');
     }
-  }, [selectedRelease?.id, web25BackendBaseUrl, web25Session]);
+  }, [dispatch, selectedRelease?.id, setBusyState, web25BackendBaseUrl, web25Session]);
 
   React.useEffect(() => {
     void refreshWeb25State();
@@ -138,12 +162,11 @@ export function useMusicWorkshopController() {
 
   React.useEffect(() => {
     if (!web25Session) {
-      setDashboard(EMPTY_DASHBOARD);
-      setSelectedRelease(null);
+      dispatch(workshopActions.resetWorkspace());
       return;
     }
     void refreshDashboard();
-  }, [refreshDashboard, web25Session]);
+  }, [dispatch, refreshDashboard, web25Session]);
 
   const metadataDocument = React.useMemo(
     () => selectedRelease
@@ -235,8 +258,8 @@ export function useMusicWorkshopController() {
   }, [applyServerRelease, selectedRelease, web25BackendBaseUrl]);
 
   const updateLocalRelease = React.useCallback((patch: Partial<CreatorReleaseRecord>) => {
-    setSelectedRelease((prev) => (prev ? { ...prev, ...patch } : prev));
-  }, []);
+    dispatch(workshopActions.patchSelectedRelease(patch));
+  }, [dispatch]);
 
   const handleCreateRelease = React.useCallback(async () => {
     if (!web25Session) return;
@@ -285,17 +308,16 @@ export function useMusicWorkshopController() {
     try {
       await logoutWeb25(web25BackendBaseUrl);
       setWeb25Session(null);
-      setDashboard(EMPTY_DASHBOARD);
-      setSelectedRelease(null);
+      dispatch(workshopActions.resetWorkspace());
     } finally {
       setAuthBusy(false);
     }
-  }, [web25BackendBaseUrl]);
+  }, [dispatch, setAuthBusy, setWeb25Session, web25BackendBaseUrl]);
 
   const handleSelectRelease = React.useCallback((release: CreatorReleaseRecord) => {
     skipAutosaveRef.current = true;
-    setSelectedRelease(release);
-  }, []);
+    dispatch(workshopActions.setSelectedRelease(release));
+  }, [dispatch]);
 
   const hydrateMetadataFromFile = React.useCallback(async (file: File) => {
     const path = (file as File & { path?: string }).path;
@@ -678,7 +700,6 @@ export function useMusicWorkshopController() {
     web25Session,
     pinataConfig,
     web25BackendBaseUrl,
-    web3Settings,
     effectiveWeb3Settings,
     metadataDocument,
     visibleReleases,
