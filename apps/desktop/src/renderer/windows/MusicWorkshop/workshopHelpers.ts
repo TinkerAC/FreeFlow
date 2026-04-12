@@ -221,6 +221,7 @@ export function defaultSplits(address?: string): CreatorReleaseSplit[] {
   ];
 }
 
+
 export function buildMetadataDocument(
   release: CreatorReleaseRecord,
   input: {

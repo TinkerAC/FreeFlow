@@ -58,7 +58,7 @@ function EmptyState() {
   );
 }
 
-export default function MusicWorkshop() {
+export default function CreatorsWorkshop() {
   const controller = useMusicWorkshopController();
   const [activeSection, setActiveSection] = React.useState<WorkshopSection>('dashboard');
 

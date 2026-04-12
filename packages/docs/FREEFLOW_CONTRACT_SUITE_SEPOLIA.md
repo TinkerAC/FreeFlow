@@ -277,7 +277,7 @@ releasable          950000000000000 wei
 
 ### 创作者窗口
 
-文件：`apps/desktop/src/renderer/windows/MusicWorkshop/MusicWorkshop.tsx`
+文件：`apps/desktop/src/renderer/windows/CreatorsWorkshop/CreatorsWorkshop.tsx`
 
 当前已经真实接入：
 

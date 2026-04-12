@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import MusicWorkshop from './windows/MusicWorkshop/MusicWorkshop';
+import CreatorsWorkshop from './windows/MusicWorkshop/CreatorsWorkshop';
 import { SettingsProvider } from '@renderer/core/config/SettingsContext';
 import '@renderer/styles/tokens.material.css';
 import DesignSystemBridge from '@renderer/designSystem/DesignSystemBridge';
@@ -16,7 +16,7 @@ createRoot(document.getElementById('app')!).render(
   <SettingsProvider>
     <Provider store={musicWorkshopStore}>
       <DesignSystemBridge>
-        <MusicWorkshop />
+        <CreatorsWorkshop />
       </DesignSystemBridge>
     </Provider>
   </SettingsProvider>,

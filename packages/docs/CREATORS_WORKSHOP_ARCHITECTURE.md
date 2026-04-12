@@ -13,8 +13,8 @@
 
 当前实现对应代码：
 
-- `apps/desktop/src/renderer/windows/MusicWorkshop/MusicWorkshop.tsx`
-- `apps/desktop/src/renderer/windows/MusicWorkshop/MusicWorkshop.module.css`
+- `apps/desktop/src/renderer/windows/CreatorsWorkshop/CreatorsWorkshop.tsx`
+- `apps/desktop/src/renderer/windows/CreatorsWorkshop/CreatorsWorkshop.module.css`
 - `apps/desktop/src/renderer/core/web3/bootstrap.ts`
 - `apps/desktop/src/main/core/ipc/handlers/musicWorkshopHandlers.ts`
 
