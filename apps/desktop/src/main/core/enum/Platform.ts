@@ -1,5 +1,6 @@
 export enum Platform {
   NET_EASE_CLOUD_MUSIC = 'NetEaseCloudMusic',
+  FREEFLOW = 'FreeFlow',
   HIFINI = 'Hifini',
   LOCAL = 'Local',
   QQ_MUSIC = 'QQMusic',
@@ -11,6 +12,8 @@ export enum Platform {
 
 export function castToPlatform(platform: string): Platform {
   switch (platform) {
+    case Platform.FREEFLOW:
+      return Platform.FREEFLOW;
     case Platform.HIFINI:
       return Platform.HIFINI;
     case Platform.NET_EASE_CLOUD_MUSIC:

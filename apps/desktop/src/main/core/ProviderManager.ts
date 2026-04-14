@@ -3,21 +3,13 @@ import { ConfigService } from '@main/core/configService';
 import { DISymbol } from '@main/di/symbol';
 import { Platform } from '@main/core/enum/Platform';
 import { AbstractContentProvider } from '@main/contentProvider/AbstractContentProvider';
-import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
+import FreeFlowProvider from '@main/contentProvider/FreeFlow/FreeFlowProvider';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
-import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
-import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
-import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
-import YouTube from '@main/contentProvider/YouTube/YouTube';
 import { Logger } from 'winston';
 
 type ProviderToggles = {
   netease?: boolean;
-  qq?: boolean;
-  bilibili?: boolean;
-  youtubeMusic?: boolean;
-  youtube?: boolean;
-  hifini?: boolean;
+  freeflow?: boolean;
 };
 
 @injectable()
@@ -28,29 +20,17 @@ export class ProviderManager {
   /** Platform 对应配置项 key 的映射表（未在配置中的平台默认始终启用） */
   private readonly toggleKeyByPlatform: Partial<Record<Platform, keyof ProviderToggles>> = {
     [Platform.NET_EASE_CLOUD_MUSIC]: 'netease',
-    [Platform.QQ_MUSIC]: 'qq',
-    [Platform.BILIBILI]: 'bilibili',
-    [Platform.YOUTUBE_MUSIC]: 'youtubeMusic',
-    [Platform.YOUTUBE]: 'youtube',
-    [Platform.HIFINI]: 'hifini',
+    [Platform.FREEFLOW]: 'freeflow',
   };
 
   constructor(
     @inject(DISymbol.ConfigService) private readonly config: ConfigService,
     @inject(DISymbol.NetEaseCloudMusic) private readonly netease: NetEaseCloudMusic,
-    @inject(DISymbol.QQMusic) private readonly qq: QQMusic,
-    @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
-    @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
-    @inject(DISymbol.YouTube) private readonly youtube: YouTube,
-    @inject(DISymbol.HifiniMusic) private readonly hifini: HifiniMusic,
+    @inject(DISymbol.FreeFlowProvider) private readonly freeflow: FreeFlowProvider,
     @inject(DISymbol.Logger) private readonly logger: Logger,
   ) {
     this.providers.set(Platform.NET_EASE_CLOUD_MUSIC, this.netease);
-    this.providers.set(Platform.QQ_MUSIC, this.qq);
-    this.providers.set(Platform.BILIBILI, this.bilibili);
-    this.providers.set(Platform.YOUTUBE_MUSIC, this.youtubeMusic);
-    this.providers.set(Platform.YOUTUBE, this.youtube);
-    this.providers.set(Platform.HIFINI, this.hifini);
+    this.providers.set(Platform.FREEFLOW, this.freeflow);
   }
 
   /**
@@ -59,19 +39,8 @@ export class ProviderManager {
   private readToggles(): Required<ProviderToggles> {
     const toggles = (this.config.get('services.providers') ?? {}) as ProviderToggles;
     return {
-      // netease: toggles.netease !== false,
-      // qq: toggles.qq !== false,
-      // bilibili: toggles.bilibili !== false,
-      // youtubeMusic: toggles.youtubeMusic !== false,
-      // youtube: toggles.youtube !== false,
-      // hifini: toggles.hifini !== false,
-      netease:true,
-      qq:true,
-      bilibili:true,
-      youtubeMusic:true,
-      youtube:true,
-      hifini:false
-
+      netease: toggles.netease !== false,
+      freeflow: toggles.freeflow !== false,
     };
   }
 

@@ -136,6 +136,7 @@ export const ServiceSettings = z.object({
   providers: z
     .object({
       netease: z.boolean().default(true),
+      freeflow: z.boolean().default(true),
       qq: z.boolean().default(true),
       bilibili: z.boolean().default(true),
       youtubeMusic: z.boolean().default(true),
@@ -143,6 +144,7 @@ export const ServiceSettings = z.object({
     })
     .default({
       netease: true,
+      freeflow: true,
       qq: true,
       bilibili: true,
       youtubeMusic: true,
@@ -237,7 +239,7 @@ export const Settings = z.object({
   network: NetworkSettings.default({ port: 29321 }),
   services: ServiceSettings.default({
     hifiniCookie: { bbs_sid: '', bbs_token: '' },
-    providers: { netease: true, qq: true, bilibili: true, youtubeMusic: true, hifini: true },
+    providers: { netease: true, freeflow: true, qq: true, bilibili: true, youtubeMusic: true, hifini: true },
     youtubeMusic: { cookie: '', visitorData: '' },
     pinata: {
       jwt: '',

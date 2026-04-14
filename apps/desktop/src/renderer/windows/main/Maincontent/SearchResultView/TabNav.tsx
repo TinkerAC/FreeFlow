@@ -1,8 +1,13 @@
 import React from 'react';
 import styles from './TabNav.module.css';
 
-export type TabKey = 'popular' | 'tracks' | 'playlists';
-const labels: Record<TabKey, string> = { popular: '热门', tracks: '歌曲', playlists: '歌单' };
+export type TabKey = 'popular' | 'tracks' | 'onchain' | 'playlists';
+const labels: Record<TabKey, string> = {
+  popular: '热门',
+  tracks: '歌曲',
+  onchain: '链上',
+  playlists: '歌单',
+};
 
 export default function TabNav({
                                  activeTab, onTabChange,

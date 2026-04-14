@@ -73,7 +73,7 @@ export default class TrackService extends AbstractService {
 
       }
       case Platform.NET_EASE_CLOUD_MUSIC: {
-        break;
+        return trackModel;
       }
       case Platform.HIFINI: {
         const metaData: HifiniThreadCacheModel = await this.hifiniMusic.getMusicInfo(trackModel.platform_unique_id);
@@ -81,7 +81,13 @@ export default class TrackService extends AbstractService {
       }
 
       case Platform.QQ_MUSIC: {
-        break;
+        return trackModel;
+      }
+      case Platform.FREEFLOW: {
+        return trackModel;
+      }
+      default: {
+        return trackModel;
       }
 
     }

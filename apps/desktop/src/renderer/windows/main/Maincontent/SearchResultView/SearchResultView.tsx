@@ -13,6 +13,8 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
+import OnchainTab from './OnchainTab';
+import { Platform } from '@main/core/enum/Platform';
 
 export default function SearchResultView({
                                            initialTab = 'popular',
@@ -39,6 +41,7 @@ export default function SearchResultView({
 
   const { track_result = [], playlist_result = [] } = fusionSearchResult;
   const popularResult = track_result[0];
+  const onchainTracks = track_result.filter((track) => track.platform === Platform.FREEFLOW);
 
   const openContextMenu = (e: React.MouseEvent<HTMLDivElement>, track: TrackEntity) => {
     e.preventDefault();
@@ -61,6 +64,9 @@ export default function SearchResultView({
         )}
         {activeTab === 'tracks' && (
           <TracksTab tracks={track_result} player={player} onContextMenu={openContextMenu} />
+        )}
+        {activeTab === 'onchain' && (
+          <OnchainTab tracks={onchainTracks} player={player} onContextMenu={openContextMenu} />
         )}
         {activeTab === 'playlists' && (
           <PlaylistsTab playlists={playlist_result} musicLibraryController={musicLibraryController} />

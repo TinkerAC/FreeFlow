@@ -71,6 +71,7 @@ export default function TrackDetailView({ track, player, musicLibraryController 
       'QQMusic': 'QQ音乐',
       'Bilibili': 'Bilibili',
       'YouTubeMusic': 'YouTube Music',
+      'FreeFlow': 'FreeFlow',
       'Local': '本地音乐',
     };
     return names[platform || ''] || platform || '未知';

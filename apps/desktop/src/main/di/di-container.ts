@@ -37,6 +37,7 @@ import { AiTextService, HeuristicAiTextService } from '@main/services/ai/AiTextS
 import { ProviderManager } from '@main/core/ProviderManager';
 import { SearchService } from '@main/services/SearchService';
 import YouTube from '@main/contentProvider/YouTube/YouTube';
+import FreeFlowProvider from '@main/contentProvider/FreeFlow/FreeFlowProvider';
 import { Logger } from 'winston';
 import rootLogger from '@src/utils/logger';
 
@@ -210,6 +211,10 @@ container
 container
   .bind<YouTube>(DISymbol.YouTube)
   .to(YouTube)
+  .inSingletonScope();
+container
+  .bind<FreeFlowProvider>(DISymbol.FreeFlowProvider)
+  .to(FreeFlowProvider)
   .inSingletonScope();
 container
   .bind<Bilibili>(DISymbol.Bilibili)

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Bilibili, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic ,YouTube} from '@components/static';
+import { Bilibili, FreeFlow, Hifini, NetEaseCloudMusic, QQMusic, YouTubeMusic, YouTube } from '@components/static';
 import styles from './PlatformIcon.module.css';
 
-type PlatformType = 'NetEaseCloudMusic' | 'Hifini' | 'QQMusic' | 'Bilibili' | 'YouTubeMusic' | string;
+type PlatformType = 'NetEaseCloudMusic' | 'FreeFlow' | 'Hifini' | 'QQMusic' | 'Bilibili' | 'YouTubeMusic' | string;
 
 interface PlatformIconProps {
   platform: PlatformType;
@@ -38,7 +38,7 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
     Bilibili,
     YouTubeMusic,
     YouTube,
-    
+    FreeFlow,
   };
 
   const iconSrc = platformIconMap[platform];

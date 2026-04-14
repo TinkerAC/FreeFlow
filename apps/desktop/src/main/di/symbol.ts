@@ -18,6 +18,7 @@ export const DISymbol = {
   QQMusic: Symbol.for('QQMusic'),
   YouTubeMusic: Symbol.for('YouTubeMusic'),
   YouTube: Symbol.for('YouTube'),
+  FreeFlowProvider: Symbol.for('FreeFlowProvider'),
   TrackRepository: Symbol.for('TrackRepository'),
   PlaylistRepository: Symbol.for('PlaylistRepository'),
   HifiniThreadCacheRepository: Symbol.for('HifiniThreadCacheRepository'),

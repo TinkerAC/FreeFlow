@@ -21,6 +21,7 @@ export enum ViewType {
   DEBUG = 'debug',
   SETTINGS = 'settings',
   TRACK_DETAIL = 'trackDetail',
+  FREEFLOW_TRACK_DETAIL = 'freeflowTrackDetail',
   WEB3 = 'web3',
 }
 

@@ -1,0 +1,151 @@
+.container {
+    display: grid;
+    gap: 16px;
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.header {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 20%, transparent);
+}
+
+.cover {
+    width: 180px;
+    height: 180px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.headerBody {
+    min-width: 0;
+    display: grid;
+    align-content: center;
+    gap: 8px;
+}
+
+.title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.platformRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.actionRow {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.primaryButton,
+.ghostButton {
+    height: 30px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid transparent;
+    padding: 0 12px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.primaryButton {
+    border-color: rgb(var(--md-sys-color-primary));
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
+}
+
+.ghostButton {
+    border-color: rgb(var(--md-sys-color-outline-variant));
+    background: transparent;
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.item {
+    border-radius: 8px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 14%, transparent);
+    padding: 10px 12px;
+}
+
+.full {
+    grid-column: 1 / -1;
+}
+
+.label {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.value {
+    margin-top: 4px;
+    font-size: 15px;
+    color: rgb(var(--md-sys-color-on-surface));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.valueBreak {
+    margin-top: 4px;
+    font-size: 13px;
+    color: rgb(var(--md-sys-color-on-surface));
+    overflow-wrap: anywhere;
+}
+
+.loading,
+.error {
+    font-size: 13px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.error {
+    color: rgb(var(--md-sys-color-error));
+}
+
+@media (max-width: 900px) {
+    .header {
+        grid-template-columns: 1fr;
+    }
+
+    .cover {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}

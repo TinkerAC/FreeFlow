@@ -1,6 +1,26 @@
 import { Platform } from '@main/core/enum/Platform';
 import { AbstractEntity } from '@src/shared/domainModel/AbstractEntity';
 
+export interface FreeFlowTrackInfo {
+  resourceKey: string;
+  chainId: number | null;
+  contractAddress: string | null;
+  tokenId: string | null;
+  accessModel: string | null;
+  previewSeconds: number | null;
+  priceEth: string | null;
+  royaltyBps: number | null;
+  coverUrl: string | null;
+  audioUrl: string | null;
+  metadataUrl: string | null;
+  metadataCid: string | null;
+  explorerUrl: string | null;
+  publishTxHash: string | null;
+  releaseId: string | null;
+  status: string | null;
+  metadataDocument: unknown | null;
+}
+
 
 /**
  * TrackRecord 抽象类，代表音乐平台中的一首歌曲
@@ -18,6 +38,7 @@ export abstract class TrackEntity extends AbstractEntity {
   downloaded?: boolean;           // 是否已下载
   modified_at?: Date;           // 修改时间
   played_count?: number;         // 播放次数
+  freeflow?: FreeFlowTrackInfo;  // FreeFlow 资源的链上/索引信息
 
 
   // abstract isFree(): boolean; // 抽象方法，判断歌曲是否免费
@@ -386,5 +407,58 @@ export class NetEaseCloudMusicTrackModel extends TrackEntity {
    */
   private isFree(): boolean {
     return this.fee === 0 || this.fee === 8;
+  }
+}
+
+export class FreeFlowTrackModel extends TrackEntity {
+  album: string;
+  artist: string;
+  cover_src: string;
+  created_at: Date;
+  duration: number;
+  platform: Platform;
+  platform_unique_id: string;
+  title: string;
+  freeflow: FreeFlowTrackInfo;
+
+  constructor(input: {
+    platform_unique_id: string;
+    title: string;
+    artist: string;
+    album: string;
+    duration: number;
+    cover_src: string;
+    freeflow: FreeFlowTrackInfo;
+  }) {
+    super();
+    this.platform = Platform.FREEFLOW;
+    this.platform_unique_id = input.platform_unique_id;
+    this.title = input.title;
+    this.artist = input.artist;
+    this.album = input.album;
+    this.duration = input.duration;
+    this.cover_src = input.cover_src;
+    this.created_at = new Date();
+    this.freeflow = input.freeflow;
+  }
+
+  public static build(json: {
+    platform_unique_id: string;
+    title?: string;
+    artist?: string;
+    album?: string;
+    duration?: number;
+    cover_src?: string;
+    freeflow: FreeFlowTrackInfo;
+  }): TrackEntity {
+    return new FreeFlowTrackModel({
+      platform_unique_id: json.platform_unique_id,
+      title: json.title ?? '',
+      artist: json.artist ?? '',
+      album: json.album ?? '',
+      duration: json.duration ?? 0,
+      cover_src: json.cover_src ?? '',
+      freeflow: json.freeflow,
+    });
   }
 }

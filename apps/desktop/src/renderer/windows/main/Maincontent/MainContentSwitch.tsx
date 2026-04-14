@@ -12,6 +12,7 @@ import { FusionSearchResult } from '@src/shared/domainModel/FusionSearchResult';
 import SettingsView from '@renderer/windows/main/Maincontent/SettingView/SettingsView';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import Web3View from './Web3View/Web3View';
+import FreeFlowTrackDetailView from './FreeFlowTrackDetailView/FreeFlowTrackDetailView';
 
 interface MainContentSwitchProps {
   player: PlayerController | null;
@@ -67,6 +68,15 @@ export default function MainContentSwitch({
           />
         ) : (
           <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-error))' }}>无歌曲数据</div>
+        );
+      case ViewType.FREEFLOW_TRACK_DETAIL:
+        return entry.data && player ? (
+          <FreeFlowTrackDetailView
+            track={entry.data as TrackEntity}
+            player={player}
+          />
+        ) : (
+          <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-error))' }}>无链上资源数据</div>
         );
       default:
         return <div style={{ padding: 16, opacity: 0.7, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>未知视图</div>;

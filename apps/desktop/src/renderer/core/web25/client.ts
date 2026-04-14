@@ -151,6 +151,34 @@ export type UpdateCreatorReleasePayload = Record<string, unknown> & {
   };
 };
 
+export type IndexedTrackResource = {
+  id: string;
+  resourceKey: string;
+  type: string;
+  title: string | null;
+  artistName: string | null;
+  albumName: string | null;
+  chainId: number | null;
+  contractAddress: string | null;
+  tokenId: string | null;
+  contentCid: string | null;
+  coverUrl: string | null;
+  audioUrl: string | null;
+  metadataUrl: string | null;
+  metadataCid: string | null;
+  accessModel: ReleaseAccessModel | null;
+  previewSeconds: number | null;
+  priceEth: string | null;
+  royaltyBps: number | null;
+  explorerUrl: string | null;
+  publishTxHash: string | null;
+  releaseId: string | null;
+  status: CreatorReleaseStatus | null;
+  metadataDocument: unknown | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 let sessionToken: string | null = null;
 
 function joinUrl(baseUrl: string, path: string) {
@@ -335,5 +363,28 @@ export async function updateCreatorRelease(
       method: 'PATCH',
       body: JSON.stringify(input),
     },
+  );
+}
+
+export async function searchIndexedTrackResources(baseUrl: string, keyword: string, limit: number = 30) {
+  const query = new URLSearchParams({
+    q: keyword.trim(),
+    limit: String(limit),
+  });
+
+  return await requestWeb25<{ items: IndexedTrackResource[] }>(
+    baseUrl,
+    `/api/v1/resources/search?${query.toString()}`,
+  );
+}
+
+export async function resolveIndexedTrackResource(baseUrl: string, resourceKey: string) {
+  const query = new URLSearchParams({
+    resourceKey,
+  });
+
+  return await requestWeb25<IndexedTrackResource>(
+    baseUrl,
+    `/api/v1/resources/resolve?${query.toString()}`,
   );
 }
