@@ -8,7 +8,8 @@ import type { CreatorReleaseDashboard, CreatorReleaseRecord, CreatorReleaseSplit
 
 export type AccessModel = ReleaseAccessModel;
 export type ReleasePanel = 'editor' | 'storage' | 'publish' | 'access';
-export type WorkshopSection = 'dashboard' | ReleasePanel | 'activity';
+export type PublishSection = ReleasePanel | 'activity';
+export type WorkshopSection = 'metadata' | 'publish';
 export type BusyState =
   | 'idle'
   | 'loading-dashboard'
@@ -76,22 +77,33 @@ export const WORKSHOP_NAV_ITEMS: Array<{
   value: WorkshopSection;
   label: string;
   description: string;
-  requiresRelease?: boolean;
 }> = [
-  { value: 'dashboard', label: '工作台', description: '项目总览、发布进度和服务状态' },
-  { value: 'editor', label: '项目资料', description: '作品信息、定价和本地素材', requiresRelease: true },
-  { value: 'storage', label: '素材存储', description: 'Pinata 上传、CID 和 Metadata', requiresRelease: true },
-  { value: 'publish', label: '链上发布', description: '分账配置与发布交易', requiresRelease: true },
-  { value: 'access', label: '授权交易', description: '购买权限、价格和链上授权', requiresRelease: true },
-  { value: 'activity', label: '日志与产物', description: '恢复检查、交易哈希和活动记录', requiresRelease: true },
+  { value: 'publish', label: '发布作品', description: '管理草稿、上传素材并链上发布' },
+  { value: 'metadata', label: '元数据编辑', description: '编辑音频标签、歌词与封面' },
 ];
 
-export function isReleasePanel(value: WorkshopSection): value is ReleasePanel {
+export const PUBLISH_SECTION_ITEMS: Array<{
+  value: PublishSection;
+  label: string;
+  description: string;
+}> = [
+  { value: 'editor', label: '项目资料', description: '基础信息、价格与分账' },
+  { value: 'storage', label: '素材存储', description: '上传音频、封面和 Metadata' },
+  { value: 'publish', label: '链上发布', description: '提交发布交易并记录哈希' },
+  { value: 'access', label: '授权验证', description: '查询授权状态与购买权限' },
+  { value: 'activity', label: '日志与产物', description: '查看错误、CID 和状态日志' },
+];
+
+export function isReleasePanel(value: string): value is ReleasePanel {
   return PANELS.some((panel) => panel.value === value);
 }
 
 export function normalizeReleasePanel(value?: string | null): ReleasePanel {
   return PANELS.some((panel) => panel.value === value) ? (value as ReleasePanel) : 'editor';
+}
+
+export function isPublishSection(value: string): value is PublishSection {
+  return value === 'activity' || isReleasePanel(value);
 }
 
 export function makeId(prefix: string) {

@@ -160,6 +160,7 @@ const mainApi: MainApi = {
   creatorsWorkshopApi: {
     show: () => ipcRenderer.invoke(Channels.CreatorsWorkshop.Show) as Promise<void>,
     readMetadata: (filePath: string) => ipcRenderer.invoke(Channels.CreatorsWorkshop.ReadMetadata, filePath),
+    writeMetadata: (payload) => ipcRenderer.invoke(Channels.CreatorsWorkshop.WriteMetadata, payload),
   },
 };
 

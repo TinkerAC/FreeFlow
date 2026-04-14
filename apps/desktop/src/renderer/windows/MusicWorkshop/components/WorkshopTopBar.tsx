@@ -7,7 +7,6 @@ import styles from '../MusicWorkshop.module.css';
 type WorkshopTopBarProps = {
   controller: MusicWorkshopController;
   activeSection: WorkshopSection;
-  onCreateRelease: () => void | Promise<void>;
 };
 
 function busyLabel(state: MusicWorkshopController['busyState']) {
@@ -42,7 +41,10 @@ function autosaveLabel(state: MusicWorkshopController['autosaveState']) {
   }
 }
 
-export default function WorkshopTopBar({ controller, activeSection, onCreateRelease }: WorkshopTopBarProps) {
+export default function WorkshopTopBar({
+  controller,
+  activeSection,
+}: WorkshopTopBarProps) {
   const activeItem = WORKSHOP_NAV_ITEMS.find((item) => item.value === activeSection);
   const sessionAddress = controller.web25Session?.address;
   const walletLabel = controller.isConnected && controller.address
@@ -56,7 +58,7 @@ export default function WorkshopTopBar({ controller, activeSection, onCreateRele
         <div className={styles.brandCopy}>
           <div className={styles.topBarTitle}>Creators Workshop</div>
           <div className={styles.topBarSubtitle}>
-            {activeItem?.label || '工作台'} / {controller.selectedRelease?.title || '未选择项目'}
+            {activeItem?.label || '工作台'}
           </div>
         </div>
       </div>
@@ -70,20 +72,6 @@ export default function WorkshopTopBar({ controller, activeSection, onCreateRele
       </div>
 
       <div className={styles.topBarActions}>
-        <button
-          className={styles.ghostButton}
-          onClick={() => void controller.refreshDashboard(controller.selectedRelease?.id)}
-          disabled={!controller.web25Session || controller.busyState !== 'idle'}
-        >
-          刷新
-        </button>
-        <button
-          className={styles.primaryButton}
-          onClick={() => void onCreateRelease()}
-          disabled={!controller.web25Session}
-        >
-          新建项目
-        </button>
         <button
           className={styles.ghostButton}
           onClick={() => (controller.web25Session ? void controller.handleSiweLogout() : void controller.handleSiweLogin())}

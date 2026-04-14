@@ -78,6 +78,7 @@ export const Channels = {
   CreatorsWorkshop: {
     Show: 'creators-workshop:show',
     ReadMetadata: 'creators-workshop:read-metadata',
+    WriteMetadata: 'creators-workshop:write-metadata',
   },
 } as const;
 

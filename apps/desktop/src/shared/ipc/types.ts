@@ -4,6 +4,11 @@ import type { Lyric } from '@src/shared/domainModel/lyricLine';
 import type { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import type { PlayerState } from '@src/shared/domainModel/playerState';
 import { OS } from '@src/shared/OS';
+import type {
+  EditableTrackMetadata,
+  MetadataWriteRequest,
+  MetadataWriteResult,
+} from '@src/shared/metadata/metadataEditor';
 
 /** Config */
 export interface ConfigApi {
@@ -174,7 +179,8 @@ export interface YouTubeMusicApi {
 
 export interface CreatorsWorkshopApi {
   show(): Promise<void>;
-  readMetadata(filePath: string): Promise<any>;
+  readMetadata(filePath: string): Promise<EditableTrackMetadata>;
+  writeMetadata(payload: MetadataWriteRequest): Promise<MetadataWriteResult>;
 }
 
 /** 主聚合 */

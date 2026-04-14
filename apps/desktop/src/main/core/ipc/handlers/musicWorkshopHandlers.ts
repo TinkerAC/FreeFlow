@@ -1,8 +1,9 @@
 import { ipcMain } from 'electron';
 import { Channels } from '@src/shared/ipc/channels';
-import { AudioService } from '@main/core/audio/AudioService';
 import { IpcContext } from './ipcContext';
 import { WindowKey } from '@main/window/windowManager';
+import { MetadataEditorService } from '@main/core/audio/MetadataEditorService';
+import type { MetadataWriteRequest } from '@src/shared/metadata/metadataEditor';
 
 export function registerMusicWorkshopHandlers(ctx: IpcContext): void {
   ipcMain.handle(Channels.CreatorsWorkshop.Show, async () => {
@@ -11,18 +12,14 @@ export function registerMusicWorkshopHandlers(ctx: IpcContext): void {
 
   ipcMain.handle(Channels.CreatorsWorkshop.ReadMetadata, async (_event, filePath: string) => {
     try {
-      const metadata = await AudioService.readMeta(filePath);
-      return {
-        filePath,
-        title: metadata.tags.title,
-        artist: metadata.tags.artist,
-        album: metadata.tags.album,
-        year: metadata.tags.year,
-        genre: metadata.tags.genre,
-      };
+      return await MetadataEditorService.readMetadata(filePath);
     } catch (error) {
       console.error(`Failed to read metadata for ${filePath}:`, error);
-      return { filePath, error: error.message };
+      throw error;
     }
+  });
+
+  ipcMain.handle(Channels.CreatorsWorkshop.WriteMetadata, async (_event, payload: MetadataWriteRequest) => {
+    return await MetadataEditorService.writeMetadata(payload);
   });
 }
