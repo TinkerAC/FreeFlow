@@ -80,10 +80,39 @@
     color: rgb(var(--md-sys-color-on-primary));
 }
 
+.primaryButton:disabled,
+.ghostButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 .ghostButton {
     border-color: rgb(var(--md-sys-color-outline-variant));
     background: transparent;
     color: rgb(var(--md-sys-color-on-surface));
+}
+
+.accessRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.accessBadge {
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 18%, transparent);
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+}
+
+.accessMeta {
+    font-size: 12px;
+    color: rgb(var(--md-sys-color-on-surface-variant));
 }
 
 .grid {

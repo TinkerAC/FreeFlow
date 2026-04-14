@@ -1,118 +1,40 @@
-/* 采用全局 tokens：--md-sys-color-*、--radius-* 等 */
-
 .root {
-    width: 100%;
-    height: 100%;
-    color: rgb(var(--md-sys-color-on-surface));
-    background: color-mix(in oklab, rgb(var(--md-sys-color-surface)) 96%, transparent);
-}
-
-/* 内容容器 */
-.container {
-    max-width: 960px;
+    max-width: 980px;
     margin: 0 auto;
-    padding: 20px 16px 48px;
+    padding: 20px 16px 32px;
     display: grid;
-    gap: 18px;
+    gap: 14px;
 }
 
-/* 顶部：标题与副标题 */
-.header {
+.block {
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 8px;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 14%, transparent);
+    padding: 16px;
     display: grid;
-    gap: 6px;
-    padding: 6px 2px 8px;
+    gap: 12px;
 }
 
 .title {
-    font-weight: 900;
-    letter-spacing: -0.01em;
-    line-height: 1.15;
-    font-size: 28px;
-    color: rgb(var(--md-sys-color-on-surface));
-    background: linear-gradient(
-            to right,
-            color-mix(in oklab, rgb(var(--md-sys-color-primary)) 84%, transparent),
-            color-mix(in oklab, rgb(var(--md-sys-color-secondary, 160 160 255)) 64%, transparent)
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.2;
 }
 
 .sub {
+    margin: 0;
     color: rgb(var(--md-sys-color-on-surface-variant));
+    font-size: 13px;
 }
 
-/* 卡片 */
-.card {
-    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 92%, transparent);
-    backdrop-filter: blur(8px) saturate(1.05);
-    border: 1px solid rgb(var(--md-sys-color-outline-variant));
-    border-radius: var(--radius-lg);
-    padding: 18px;
-    box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, .20));
+.blockTitle {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.field {
     display: grid;
-    gap: 14px;
-}
-
-.cardHeader {
-    font-size: 18px;
-    font-weight: 800;
-    color: rgb(var(--md-sys-color-on-surface));
-}
-
-/* 行内布局 */
-.row {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
-}
-
-@media (min-width: 640px) {
-    .row {
-        grid-template-columns: auto 1fr;
-        align-items: center;
-    }
-}
-
-/* 头像块 */
-.avatarWrap {
-    position: relative;
-    width: 96px;
-    height: 96px;
-    border-radius: 999px;
-    overflow: hidden;
-    border: 2px solid rgb(var(--md-sys-color-outline-variant));
-    box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
-}
-
-.avatarImg {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.avatarMask {
-    position: absolute;
-    inset: 0;
-    background: rgba(var(--md-sys-color-scrim), .45);
-    color: rgb(var(--md-sys-color-inverse-on-surface));
-    display: grid;
-    place-items: center;
-    font-size: 12px;
-    opacity: 0;
-    transition: opacity .15s ease;
-    cursor: pointer;
-}
-
-.avatarWrap:hover .avatarMask {
-    opacity: 1;
-}
-
-.inputGroup {
-    display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .label {
@@ -121,195 +43,82 @@
 }
 
 .input {
-    width: 100%;
-    background: rgb(var(--md-sys-color-surface-container));
-    color: rgb(var(--md-sys-color-on-surface));
+    height: 36px;
+    border-radius: 8px;
     border: 1px solid rgb(var(--md-sys-color-outline-variant));
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-    outline: none;
-    transition: box-shadow .12s ease, border-color .12s ease, background .12s ease;
-}
-
-.input::placeholder {
-    color: rgb(var(--md-sys-color-on-surface-variant));
-    opacity: .95;
-}
-
-.input:focus {
-    border-color: rgb(var(--md-sys-color-primary));
-    box-shadow: 0 0 0 3px color-mix(in oklab, rgb(var(--md-sys-color-primary)) 25%, transparent);
     background: rgb(var(--md-sys-color-surface));
+    color: rgb(var(--md-sys-color-on-surface));
+    padding: 0 10px;
 }
 
-/* 扫描路径列表 */
-.scanList {
+.grid {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
 
-.scanRow {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    align-items: center;
-    background: rgba(var(--md-sys-color-surface-variant), .35);
+.item {
     border: 1px solid rgb(var(--md-sys-color-outline-variant));
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     padding: 8px 10px;
-    transition: background .12s ease;
+    display: grid;
+    gap: 2px;
 }
 
-.scanRow:hover {
-    background: rgba(var(--md-sys-color-surface-variant), .5);
-}
-
-.scanText {
-    color: rgb(var(--md-sys-color-on-surface));
+.value {
+    font-size: 13px;
     word-break: break-all;
 }
 
-.scanRowBtns {
-    display: inline-flex;
+.actions {
+    display: flex;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
-/* 按钮 */
-.btn {
-    height: 36px;
-    display: inline-grid;
-    grid-auto-flow: column;
-    align-items: center;
-    gap: 8px;
-    padding: 0 14px;
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: filter .12s ease, transform .05s ease, background .12s ease, border-color .12s ease;
-    color: rgb(var(--md-sys-color-on-primary));
-    background: rgb(var(--md-sys-color-primary));
-}
-
-.btn:hover {
-    filter: brightness(1.05);
-}
-
-.btn:active {
-    transform: translateY(1px);
-}
-
-.btnGhost {
-    color: rgb(var(--md-sys-color-on-surface));
-    background: rgba(var(--md-sys-color-surface-variant), .35);
-    border-color: rgb(var(--md-sys-color-outline-variant));
-}
-
-.btnGhost:hover {
-    background: rgba(var(--md-sys-color-surface-variant), .5);
-}
-
-.btnDanger {
-    color: rgb(var(--md-sys-color-on-error));
-    background: rgb(var(--md-sys-color-error));
-}
-
-.btnDanger:hover {
-    filter: brightness(1.05);
-}
-
-/* 主按钮（保存） */
-.primarySave {
-    height: 44px;
-    padding: 0 22px;
-    border-radius: var(--radius-md);
-    background: linear-gradient(
-            to right,
-            rgb(var(--md-sys-color-primary)),
-            color-mix(in oklab, rgb(var(--md-sys-color-primary)) 70%, rgb(var(--md-sys-color-tertiary)))
-    );
-    color: rgb(var(--md-sys-color-on-primary));
-    font-weight: 800;
-    box-shadow: var(--elev-3, 0 12px 28px rgba(0, 0, 0, .28));
-}
-
-.primarySave:hover {
-    filter: brightness(1.05);
-}
-
-.primarySave:active {
-    transform: translateY(1px);
-}
-
-/* 工具条（路径输入 + 按钮） */
-.toolbar {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 10px;
-}
-
-/* 状态消息 */
-.toast {
-    margin-top: 10px;
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.toastOk {
-    color: rgb(var(--md-sys-color-on-secondary-container));
-    background: rgb(var(--md-sys-color-secondary-container));
-    border: 1px solid color-mix(in oklab, rgb(var(--md-sys-color-secondary)) 36%, rgb(var(--md-sys-color-secondary-container)));
-}
-
-.toastErr {
-    color: rgb(var(--md-sys-color-on-error-container));
-    background: rgb(var(--md-sys-color-error-container));
-    border: 1px solid color-mix(in oklab, rgb(var(--md-sys-color-error)) 36%, rgb(var(--md-sys-color-error-container)));
-}
-
-/* 页脚 */
-.footer {
-    margin-top: 24px;
-    padding-top: 16px;
-    border-top: 1px solid rgb(var(--md-sys-color-outline-variant));
-    text-align: center;
-    color: rgb(var(--md-sys-color-on-surface-variant));
-    font-size: 13px;
-}
-
-.footer small {
-    display: block;
-    margin-top: 6px;
-    opacity: .95;
-}
-
-/* 小图标按钮（编辑/删除） */
-.iconBtn {
-    width: 32px;
+.primaryButton,
+.ghostButton {
     height: 32px;
-    display: grid;
-    place-items: center;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgb(var(--md-sys-color-outline-variant));
-    color: rgb(var(--md-sys-color-on-surface));
-    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container)) 92%, transparent);
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0 12px;
+    font-size: 13px;
     cursor: pointer;
-    transition: background .12s ease, transform .05s ease, border-color .12s ease;
 }
 
-.iconBtn:hover {
-    background: rgba(var(--md-sys-color-surface-variant), .5);
+.primaryButton {
+    background: rgb(var(--md-sys-color-primary));
+    color: rgb(var(--md-sys-color-on-primary));
 }
 
-.iconBtn:active {
-    transform: translateY(1px);
+.ghostButton {
+    background: transparent;
+    border-color: rgb(var(--md-sys-color-outline-variant));
+    color: rgb(var(--md-sys-color-on-surface));
 }
 
-/* 小标题（区块内部的辅助） */
-.kicker {
-    font-size: 11px;
-    letter-spacing: .04em;
-    text-transform: uppercase;
+.primaryButton:disabled,
+.ghostButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.stats {
+    font-size: 13px;
     color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.status {
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: rgb(var(--md-sys-color-on-surface));
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 20%, transparent);
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
 }

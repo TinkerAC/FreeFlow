@@ -171,6 +171,7 @@ export type IndexedTrackResource = {
   priceEth: string | null;
   royaltyBps: number | null;
   explorerUrl: string | null;
+  platformHubAddress: string | null;
   publishTxHash: string | null;
   releaseId: string | null;
   status: CreatorReleaseStatus | null;

@@ -10,6 +10,7 @@ import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
+import { Platform } from '@main/core/enum/Platform';
 
 // 仅在文本溢出时跑马灯
 function TtlMarquee({ text }: { text: string }) {
@@ -57,6 +58,10 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
 
   // 优先使用数据库中的 playlist_cover，如果没有则使用第一首歌曲的封面
   const coverImage = presentPlaylist?.playlist_cover || presentPlaylist?.tracks?.[0]?.cover_src || DefaultCover;
+  const isOnchainLibrary = presentPlaylist?.playlist_id === 0;
+  const playbackTracks = isOnchainLibrary
+    ? (presentPlaylist?.tracks || []).filter((track) => track.platform === Platform.FREEFLOW)
+    : (presentPlaylist?.tracks || []);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [filteredTracks, setFilteredTracks] = useState(presentPlaylist?.tracks || []);
@@ -70,6 +75,9 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
 
   const applySortAndFilter = () => {
     let tracks = presentPlaylist?.tracks || [];
+    if (isOnchainLibrary) {
+      tracks = tracks.filter((track) => track.platform === Platform.FREEFLOW);
+    }
 
     // 先过滤
     if (searchKeyword) {
@@ -196,7 +204,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
           <div className={styles.compactActions}>
             <button
               className={styles.playBtn}
-              onClick={() => player.replacePlayQueue(presentPlaylist?.tracks || [])}
+              onClick={() => player.replacePlayQueue(playbackTracks)}
               title="播放全部"
               aria-label="播放全部"
             >
@@ -222,10 +230,11 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
               </span>
             </div>
             <h1 className={styles.title} onClick={() => setModalVisible(true)}>
-              {presentPlaylist?.title || '未知歌单'}
+              {isOnchainLibrary ? '链上音乐库' : (presentPlaylist?.title || '未知歌单')}
             </h1>
             <p className={styles.sub}>
-              {presentPlaylist?.creator || '未知创建者'} • {(presentPlaylist?.tracks?.length || 0)} 首歌曲
+              {(isOnchainLibrary ? 'FreeFlow' : (presentPlaylist?.creator || '未知创建者'))}
+              {' '}• {playbackTracks.length} 首歌曲
             </p>
           </div>
         </div>
@@ -235,7 +244,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
           <div className={styles.actions}>
             <button
               className={styles.playBtn}
-              onClick={() => player.replacePlayQueue(presentPlaylist?.tracks || [])}
+              onClick={() => player.replacePlayQueue(playbackTracks)}
               aria-label="播放全部"
               title="播放全部"
             >
@@ -249,26 +258,28 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
             </button>
 
             {/* 收藏 / 取消收藏 */}
-            <button className={styles.iconGhost} title="收藏/取消收藏">
-              {presentPlaylist?.is_persistent ? (
-                <i
-                  className="fas fa-heart"
-                  style={{ color: 'rgb(var(--md-sys-color-error))' }}
-                  onClick={() =>
-                    playlistContext.removePlaylist(presentPlaylist?.playlist_id)
-                      .then(() => musicLibraryController.refreshPlaylists())
-                  }
-                />
-              ) : (
-                <i
-                  className="far fa-heart"
-                  onClick={() =>
-                    playlistContext.addPlaylist(presentPlaylist!)
-                      .then(() => musicLibraryController.refreshPlaylists())
-                  }
-                />
-              )}
-            </button>
+            {!isOnchainLibrary && (
+              <button className={styles.iconGhost} title="收藏/取消收藏">
+                {presentPlaylist?.is_persistent ? (
+                  <i
+                    className="fas fa-heart"
+                    style={{ color: 'rgb(var(--md-sys-color-error))' }}
+                    onClick={() =>
+                      playlistContext.removePlaylist(presentPlaylist?.playlist_id)
+                        .then(() => musicLibraryController.refreshPlaylists())
+                    }
+                  />
+                ) : (
+                  <i
+                    className="far fa-heart"
+                    onClick={() =>
+                      playlistContext.addPlaylist(presentPlaylist!)
+                        .then(() => musicLibraryController.refreshPlaylists())
+                    }
+                  />
+                )}
+              </button>
+            )}
 
             {/* 排序选择器 */}
             <select

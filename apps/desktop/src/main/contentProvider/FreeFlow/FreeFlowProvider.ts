@@ -25,6 +25,7 @@ type ResourceTrackPayload = {
   priceEth: string | null;
   royaltyBps: number | null;
   explorerUrl: string | null;
+  platformHubAddress: string | null;
   publishTxHash: string | null;
   releaseId: string | null;
   status: string | null;
@@ -76,6 +77,7 @@ export default class FreeFlowProvider extends AbstractContentProvider {
       metadataUrl: item.metadataUrl ?? null,
       metadataCid: item.metadataCid ?? null,
       explorerUrl: item.explorerUrl ?? null,
+      platformHubAddress: item.platformHubAddress ?? null,
       publishTxHash: item.publishTxHash ?? null,
       releaseId: item.releaseId ?? null,
       status: item.status ?? null,
@@ -108,7 +110,7 @@ export default class FreeFlowProvider extends AbstractContentProvider {
       const items = response.data?.data?.items ?? [];
       return items.map((item) => this.toTrack(item));
     } catch (error) {
-      this.logger.warn({ err: error }, '[freeflow.provider] searchTrack failed');
+      this.logger.warn(`[freeflow.provider] searchTrack failed: ${error instanceof Error ? error.message : String(error)}`);
       return [];
     }
   }
@@ -126,7 +128,9 @@ export default class FreeFlowProvider extends AbstractContentProvider {
       if (payload) this.detailCache.set(resourceKey, payload);
       return payload;
     } catch (error) {
-      this.logger.warn({ err: error, resourceKey }, '[freeflow.provider] resolveResource failed');
+      this.logger.warn(
+        `[freeflow.provider] resolveResource failed (${resourceKey}): ${error instanceof Error ? error.message : String(error)}`,
+      );
       return null;
     }
   }

@@ -89,6 +89,7 @@ export function mapResourceRecord(record: PersistedResourceRecord) {
     priceEth: release?.priceEth ?? null,
     royaltyBps: release?.royaltyBps ?? null,
     explorerUrl: release?.explorerUrl ?? null,
+    platformHubAddress: release?.platformHubAddress ?? null,
     publishTxHash: release?.publishTxHash ?? null,
     releaseId: release?.id ?? null,
     status: release?.status ?? null,

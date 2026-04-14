@@ -2,6 +2,7 @@ import React from 'react';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { useSettingsContext } from '@renderer/core/config/SettingsContext';
 import { type CreatorReleaseRecord } from '@renderer/core/web25/client';
+import { readWeb25SessionSnapshot, subscribeWeb25SessionSnapshot } from '@renderer/core/web25/sessionSync';
 import {
   type AccessCheckState,
   buildMetadataDocument,
@@ -98,6 +99,13 @@ export function useMusicWorkshopController() {
       preferredReleaseId: preferredReleaseId ?? null,
     }));
   }, [dispatch, web25BackendBaseUrl]);
+
+  React.useEffect(() => {
+    dispatch(workshopActions.setWeb25Session(readWeb25SessionSnapshot()));
+    return subscribeWeb25SessionSnapshot((session) => {
+      dispatch(workshopActions.setWeb25Session(session));
+    });
+  }, [dispatch]);
 
   React.useEffect(() => {
     void refreshWeb25State();

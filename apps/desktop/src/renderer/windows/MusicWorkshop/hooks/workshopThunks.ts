@@ -1,20 +1,20 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { BrowserProvider, Contract, formatEther, parseEther } from 'ethers';
 import {
-  buildSiweMessage,
   createCreatorRelease,
   type CreatorReleaseDashboard,
   type CreatorReleaseRecord,
   getPinataConfig,
-  getWeb25Session,
   listCreatorReleases,
-  logoutWeb25,
-  requestSiweNonce,
   updateCreatorRelease,
   uploadFileToWeb25Pinata,
-  verifySiweSession,
   type Web25Session,
 } from '@renderer/core/web25/client';
+import {
+  loginWeb25WithSiwe,
+  logoutWeb25Session,
+  refreshWeb25Session,
+} from '@renderer/core/web25/auth';
 import { PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import { type AccessCheckState, defaultSplits, EMPTY_DASHBOARD, metadataUriForRelease, slugify } from '../workshopHelpers';
 import type { MusicWorkshopRootState } from './workshopStore';
@@ -52,10 +52,10 @@ export const refreshWeb25StateThunk = createAsyncThunk<
 
     try {
       const [sessionPayload, pinataPayload] = await Promise.all([
-        getWeb25Session(baseUrl),
+        refreshWeb25Session(baseUrl),
         getPinataConfig(baseUrl),
       ]);
-      return { session: sessionPayload.session, pinataConfig: pinataPayload };
+      return { session: sessionPayload, pinataConfig: pinataPayload };
     } catch {
       return { session: null, pinataConfig: null };
     }
@@ -108,27 +108,12 @@ export const siweLoginThunk = createAsyncThunk<
 >(
   'musicWorkshop/siweLogin',
   async ({ baseUrl, walletProvider, fallbackAddress }) => {
-    const provider = new BrowserProvider(walletProvider);
-    const signer = await provider.getSigner();
-    const signerAddress = fallbackAddress || await signer.getAddress();
-    const network = await provider.getNetwork();
-    const chainId = Number(network.chainId);
-
-    const noncePayload = await requestSiweNonce(baseUrl, { address: signerAddress, chainId });
-    const message = buildSiweMessage({
-      domain: noncePayload.domain,
-      address: signerAddress,
-      uri: noncePayload.uri,
-      statement: noncePayload.statement,
-      version: noncePayload.version,
-      chainId,
-      nonce: noncePayload.nonce,
-      issuedAt: new Date().toISOString(),
+    const session = await loginWeb25WithSiwe({
+      baseUrl,
+      walletProvider,
+      fallbackAddress,
     });
-    const signature = await signer.signMessage(message);
-    const verified = await verifySiweSession(baseUrl, { message, signature });
-
-    return { session: verified.session };
+    return { session };
   },
 );
 
@@ -138,7 +123,7 @@ export const siweLogoutThunk = createAsyncThunk<
 >(
   'musicWorkshop/siweLogout',
   async ({ baseUrl }) => {
-    await logoutWeb25(baseUrl);
+    await logoutWeb25Session(baseUrl);
   },
 );
 

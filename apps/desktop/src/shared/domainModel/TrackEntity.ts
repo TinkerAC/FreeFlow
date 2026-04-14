@@ -15,6 +15,7 @@ export interface FreeFlowTrackInfo {
   metadataUrl: string | null;
   metadataCid: string | null;
   explorerUrl: string | null;
+  platformHubAddress: string | null;
   publishTxHash: string | null;
   releaseId: string | null;
   status: string | null;

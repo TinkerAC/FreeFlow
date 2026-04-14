@@ -12,7 +12,7 @@ resourceRouter.get('/search', async (req, res, next) => {
     const keyword = String(req.query.q ?? '').trim();
     const limitInput = Number(req.query.limit ?? 20);
     const limit = Number.isFinite(limitInput)
-      ? Math.min(50, Math.max(1, Math.trunc(limitInput)))
+      ? Math.min(200, Math.max(1, Math.trunc(limitInput)))
       : 20;
 
     const payload = await resourceService.searchTracks(keyword, limit);
