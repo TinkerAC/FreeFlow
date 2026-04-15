@@ -9,7 +9,6 @@ import rootLogger from '@src/utils/logger';
 export function registerPlayerHandlers({ windowManager, dataPath }: IpcContext): void {
   let lastPlayerState: PlayerState | null = null;
 
-  const mainWindow = windowManager.get(WindowKey.MAIN);
   ipcMain.handle(Channels.Player.LoadState, async () => loadPlayer(dataPath.playerStateDumpFile));
 
   // 简单的防抖函数
@@ -39,6 +38,7 @@ export function registerPlayerHandlers({ windowManager, dataPath }: IpcContext):
     savePlayer(dataPath.playerStateDumpFile, state);
     if (terminate) {
       console.log('应用即将退出，播放器状态已保存。');
+      const mainWindow = windowManager.get(WindowKey.MAIN);
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.destroy();
       }

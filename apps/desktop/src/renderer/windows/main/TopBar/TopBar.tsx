@@ -10,8 +10,8 @@ import PlayerController from '@renderer/core/controller/PlayerController';
 import clsx from 'clsx';
 import { OS } from '@src/shared/OS';
 import { useNavigation, ViewType } from '@renderer/core/navigation';
-import Web3Button from '@renderer/windows/main/TopBar/ConnectWalletButton'
 import CreatorsWorkshopButton from '@renderer/windows/main/TopBar/CreatorsWorkshopButton';
+
 async function getSearchResults(searchTerm: string, safeMode: boolean = false) {
   return searchContext.getSearchResults(searchTerm, safeMode);
 }
@@ -37,7 +37,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const [isShiftPressed, setIsShiftPressed] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Shift') setIsShiftPressed(true);
@@ -164,7 +164,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
           </div>
         )}
 
-        {/* 中：搜索（更像“岛”） */}
+        {/* 中：搜索框 */}
         <div className={styles.center}>
           <div className={clsx(styles.search, (isInputFocused && isShiftPressed) && styles.searchSafeMode)}>
             <i className={clsx('fa-solid fa-magnifying-glass', styles.searchIcon)} aria-hidden />
@@ -187,10 +187,10 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
 
         {/* 右：操作（Premium / 设置 / 调试 / 用户 / 窗口控件） */}
         <div className={clsx(styles.right, styles.nodrag)}>
-          <Web3Button />
+          {/*用于弹出创作者工作台的按钮*/}
           <CreatorsWorkshopButton />
 
-          {/* 新：齿轮按钮 -> SettingsView */}
+          {/*齿轮按钮 -> SettingsView */}
           <button
             className={styles.iconBtn}
             title="设置"
@@ -213,8 +213,10 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
 
           {platform !== OS.MACOS && (
             <div className={styles.winCtrl}>
-              <div className={styles.winBtn} title="最小化" onClick={() => windowControlContext.minimize()}>&#8722;</div>
-              <div className={styles.winBtn} title="最大化" onClick={() => windowControlContext.maximize()}>&#9633;</div>
+              <div className={styles.winBtn} title="最小化"
+                   onClick={() => windowControlContext.minimize()}>&#8722;</div>
+              <div className={styles.winBtn} title="最大化"
+                   onClick={() => windowControlContext.maximize()}>&#9633;</div>
               <div className={styles.winBtn} title="关闭" onClick={() => windowControlContext.close()}>&times;</div>
             </div>
           )}

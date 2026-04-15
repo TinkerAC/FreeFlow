@@ -1,76 +1,49 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
-import type { WindowManager } from '@main/window/windowManager';
+import { app } from 'electron';
+import { WindowKey, windowManager } from '@main/window/windowManager';
 import type ShortCutManager from '@main/core/ShortCutManager';
 import type ProxyServerManager from '@main/core/AudioProxyServer';
-import type LocalLibraryService from '@main/services/localLibraryService';
 import type IpcController from '@main/core/ipc/IpcController';
 import type TrayManager from '@main/core/TrayManager';
-import ProfileGuideWindow from '@main/window/ProfileGuideWindow';
 import { markQuitting } from '@main/window/quitState';
-import { registerProfileHandlers } from '@main/core/ipc/handlers/profileHandlers';
-import { ensureRootDataPath, root_Data_Path } from '@main/core/rootDataPath';
+import { registerProfileHandlers } from '@main/core/ipc/handlers/bootstrap/profileHandlers';
 import type { ProfileSummary } from '@src/shared/profile/profile';
-import { Channels } from '@src/shared/ipc/channels';
 import chalk from 'chalk';
 import rootLogger, { IS_DEVELOPMENT } from '@src/utils/logger';
+import { ensureRootDataPath, root_Data_Path } from '@main/core/PathConfig';
+import { registerBootstrapWindowControls } from '@main/core/ipc/handlers/bootstrap/guideWindowControlHandlers';
 
 const logger = rootLogger.child({ context: 'Main' });
 
-let guideWindow: ProfileGuideWindow | null = null;
-let windowManager: WindowManager | null = null;
-let windowKeys: typeof import('@main/window/windowManager').WindowKey | null = null;
 let shortcutManager: ShortCutManager | null = null;
 let mainLaunch: Promise<void> | null = null;
 let mainApplicationLoaded = false;
 let activeProfileId: string | null = null;
 
+windowManager.onProfileGuideClosed(() => {
+  if (mainApplicationLoaded) {
+    windowManager.activate(WindowKey.MAIN);
+  }
+});
+
 process.on('uncaughtException', (e) => logger.error('UncaughtException:', e));
 process.on('unhandledRejection', (e) => logger.error('UnhandledRejection:', e));
 
-function registerBootstrapWindowControls(): void {
-  ipcMain.on(Channels.Window.Controls, (event, action: string) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (!win || win.isDestroyed()) return;
-
-    switch (action) {
-      case 'minimize':
-        win.minimize();
-        break;
-      case 'maximize':
-        win.isMaximized() ? win.unmaximize() : win.maximize();
-        break;
-      case 'close':
-        win.close();
-        break;
-      default:
-        logger.warn(`Unknown window action: ${action}`);
-    }
-  });
-}
 
 function showProfileGuide(): void {
   if (!app.isReady()) return;
-
-  if (!guideWindow || guideWindow.isDestroyed()) {
-    guideWindow = new ProfileGuideWindow();
-    guideWindow.on('closed', () => {
-      guideWindow = null;
-      if (mainApplicationLoaded && windowManager && windowKeys) {
-        windowManager.activate(windowKeys.MAIN);
-      }
-    });
-    return;
-  }
-
-  if (guideWindow.isMinimized()) guideWindow.restore();
-  guideWindow.show();
-  guideWindow.focus();
+  windowManager.showProfileGuide();
 }
 
 function closeProfileGuide(): void {
-  if (!guideWindow || guideWindow.isDestroyed()) return;
-  guideWindow.destroy();
-  guideWindow = null;
+  windowManager.closeProfileGuide();
+}
+
+function activatePrimaryWindow(): void {
+  if (!mainApplicationLoaded) {
+    showProfileGuide();
+    return;
+  }
+  windowManager.activatePrimaryWindow();
 }
 
 function relaunchToProfileGuide(): void {
@@ -83,21 +56,14 @@ function relaunchToProfileGuide(): void {
 
 function returnToProfileGuide(): void {
   logger.info('Returning to Profile guide');
-
-  if (windowManager && windowKeys) {
-    windowManager.hide(windowKeys.CREATORS_WORKSHOP);
-    windowManager.hide(windowKeys.MINI);
-    windowManager.hide(windowKeys.MAIN);
-  }
-
-  showProfileGuide();
+  windowManager.enterProfileGuideMode();
 }
 
 async function launchMainApplication(profile: ProfileSummary): Promise<void> {
   if (mainApplicationLoaded) {
     if (profile.id === activeProfileId) {
       closeProfileGuide();
-      windowManager?.activate(windowKeys!.MAIN);
+      windowManager.activate(WindowKey.MAIN);
       return;
     }
 
@@ -115,7 +81,6 @@ async function launchMainApplication(profile: ProfileSummary): Promise<void> {
     activeProfileId = profile.id;
 
     const [
-      windowModule,
       diModule,
       symbolModule,
       databaseModule,
@@ -123,7 +88,6 @@ async function launchMainApplication(profile: ProfileSummary): Promise<void> {
       helperModule,
       sessionModule,
     ] = await Promise.all([
-      import('@main/window/windowManager'),
       import('@main/di/di-container'),
       import('@main/di/symbol'),
       import('@main/database/seqimpl'),
@@ -132,7 +96,6 @@ async function launchMainApplication(profile: ProfileSummary): Promise<void> {
       import('@main/database/seqimpl/Session'),
     ]);
 
-    windowKeys = windowModule.WindowKey;
     const { container } = diModule;
     const { DISymbol } = symbolModule;
     const { sequelize } = databaseModule;
@@ -140,21 +103,18 @@ async function launchMainApplication(profile: ProfileSummary): Promise<void> {
     const { getOperatingSystem } = helperModule;
     const { Session } = sessionModule;
 
-    const localLibraryService = container.get<LocalLibraryService>(DISymbol.LocalLibraryService);
     const proxyServerManager = container.get<ProxyServerManager>(DISymbol.ProxyServerManager);
     const ipcController = container.get<IpcController>(DISymbol.IpcController);
     const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
     shortcutManager = container.get<ShortCutManager>(DISymbol.ShortcutManager);
-    windowManager = container.get<WindowManager>(DISymbol.WindowManager);
 
     setAppMenu();
     await sequelize.sync();
-    await localLibraryService.updateLocalLibrary();
     await proxyServerManager.start();
 
     ipcController.register();
-    windowManager.activate(windowKeys.MAIN);
-    windowManager.ensure(windowKeys.WORKER);
+    windowManager.activate(WindowKey.MAIN);
+    windowManager.ensure(WindowKey.WORKER);
     closeProfileGuide();
 
     trayManager.createTray();
@@ -191,20 +151,10 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
   app.quit();
 } else {
   logger.info('App started');
-  registerBootstrapWindowControls();
+  registerBootstrapWindowControls(windowManager);
 
   app.on('second-instance', () => {
-    if (!windowManager || !windowKeys) {
-      showProfileGuide();
-      return;
-    }
-
-    if (windowManager.isVisible(windowKeys.MINI)) {
-      windowManager.activate(windowKeys.MINI);
-      return;
-    }
-
-    windowManager.activate(windowKeys.MAIN);
+    activatePrimaryWindow();
   });
 
   app.on('web-contents-created', (_e, contents) => {
@@ -216,6 +166,7 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
 
   app.whenReady().then(() => {
     ensureRootDataPath();
+
     registerProfileHandlers({
       rootDataPath: root_Data_Path,
       onEnterProfile: launchMainApplication,
@@ -228,17 +179,7 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
   });
 
   app.on('activate', () => {
-    if (!windowManager || !windowKeys) {
-      showProfileGuide();
-      return;
-    }
-
-    if (windowManager.isVisible(windowKeys.MINI)) {
-      windowManager.activate(windowKeys.MINI);
-      return;
-    }
-
-    windowManager.activate(windowKeys.MAIN);
+    activatePrimaryWindow();
   });
 
   app.on('window-all-closed', () => {
@@ -253,6 +194,6 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
 
   app.on('will-quit', () => {
     shortcutManager?.unregister();
-    windowManager?.shutdown();
+    windowManager.shutdown();
   });
 }

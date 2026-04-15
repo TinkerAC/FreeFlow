@@ -22,6 +22,7 @@ export declare const CREATOR_RELEASE_CLIENT_UPDATE_STATUSES: readonly [
   'CANCELLED',
 ];
 
+
 export type CreatorReleaseClientUpdateStatus = (typeof CREATOR_RELEASE_CLIENT_UPDATE_STATUSES)[number];
 
 export declare const CREATOR_RELEASE_IN_PROGRESS_STATUSES: readonly [
@@ -40,3 +41,4 @@ export type ReleaseActivityLevel = (typeof RELEASE_ACTIVITY_LEVELS)[number];
 
 export declare const CREATOR_RELEASE_PUBLISHED_STATUS: 'PUBLISHED';
 export declare const CREATOR_RELEASE_FAILED_STATUS: 'FAILED';
+

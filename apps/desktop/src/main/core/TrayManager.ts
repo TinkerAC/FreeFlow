@@ -58,7 +58,7 @@ export default class TrayManager {
     const contextMenu = Menu.buildFromTemplate([
       {
         label: '显示窗口',
-        click: () => this.windowManager.show(WindowKey.MAIN),
+        click: () => this.windowManager.activatePrimaryWindow(),
       },
       {
         label: '退出',
@@ -69,7 +69,7 @@ export default class TrayManager {
     this.tray.setToolTip('FreeFlow');
     this.tray.setContextMenu(contextMenu);
 
-    this.tray.on('click', () => this.windowManager.show(WindowKey.MAIN));
+    this.tray.on('click', () => this.windowManager.activatePrimaryWindow());
 
     console.log('系统托盘已创建');
     return this.tray;

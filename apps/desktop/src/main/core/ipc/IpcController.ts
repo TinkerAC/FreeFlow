@@ -14,26 +14,28 @@ import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { ConfigService } from '@main/core/configService';
 import { AiTextService } from '@main/services/ai/AiTextService';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
-import { IpcContext } from './handlers/ipcContext';
+import { IpcContext } from './handlers/runtime/ipcContext';
 import { ProviderManager } from '@main/core/ProviderManager';
 import { SearchService } from '@main/services/SearchService';
-import { registerSystemHandlers } from './handlers/systemHandlers';
-import { registerWindowHandlers } from './handlers/windowHandlers';
-import { registerPlaylistHandlers } from './handlers/playlistHandlers';
-import { registerPlayerHandlers } from './handlers/playerHandlers';
-import { registerTrackHandlers } from './handlers/trackHandlers';
-import { registerSearchHandlers } from './handlers/searchHandlers';
-import { registerYouTubeMusicHandlers } from './handlers/youtubeHandlers';
-import { registerConfigHandlers } from './handlers/configHandlers';
-import { registerDownloadHandlers } from './handlers/downloadHandlers';
-import { registerMiscHandlers } from './handlers/miscHandlers';
-import { registerMusicWorkshopHandlers } from './handlers/musicWorkshopHandlers';
+import { registerSystemHandlers } from './handlers/runtime/systemHandlers';
+import { registerWindowHandlers } from './handlers/runtime/windowHandlers';
+import { registerPlaylistHandlers } from './handlers/runtime/playlistHandlers';
+import { registerPlayerHandlers } from './handlers/runtime/playerHandlers';
+import { registerTrackHandlers } from './handlers/runtime/trackHandlers';
+import { registerSearchHandlers } from './handlers/runtime/searchHandlers';
+import { registerYouTubeMusicHandlers } from './handlers/runtime/youtubeHandlers';
+import { registerConfigHandlers } from './handlers/runtime/configHandlers';
+import { registerDownloadHandlers } from './handlers/runtime/downloadHandlers';
+import { registerMiscHandlers } from './handlers/runtime/miscHandlers';
+import { registerMusicWorkshopHandlers } from './handlers/runtime/musicWorkshopHandlers';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能拆分到独立模块。
  */
 @injectable()
 export default class IpcController {
+  private registered = false;
+
   constructor(
     @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
     @inject(DISymbol.PlaylistService) private readonly playlistService: PlaylistService,
@@ -55,6 +57,8 @@ export default class IpcController {
   }
 
   public register(): void {
+    if (this.registered) return;
+
     const context: IpcContext = {
       windowManager: this.windowManager,
       configService: this.configService,
@@ -85,5 +89,7 @@ export default class IpcController {
     registerDownloadHandlers(context);
     registerMiscHandlers(context);
     registerMusicWorkshopHandlers(context);
+
+    this.registered = true;
   }
 }

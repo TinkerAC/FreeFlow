@@ -5,11 +5,11 @@ import {
   buildWalletProfileName,
   DEFAULT_PROFILE_ID,
   normalizeWalletAddress,
-  SEPOLIA_CHAIN_ID,
   type ProfileIndex,
   type ProfileSummary,
   type WalletProfileInput,
 } from '@src/shared/profile/profile';
+import { SEPOLIA_CHAIN_ID } from '@src/shared/Constance';
 
 const PROFILE_INDEX_FILE = 'profiles.json';
 
@@ -141,22 +141,22 @@ export function ensureWalletProfile(rootDataPath: string, input: WalletProfileIn
 
   const profile: ProfileSummary = existingProfile
     ? {
-        ...existingProfile,
-        name: buildWalletProfileName(input),
-        type: 'wallet',
-        walletAddress,
-        chainId: input.chainId,
-        updatedAt: timestamp,
-      }
+      ...existingProfile,
+      name: buildWalletProfileName(input),
+      type: 'wallet',
+      walletAddress,
+      chainId: input.chainId,
+      updatedAt: timestamp,
+    }
     : {
-        id: profileId,
-        name: buildWalletProfileName(input),
-        type: 'wallet',
-        walletAddress,
-        chainId: input.chainId,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      };
+      id: profileId,
+      name: buildWalletProfileName(input),
+      type: 'wallet',
+      walletAddress,
+      chainId: input.chainId,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
 
   const profiles = existingProfile
     ? index.profiles.map((item) => (item.id === profileId ? profile : item))

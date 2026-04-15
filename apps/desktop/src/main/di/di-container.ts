@@ -11,7 +11,7 @@ import TrackService from '@main/services/TrackService';
 import PlaylistService from '@main/services/PlaylistService';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
-import { WindowManager } from '@main/window/windowManager';
+import { WindowManager, windowManager } from '@main/window/windowManager';
 import { HifiniDownloader } from '@main/services/Downloader';
 import { LyricService } from '@main/services/LyricService';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
@@ -111,8 +111,7 @@ container
     }));
 container
   .bind<WindowManager>(DISymbol.WindowManager)
-  .to(WindowManager)
-  .inSingletonScope();
+  .toConstantValue(windowManager);
 container
   .bind<HifiniDownloader>(DISymbol.HifiniDownloader)
   .to(HifiniDownloader)

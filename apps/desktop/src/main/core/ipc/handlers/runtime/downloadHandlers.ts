@@ -27,7 +27,8 @@ export function registerDownloadHandlers({
     const token = crypto.randomUUID();
     downloader.registerDownload(token, track.id);
 
-    const ses = windowManager.get(WindowKey.WORKER)!.webContents.session;
+    const worker = windowManager.ensure(WindowKey.WORKER);
+    const ses = worker.webContents.session;
     ses.once('will-download', (event, item) => {
       const fileName = item.getFilename();
       const total = item.getTotalBytes();

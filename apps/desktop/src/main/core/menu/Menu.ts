@@ -25,7 +25,7 @@ const menu_template = [
       {
         label: 'SaveState',
         click: () => {
-          windowManager.get(WindowKey.MAIN).webContents.send(Channels.Player.RequestDump);
+          windowManager.get(WindowKey.MAIN)?.webContents.send(Channels.Player.RequestDump);
         },
         accelerator: 'Cmd+S',
       },

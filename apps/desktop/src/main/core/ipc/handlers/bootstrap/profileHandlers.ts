@@ -1,24 +1,9 @@
 import { app, ipcMain } from 'electron';
 import { Channels } from '@src/shared/ipc/channels';
-import {
-  ensureWalletProfile,
-  getActiveProfile,
-  loadProfileIndex,
-} from '@main/core/profileStore';
-import { SEPOLIA_CHAIN_ID, type ProfileSummary, type WalletProfileInput } from '@src/shared/profile/profile';
+import { ensureWalletProfile, getActiveProfile, loadProfileIndex } from '@main/core/profileStore';
+import { type ProfileSummary, type WalletProfileInput } from '@src/shared/profile/profile';
+import { SEPOLIA_CHAIN_ID } from '@src/shared/Constance';
 
-export interface ProfileHandlerOptions {
-  rootDataPath: string;
-  onEnterProfile?: (profile: ProfileSummary) => Promise<void> | void;
-  onExitToGuide?: () => Promise<void> | void;
-}
-
-function relaunch(): void {
-  setTimeout(() => {
-    app.relaunch();
-    app.exit(0);
-  }, 10);
-}
 
 export function registerProfileHandlers(options: ProfileHandlerOptions): void {
   ipcMain.handle(Channels.Profile.List, async () => {
@@ -47,4 +32,17 @@ export function registerProfileHandlers(options: ProfileHandlerOptions): void {
 
     relaunch();
   });
+}
+
+export interface ProfileHandlerOptions {
+  rootDataPath: string;
+  onEnterProfile?: (profile: ProfileSummary) => Promise<void> | void;
+  onExitToGuide?: () => Promise<void> | void;
+}
+
+function relaunch(): void {
+  setTimeout(() => {
+    app.relaunch();
+    app.exit(0);
+  }, 10);
 }

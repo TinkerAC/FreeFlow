@@ -1,5 +1,4 @@
 export const DEFAULT_PROFILE_ID = 'default';
-export const SEPOLIA_CHAIN_ID = 11155111;
 
 export type ProfileType = 'local' | 'wallet';
 
