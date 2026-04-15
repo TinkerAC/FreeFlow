@@ -1,5 +1,6 @@
 import type { Express } from 'express';
 import { authRouter } from '../../modules/auth/auth.routes.js';
+import { commentRouter } from '../../modules/comments/comment.routes.js';
 import { pinataRouter } from '../../modules/pinata/pinata.routes.js';
 import { resourceRouter } from '../../modules/resources/resource.routes.js';
 import { releaseRouter } from '../../modules/releases/release.routes.js';
@@ -16,5 +17,6 @@ export function registerHttpRoutes(app: Express) {
   app.use('/api/v1/resources', resourceRouter);
   app.use('/api/v1/releases', releaseRouter);
   app.use('/api/v1/users', userRouter);
+  app.use('/api/v1/comments', commentRouter);
   app.use('/api/v1/system', systemRouter);
 }

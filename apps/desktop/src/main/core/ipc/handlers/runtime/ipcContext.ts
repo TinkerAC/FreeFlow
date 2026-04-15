@@ -4,7 +4,7 @@ import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCl
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import { LyricService } from '@main/services/LyricService';
 import { FileCacheManager } from '@main/core/FileCacheManager';
-import { HifiniDownloader } from '@main/services/Downloader';
+import { IpfsDownloadService } from '@main/services/IpfsDownloadService';
 import { DataPath } from '@main/core/PathConfig';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
 import { AiTextService } from '@main/services/ai/AiTextService';
@@ -24,7 +24,7 @@ export interface IpcContext {
   qqMusic: QQMusic;
   lyricService: LyricService;
   fileCacheManager: FileCacheManager;
-  downloader: HifiniDownloader;
+  ipfsDownloadService: IpfsDownloadService;
   dataPath: DataPath;
   bilibili: Bilibili;
   aiText: AiTextService;

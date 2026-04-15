@@ -151,6 +151,17 @@ export default class TrackService extends AbstractService {
     return await this.trackRepository.bindLocalFileToTrack(trackId, filePath);
   }
 
+  public async markDownloadState(trackId: number, state: {
+    status: 'none' | 'downloading' | 'downloaded' | 'failed';
+    localPath?: string;
+    sourceCid?: string;
+    sourceGateway?: string;
+    error?: string;
+    downloadedAt?: Date | null;
+  }): Promise<TrackEntity> {
+    return await this.trackRepository.updateDownloadState(trackId, state);
+  }
+
 
   public async increasePlayCount(track: TrackEntity): Promise<TrackEntity> {
     return await this.trackRepository.increasePlayCount(track);

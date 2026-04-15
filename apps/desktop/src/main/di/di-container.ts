@@ -12,7 +12,7 @@ import PlaylistService from '@main/services/PlaylistService';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { WindowManager, windowManager } from '@main/window/windowManager';
-import { HifiniDownloader } from '@main/services/Downloader';
+import { IpfsDownloadService } from '@main/services/IpfsDownloadService';
 import { LyricService } from '@main/services/LyricService';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
@@ -113,8 +113,8 @@ container
   .bind<WindowManager>(DISymbol.WindowManager)
   .toConstantValue(windowManager);
 container
-  .bind<HifiniDownloader>(DISymbol.HifiniDownloader)
-  .to(HifiniDownloader)
+  .bind<IpfsDownloadService>(DISymbol.IpfsDownloadService)
+  .to(IpfsDownloadService)
   .inSingletonScope();
 container
   .bind<ProxyServerManager>(DISymbol.ProxyServerManager)

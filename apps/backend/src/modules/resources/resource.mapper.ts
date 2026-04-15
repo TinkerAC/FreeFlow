@@ -82,6 +82,8 @@ export function mapResourceRecord(record: PersistedResourceRecord) {
     contentCid: record.contentCid ?? null,
     coverUrl: coverStorage?.gatewayUrl ?? pickMetadataImage(metadata),
     audioUrl: audioStorage?.gatewayUrl ?? pickMetadataAudioGateway(metadata),
+    audioCid: audioStorage?.cid ?? null,
+    coverCid: coverStorage?.cid ?? null,
     metadataUrl: metadataStorage?.gatewayUrl ?? null,
     metadataCid: metadataStorage?.cid ?? null,
     accessModel: release?.accessModel ?? null,

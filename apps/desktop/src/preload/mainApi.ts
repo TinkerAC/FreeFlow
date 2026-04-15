@@ -27,7 +27,8 @@ const mainApi: MainApi = {
     getLocalLibrary: () => ipcRenderer.invoke(Channels.Library.GetLocalLibrary) as Promise<TrackEntity[]>,
     addTrackToLibrary: (track) => ipcRenderer.invoke(Channels.Library.AddTrackToLibrary, track),
     removeTrackFromLibrary: (track) => ipcRenderer.invoke(Channels.Library.RemoveTrackFromLibrary, track),
-    downFromHifini: (track) => ipcRenderer.send(Channels.Library.DownloadFromHifini, track),
+    downloadTrack: (track) => ipcRenderer.invoke(Channels.Library.DownloadTrack, track),
+    downFromHifini: (track) => ipcRenderer.invoke(Channels.Library.DownloadTrack, track),
     increasePlayCount: (track) => ipcRenderer.send(Channels.Library.IncreasePlayCount, track),
   },
 
@@ -169,6 +170,7 @@ const mainApi: MainApi = {
     show: () => ipcRenderer.invoke(Channels.CreatorsWorkshop.Show) as Promise<void>,
     readMetadata: (filePath: string) => ipcRenderer.invoke(Channels.CreatorsWorkshop.ReadMetadata, filePath),
     writeMetadata: (payload) => ipcRenderer.invoke(Channels.CreatorsWorkshop.WriteMetadata, payload),
+    validateMetadata: (filePath: string) => ipcRenderer.invoke(Channels.CreatorsWorkshop.ValidateMetadata, filePath),
   },
 };
 

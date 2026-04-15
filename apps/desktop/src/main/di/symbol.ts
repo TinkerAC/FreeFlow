@@ -7,7 +7,7 @@ export const DISymbol = {
   Sequelize: Symbol.for('Sequelize'),
   FileCacheManager: Symbol.for('FileCacheManager'),
   WindowManager: Symbol.for('WindowManager'),
-  HifiniDownloader: Symbol.for('HifiniDownloader'),
+  IpfsDownloadService: Symbol.for('IpfsDownloadService'),
   ProxyServerManager: Symbol.for('ProxyServerManager'),
   LocalLibraryService: Symbol.for('LocalLibraryService'),
   TrackService: Symbol.for('TrackService'),

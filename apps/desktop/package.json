@@ -11,7 +11,9 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint src/ --ext .ts,.js,.tsx,.jsx",
-    "test": "vitest"
+    "test": "vitest",
+    "check:metadata": "node tools/check-audio-metadata.mjs",
+    "embed:test-music-metadata": "node tools/embed-test-music-metadata.cjs"
   },
   "keywords": [
     "2026",

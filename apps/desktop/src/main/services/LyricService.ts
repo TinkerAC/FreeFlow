@@ -4,7 +4,7 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 import { distance } from 'fastest-levenshtein';
 import { DISymbol } from '@main/di/symbol';
-import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
+import type YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import { ProviderManager } from '@main/core/ProviderManager';
 import { Logger } from 'winston';
 import { Platform } from '@main/core/enum/Platform';

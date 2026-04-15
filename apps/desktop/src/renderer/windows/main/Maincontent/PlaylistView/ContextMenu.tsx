@@ -69,7 +69,8 @@ export default function ContextMenu({
     { key: 'edit', icon: 'fas fa-pen', label: '编辑歌曲信息', onClick: () => onEditRequest?.(track) },
     {
       key: 'download', icon: 'fas fa-download', label: '下载', onClick: async () => {
-        await libraryContext.downFromHifini(track);
+        await libraryContext.downloadTrack(track);
+        await musicLibraryController.refreshPlaylists();
       },
     },
   ];

@@ -15,6 +15,11 @@ export interface TrackCreationAttributes
     | 'lyrics'
     | 'played_count'
     | 'relative_local_path'
+    | 'download_status'
+    | 'download_source_cid'
+    | 'download_source_gateway'
+    | 'download_error'
+    | 'downloaded_at'
     | 'created_at'
     | 'modified_at'
   > {
@@ -34,6 +39,11 @@ export class Track
   public lyrics?: string;
   public played_count!: number;
   public relative_local_path!: string;
+  public download_status!: 'none' | 'downloading' | 'downloaded' | 'failed';
+  public download_source_cid?: string;
+  public download_source_gateway?: string;
+  public download_error?: string;
+  public downloaded_at?: Date;
   public created_at?: Date;
   public modified_at?: Date;
 }
@@ -70,6 +80,23 @@ Track.init(
       type: DataTypes.TEXT,
       defaultValue: '',
     },
+    download_status: {
+      type: DataTypes.TEXT,
+      defaultValue: 'none',
+    },
+    download_source_cid: {
+      type: DataTypes.TEXT,
+      defaultValue: '',
+    },
+    download_source_gateway: {
+      type: DataTypes.TEXT,
+      defaultValue: '',
+    },
+    download_error: {
+      type: DataTypes.TEXT,
+      defaultValue: '',
+    },
+    downloaded_at: DataTypes.DATE,
   },
   {
     sequelize,

@@ -179,7 +179,9 @@ export type IndexedTrackResource = {
   tokenId: string | null;
   contentCid: string | null;
   coverUrl: string | null;
+  coverCid: string | null;
   audioUrl: string | null;
+  audioCid: string | null;
   metadataUrl: string | null;
   metadataCid: string | null;
   accessModel: ReleaseAccessModel | null;
@@ -194,6 +196,34 @@ export type IndexedTrackResource = {
   metadataDocument: unknown | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type Web25Comment = {
+  id: string;
+  resourceId: string;
+  parentId: string | null;
+  body: string;
+  status: string;
+  author: {
+    userId: string;
+    displayName: string;
+    avatarUrl: string | null;
+    walletAddress: string | null;
+  };
+  replies: Web25Comment[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Web25CommentList = {
+  resource: {
+    id: string;
+    resourceKey: string;
+    type: string;
+    title: string | null;
+  };
+  items: Web25Comment[];
+  nextCursor: string | null;
 };
 
 let sessionToken: string | null = null;
@@ -451,5 +481,43 @@ export async function resolveIndexedTrackResource(baseUrl: string, resourceKey: 
   return await requestWeb25<IndexedTrackResource>(
     baseUrl,
     `/api/v1/resources/resolve?${query.toString()}`,
+  );
+}
+
+export async function listWeb25Comments(
+  baseUrl: string,
+  input: {
+    resourceKey: string;
+    limit?: number;
+    cursor?: string | null;
+  },
+) {
+  const query = new URLSearchParams({
+    resourceKey: input.resourceKey,
+    limit: String(input.limit ?? 30),
+  });
+  if (input.cursor) query.set('cursor', input.cursor);
+
+  return await requestWeb25<Web25CommentList>(
+    baseUrl,
+    `/api/v1/comments?${query.toString()}`,
+  );
+}
+
+export async function createWeb25Comment(
+  baseUrl: string,
+  input: {
+    resourceKey: string;
+    body: string;
+    parentId?: string | null;
+  },
+) {
+  return await requestWeb25<Web25Comment>(
+    baseUrl,
+    '/api/v1/comments',
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    },
   );
 }

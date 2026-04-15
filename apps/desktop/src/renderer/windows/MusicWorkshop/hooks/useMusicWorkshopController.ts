@@ -4,6 +4,7 @@ import { profileContext } from '@renderer/core/electronContextApi';
 import { useSettingsContext } from '@renderer/core/config/SettingsContext';
 import { type CreatorReleaseRecord } from '@renderer/core/web25/client';
 import { readWeb25SessionSnapshot, subscribeWeb25SessionSnapshot } from '@renderer/core/web25/sessionSync';
+import type { TrackMetadataValidationResult } from '@src/shared/metadata/metadataValidation';
 import {
   type AccessCheckState,
   buildMetadataDocument,
@@ -63,6 +64,7 @@ export function useMusicWorkshopController() {
   const [coverPreviewUrl, setCoverPreviewUrl] = React.useState('');
   const [accessCheck, setAccessCheck] = React.useState<AccessCheckState>(DEFAULT_ACCESS_CHECK_STATE);
   const [authStatusText, setAuthStatusText] = React.useState('');
+  const [audioMetadataValidation, setAudioMetadataValidation] = React.useState<TrackMetadataValidationResult | null>(null);
 
   // 当服务端回填最新 release 时，跳过一次自动保存，避免客户端立刻把旧快照写回去。
   const skipAutosaveRef = React.useRef(false);
@@ -78,6 +80,7 @@ export function useMusicWorkshopController() {
   React.useEffect(() => {
     setAudioFile(null);
     setCoverFile(null);
+    setAudioMetadataValidation(null);
     setAccessCheck((prev) => ({ ...DEFAULT_ACCESS_CHECK_STATE, tokenId: selectedRelease?.tokenId || prev.tokenId }));
     if (selectedRelease) {
       setActivePanel(normalizeReleasePanel(selectedRelease.currentStage));
@@ -269,7 +272,41 @@ export function useMusicWorkshopController() {
     const file = event.target.files?.[0];
     if (!file || !selectedRelease) return;
     setAudioFile(file);
+    setAudioMetadataValidation(null);
     const metadata = await hydrateMetadataFromFile(file);
+    const filePath = (file as File & { path?: string }).path;
+    if (filePath) {
+      try {
+        setAudioMetadataValidation(await window.mainApi.creatorsWorkshopApi.validateMetadata(filePath));
+      } catch (error) {
+        setAudioMetadataValidation({
+          ok: false,
+          filePath,
+          metadata: {
+            filePath,
+            title: metadata.title,
+            artist: metadata.artist,
+            album: metadata.album,
+            genre: metadata.genre,
+            year: null,
+            lyrics: '',
+            coverDataUrl: '',
+            durationSec: null,
+            bitrate: null,
+            sampleRate: null,
+            channels: null,
+            codec: '',
+            container: '',
+          },
+          missingFields: ['lyrics'],
+          issues: [{
+            field: 'lyrics',
+            label: '歌词',
+            message: error instanceof Error ? error.message : '元数据校验失败',
+          }],
+        });
+      }
+    }
     updateLocalRelease({
       audioSourceName: file.name,
       audioSourcePath: (file as File & { path?: string }).path || null,
@@ -295,6 +332,7 @@ export function useMusicWorkshopController() {
 
   const handleUploadAssets = React.useCallback(async () => {
     if (!selectedRelease || !web25Session || (!audioFile && !selectedRelease.audioStorageObjectId)) return;
+    if (audioFile && audioMetadataValidation && !audioMetadataValidation.ok) return;
     skipAutosaveRef.current = true;
     await dispatch(uploadAssetsThunk({
       baseUrl: web25BackendBaseUrl,
@@ -302,7 +340,7 @@ export function useMusicWorkshopController() {
       audioFile,
       coverFile,
     })).unwrap();
-  }, [audioFile, coverFile, dispatch, selectedRelease, web25BackendBaseUrl, web25Session]);
+  }, [audioFile, audioMetadataValidation, coverFile, dispatch, selectedRelease, web25BackendBaseUrl, web25Session]);
 
   const handleUploadMetadata = React.useCallback(async () => {
     if (!selectedRelease || !metadataDocument || !selectedRelease.audioStorageObjectId) return;
@@ -425,6 +463,7 @@ export function useMusicWorkshopController() {
     web25BackendBaseUrl,
     effectiveWeb3Settings,
     metadataDocument,
+    audioMetadataValidation,
     visibleReleases,
     activeSplits,
     needsAudioReattach,

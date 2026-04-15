@@ -17,7 +17,9 @@ type ResourceTrackPayload = {
   contractAddress: string | null;
   tokenId: string | null;
   coverUrl: string | null;
+  coverCid: string | null;
   audioUrl: string | null;
+  audioCid: string | null;
   metadataUrl: string | null;
   metadataCid: string | null;
   accessModel: string | null;
@@ -73,7 +75,9 @@ export default class FreeFlowProvider extends AbstractContentProvider {
       priceEth: item.priceEth ?? null,
       royaltyBps: item.royaltyBps ?? null,
       coverUrl: item.coverUrl ?? null,
+      coverCid: item.coverCid ?? null,
       audioUrl: item.audioUrl ?? null,
+      audioCid: item.audioCid ?? null,
       metadataUrl: item.metadataUrl ?? null,
       metadataCid: item.metadataCid ?? null,
       explorerUrl: item.explorerUrl ?? null,

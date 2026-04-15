@@ -10,6 +10,9 @@ type StoragePanelProps = {
 export default function StoragePanel({ controller }: StoragePanelProps) {
   const release = controller.selectedRelease;
   if (!release) return null;
+  const metadataInvalid = !!controller.audioFile
+    && !!controller.audioMetadataValidation
+    && !controller.audioMetadataValidation.ok;
 
   return (
     <div className={styles.panelGrid}>
@@ -26,9 +29,16 @@ export default function StoragePanel({ controller }: StoragePanelProps) {
             <label className={styles.label}>Upload Limit<input className={styles.input} value={controller.pinataConfig ? formatBytes(controller.pinataConfig.maxFileSizeBytes) : ''} readOnly /></label>
           </div>
           <div className={styles.actionRow}>
-            <button className={styles.primaryButton} onClick={() => void controller.handleUploadAssets()} disabled={!controller.selectedRelease || !controller.web25Session || (!controller.audioFile && !release.audioStorageObjectId) || controller.busyState !== 'idle'}>上传素材</button>
+            <button className={styles.primaryButton} onClick={() => void controller.handleUploadAssets()} disabled={!controller.selectedRelease || !controller.web25Session || (!controller.audioFile && !release.audioStorageObjectId) || metadataInvalid || controller.busyState !== 'idle'}>上传素材</button>
             <button className={styles.primaryButton} onClick={() => void controller.handleUploadMetadata()} disabled={!release.audioStorageObjectId || !controller.metadataDocument || controller.busyState !== 'idle'}>上传 Metadata</button>
           </div>
+          {metadataInvalid ? (
+            <div className={styles.noticeList}>
+              {controller.audioMetadataValidation?.issues.map((issue) => (
+                <div key={issue.field} className={styles.noticeWarning}>{issue.message}</div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
