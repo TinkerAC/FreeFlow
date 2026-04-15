@@ -2,7 +2,13 @@ import React from 'react';
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { useSetting } from '@renderer/core/config/SettingsContext';
 import { profileContext } from '@renderer/core/electronContextApi';
-import { loginWeb25WithSiwe, logoutWeb25Session, useWeb25SessionState } from '@renderer/core/web25/auth';
+import { logoutWeb25Session, useWeb25SessionState } from '@renderer/core/web25/auth';
+import {
+  getCurrentWeb25UserProfile,
+  updateCurrentWeb25UserProfile,
+  uploadWeb25UserAvatar,
+  type Web25UserProfile,
+} from '@renderer/core/web25/client';
 import { syncOwnedFreeFlowLibrary } from '@renderer/core/freeflow/ownedLibrary';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import styles from './ProfileView.module.css';
@@ -18,51 +24,136 @@ export default function ProfileView() {
   const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
   const { session, refresh, refreshing } = useWeb25SessionState(web25BaseUrl.value);
 
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [authBusy, setAuthBusy] = React.useState(false);
   const [syncBusy, setSyncBusy] = React.useState(false);
+  const [profileBusy, setProfileBusy] = React.useState(false);
   const [statusText, setStatusText] = React.useState('');
   const [syncStats, setSyncStats] = React.useState<{ owned: number; indexed: number } | null>(null);
+  const [userProfile, setUserProfile] = React.useState<Web25UserProfile | null>(null);
+  const [draftDisplayName, setDraftDisplayName] = React.useState('');
 
   React.useEffect(() => {
     void refresh().catch(() => {
     });
   }, [refresh]);
 
-  const handleSiweLogin = React.useCallback(async () => {
-    if (!walletProvider) {
-      setStatusText('请返回 Profile 引导连接钱包');
+  const syncProfileMetadataToLocalIndex = React.useCallback(async (profile: Web25UserProfile | null) => {
+    if (!profile) return;
+    try {
+      const activeProfile = await profileContext.getActiveProfile();
+      await profileContext.updateProfileMetadata({
+        profileId: activeProfile.id,
+        patch: {
+          web25DisplayName: profile.displayName || null,
+          web25AvatarUrl: profile.avatarUrl,
+        },
+      });
+    } catch {
+      // ignore profile metadata sync failures on UI side
+    }
+  }, []);
+
+  const loadWeb25UserProfile = React.useCallback(async () => {
+    if (!session) {
+      setUserProfile(null);
+      setDraftDisplayName('');
       return;
     }
-    setAuthBusy(true);
-    setStatusText('');
-    try {
-      await loginWeb25WithSiwe({
-        baseUrl: web25BaseUrl.value,
-        walletProvider,
-        fallbackAddress: address,
-      });
-      await refresh();
-      setStatusText('SIWE 登录成功');
-    } catch (error) {
-      setStatusText(`SIWE 登录失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
-    } finally {
-      setAuthBusy(false);
-    }
-  }, [address, refresh, walletProvider, web25BaseUrl.value]);
+
+    const profile = await getCurrentWeb25UserProfile(web25BaseUrl.value);
+    setUserProfile(profile);
+    setDraftDisplayName(profile.displayName || '');
+    await syncProfileMetadataToLocalIndex(profile);
+  }, [session, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
+
+  React.useEffect(() => {
+    void loadWeb25UserProfile().catch((error) => {
+      setStatusText(`读取用户资料失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
+    });
+  }, [loadWeb25UserProfile]);
 
   const handleSiweLogout = React.useCallback(async () => {
     setAuthBusy(true);
     setStatusText('');
     try {
-      await logoutWeb25Session(web25BaseUrl.value);
+      await logoutWeb25Session(web25BaseUrl.value, { clearLocalScope: 'all-profiles' });
+      setUserProfile(null);
+      setDraftDisplayName('');
+      setSyncStats(null);
       await refresh();
-      setStatusText('已退出 SIWE 会话');
+      await profileContext.exitToGuide();
     } catch (error) {
       setStatusText(`退出失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
     } finally {
       setAuthBusy(false);
     }
   }, [refresh, web25BaseUrl.value]);
+
+  const handleSaveUserProfile = React.useCallback(async () => {
+    if (!session) {
+      setStatusText('请先返回引导完成 SIWE 登录');
+      return;
+    }
+    setProfileBusy(true);
+    setStatusText('');
+    try {
+      const updated = await updateCurrentWeb25UserProfile(web25BaseUrl.value, {
+        displayName: draftDisplayName.trim(),
+      });
+      setUserProfile(updated);
+      setDraftDisplayName(updated.displayName || '');
+      await syncProfileMetadataToLocalIndex(updated);
+      setStatusText('用户资料已更新');
+    } catch (error) {
+      setStatusText(`更新资料失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
+    } finally {
+      setProfileBusy(false);
+    }
+  }, [draftDisplayName, session, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
+
+  const handleClearAvatar = React.useCallback(async () => {
+    if (!session) {
+      setStatusText('请先返回引导完成 SIWE 登录');
+      return;
+    }
+    setProfileBusy(true);
+    setStatusText('');
+    try {
+      const updated = await updateCurrentWeb25UserProfile(web25BaseUrl.value, {
+        avatarUrl: null,
+      });
+      setUserProfile(updated);
+      await syncProfileMetadataToLocalIndex(updated);
+      setStatusText('头像已移除');
+    } catch (error) {
+      setStatusText(`移除头像失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
+    } finally {
+      setProfileBusy(false);
+    }
+  }, [session, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
+
+  const handleAvatarFileChange = React.useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!session) {
+      setStatusText('请先返回引导完成 SIWE 登录');
+      return;
+    }
+    setProfileBusy(true);
+    setStatusText('');
+    try {
+      const updated = await uploadWeb25UserAvatar(web25BaseUrl.value, file);
+      setUserProfile(updated);
+      await syncProfileMetadataToLocalIndex(updated);
+      setStatusText('头像已上传到 Imgur');
+    } catch (error) {
+      setStatusText(`上传头像失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
+    } finally {
+      setProfileBusy(false);
+    }
+  }, [session, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
 
   const handleSyncOwned = React.useCallback(async () => {
     if (!walletProvider || !address) {
@@ -93,8 +184,92 @@ export default function ProfileView() {
     <ViewShell hideScrollbar>
       <div className={styles.root}>
         <section className={styles.block}>
-          <h1 className={styles.title}>账户与链上状态</h1>
-          <p className={styles.sub}>统一查看钱包、SIWE 会话和 Web2.5 服务状态。</p>
+          <h1 className={styles.title}>账户中心</h1>
+          <p className={styles.sub}>管理 Web2.5 身份资料与链上资源同步。</p>
+        </section>
+
+        <section className={styles.block}>
+          <div className={styles.blockTitle}>Web2.5 身份资料</div>
+          <div className={styles.profileCard}>
+            <div className={styles.avatarPane}>
+              {userProfile?.avatarUrl ? (
+                <img className={styles.avatarPreview} src={userProfile.avatarUrl} alt={userProfile.displayName || 'avatar'} />
+              ) : (
+                <div className={styles.avatarFallback}>
+                  {(userProfile?.displayName?.slice(0, 2) || address?.slice(2, 4) || 'FF').toUpperCase()}
+                </div>
+              )}
+              <div className={styles.actions}>
+                <button
+                  className={styles.primaryButton}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={profileBusy || !session}
+                >
+                  {profileBusy ? '处理中...' : '上传头像'}
+                </button>
+                <button
+                  className={styles.ghostButton}
+                  onClick={() => void handleClearAvatar()}
+                  disabled={profileBusy || !session || !userProfile?.avatarUrl}
+                >
+                  移除头像
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className={styles.hiddenInput}
+                  onChange={(event) => {
+                    void handleAvatarFileChange(event);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.profileForm}>
+              <label className={styles.field}>
+                <span className={styles.label}>显示名称</span>
+                <input
+                  className={styles.input}
+                  value={draftDisplayName}
+                  onChange={(event) => setDraftDisplayName(event.target.value)}
+                  placeholder="输入名称"
+                  disabled={!session || profileBusy}
+                />
+              </label>
+              <div className={styles.actions}>
+                <button
+                  className={styles.primaryButton}
+                  onClick={() => void handleSaveUserProfile()}
+                  disabled={profileBusy || !session}
+                >
+                  {profileBusy ? '保存中...' : '保存资料'}
+                </button>
+                <button
+                  className={styles.ghostButton}
+                  onClick={() => {
+                    void profileContext.exitToGuide();
+                  }}
+                >
+                  返回引导
+                </button>
+              </div>
+              <div className={styles.grid}>
+                <div className={styles.item}>
+                  <span className={styles.label}>用户 ID</span>
+                  <span className={styles.value}>{userProfile?.userId ?? '-'}</span>
+                </div>
+                <div className={styles.item}>
+                  <span className={styles.label}>绑定地址</span>
+                  <span className={styles.value}>{formatAddress(userProfile?.walletAddress ?? undefined)}</span>
+                </div>
+                <div className={styles.item}>
+                  <span className={styles.label}>资料更新时间</span>
+                  <span className={styles.value}>{userProfile?.updatedAt ?? '-'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className={styles.block}>
@@ -114,7 +289,12 @@ export default function ProfileView() {
             </div>
           </div>
           <div className={styles.actions}>
-            <button className={styles.primaryButton} onClick={() => profileContext.exitToGuide()}>
+            <button
+              className={styles.primaryButton}
+              onClick={() => {
+                void profileContext.exitToGuide();
+              }}
+            >
               {isConnected ? '切换 Profile' : '返回 Profile 引导'}
             </button>
           </div>
@@ -161,17 +341,17 @@ export default function ProfileView() {
           <div className={styles.actions}>
             <button
               className={styles.primaryButton}
-              onClick={() => void handleSiweLogin()}
+              onClick={() => void profileContext.exitToGuide()}
               disabled={authBusy}
             >
-              {authBusy ? '处理中...' : 'SIWE 登录'}
+              前往引导登录
             </button>
             <button
               className={styles.ghostButton}
               onClick={() => void handleSiweLogout()}
               disabled={authBusy || !session}
             >
-              退出会话
+              退出并返回引导
             </button>
             <button
               className={styles.ghostButton}
@@ -200,8 +380,9 @@ export default function ProfileView() {
               已拥有 {syncStats.owned} / 已扫描 {syncStats.indexed}
             </div>
           )}
-          {statusText && <div className={styles.status}>{statusText}</div>}
         </section>
+
+        {statusText && <div className={styles.status}>{statusText}</div>}
       </div>
     </ViewShell>
   );

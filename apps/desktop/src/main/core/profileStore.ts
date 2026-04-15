@@ -5,6 +5,7 @@ import {
   buildWalletProfileName,
   DEFAULT_PROFILE_ID,
   normalizeWalletAddress,
+  type ProfileMetadataPatch,
   type ProfileIndex,
   type ProfileSummary,
   type WalletProfileInput,
@@ -15,6 +16,23 @@ const PROFILE_INDEX_FILE = 'profiles.json';
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function normalizeOptionalText(value: string | null | undefined): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  const normalized = String(value).trim();
+  return normalized || undefined;
+}
+
+function normalizeOptionalUrl(value: string | null | undefined): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  const normalized = String(value).trim();
+  if (!normalized) return undefined;
+  try {
+    return new URL(normalized).toString();
+  } catch {
+    return undefined;
+  }
 }
 
 export function sanitizeProfileId(raw: string): string {
@@ -52,6 +70,8 @@ function normalizeProfile(profile: ProfileSummary): ProfileSummary {
     type: profile.type === 'wallet' ? 'wallet' : 'local',
     walletAddress: profile.walletAddress ? normalizeWalletAddress(profile.walletAddress) : undefined,
     chainId: typeof profile.chainId === 'number' ? profile.chainId : undefined,
+    web25DisplayName: normalizeOptionalText(profile.web25DisplayName),
+    web25AvatarUrl: normalizeOptionalUrl(profile.web25AvatarUrl),
     createdAt: profile.createdAt || timestamp,
     updatedAt: profile.updatedAt || timestamp,
   };
@@ -169,6 +189,37 @@ export function ensureWalletProfile(rootDataPath: string, input: WalletProfileIn
 
   ensureProfilePath(rootDataPath, profileId);
   return nextIndex.profiles.find((item) => item.id === profileId)!;
+}
+
+export function updateProfileMetadata(
+  rootDataPath: string,
+  profileId: string,
+  patch: ProfileMetadataPatch,
+): ProfileSummary {
+  const safeProfileId = sanitizeProfileId(profileId);
+  const index = loadProfileIndex(rootDataPath);
+  const profile = index.profiles.find((item) => item.id === safeProfileId);
+  if (!profile) {
+    throw new Error(`Profile ${safeProfileId} is missing`);
+  }
+
+  const nextProfile: ProfileSummary = {
+    ...profile,
+    ...(Object.prototype.hasOwnProperty.call(patch, 'web25DisplayName')
+      ? { web25DisplayName: normalizeOptionalText(patch.web25DisplayName) }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(patch, 'web25AvatarUrl')
+      ? { web25AvatarUrl: normalizeOptionalUrl(patch.web25AvatarUrl) }
+      : {}),
+    updatedAt: nowIso(),
+  };
+
+  const nextIndex = saveProfileIndex(rootDataPath, {
+    activeProfileId: index.activeProfileId,
+    profiles: index.profiles.map((item) => (item.id === safeProfileId ? nextProfile : item)),
+  });
+
+  return nextIndex.profiles.find((item) => item.id === safeProfileId)!;
 }
 
 export function ensureProfilePath(rootDataPath: string, profileId: string): string {

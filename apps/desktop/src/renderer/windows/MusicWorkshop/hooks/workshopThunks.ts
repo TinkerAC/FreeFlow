@@ -12,7 +12,6 @@ import {
   type Web25Session,
 } from '@renderer/core/web25/client';
 import {
-  loginWeb25WithSiwe,
   logoutWeb25Session,
   refreshWeb25Session,
 } from '@renderer/core/web25/auth';
@@ -110,21 +109,6 @@ export const createReleaseThunk = createAsyncThunk<
       ...created,
       royaltySplits: created.royaltySplits.length ? created.royaltySplits : defaultSplits(address || undefined),
     };
-  },
-);
-
-export const siweLoginThunk = createAsyncThunk<
-  { session: Web25Session },
-  { baseUrl: string; walletProvider: WalletProviderLike; fallbackAddress?: string | null }
->(
-  'musicWorkshop/siweLogin',
-  async ({ baseUrl, walletProvider, fallbackAddress }) => {
-    const session = await loginWeb25WithSiwe({
-      baseUrl,
-      walletProvider,
-      fallbackAddress,
-    });
-    return { session };
   },
 );
 

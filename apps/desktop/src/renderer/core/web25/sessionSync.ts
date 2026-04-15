@@ -12,6 +12,10 @@ function getSessionStorageKey() {
   return `${WEB25_SESSION_STORAGE_KEY_PREFIX}.${getRuntimeProfileId()}`;
 }
 
+function isWeb25SessionStorageKey(key: string) {
+  return key.startsWith(`${WEB25_SESSION_STORAGE_KEY_PREFIX}.`);
+}
+
 function getSessionChannelName() {
   return `${WEB25_SESSION_CHANNEL_PREFIX}.${getRuntimeProfileId()}`;
 }
@@ -83,6 +87,27 @@ export function writeWeb25SessionSnapshot(session: Web25Session | null) {
     window.localStorage.setItem(storageKey, JSON.stringify(session));
   }
   emitWeb25Session(session);
+}
+
+export type Web25SessionClearScope = 'current-profile' | 'all-profiles';
+
+export function clearWeb25SessionSnapshots(scope: Web25SessionClearScope = 'current-profile') {
+  if (typeof window === 'undefined') return;
+
+  if (scope === 'all-profiles') {
+    const keysToDelete: string[] = [];
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      if (key && isWeb25SessionStorageKey(key)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach((key) => window.localStorage.removeItem(key));
+    emitWeb25Session(null);
+    return;
+  }
+
+  writeWeb25SessionSnapshot(null);
 }
 
 export function subscribeWeb25SessionSnapshot(listener: (session: Web25Session | null) => void) {

@@ -30,6 +30,15 @@ export type Web25Session = {
   verifiedAt: string;
 };
 
+export type Web25UserProfile = {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  walletAddress: string | null;
+  chainId: number | null;
+  updatedAt: string;
+};
+
 export type SiweNoncePayload = {
   nonce: string;
   domain: string;
@@ -282,6 +291,7 @@ export async function getWeb25Session(baseUrl: string) {
 }
 
 export async function logoutWeb25(baseUrl: string) {
+  sessionToken = null;
   const payload = await requestWeb25<{ loggedOut: boolean }>(
     baseUrl,
     '/api/v1/auth/logout',
@@ -289,8 +299,45 @@ export async function logoutWeb25(baseUrl: string) {
       method: 'POST',
     },
   );
-  sessionToken = null;
   return payload;
+}
+
+export async function getCurrentWeb25UserProfile(baseUrl: string) {
+  return await requestWeb25<Web25UserProfile>(
+    baseUrl,
+    '/api/v1/users/me',
+  );
+}
+
+export async function updateCurrentWeb25UserProfile(
+  baseUrl: string,
+  input: {
+    displayName?: string;
+    avatarUrl?: string | null;
+  },
+) {
+  return await requestWeb25<Web25UserProfile>(
+    baseUrl,
+    '/api/v1/users/me',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function uploadWeb25UserAvatar(baseUrl: string, file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return await requestWeb25<Web25UserProfile>(
+    baseUrl,
+    '/api/v1/users/me/avatar',
+    {
+      method: 'POST',
+      body: formData,
+    },
+  );
 }
 
 export async function getPinataConfig(baseUrl: string) {

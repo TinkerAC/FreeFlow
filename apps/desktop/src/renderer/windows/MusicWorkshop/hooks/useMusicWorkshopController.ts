@@ -24,7 +24,6 @@ import {
   refreshAccessThunk,
   refreshDashboardThunk,
   refreshWeb25StateThunk,
-  siweLoginThunk,
   siweLogoutThunk,
   uploadAssetsThunk,
   uploadMetadataThunk,
@@ -215,34 +214,16 @@ export function useMusicWorkshopController() {
   }, [address, dispatch, web25BackendBaseUrl, web25Session]);
 
   const handleSiweLogin = React.useCallback(async () => {
-    if (!web25BackendBaseUrl) return;
-    if (!walletProvider) {
-      setAuthStatusText('SIWE 登录失败：请从 Profile 引导连接钱包');
-      return;
-    }
-
-    setAuthStatusText('');
-    try {
-      await dispatch(siweLoginThunk({
-        baseUrl: web25BackendBaseUrl,
-        walletProvider,
-        fallbackAddress: address,
-      })).unwrap();
-      await refreshDashboard();
-    } catch (error) {
-      const raw = error instanceof Error ? error.message : String(error ?? '');
-      const message = raw.includes('Failed to fetch')
-        ? `SIWE 登录失败：无法连接 ${web25BackendBaseUrl}，请确认后端已启动且端口正确`
-        : `SIWE 登录失败：${raw}`;
-      setAuthStatusText(message);
-    }
-  }, [address, dispatch, refreshDashboard, walletProvider, web25BackendBaseUrl]);
+    setAuthStatusText('请在 Profile 引导窗口完成 SIWE 登录');
+    await profileContext.exitToGuide();
+  }, []);
 
   const handleSiweLogout = React.useCallback(async () => {
     if (!web25BackendBaseUrl) return;
     setAuthStatusText('');
     try {
       await dispatch(siweLogoutThunk({ baseUrl: web25BackendBaseUrl })).unwrap();
+      await profileContext.exitToGuide();
     } catch (error) {
       const raw = error instanceof Error ? error.message : String(error ?? '');
       const message = raw.includes('Failed to fetch')

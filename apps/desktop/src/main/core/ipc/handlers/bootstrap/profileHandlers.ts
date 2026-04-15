@@ -1,7 +1,7 @@
 import { app, ipcMain } from 'electron';
 import { Channels } from '@src/shared/ipc/channels';
-import { ensureWalletProfile, getActiveProfile, loadProfileIndex } from '@main/core/profileStore';
-import { type ProfileSummary, type WalletProfileInput } from '@src/shared/profile/profile';
+import { ensureWalletProfile, getActiveProfile, loadProfileIndex, updateProfileMetadata } from '@main/core/profileStore';
+import { type ProfileMetadataPatch, type ProfileSummary, type WalletProfileInput } from '@src/shared/profile/profile';
 import { SEPOLIA_CHAIN_ID } from '@src/shared/Constance';
 
 
@@ -32,6 +32,22 @@ export function registerProfileHandlers(options: ProfileHandlerOptions): void {
 
     relaunch();
   });
+
+  ipcMain.handle(
+    Channels.Profile.UpdateMetadata,
+    async (
+      _evt,
+      payload: {
+        profileId: string;
+        patch: ProfileMetadataPatch;
+      },
+    ) => {
+      if (!payload || typeof payload.profileId !== 'string' || !payload.patch || typeof payload.patch !== 'object') {
+        throw new Error('Invalid profile metadata payload');
+      }
+      return updateProfileMetadata(options.rootDataPath, payload.profileId, payload.patch);
+    },
+  );
 }
 
 export interface ProfileHandlerOptions {

@@ -23,7 +23,6 @@ import {
   refreshAccessThunk,
   refreshDashboardThunk,
   refreshWeb25StateThunk,
-  siweLoginThunk,
   siweLogoutThunk,
   uploadAssetsThunk,
   uploadMetadataThunk,
@@ -131,16 +130,6 @@ const workshopSlice = createSlice({
       })
       .addCase(deleteReleaseThunk.rejected, (state) => {
         state.busyState = 'idle';
-      })
-      .addCase(siweLoginThunk.pending, (state) => {
-        state.authBusy = true;
-      })
-      .addCase(siweLoginThunk.fulfilled, (state, action) => {
-        state.authBusy = false;
-        state.web25Session = action.payload.session;
-      })
-      .addCase(siweLoginThunk.rejected, (state) => {
-        state.authBusy = false;
       })
       .addCase(siweLogoutThunk.pending, (state) => {
         state.authBusy = true;

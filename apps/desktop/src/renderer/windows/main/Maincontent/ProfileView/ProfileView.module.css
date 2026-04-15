@@ -9,7 +9,7 @@
 .block {
     border: 1px solid rgb(var(--md-sys-color-outline-variant));
     border-radius: 8px;
-    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 14%, transparent);
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 18%, transparent);
     padding: 16px;
     display: grid;
     gap: 12px;
@@ -49,6 +49,49 @@
     background: rgb(var(--md-sys-color-surface));
     color: rgb(var(--md-sys-color-on-surface));
     padding: 0 10px;
+}
+
+.profileCard {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.avatarPane {
+    display: grid;
+    gap: 10px;
+    justify-items: stretch;
+}
+
+.avatarPreview,
+.avatarFallback {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    border: 1px solid rgb(var(--md-sys-color-outline-variant));
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-variant)) 35%, transparent);
+}
+
+.avatarPreview {
+    object-fit: cover;
+}
+
+.avatarFallback {
+    display: grid;
+    place-items: center;
+    font-size: 46px;
+    font-weight: 700;
+    color: rgb(var(--md-sys-color-on-surface));
+}
+
+.profileForm {
+    display: grid;
+    gap: 10px;
+}
+
+.hiddenInput {
+    display: none;
 }
 
 .grid {
@@ -119,6 +162,10 @@
 
 @media (max-width: 900px) {
     .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profileCard {
         grid-template-columns: 1fr;
     }
 }

@@ -10,8 +10,10 @@ import {
 } from './client';
 import {
   readWeb25SessionSnapshot,
+  clearWeb25SessionSnapshots,
   subscribeWeb25SessionSnapshot,
   writeWeb25SessionSnapshot,
+  type Web25SessionClearScope,
 } from './sessionSync';
 
 type WalletProviderLike = ConstructorParameters<typeof BrowserProvider>[0];
@@ -52,9 +54,17 @@ export async function loginWeb25WithSiwe(input: LoginInput) {
   return verified.session;
 }
 
-export async function logoutWeb25Session(baseUrl: string) {
-  await logoutWeb25(baseUrl);
-  writeWeb25SessionSnapshot(null);
+export async function logoutWeb25Session(
+  baseUrl: string,
+  options: { clearLocalScope?: Web25SessionClearScope } = {},
+) {
+  try {
+    await logoutWeb25(baseUrl);
+  } catch {
+    // Local cleanup still applies when backend logout fails (offline/restart scenarios).
+  } finally {
+    clearWeb25SessionSnapshots(options.clearLocalScope ?? 'all-profiles');
+  }
 }
 
 export function useWeb25SessionState(baseUrl: string) {

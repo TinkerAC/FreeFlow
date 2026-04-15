@@ -8,6 +8,8 @@ export interface ProfileSummary {
   type: ProfileType;
   walletAddress?: string;
   chainId?: number;
+  web25DisplayName?: string;
+  web25AvatarUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +22,11 @@ export interface ProfileIndex {
 export interface WalletProfileInput {
   address: string;
   chainId: number;
+}
+
+export interface ProfileMetadataPatch {
+  web25DisplayName?: string | null;
+  web25AvatarUrl?: string | null;
 }
 
 export function normalizeWalletAddress(address: string): string {

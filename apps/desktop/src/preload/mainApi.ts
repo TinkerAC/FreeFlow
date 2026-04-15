@@ -162,6 +162,7 @@ const mainApi: MainApi = {
     getActiveProfile: () => ipcRenderer.invoke(Channels.Profile.GetActive),
     enterWalletProfile: (payload) => ipcRenderer.invoke(Channels.Profile.EnterWalletProfile, payload),
     exitToGuide: () => ipcRenderer.invoke(Channels.Profile.ExitToGuide),
+    updateProfileMetadata: (payload) => ipcRenderer.invoke(Channels.Profile.UpdateMetadata, payload),
   },
 
   creatorsWorkshopApi: {

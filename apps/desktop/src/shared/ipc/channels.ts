@@ -80,6 +80,7 @@ export const Channels = {
     GetActive: 'profile:get-active',
     EnterWalletProfile: 'profile:enter-wallet-profile',
     ExitToGuide: 'profile:exit-to-guide',
+    UpdateMetadata: 'profile:update-metadata',
   },
   CreatorsWorkshop: {
     Show: 'creators-workshop:show',

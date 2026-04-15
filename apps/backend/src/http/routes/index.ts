@@ -4,6 +4,7 @@ import { pinataRouter } from '../../modules/pinata/pinata.routes.js';
 import { resourceRouter } from '../../modules/resources/resource.routes.js';
 import { releaseRouter } from '../../modules/releases/release.routes.js';
 import { systemRouter } from '../../modules/system/system.routes.js';
+import { userRouter } from '../../modules/users/user.routes.js';
 
 /**
  * 集中注册所有 HTTP 路由挂载点。
@@ -14,5 +15,6 @@ export function registerHttpRoutes(app: Express) {
   app.use('/api/v1/storage/pinata', pinataRouter);
   app.use('/api/v1/resources', resourceRouter);
   app.use('/api/v1/releases', releaseRouter);
+  app.use('/api/v1/users', userRouter);
   app.use('/api/v1/system', systemRouter);
 }
