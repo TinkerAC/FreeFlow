@@ -36,4 +36,5 @@ export const DISymbol = {
   AiTextService: Symbol.for('AiTextService'),
   ProviderManager: Symbol.for('ProviderManager'),
   SearchService: Symbol.for('SearchService'),
+  ProfileManager: Symbol.for('ProfileManager'),
 };

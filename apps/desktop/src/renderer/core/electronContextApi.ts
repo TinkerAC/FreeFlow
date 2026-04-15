@@ -5,6 +5,7 @@ import type {
   MainApi,
   PlayerApi,
   PlaylistApi,
+  ProfileApi,
   SearchApi,
   ShortcutApi,
   SystemApi,
@@ -22,6 +23,7 @@ const windowControlContext: WindowControlApi = mainApi.windowControlApi;
 const libraryContext: LibraryApi = mainApi.libraryApi;
 const lyricsContext: LyricsApi = mainApi.lyricsApi;
 const systemContext: SystemApi = mainApi.systemApi;
+const profileContext: ProfileApi = mainApi.profileApi;
 
 export {
   configContext,
@@ -33,4 +35,5 @@ export {
   libraryContext,
   lyricsContext,
   systemContext,
+  profileContext,
 };

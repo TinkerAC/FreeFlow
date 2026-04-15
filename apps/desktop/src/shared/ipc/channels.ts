@@ -75,6 +75,12 @@ export const Channels = {
     SyncCredentials: 'youtube:sync-credentials',
     CloseLogin: 'youtube:close-login-window',
   },
+  Profile: {
+    List: 'profile:list',
+    GetActive: 'profile:get-active',
+    Create: 'profile:create',
+    Switch: 'profile:switch',
+  },
   CreatorsWorkshop: {
     Show: 'creators-workshop:show',
     ReadMetadata: 'creators-workshop:read-metadata',

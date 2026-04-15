@@ -67,6 +67,11 @@ export default function WorkshopTopBar({
         <span className={`${styles.statusPill} ${controller.web25Session ? styles.statusPillOnline : styles.statusPillMuted}`}>
           {sessionAddress ? `SIWE ${sessionAddress.slice(0, 6)}...${sessionAddress.slice(-4)}` : 'SIWE 未登录'}
         </span>
+        {controller.authStatusText ? (
+          <span className={`${styles.statusPill} ${styles.statusPillMuted}`}>
+            {controller.authStatusText}
+          </span>
+        ) : null}
         <span className={styles.statusPill}>任务：{busyLabel(controller.busyState)}</span>
         <span className={styles.statusPill}>草稿：{autosaveLabel(controller.autosaveState)}</span>
       </div>
@@ -74,7 +79,15 @@ export default function WorkshopTopBar({
       <div className={styles.topBarActions}>
         <button
           className={styles.ghostButton}
-          onClick={() => (controller.web25Session ? void controller.handleSiweLogout() : void controller.handleSiweLogin())}
+          onClick={() => {
+            void (async () => {
+              if (controller.web25Session) {
+                await controller.handleSiweLogout();
+                return;
+              }
+              await controller.handleSiweLogin();
+            })();
+          }}
           disabled={controller.authBusy}
         >
           {controller.authBusy ? '处理中...' : (controller.web25Session ? '退出会话' : 'SIWE 登录')}

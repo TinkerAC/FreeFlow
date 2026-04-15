@@ -251,7 +251,7 @@ export const Settings = z.object({
       signedUploadUrl: '',
     },
     web25Backend: {
-      baseUrl: 'http://localhost:8788',
+      baseUrl: 'http://localhost:8787',
     },
     ai: { enabled: false, provider: 'gemini', geminiApiKey: '', geminiModel: 'gemini-1.5-flash' },
   }),

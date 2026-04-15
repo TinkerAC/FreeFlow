@@ -40,6 +40,7 @@ import YouTube from '@main/contentProvider/YouTube/YouTube';
 import FreeFlowProvider from '@main/contentProvider/FreeFlow/FreeFlowProvider';
 import { Logger } from 'winston';
 import rootLogger from '@src/utils/logger';
+import { ProfileManager } from '@main/core/ProfileManager';
 
 const container = new Container();
 
@@ -81,10 +82,18 @@ container.bind<DataPath>(DISymbol.DataPath).toConstantValue(AppDataPath);
 container.bind<OS>(DISymbol.RunningOS).toConstantValue(getOperatingSystem());
 container.bind<boolean>(DISymbol.IsDevelopment).toConstantValue(process.env.NODE_ENV === 'development');
 //===== 用于存储设置的 Store 实例（单例） =====
-const settingsStore = new Store<Settings>({ name: 'settings', watch: true });
+const settingsStore = new Store<Settings>({
+  name: 'settings',
+  watch: true,
+  cwd: AppDataPath.profilePath,
+});
 container.bind<Store<Settings>>(DISymbol.SettingsStore).toConstantValue(settingsStore);
 
-container.bind<Store>(DISymbol.Store).toConstantValue(new Store({ watch: true }));
+container.bind<Store>(DISymbol.Store).toConstantValue(new Store({
+  name: 'store',
+  watch: true,
+  cwd: AppDataPath.profilePath,
+}));
 container
   .bind<SequelizeInstance>(DISymbol.Sequelize)
   .toConstantValue(sequelize as SequelizeInstance);
@@ -151,6 +160,11 @@ container
 container
   .bind<SearchService>(DISymbol.SearchService)
   .to(SearchService)
+  .inSingletonScope();
+
+container
+  .bind<ProfileManager>(DISymbol.ProfileManager)
+  .to(ProfileManager)
   .inSingletonScope();
 
 //TODO:Refactor this

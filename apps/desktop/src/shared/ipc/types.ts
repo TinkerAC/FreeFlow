@@ -9,6 +9,7 @@ import type {
   MetadataWriteRequest,
   MetadataWriteResult,
 } from '@src/shared/metadata/metadataEditor';
+import type { ProfileSummary, SwitchProfileResult } from '@src/shared/profile/profile';
 
 /** Config */
 export interface ConfigApi {
@@ -177,6 +178,16 @@ export interface YouTubeMusicApi {
   closeLoginWindow(): Promise<void>;
 }
 
+export interface ProfileApi {
+  listProfiles(): Promise<ProfileSummary[]>;
+
+  getActiveProfile(): Promise<ProfileSummary>;
+
+  createProfile(payload: { id?: string; name?: string }): Promise<ProfileSummary>;
+
+  switchProfile(profileId: string): Promise<SwitchProfileResult>;
+}
+
 export interface CreatorsWorkshopApi {
   show(): Promise<void>;
   readMetadata(filePath: string): Promise<EditableTrackMetadata>;
@@ -197,5 +208,6 @@ export interface MainApi {
   windowControlApi: WindowControlApi;
   miniPlayerApi: MiniPlayerApi;
   youtubeMusicApi: YouTubeMusicApi;
+  profileApi: ProfileApi;
   creatorsWorkshopApi: CreatorsWorkshopApi;
 }

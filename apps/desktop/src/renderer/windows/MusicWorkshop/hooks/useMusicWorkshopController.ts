@@ -62,6 +62,7 @@ export function useMusicWorkshopController() {
   const [coverFile, setCoverFile] = React.useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = React.useState('');
   const [accessCheck, setAccessCheck] = React.useState<AccessCheckState>(DEFAULT_ACCESS_CHECK_STATE);
+  const [authStatusText, setAuthStatusText] = React.useState('');
 
   // 当服务端回填最新 release 时，跳过一次自动保存，避免客户端立刻把旧快照写回去。
   const skipAutosaveRef = React.useRef(false);
@@ -214,17 +215,35 @@ export function useMusicWorkshopController() {
 
   const handleSiweLogin = React.useCallback(async () => {
     if (!walletProvider || !web25BackendBaseUrl) return;
-    await dispatch(siweLoginThunk({
-      baseUrl: web25BackendBaseUrl,
-      walletProvider,
-      fallbackAddress: address,
-    })).unwrap();
-    await refreshDashboard();
+    setAuthStatusText('');
+    try {
+      await dispatch(siweLoginThunk({
+        baseUrl: web25BackendBaseUrl,
+        walletProvider,
+        fallbackAddress: address,
+      })).unwrap();
+      await refreshDashboard();
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : String(error ?? '');
+      const message = raw.includes('Failed to fetch')
+        ? `SIWE 登录失败：无法连接 ${web25BackendBaseUrl}，请确认后端已启动且端口正确`
+        : `SIWE 登录失败：${raw}`;
+      setAuthStatusText(message);
+    }
   }, [address, dispatch, refreshDashboard, walletProvider, web25BackendBaseUrl]);
 
   const handleSiweLogout = React.useCallback(async () => {
     if (!web25BackendBaseUrl) return;
-    await dispatch(siweLogoutThunk({ baseUrl: web25BackendBaseUrl })).unwrap();
+    setAuthStatusText('');
+    try {
+      await dispatch(siweLogoutThunk({ baseUrl: web25BackendBaseUrl })).unwrap();
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : String(error ?? '');
+      const message = raw.includes('Failed to fetch')
+        ? `退出会话失败：无法连接 ${web25BackendBaseUrl}`
+        : `退出会话失败：${raw}`;
+      setAuthStatusText(message);
+    }
   }, [dispatch, web25BackendBaseUrl]);
 
   const handleSelectRelease = React.useCallback((release: CreatorReleaseRecord) => {
@@ -401,6 +420,7 @@ export function useMusicWorkshopController() {
     busyState,
     autosaveState,
     authBusy,
+    authStatusText,
     web25Session,
     pinataConfig,
     web25BackendBaseUrl,

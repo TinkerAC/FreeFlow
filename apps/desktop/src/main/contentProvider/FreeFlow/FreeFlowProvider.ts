@@ -135,7 +135,7 @@ export default class FreeFlowProvider extends AbstractContentProvider {
     }
   }
 
-  async getTrackLink(uniqueId: string): Promise<string | void> {
+  async getTrackLink(uniqueId: string): Promise<string | undefined> {
     const payload = await this.resolveResourceByKey(uniqueId);
     return payload?.audioUrl ?? undefined;
   }

@@ -157,6 +157,13 @@ const mainApi: MainApi = {
     closeLoginWindow: () => ipcRenderer.invoke(Channels.YouTubeMusic.CloseLogin) as Promise<void>,
   },
 
+  profileApi: {
+    listProfiles: () => ipcRenderer.invoke(Channels.Profile.List),
+    getActiveProfile: () => ipcRenderer.invoke(Channels.Profile.GetActive),
+    createProfile: (payload: { id?: string; name?: string }) => ipcRenderer.invoke(Channels.Profile.Create, payload),
+    switchProfile: (profileId: string) => ipcRenderer.invoke(Channels.Profile.Switch, profileId),
+  },
+
   creatorsWorkshopApi: {
     show: () => ipcRenderer.invoke(Channels.CreatorsWorkshop.Show) as Promise<void>,
     readMetadata: (filePath: string) => ipcRenderer.invoke(Channels.CreatorsWorkshop.ReadMetadata, filePath),

@@ -7,17 +7,21 @@ import { SettingsProvider } from '@renderer/core/config/SettingsContext';
 
 import '@renderer/styles/tokens.material.css';
 import DesignSystemBridge from '@renderer/designSystem/DesignSystemBridge';
+import { bootstrapRuntimeProfileId } from '@renderer/core/profile/runtimeProfile';
 
 console.log('[FreeFlow] : Renderer execution started');
 
-createRoot(document.getElementById('app')!).render(
-  <SettingsProvider>
-    <DesignSystemBridge>
-      <HashRouter>
-        <Routes>
-          <Route path="/*" element={<Application />} />
-        </Routes>
-      </HashRouter>
-    </DesignSystemBridge>
-  </SettingsProvider>,
-);
+void (async () => {
+  await bootstrapRuntimeProfileId();
+  createRoot(document.getElementById('app')!).render(
+    <SettingsProvider>
+      <DesignSystemBridge>
+        <HashRouter>
+          <Routes>
+            <Route path="/*" element={<Application />} />
+          </Routes>
+        </HashRouter>
+      </DesignSystemBridge>
+    </SettingsProvider>,
+  );
+})();

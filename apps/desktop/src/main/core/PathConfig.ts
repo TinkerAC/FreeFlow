@@ -2,9 +2,13 @@
 import path from 'path';
 import { app } from 'electron';
 import fs from 'fs';
+import { ensureProfilePath, loadProfileIndex } from '@main/core/profileStore';
 
 
 export interface DataPath {
+  rootDataPath: string;
+  profileId: string;
+  profilePath: string;
   dataPath: string;
   musicCacheDir: string;
   playerStateDumpFile: string;
@@ -15,32 +19,46 @@ export interface DataPath {
 
 const environment = process.env.NODE_ENV || 'production';
 
-const data_Path =
+const root_Data_Path =
   environment === 'development'
     ? path.join(__dirname, '..', '..', 'data')
     : path.join(app.getPath('userData'), 'data');
 
 // 创建路径(如果不存在)
-if (!fs.existsSync(data_Path)) {
-  fs.mkdirSync(data_Path, { recursive: true });
-  console.log(`已创建数据目录: ${data_Path}`);
+if (!fs.existsSync(root_Data_Path)) {
+  fs.mkdirSync(root_Data_Path, { recursive: true });
+  console.log(`已创建数据目录: ${root_Data_Path}`);
 } else {
-  console.log(`数据目录已存在: ${data_Path}`);
+  console.log(`数据目录已存在: ${root_Data_Path}`);
 }
 
+const profileIndex = loadProfileIndex(root_Data_Path);
+const active_Profile_Id = profileIndex.activeProfileId;
+const profile_Path = ensureProfilePath(root_Data_Path, active_Profile_Id);
+
 //存放播放中加载的音乐
-const music_Cache_Dir: string = path.join(data_Path, 'fileCache');
-const playerState_DumpFile: string = path.join(data_Path, 'playerState.json');
-const db_Path: string = path.join(data_Path, 'database.sqlite');
+const music_Cache_Dir: string = path.join(profile_Path, 'fileCache');
+const playerState_DumpFile: string = path.join(profile_Path, 'playerState.json');
+const db_Path: string = path.join(profile_Path, 'database.sqlite');
 
 //存放用户下载的音乐
-const music_Dir: string = path.join(data_Path, 'music');
+const music_Dir: string = path.join(profile_Path, 'music');
+
+for (const dir of [music_Cache_Dir, music_Dir]) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
 const AppDataPath: DataPath = {
-  dataPath: data_Path,
+  rootDataPath: root_Data_Path,
+  profileId: active_Profile_Id,
+  profilePath: profile_Path,
+  dataPath: profile_Path,
   dbPath: db_Path,
   musicCacheDir: music_Cache_Dir,
   musicDir: music_Dir,
   playerStateDumpFile: playerState_DumpFile,
 };
 
-export { environment, data_Path, db_Path, AppDataPath };
+export { environment, root_Data_Path, db_Path, AppDataPath };

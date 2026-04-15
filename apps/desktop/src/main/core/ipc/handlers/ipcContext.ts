@@ -14,6 +14,7 @@ import { ConfigService } from '@main/core/configService';
 import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import { ProviderManager } from '@main/core/ProviderManager';
 import { SearchService } from '@main/services/SearchService';
+import { ProfileManager } from '@main/core/ProfileManager';
 
 export interface IpcContext {
   windowManager: WindowManager;
@@ -32,4 +33,5 @@ export interface IpcContext {
   hifiniMusic: HifiniMusic;
   providerManager: ProviderManager;
   searchService: SearchService;
+  profileManager: ProfileManager;
 }
