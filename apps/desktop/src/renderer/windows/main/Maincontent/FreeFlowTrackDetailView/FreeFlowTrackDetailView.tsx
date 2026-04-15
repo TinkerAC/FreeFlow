@@ -6,7 +6,8 @@ import { useSetting } from '@renderer/core/config/SettingsContext';
 import { syncOwnedFreeFlowLibrary } from '@renderer/core/freeflow/ownedLibrary';
 import { resolveIndexedTrackResource } from '@renderer/core/web25/client';
 import PlayerController from '@renderer/core/controller/PlayerController';
-import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { profileContext } from '@renderer/core/electronContextApi';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import { FreeFlowTrackInfo, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { DEFAULT_SEPOLIA_CONTRACTS, MUSIC_ASSET_ABI, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
@@ -46,7 +47,6 @@ function formatPrice(priceEth: string | null) {
 }
 
 export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrackDetailViewProps) {
-  const { open } = useWeb3Modal();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
@@ -231,7 +231,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
                   className={styles.primaryButton}
                   onClick={() => {
                     if (!isConnected || !walletProvider || !address) {
-                      void open();
+                      void profileContext.exitToGuide();
                       return;
                     }
                     void handleBuyAccess();
@@ -239,7 +239,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
                   disabled={buying || refreshingAccess || (!!hasAccess)}
                 >
                   {!isConnected || !walletProvider || !address
-                    ? '连接钱包'
+                    ? '返回 Profile 引导'
                     : (hasAccess ? '已拥有访问权' : (buying ? '购买中...' : `购买 ${formatPrice(accessStatus.priceEth ?? info?.priceEth ?? null)}`))}
                 </button>
               )}

@@ -1,9 +1,7 @@
-// file: src/main/pathConfig.ts
 import path from 'path';
-import { app } from 'electron';
 import fs from 'fs';
 import { ensureProfilePath, loadProfileIndex } from '@main/core/profileStore';
-
+import { ensureRootDataPath, environment, root_Data_Path } from '@main/core/rootDataPath';
 
 export interface DataPath {
   rootDataPath: string;
@@ -17,20 +15,7 @@ export interface DataPath {
 }
 
 
-const environment = process.env.NODE_ENV || 'production';
-
-const root_Data_Path =
-  environment === 'development'
-    ? path.join(__dirname, '..', '..', 'data')
-    : path.join(app.getPath('userData'), 'data');
-
-// 创建路径(如果不存在)
-if (!fs.existsSync(root_Data_Path)) {
-  fs.mkdirSync(root_Data_Path, { recursive: true });
-  console.log(`已创建数据目录: ${root_Data_Path}`);
-} else {
-  console.log(`数据目录已存在: ${root_Data_Path}`);
-}
+ensureRootDataPath();
 
 const profileIndex = loadProfileIndex(root_Data_Path);
 const active_Profile_Id = profileIndex.activeProfileId;

@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, IpcMainEvent, screen } from 'electron';
+import { BrowserWindow, ipcMain, screen } from 'electron';
 import { Channels } from '@src/shared/ipc/channels';
 import { WindowKey } from '@main/window/windowManager';
 import { IpcContext } from './ipcContext';
@@ -58,24 +58,6 @@ export function registerWindowHandlers({ windowManager, configService }: IpcCont
     mini.on('close', save);
   };
 
-  const mainWindow = windowManager.get(WindowKey.MAIN)!;
-
-  ipcMain.on(Channels.Window.Controls, (_evt: IpcMainEvent, action: string) => {
-    switch (action) {
-      case 'minimize':
-        mainWindow.minimize();
-        break;
-      case 'maximize':
-        mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
-        break;
-      case 'close':
-        mainWindow.hide();
-        break;
-      default:
-        console.error('Unknown window action:', action);
-    }
-  });
-
   ipcMain.handle(Channels.MiniPlayer.Toggle, async () => {
     if (windowManager.isVisible(WindowKey.MINI)) {
       windowManager.activate(WindowKey.MAIN);
@@ -121,4 +103,3 @@ export function registerWindowHandlers({ windowManager, configService }: IpcCont
     mini.setSize(w, payload.expanded ? expandedH : collapsedH, true);
   });
 }
-

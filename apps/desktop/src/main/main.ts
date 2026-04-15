@@ -1,93 +1,166 @@
-// file: src/main/core/core.ts
-import { app } from 'electron';
-import { WindowKey, WindowManager } from './window/windowManager';
-import { markQuitting } from './window/quitState';
-
-import ProxyServerManager from '@main/core/AudioProxyServer';
-import { ConfigService } from '@main/core/configService';
-import LocalLibraryService from '@main/services/localLibraryService';
-import { sequelize } from '@main/database/seqimpl';
-import { container } from '@main/di/di-container';
-import { DISymbol } from '@main/di/symbol';
-import IpcController from '@main/core/ipc/IpcController';
-import TrayManager from '@main/core/TrayManager';
-import ShortCutManager from '@main/core/ShortCutManager';
-import { getOperatingSystem } from '@src/utils/helpers';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import type { WindowManager } from '@main/window/windowManager';
+import type ShortCutManager from '@main/core/ShortCutManager';
+import type ProxyServerManager from '@main/core/AudioProxyServer';
+import type LocalLibraryService from '@main/services/localLibraryService';
+import type IpcController from '@main/core/ipc/IpcController';
+import type TrayManager from '@main/core/TrayManager';
+import ProfileGuideWindow from '@main/window/ProfileGuideWindow';
+import { markQuitting } from '@main/window/quitState';
+import { registerProfileHandlers } from '@main/core/ipc/handlers/profileHandlers';
+import { ensureRootDataPath, root_Data_Path } from '@main/core/rootDataPath';
+import type { ProfileSummary } from '@src/shared/profile/profile';
+import { Channels } from '@src/shared/ipc/channels';
 import chalk from 'chalk';
-import { OS } from '@src/shared/OS';
 import rootLogger, { IS_DEVELOPMENT } from '@src/utils/logger';
-import { setAppMenu } from '@main/core/menu/Menu';
-import { Session } from '@main/database/seqimpl/Session';
 
-const logger = rootLogger.child(
-  { context: 'Main' },
-);
+const logger = rootLogger.child({ context: 'Main' });
 
+let guideWindow: ProfileGuideWindow | null = null;
+let windowManager: WindowManager | null = null;
+let windowKeys: typeof import('@main/window/windowManager').WindowKey | null = null;
+let shortcutManager: ShortCutManager | null = null;
+let mainLaunch: Promise<void> | null = null;
+let mainApplicationLoaded = false;
+let activeProfileId: string | null = null;
 
-// 全局异常兜底
 process.on('uncaughtException', (e) => logger.error('UncaughtException:', e));
 process.on('unhandledRejection', (e) => logger.error('UnhandledRejection:', e));
 
-// 单实例锁
-const gotTheLock = app.requestSingleInstanceLock();
-//如果未获取到锁，此时应该退出当前实例。在开发环境下，我们允许多实例运行。
-if (!gotTheLock && !IS_DEVELOPMENT) {
-  logger.info('Another instance is already running, quitting...');
-  app.quit();
-} else {
-  logger.info('App started');
-  const windowManager = container.get<WindowManager>(DISymbol.WindowManager);
+function registerBootstrapWindowControls(): void {
+  ipcMain.on(Channels.Window.Controls, (event, action: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win || win.isDestroyed()) return;
 
-  // 若用户再次启动应用，将唤起已有主窗口
-  app.on('second-instance', () => {
-    if (windowManager.isVisible(WindowKey.MINI)) {
-      windowManager.activate(WindowKey.MINI);
-    } else {
-      windowManager.activate(WindowKey.MAIN);
+    switch (action) {
+      case 'minimize':
+        win.minimize();
+        break;
+      case 'maximize':
+        win.isMaximized() ? win.unmaximize() : win.maximize();
+        break;
+      case 'close':
+        win.close();
+        break;
+      default:
+        logger.warn(`Unknown window action: ${action}`);
     }
   });
+}
 
-  // 依赖注入获取服务实例
-  const localLibraryService = container.get<LocalLibraryService>(DISymbol.LocalLibraryService);
-  const proxyServerManager = container.get<ProxyServerManager>(DISymbol.ProxyServerManager);
-  const ipcController = container.get<IpcController>(DISymbol.IpcController);
-  const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
-  const shortcutManager = container.get<ShortCutManager>(DISymbol.ShortcutManager);
-  const os: OS = container.get<OS>(DISymbol.RunningOS);
+function showProfileGuide(): void {
+  if (!app.isReady()) return;
 
-  // 稳定性：限制外部导航/弹窗
-  app.on('web-contents-created', (_e, contents) => {
-    contents.setWindowOpenHandler(() => ({ action: 'deny' }));
-    contents.on('will-navigate', (ev, url) => {
-      if (!url.startsWith('file://') && !url.startsWith('app://')) ev.preventDefault();
+  if (!guideWindow || guideWindow.isDestroyed()) {
+    guideWindow = new ProfileGuideWindow();
+    guideWindow.on('closed', () => {
+      guideWindow = null;
+      if (mainApplicationLoaded && windowManager && windowKeys) {
+        windowManager.activate(windowKeys.MAIN);
+      }
     });
-  });
+    return;
+  }
 
-  // READY
-  app.whenReady().then(async () => {
+  if (guideWindow.isMinimized()) guideWindow.restore();
+  guideWindow.show();
+  guideWindow.focus();
+}
 
-    // 1) 菜单
+function closeProfileGuide(): void {
+  if (!guideWindow || guideWindow.isDestroyed()) return;
+  guideWindow.destroy();
+  guideWindow = null;
+}
+
+function relaunchToProfileGuide(): void {
+  logger.info('Relaunching application for Profile data source switch');
+  setTimeout(() => {
+    app.relaunch();
+    app.exit(0);
+  }, 10);
+}
+
+function returnToProfileGuide(): void {
+  logger.info('Returning to Profile guide');
+
+  if (windowManager && windowKeys) {
+    windowManager.hide(windowKeys.CREATORS_WORKSHOP);
+    windowManager.hide(windowKeys.MINI);
+    windowManager.hide(windowKeys.MAIN);
+  }
+
+  showProfileGuide();
+}
+
+async function launchMainApplication(profile: ProfileSummary): Promise<void> {
+  if (mainApplicationLoaded) {
+    if (profile.id === activeProfileId) {
+      closeProfileGuide();
+      windowManager?.activate(windowKeys!.MAIN);
+      return;
+    }
+
+    relaunchToProfileGuide();
+    return;
+  }
+
+  if (mainLaunch) {
+    await mainLaunch;
+    return;
+  }
+
+  mainLaunch = (async () => {
+    logger.info(`Loading profile ${profile.id}`);
+    activeProfileId = profile.id;
+
+    const [
+      windowModule,
+      diModule,
+      symbolModule,
+      databaseModule,
+      menuModule,
+      helperModule,
+      sessionModule,
+    ] = await Promise.all([
+      import('@main/window/windowManager'),
+      import('@main/di/di-container'),
+      import('@main/di/symbol'),
+      import('@main/database/seqimpl'),
+      import('@main/core/menu/Menu'),
+      import('@src/utils/helpers'),
+      import('@main/database/seqimpl/Session'),
+    ]);
+
+    windowKeys = windowModule.WindowKey;
+    const { container } = diModule;
+    const { DISymbol } = symbolModule;
+    const { sequelize } = databaseModule;
+    const { setAppMenu } = menuModule;
+    const { getOperatingSystem } = helperModule;
+    const { Session } = sessionModule;
+
+    const localLibraryService = container.get<LocalLibraryService>(DISymbol.LocalLibraryService);
+    const proxyServerManager = container.get<ProxyServerManager>(DISymbol.ProxyServerManager);
+    const ipcController = container.get<IpcController>(DISymbol.IpcController);
+    const trayManager = container.get<TrayManager>(DISymbol.TrayManager);
+    shortcutManager = container.get<ShortCutManager>(DISymbol.ShortcutManager);
+    windowManager = container.get<WindowManager>(DISymbol.WindowManager);
+
     setAppMenu();
-    // 2) 初始化
     await sequelize.sync();
     await localLibraryService.updateLocalLibrary();
     await proxyServerManager.start();
 
-    // 3) 创建窗口
-    windowManager.activate(WindowKey.MAIN);
-
-    // 4) 其余注册
     ipcController.register();
-    windowManager.ensure(WindowKey.WORKER);
+    windowManager.activate(windowKeys.MAIN);
+    windowManager.ensure(windowKeys.WORKER);
+    closeProfileGuide();
 
-
-    // Windows 托盘
     trayManager.createTray();
-
-    // 注册全局快捷键
     shortcutManager.register();
+    mainApplicationLoaded = true;
 
-    // 记录启动信息
     const startAt = new Date();
     Session.create({
       start_at: startAt,
@@ -99,34 +172,87 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
           `启动信息记录成功: ${startAt.toISOString()} ${getOperatingSystem()} ${app.getVersion()}`,
         ),
       );
-    }).catch(error => {
+    }).catch((error: unknown) => {
       logger.error('记录启动信息失败', error);
+    });
+  })().catch((error: unknown) => {
+    mainLaunch = null;
+    logger.error('startup failed', error);
+    showProfileGuide();
+    throw error;
+  });
+
+  await mainLaunch;
+}
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock && !IS_DEVELOPMENT) {
+  logger.info('Another instance is already running, quitting...');
+  app.quit();
+} else {
+  logger.info('App started');
+  registerBootstrapWindowControls();
+
+  app.on('second-instance', () => {
+    if (!windowManager || !windowKeys) {
+      showProfileGuide();
+      return;
+    }
+
+    if (windowManager.isVisible(windowKeys.MINI)) {
+      windowManager.activate(windowKeys.MINI);
+      return;
+    }
+
+    windowManager.activate(windowKeys.MAIN);
+  });
+
+  app.on('web-contents-created', (_e, contents) => {
+    contents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    contents.on('will-navigate', (ev, url) => {
+      if (!url.startsWith('file://') && !url.startsWith('app://')) ev.preventDefault();
     });
   });
 
-  // Dock / 任务栏 被点击激活
+  app.whenReady().then(() => {
+    ensureRootDataPath();
+    registerProfileHandlers({
+      rootDataPath: root_Data_Path,
+      onEnterProfile: launchMainApplication,
+      onExitToGuide: returnToProfileGuide,
+    });
+    showProfileGuide();
+  }).catch((error: unknown) => {
+    logger.error('startup failed', error);
+    app.quit();
+  });
+
   app.on('activate', () => {
-    // 若 Mini 正在使用，点击 Dock 应该恢复 Mini 而不是主界面
-    if (windowManager.isVisible(WindowKey.MINI)) {
-      windowManager.activate(WindowKey.MINI);
+    if (!windowManager || !windowKeys) {
+      showProfileGuide();
       return;
     }
-    windowManager.activate(WindowKey.MAIN);
+
+    if (windowManager.isVisible(windowKeys.MINI)) {
+      windowManager.activate(windowKeys.MINI);
+      return;
+    }
+
+    windowManager.activate(windowKeys.MAIN);
   });
 
-  // 所有窗口关闭：macOS 常驻，其它平台退出
   app.on('window-all-closed', () => {
-    if (os !== OS.MACOS) app.quit();
+    logger.info(`window-all-closed mainLoaded=${mainApplicationLoaded} platform=${process.platform}`);
+    if (!mainApplicationLoaded || process.platform !== 'darwin') app.quit();
   });
 
-  // 触发退出
   app.on('before-quit', () => {
+    logger.info('before-quit');
     markQuitting();
   });
 
-  // 真正退出前：注销快捷键
   app.on('will-quit', () => {
-    shortcutManager.unregister();
-    windowManager.shutdown();
+    shortcutManager?.unregister();
+    windowManager?.shutdown();
   });
 }

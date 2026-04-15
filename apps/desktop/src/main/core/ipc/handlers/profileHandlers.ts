@@ -1,32 +1,50 @@
 import { app, ipcMain } from 'electron';
 import { Channels } from '@src/shared/ipc/channels';
-import { IpcContext } from './ipcContext';
+import {
+  ensureWalletProfile,
+  getActiveProfile,
+  loadProfileIndex,
+} from '@main/core/profileStore';
+import { SEPOLIA_CHAIN_ID, type ProfileSummary, type WalletProfileInput } from '@src/shared/profile/profile';
 
-export function registerProfileHandlers({ profileManager }: IpcContext): void {
+export interface ProfileHandlerOptions {
+  rootDataPath: string;
+  onEnterProfile?: (profile: ProfileSummary) => Promise<void> | void;
+  onExitToGuide?: () => Promise<void> | void;
+}
+
+function relaunch(): void {
+  setTimeout(() => {
+    app.relaunch();
+    app.exit(0);
+  }, 10);
+}
+
+export function registerProfileHandlers(options: ProfileHandlerOptions): void {
   ipcMain.handle(Channels.Profile.List, async () => {
-    return profileManager.listProfiles();
+    return loadProfileIndex(options.rootDataPath).profiles;
   });
 
   ipcMain.handle(Channels.Profile.GetActive, async () => {
-    return profileManager.getActiveProfile();
+    return getActiveProfile(options.rootDataPath);
   });
 
-  ipcMain.handle(
-    Channels.Profile.Create,
-    async (_evt, payload: { id?: string; name?: string } | undefined) => {
-      return profileManager.createProfile(payload ?? {});
-    },
-  );
-
-  ipcMain.handle(Channels.Profile.Switch, async (_evt, profileId: string) => {
-    const result = profileManager.switchProfile(profileId);
-    if (result.relaunchRequired) {
-      setTimeout(() => {
-        app.relaunch();
-        app.exit(0);
-      }, 10);
+  ipcMain.handle(Channels.Profile.EnterWalletProfile, async (_evt, input: WalletProfileInput) => {
+    if (input.chainId !== SEPOLIA_CHAIN_ID) {
+      throw new Error(`Sepolia chain ${SEPOLIA_CHAIN_ID} is required`);
     }
-    return result;
+
+    const profile = ensureWalletProfile(options.rootDataPath, input);
+    await options.onEnterProfile?.(profile);
+    return profile;
+  });
+
+  ipcMain.handle(Channels.Profile.ExitToGuide, async () => {
+    if (options.onExitToGuide) {
+      await options.onExitToGuide();
+      return;
+    }
+
+    relaunch();
   });
 }
-

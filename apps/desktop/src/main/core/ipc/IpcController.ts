@@ -28,8 +28,6 @@ import { registerConfigHandlers } from './handlers/configHandlers';
 import { registerDownloadHandlers } from './handlers/downloadHandlers';
 import { registerMiscHandlers } from './handlers/miscHandlers';
 import { registerMusicWorkshopHandlers } from './handlers/musicWorkshopHandlers';
-import { registerProfileHandlers } from './handlers/profileHandlers';
-import { ProfileManager } from '@main/core/ProfileManager';
 
 /**
  * IpcController 统一注册所有 IPC 事件，并按功能拆分到独立模块。
@@ -53,7 +51,6 @@ export default class IpcController {
     @inject(DISymbol.YouTubeMusic) private readonly youtubeMusic: YouTubeMusic,
     @inject(DISymbol.ProviderManager) private readonly providerManager: ProviderManager,
     @inject(DISymbol.SearchService) private readonly searchService: SearchService,
-    @inject(DISymbol.ProfileManager) private readonly profileManager: ProfileManager,
   ) {
   }
 
@@ -75,7 +72,6 @@ export default class IpcController {
       hifiniMusic: this.hifiniMusic,
       providerManager: this.providerManager,
       searchService: this.searchService,
-      profileManager: this.profileManager,
     };
 
     registerSystemHandlers(context);
@@ -89,6 +85,5 @@ export default class IpcController {
     registerDownloadHandlers(context);
     registerMiscHandlers(context);
     registerMusicWorkshopHandlers(context);
-    registerProfileHandlers(context);
   }
 }

@@ -160,8 +160,8 @@ const mainApi: MainApi = {
   profileApi: {
     listProfiles: () => ipcRenderer.invoke(Channels.Profile.List),
     getActiveProfile: () => ipcRenderer.invoke(Channels.Profile.GetActive),
-    createProfile: (payload: { id?: string; name?: string }) => ipcRenderer.invoke(Channels.Profile.Create, payload),
-    switchProfile: (profileId: string) => ipcRenderer.invoke(Channels.Profile.Switch, profileId),
+    enterWalletProfile: (payload) => ipcRenderer.invoke(Channels.Profile.EnterWalletProfile, payload),
+    exitToGuide: () => ipcRenderer.invoke(Channels.Profile.ExitToGuide),
   },
 
   creatorsWorkshopApi: {

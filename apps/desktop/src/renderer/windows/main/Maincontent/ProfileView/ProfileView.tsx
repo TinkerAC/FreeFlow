@@ -1,6 +1,7 @@
 import React from 'react';
-import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { useSetting } from '@renderer/core/config/SettingsContext';
+import { profileContext } from '@renderer/core/electronContextApi';
 import { loginWeb25WithSiwe, logoutWeb25Session, useWeb25SessionState } from '@renderer/core/web25/auth';
 import { syncOwnedFreeFlowLibrary } from '@renderer/core/freeflow/ownedLibrary';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
@@ -12,7 +13,6 @@ function formatAddress(value?: string) {
 }
 
 export default function ProfileView() {
-  const { open } = useWeb3Modal();
   const { address, chainId, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
@@ -30,7 +30,7 @@ export default function ProfileView() {
 
   const handleSiweLogin = React.useCallback(async () => {
     if (!walletProvider) {
-      await open();
+      setStatusText('请返回 Profile 引导连接钱包');
       return;
     }
     setAuthBusy(true);
@@ -48,7 +48,7 @@ export default function ProfileView() {
     } finally {
       setAuthBusy(false);
     }
-  }, [address, open, refresh, walletProvider, web25BaseUrl.value]);
+  }, [address, refresh, walletProvider, web25BaseUrl.value]);
 
   const handleSiweLogout = React.useCallback(async () => {
     setAuthBusy(true);
@@ -66,7 +66,7 @@ export default function ProfileView() {
 
   const handleSyncOwned = React.useCallback(async () => {
     if (!walletProvider || !address) {
-      await open();
+      setStatusText('请返回 Profile 引导连接钱包');
       return;
     }
     setSyncBusy(true);
@@ -87,7 +87,7 @@ export default function ProfileView() {
     } finally {
       setSyncBusy(false);
     }
-  }, [address, open, walletProvider, web25BaseUrl.value]);
+  }, [address, walletProvider, web25BaseUrl.value]);
 
   return (
     <ViewShell hideScrollbar>
@@ -114,8 +114,8 @@ export default function ProfileView() {
             </div>
           </div>
           <div className={styles.actions}>
-            <button className={styles.primaryButton} onClick={() => open()}>
-              {isConnected ? '切换钱包' : '连接钱包'}
+            <button className={styles.primaryButton} onClick={() => profileContext.exitToGuide()}>
+              {isConnected ? '切换 Profile' : '返回 Profile 引导'}
             </button>
           </div>
         </section>

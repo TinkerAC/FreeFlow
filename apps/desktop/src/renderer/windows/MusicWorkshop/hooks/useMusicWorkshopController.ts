@@ -1,5 +1,6 @@
 import React from 'react';
-import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { profileContext } from '@renderer/core/electronContextApi';
 import { useSettingsContext } from '@renderer/core/config/SettingsContext';
 import { type CreatorReleaseRecord } from '@renderer/core/web25/client';
 import { readWeb25SessionSnapshot, subscribeWeb25SessionSnapshot } from '@renderer/core/web25/sessionSync';
@@ -29,7 +30,6 @@ import {
 } from './workshopThunks';
 
 export function useMusicWorkshopController() {
-  const { open } = useWeb3Modal();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const { settings, setByPath } = useSettingsContext();
@@ -214,7 +214,12 @@ export function useMusicWorkshopController() {
   }, [address, dispatch, web25BackendBaseUrl, web25Session]);
 
   const handleSiweLogin = React.useCallback(async () => {
-    if (!walletProvider || !web25BackendBaseUrl) return;
+    if (!web25BackendBaseUrl) return;
+    if (!walletProvider) {
+      setAuthStatusText('SIWE 登录失败：请从 Profile 引导连接钱包');
+      return;
+    }
+
     setAuthStatusText('');
     try {
       await dispatch(siweLoginThunk({
@@ -245,6 +250,10 @@ export function useMusicWorkshopController() {
       setAuthStatusText(message);
     }
   }, [dispatch, web25BackendBaseUrl]);
+
+  const handleExitToGuide = React.useCallback(async () => {
+    await profileContext.exitToGuide();
+  }, []);
 
   const handleSelectRelease = React.useCallback((release: CreatorReleaseRecord) => {
     skipAutosaveRef.current = true;
@@ -404,7 +413,6 @@ export function useMusicWorkshopController() {
   }, [selectedRelease?.tokenId]);
 
   return {
-    open,
     address,
     isConnected,
     settings,
@@ -437,6 +445,7 @@ export function useMusicWorkshopController() {
     handleCreateRelease,
     handleSiweLogin,
     handleSiweLogout,
+    handleExitToGuide,
     handleSelectRelease,
     refreshDashboard,
     onAudioSelected,

@@ -8,65 +8,28 @@ import type { ProfileSummary } from '@src/shared/profile/profile';
 export default function UserSettingsTab() {
   const userName = useSetting<string>('user.userName', '');
   const avatarPath = useSetting<string>('user.avatarPath', '');
-  const [profiles, setProfiles] = React.useState<ProfileSummary[]>([]);
-  const [activeProfileId, setActiveProfileId] = React.useState('');
-  const [selectedProfileId, setSelectedProfileId] = React.useState('');
-  const [newProfileName, setNewProfileName] = React.useState('');
-  const [busy, setBusy] = React.useState(false);
+  const [activeProfile, setActiveProfile] = React.useState<ProfileSummary | null>(null);
   const [statusText, setStatusText] = React.useState('');
 
-  const loadProfiles = React.useCallback(async () => {
-    const [allProfiles, active] = await Promise.all([
-      profileContext.listProfiles(),
-      profileContext.getActiveProfile(),
-    ]);
-    setProfiles(allProfiles);
-    setActiveProfileId(active.id);
-    setSelectedProfileId(active.id);
+  const loadProfile = React.useCallback(async () => {
+    const profile = await profileContext.getActiveProfile();
+    setActiveProfile(profile);
   }, []);
 
   React.useEffect(() => {
-    void loadProfiles().catch((error) => {
+    void loadProfile().catch((error) => {
       setStatusText(`加载 Profile 失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
     });
-  }, [loadProfiles]);
+  }, [loadProfile]);
 
-  const handleCreateProfile = React.useCallback(async () => {
-    const name = newProfileName.trim();
-    if (!name) {
-      setStatusText('请输入 Profile 名称');
-      return;
-    }
-    setBusy(true);
+  const handleExitToGuide = React.useCallback(async () => {
     setStatusText('');
     try {
-      const created = await profileContext.createProfile({ name });
-      setNewProfileName('');
-      setStatusText(`已创建 Profile: ${created.name}`);
-      await loadProfiles();
-      setSelectedProfileId(created.id);
+      await profileContext.exitToGuide();
     } catch (error) {
-      setStatusText(`创建失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
-    } finally {
-      setBusy(false);
+      setStatusText(`退出到引导失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
     }
-  }, [loadProfiles, newProfileName]);
-
-  const handleSwitchProfile = React.useCallback(async () => {
-    if (!selectedProfileId || selectedProfileId === activeProfileId) {
-      setStatusText('当前已是选中 Profile');
-      return;
-    }
-    setBusy(true);
-    setStatusText('');
-    try {
-      await profileContext.switchProfile(selectedProfileId);
-      setStatusText('正在切换 Profile，应用即将重启...');
-    } catch (error) {
-      setStatusText(`切换失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
-      setBusy(false);
-    }
-  }, [activeProfileId, selectedProfileId]);
+  }, []);
 
   return (
     <>
@@ -117,35 +80,23 @@ export default function UserSettingsTab() {
       <SettingsGroup title="Profile" desc="每个 Profile 使用独立数据库与本地设置">
         <SettingRow
           label="当前 Profile"
+          sub="切换钱包或 Profile 需要退出到引导界面"
           control={(
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <select
-                value={selectedProfileId}
-                onChange={(event) => setSelectedProfileId(event.target.value)}
+              <span
                 style={{
-                  height: 30,
-                  borderRadius: 999,
-                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
-                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
-                  color: 'rgb(var(--md-sys-color-on-surface))',
-                  padding: '0 10px',
                   minWidth: 220,
+                  color: 'rgb(var(--md-sys-color-on-surface))',
                 }}
-                disabled={busy}
               >
-                {profiles.map((profile) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.name} ({profile.id})
-                  </option>
-                ))}
-              </select>
+                {activeProfile ? `${activeProfile.name} (${activeProfile.id})` : '加载中...'}
+              </span>
               <button
                 type="button"
-                onClick={() => void handleSwitchProfile()}
-                disabled={busy || !selectedProfileId || selectedProfileId === activeProfileId}
+                onClick={() => void handleExitToGuide()}
                 style={{
                   height: 30,
-                  borderRadius: 999,
+                  borderRadius: 8,
                   border: '1px solid rgb(var(--md-sys-color-outline-variant))',
                   background: 'rgb(var(--md-sys-color-primary))',
                   color: 'rgb(var(--md-sys-color-on-primary))',
@@ -153,48 +104,7 @@ export default function UserSettingsTab() {
                   cursor: 'pointer',
                 }}
               >
-                切换
-              </button>
-            </div>
-          )}
-          sub="切换后会自动重启应用并切换到该 Profile 的数据源"
-        />
-
-        <SettingRow
-          label="新建 Profile"
-          control={(
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                value={newProfileName}
-                onChange={(event) => setNewProfileName(event.target.value)}
-                placeholder="输入 Profile 名称"
-                style={{
-                  height: 28,
-                  borderRadius: 999,
-                  background: 'rgba(var(--md-sys-color-surface-variant), .35)',
-                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
-                  color: 'rgb(var(--md-sys-color-on-surface))',
-                  padding: '0 10px',
-                  minWidth: 220,
-                }}
-                disabled={busy}
-              />
-              <button
-                type="button"
-                onClick={() => void handleCreateProfile()}
-                disabled={busy}
-                style={{
-                  height: 30,
-                  borderRadius: 999,
-                  border: '1px solid rgb(var(--md-sys-color-outline-variant))',
-                  background: 'rgba(var(--md-sys-color-surface-variant), .45)',
-                  color: 'rgb(var(--md-sys-color-on-surface))',
-                  padding: '0 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                创建
+                返回引导
               </button>
             </div>
           )}

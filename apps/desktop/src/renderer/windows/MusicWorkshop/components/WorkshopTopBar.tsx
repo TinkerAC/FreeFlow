@@ -49,7 +49,7 @@ export default function WorkshopTopBar({
   const sessionAddress = controller.web25Session?.address;
   const walletLabel = controller.isConnected && controller.address
     ? `钱包 ${controller.address.slice(0, 6)}...`
-    : '连接钱包';
+    : 'Profile 引导';
 
   return (
     <header className={styles.topBar}>
@@ -92,7 +92,7 @@ export default function WorkshopTopBar({
         >
           {controller.authBusy ? '处理中...' : (controller.web25Session ? '退出会话' : 'SIWE 登录')}
         </button>
-        <button className={styles.walletButton} onClick={() => controller.open()}>{walletLabel}</button>
+        <button className={styles.walletButton} onClick={() => controller.handleExitToGuide()}>{walletLabel}</button>
       </div>
     </header>
   );

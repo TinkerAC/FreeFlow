@@ -1,16 +1,16 @@
-import { useWeb3Modal, useWeb3ModalAccount } from '@web3modal/ethers/react'
+import { useWeb3ModalAccount } from '@web3modal/ethers/react'
 import React from 'react';
+import { profileContext } from '@renderer/core/electronContextApi';
 import styles from './TopBar.module.css';
 
 export default function Web3Button() {
-  const { open } = useWeb3Modal()
   const { address, isConnected } = useWeb3ModalAccount()
 
   return (
     <button
-      onClick={() => open()}
+      onClick={() => profileContext.exitToGuide()}
       className={styles.iconBtn}
-      title={isConnected ? `已连接: ${address?.slice(0, 6)}...` : '链接 Web3 钱包'}
+      title={isConnected ? `切换 Profile: ${address?.slice(0, 6)}...` : '返回 Profile 引导'}
     >
       <i
         className="fa-solid fa-wallet"
@@ -19,4 +19,3 @@ export default function Web3Button() {
     </button>
   )
 }
-

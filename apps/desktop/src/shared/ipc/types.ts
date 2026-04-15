@@ -9,7 +9,7 @@ import type {
   MetadataWriteRequest,
   MetadataWriteResult,
 } from '@src/shared/metadata/metadataEditor';
-import type { ProfileSummary, SwitchProfileResult } from '@src/shared/profile/profile';
+import type { ProfileSummary, WalletProfileInput } from '@src/shared/profile/profile';
 
 /** Config */
 export interface ConfigApi {
@@ -183,9 +183,9 @@ export interface ProfileApi {
 
   getActiveProfile(): Promise<ProfileSummary>;
 
-  createProfile(payload: { id?: string; name?: string }): Promise<ProfileSummary>;
+  enterWalletProfile(payload: WalletProfileInput): Promise<ProfileSummary>;
 
-  switchProfile(profileId: string): Promise<SwitchProfileResult>;
+  exitToGuide(): Promise<void>;
 }
 
 export interface CreatorsWorkshopApi {

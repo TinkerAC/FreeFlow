@@ -1,8 +1,16 @@
 import fs from 'fs';
 import path from 'path';
-import type { ProfileIndex, ProfileSummary } from '@src/shared/profile/profile';
+import {
+  buildWalletProfileId,
+  buildWalletProfileName,
+  DEFAULT_PROFILE_ID,
+  normalizeWalletAddress,
+  SEPOLIA_CHAIN_ID,
+  type ProfileIndex,
+  type ProfileSummary,
+  type WalletProfileInput,
+} from '@src/shared/profile/profile';
 
-export const DEFAULT_PROFILE_ID = 'default';
 const PROFILE_INDEX_FILE = 'profiles.json';
 
 function nowIso(): string {
@@ -20,6 +28,7 @@ export function buildDefaultProfile(): ProfileSummary {
   return {
     id: DEFAULT_PROFILE_ID,
     name: 'Default',
+    type: 'local',
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -31,6 +40,7 @@ function getProfileIndexPath(rootDataPath: string): string {
 
 function writeProfileIndex(rootDataPath: string, index: ProfileIndex): void {
   const filePath = getProfileIndexPath(rootDataPath);
+  fs.mkdirSync(rootDataPath, { recursive: true });
   fs.writeFileSync(filePath, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
 }
 
@@ -39,6 +49,9 @@ function normalizeProfile(profile: ProfileSummary): ProfileSummary {
   return {
     id: sanitizeProfileId(profile.id),
     name: String(profile.name || '').trim() || 'Profile',
+    type: profile.type === 'wallet' ? 'wallet' : 'local',
+    walletAddress: profile.walletAddress ? normalizeWalletAddress(profile.walletAddress) : undefined,
+    chainId: typeof profile.chainId === 'number' ? profile.chainId : undefined,
     createdAt: profile.createdAt || timestamp,
     updatedAt: profile.updatedAt || timestamp,
   };
@@ -105,6 +118,59 @@ export function saveProfileIndex(rootDataPath: string, index: ProfileIndex): Pro
   return normalized;
 }
 
+export function getActiveProfile(rootDataPath: string): ProfileSummary {
+  const index = loadProfileIndex(rootDataPath);
+  const activeProfile = index.profiles.find((profile) => profile.id === index.activeProfileId);
+  if (!activeProfile) {
+    throw new Error(`Active profile ${index.activeProfileId} is missing`);
+  }
+  ensureProfilePath(rootDataPath, activeProfile.id);
+  return activeProfile;
+}
+
+export function ensureWalletProfile(rootDataPath: string, input: WalletProfileInput): ProfileSummary {
+  if (input.chainId !== SEPOLIA_CHAIN_ID) {
+    throw new Error(`Unsupported chain ${input.chainId}`);
+  }
+
+  const walletAddress = normalizeWalletAddress(input.address);
+  const profileId = buildWalletProfileId({ ...input, address: walletAddress });
+  const index = loadProfileIndex(rootDataPath);
+  const existingProfile = index.profiles.find((profile) => profile.id === profileId);
+  const timestamp = nowIso();
+
+  const profile: ProfileSummary = existingProfile
+    ? {
+        ...existingProfile,
+        name: buildWalletProfileName(input),
+        type: 'wallet',
+        walletAddress,
+        chainId: input.chainId,
+        updatedAt: timestamp,
+      }
+    : {
+        id: profileId,
+        name: buildWalletProfileName(input),
+        type: 'wallet',
+        walletAddress,
+        chainId: input.chainId,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+
+  const profiles = existingProfile
+    ? index.profiles.map((item) => (item.id === profileId ? profile : item))
+    : [...index.profiles, profile];
+
+  const nextIndex = saveProfileIndex(rootDataPath, {
+    activeProfileId: profileId,
+    profiles,
+  });
+
+  ensureProfilePath(rootDataPath, profileId);
+  return nextIndex.profiles.find((item) => item.id === profileId)!;
+}
+
 export function ensureProfilePath(rootDataPath: string, profileId: string): string {
   const safeProfileId = sanitizeProfileId(profileId);
   const profilePath = path.join(rootDataPath, 'profiles', safeProfileId);
@@ -113,4 +179,3 @@ export function ensureProfilePath(rootDataPath: string, profileId: string): stri
   }
   return profilePath;
 }
-

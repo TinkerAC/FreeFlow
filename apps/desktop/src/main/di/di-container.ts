@@ -40,7 +40,6 @@ import YouTube from '@main/contentProvider/YouTube/YouTube';
 import FreeFlowProvider from '@main/contentProvider/FreeFlow/FreeFlowProvider';
 import { Logger } from 'winston';
 import rootLogger from '@src/utils/logger';
-import { ProfileManager } from '@main/core/ProfileManager';
 
 const container = new Container();
 
@@ -160,11 +159,6 @@ container
 container
   .bind<SearchService>(DISymbol.SearchService)
   .to(SearchService)
-  .inSingletonScope();
-
-container
-  .bind<ProfileManager>(DISymbol.ProfileManager)
-  .to(ProfileManager)
   .inSingletonScope();
 
 //TODO:Refactor this

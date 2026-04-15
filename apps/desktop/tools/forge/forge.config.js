@@ -82,6 +82,15 @@ module.exports = {
                 js: path.join(rootDir, 'src/renderer/appPreload.tsx'),
               },
             },
+            {
+              name: 'profile_guide_window',
+              rhmr: 'react-hot-loader/patch',
+              html: path.join(rootDir, 'src/renderer/app.html'),
+              js: path.join(rootDir, 'src/renderer/profileGuideRenderer.tsx'),
+              preload: {
+                js: path.join(rootDir, 'src/renderer/appPreload.tsx'),
+              },
+            },
           ],
         },
         devServer: {
