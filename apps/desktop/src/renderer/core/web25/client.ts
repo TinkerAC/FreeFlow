@@ -141,6 +141,13 @@ export type CreatorReleaseDashboard = {
   releases: CreatorReleaseRecord[];
 };
 
+export type DeleteCreatorReleaseResult = {
+  releaseId: string;
+  deletedPublishedResource: boolean;
+  deletedStorageUploadCount: number;
+  deletedStorageObjectCount: number;
+};
+
 export type UpdateCreatorReleasePayload = Record<string, unknown> & {
   status?: CreatorReleaseClientUpdateStatus;
   accessModel?: ReleaseAccessModel;
@@ -363,6 +370,16 @@ export async function updateCreatorRelease(
     {
       method: 'PATCH',
       body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function deleteCreatorRelease(baseUrl: string, releaseId: string) {
+  return await requestWeb25<DeleteCreatorReleaseResult>(
+    baseUrl,
+    `/api/v1/releases/${releaseId}`,
+    {
+      method: 'DELETE',
     },
   );
 }

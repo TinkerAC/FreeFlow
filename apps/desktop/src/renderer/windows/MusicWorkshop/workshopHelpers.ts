@@ -15,6 +15,7 @@ export type BusyState =
   | 'loading-dashboard'
   | 'uploading-assets'
   | 'uploading-metadata'
+  | 'deleting-release'
   | 'publishing'
   | 'checking-access'
   | 'buying';
@@ -168,6 +169,18 @@ export function replaceReleaseInDashboard(
     : [release, ...dashboard.releases];
 
   nextReleases.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+  return {
+    summary: summarizeDashboard(nextReleases),
+    releases: nextReleases,
+  };
+}
+
+export function removeReleaseFromDashboard(
+  dashboard: CreatorReleaseDashboard,
+  releaseId: string,
+) {
+  const nextReleases = dashboard.releases.filter((item) => item.id !== releaseId);
 
   return {
     summary: summarizeDashboard(nextReleases),

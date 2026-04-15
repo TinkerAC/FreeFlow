@@ -151,6 +151,88 @@ export class ReleaseRepository {
 
     return resource;
   }
+
+  async deleteForCreator(creatorUserId: string, releaseId: string) {
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.creatorRelease.findFirst({
+        where: {
+          id: releaseId,
+          creatorUserId,
+        },
+        select: {
+          id: true,
+          audioStorageObjectId: true,
+          coverStorageObjectId: true,
+          metadataStorageObjectId: true,
+          publishedResourceId: true,
+        },
+      });
+
+      if (!existing) {
+        return null;
+      }
+
+      const storageObjectIds = Array.from(new Set([
+        existing.audioStorageObjectId,
+        existing.coverStorageObjectId,
+        existing.metadataStorageObjectId,
+      ].filter((id): id is string => Boolean(id))));
+
+      if (existing.publishedResourceId) {
+        await tx.resource.deleteMany({
+          where: {
+            id: existing.publishedResourceId,
+          },
+        });
+      }
+
+      await tx.creatorRelease.delete({
+        where: {
+          id: existing.id,
+        },
+      });
+
+      const deletedStorageUploads = storageObjectIds.length
+        ? await tx.storageUpload.deleteMany({
+            where: {
+              storageObjectId: {
+                in: storageObjectIds,
+              },
+              uploaderUserId: creatorUserId,
+            },
+          })
+        : { count: 0 };
+
+      const deletedStorageObjects = storageObjectIds.length
+        ? await tx.storageObject.deleteMany({
+            where: {
+              id: {
+                in: storageObjectIds,
+              },
+              audioReleases: {
+                none: {},
+              },
+              coverReleases: {
+                none: {},
+              },
+              metadataReleases: {
+                none: {},
+              },
+              uploads: {
+                none: {},
+              },
+            },
+          })
+        : { count: 0 };
+
+      return {
+        releaseId: existing.id,
+        deletedPublishedResource: Boolean(existing.publishedResourceId),
+        deletedStorageUploadCount: deletedStorageUploads.count,
+        deletedStorageObjectCount: deletedStorageObjects.count,
+      };
+    });
+  }
 }
 
 export type PersistedCreatorRelease = Awaited<ReturnType<ReleaseRepository['findByIdForCreator']>> extends infer T

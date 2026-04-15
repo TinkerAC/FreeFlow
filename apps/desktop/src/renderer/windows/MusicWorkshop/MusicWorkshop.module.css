@@ -156,7 +156,14 @@
 
 .releaseList {
     min-height: 0;
-    overflow: auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    align-content: flex-start;
 }
 
 .navButton,
@@ -212,16 +219,126 @@
 
 .releaseCard {
     padding: 12px;
-    display: grid;
-    gap: 8px;
+    display: block;
+    flex: 0 0 86px;
+    height: 86px;
+    box-sizing: border-box;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.releaseCard:focus-visible {
+    outline: 2px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
 }
 
 .releaseCardTop,
-.releaseMeta,
 .assetHeader,
 .cardHeader,
 .contentTools {
     justify-content: space-between;
+}
+
+.releaseCardLayout {
+    min-width: 0;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+}
+
+.releaseThumb {
+    width: 46px;
+    height: 46px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: rgb(var(--md-sys-color-secondary-container));
+    color: rgb(var(--md-sys-color-on-secondary-container));
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.releaseThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.releaseCardContent {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.releaseCardTop {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+}
+
+.releaseTitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.releaseCardActions {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.releaseDeleteButton {
+    min-height: 26px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(var(--md-sys-color-error), 0.28);
+    background: rgb(var(--md-sys-color-error-container));
+    color: rgb(var(--md-sys-color-on-error-container));
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 850;
+    white-space: nowrap;
+    transition: filter .15s ease, opacity .15s ease;
+}
+
+.releaseDeleteButton:hover {
+    filter: brightness(1.03);
+}
+
+.releaseDeleteButton:disabled {
+    cursor: not-allowed;
+    filter: none;
+    opacity: 0.52;
+}
+
+.releaseMetaGrid {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px 8px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.releaseMetaGrid span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.releaseMetaGrid span:nth-child(even) {
+    justify-self: end;
 }
 
 .contentShell {
@@ -332,6 +449,16 @@
 
 .projectManager > .ghostButton {
     width: 100%;
+}
+
+.projectManager .filterRow {
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.projectManager .filterButton {
+    min-width: 0;
+    flex: 1 1 calc(50% - 5px);
 }
 
 .publishPanel {

@@ -17,6 +17,8 @@ function busyLabel(state: MusicWorkshopController['busyState']) {
       return '上传素材';
     case 'uploading-metadata':
       return '上传 Metadata';
+    case 'deleting-release':
+      return '删除项目';
     case 'publishing':
       return '链上发布';
     case 'checking-access':

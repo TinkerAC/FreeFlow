@@ -11,12 +11,14 @@ import {
   EMPTY_DASHBOARD,
   type ReleaseFilter,
   type ReleasePanel,
+  removeReleaseFromDashboard,
   replaceReleaseInDashboard,
 } from '../workshopHelpers';
 import {
   autosaveReleaseThunk,
   buyAccessThunk,
   createReleaseThunk,
+  deleteReleaseThunk,
   publishReleaseThunk,
   refreshAccessThunk,
   refreshDashboardThunk,
@@ -115,6 +117,20 @@ const workshopSlice = createSlice({
       .addCase(createReleaseThunk.fulfilled, (state, action) => {
         state.selectedRelease = action.payload;
         state.dashboard = replaceReleaseInDashboard(state.dashboard, action.payload);
+      })
+      .addCase(deleteReleaseThunk.pending, (state) => {
+        state.busyState = 'deleting-release';
+      })
+      .addCase(deleteReleaseThunk.fulfilled, (state, action) => {
+        state.dashboard = removeReleaseFromDashboard(state.dashboard, action.payload.releaseId);
+        if (state.selectedRelease?.id === action.payload.releaseId) {
+          state.selectedRelease = state.dashboard.releases[0] ?? null;
+          state.activePanel = 'editor';
+        }
+        state.busyState = 'idle';
+      })
+      .addCase(deleteReleaseThunk.rejected, (state) => {
+        state.busyState = 'idle';
       })
       .addCase(siweLoginThunk.pending, (state) => {
         state.authBusy = true;

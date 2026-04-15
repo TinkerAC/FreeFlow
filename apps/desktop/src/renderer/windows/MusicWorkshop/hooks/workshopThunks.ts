@@ -4,6 +4,7 @@ import {
   createCreatorRelease,
   type CreatorReleaseDashboard,
   type CreatorReleaseRecord,
+  deleteCreatorRelease,
   getPinataConfig,
   listCreatorReleases,
   updateCreatorRelease,
@@ -81,6 +82,16 @@ export const refreshDashboardThunk = createAsyncThunk<
       ?? null;
 
     return { dashboard: payload, selectedRelease: next };
+  },
+);
+
+export const deleteReleaseThunk = createAsyncThunk<
+  { releaseId: string; deletedPublishedResource: boolean; deletedStorageUploadCount: number; deletedStorageObjectCount: number },
+  { baseUrl: string; releaseId: string }
+>(
+  'musicWorkshop/deleteRelease',
+  async ({ baseUrl, releaseId }) => {
+    return await deleteCreatorRelease(baseUrl, releaseId);
   },
 );
 

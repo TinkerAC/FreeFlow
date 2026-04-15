@@ -1,4 +1,5 @@
 import { createCreatorRelease } from './use-cases/create-creator-release.js';
+import { deleteCreatorRelease } from './use-cases/delete-creator-release.js';
 import { getCreatorRelease } from './use-cases/get-creator-release.js';
 import { listCreatorReleases } from './use-cases/list-creator-releases.js';
 import { updateCreatorRelease } from './use-cases/update-creator-release.js';
@@ -23,6 +24,10 @@ export class ReleaseService {
 
   async updateCreatorRelease(creatorUserId: string, releaseId: string, input: UpdateCreatorReleaseInput) {
     return updateCreatorRelease(creatorUserId, releaseId, input);
+  }
+
+  async deleteCreatorRelease(creatorUserId: string, releaseId: string) {
+    return deleteCreatorRelease(creatorUserId, releaseId);
   }
 }
 

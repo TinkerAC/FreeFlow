@@ -61,3 +61,15 @@ releaseRouter.patch('/:releaseId', async (req, res, next) => {
     next(error);
   }
 });
+
+releaseRouter.delete('/:releaseId', async (req, res, next) => {
+  try {
+    const result = await releaseService.deleteCreatorRelease(req.authSession!.userId, req.params.releaseId);
+    res.json({
+      ok: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+});

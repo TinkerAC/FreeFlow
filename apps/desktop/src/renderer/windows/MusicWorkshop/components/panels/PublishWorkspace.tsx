@@ -35,6 +35,23 @@ function EmptyPublishState() {
   );
 }
 
+function compactIdentifier(value: string, head = 10, tail = 6) {
+  const normalized = value.trim();
+  if (!normalized) return normalized;
+  if (/^0x[a-fA-F0-9]{40}$/.test(normalized)) {
+    return `${normalized.slice(0, 6)}...${normalized.slice(-4)}`;
+  }
+  if (normalized.length > head + tail + 6 && /^[a-zA-Z0-9:_./-]+$/.test(normalized)) {
+    return `${normalized.slice(0, head)}...${normalized.slice(-tail)}`;
+  }
+  return normalized;
+}
+
+function releaseInitials(release: CreatorReleaseRecord) {
+  const source = release.title || release.artistName || release.slug || 'FF';
+  return source.trim().slice(0, 2).toUpperCase();
+}
+
 function renderStep(controller: MusicWorkshopController, section: PublishSection) {
   if (!controller.selectedRelease) return <EmptyPublishState />;
 
@@ -63,6 +80,23 @@ export default function PublishWorkspace({
 }: PublishWorkspaceProps) {
   const release = controller.selectedRelease;
   const activeItem = PUBLISH_SECTION_ITEMS.find((item) => item.value === activePublishSection);
+  const openReleaseFromKeyboard = React.useCallback((event: React.KeyboardEvent, item: CreatorReleaseRecord) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onSelectRelease(item);
+  }, [onSelectRelease]);
+
+  const deleteRelease = React.useCallback((event: React.MouseEvent, item: CreatorReleaseRecord) => {
+    event.stopPropagation();
+    const label = item.title || item.slug || item.id;
+    const confirmed = window.confirm(`删除项目「${label}」？后端记录、发布资源索引和未被其他项目引用的素材记录都会被释放。`);
+    if (!confirmed) return;
+    void controller.handleDeleteRelease(item.id).catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      window.alert(`删除项目失败：${message}`);
+    });
+  }, [controller]);
 
   return (
     <div className={styles.publishWorkspace}>
@@ -142,26 +176,58 @@ export default function PublishWorkspace({
 
           <div className={styles.releaseList}>
             {controller.visibleReleases.map((item) => (
-              <button
+              <div
                 key={item.id}
                 className={`${styles.releaseCard} ${release?.id === item.id ? styles.releaseCardActive : ''}`}
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelectRelease(item)}
+                onKeyDown={(event) => openReleaseFromKeyboard(event, item)}
               >
-                <div className={styles.releaseCardTop}>
-                  <div className={styles.releaseTitle}>{item.title || 'Untitled Draft'}</div>
-                  <span className={`${styles.statusBadge} ${statusToneClass(releaseStatusTone(item.status), styles)}`}>
-                    {releaseStatusLabel(item.status)}
-                  </span>
+                <div className={styles.releaseCardLayout}>
+                  <div className={styles.releaseThumb}>
+                    {item.coverStorageObject?.gatewayUrl ? (
+                      <img src={item.coverStorageObject.gatewayUrl} alt="" />
+                    ) : (
+                      <span>{releaseInitials(item)}</span>
+                    )}
+                  </div>
+
+                  <div className={styles.releaseCardContent}>
+                    <div className={styles.releaseCardTop}>
+                      <div className={styles.releaseTitle} title={item.title || item.slug || 'Untitled Draft'}>
+                        {compactIdentifier(item.title || item.slug || 'Untitled Draft', 18, 8)}
+                      </div>
+                      <div className={styles.releaseCardActions}>
+                        <span className={`${styles.statusBadge} ${statusToneClass(releaseStatusTone(item.status), styles)}`}>
+                          {releaseStatusLabel(item.status)}
+                        </span>
+                        <button
+                          type="button"
+                          className={styles.releaseDeleteButton}
+                          onClick={(event) => deleteRelease(event, item)}
+                          onKeyDown={(event) => event.stopPropagation()}
+                          disabled={!controller.web25Session || controller.busyState !== 'idle'}
+                          title="删除项目"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.releaseMetaGrid}>
+                      <span title={item.artistName || 'Unknown artist'}>
+                        {compactIdentifier(item.artistName || 'Unknown artist', 16, 6)}
+                      </span>
+                      <span>{formatRelativeTime(item.updatedAt)}</span>
+                      <span title={item.tokenId ? `Token #${item.tokenId}` : '未上链'}>
+                        {item.tokenId ? `Token #${compactIdentifier(item.tokenId, 8, 6)}` : '未上链'}
+                      </span>
+                      <span>{item.metadataStorageObject ? 'Metadata 就绪' : 'Metadata 待生成'}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className={styles.releaseMeta}>
-                  <span>{item.artistName || 'Unknown artist'}</span>
-                  <span>{formatRelativeTime(item.updatedAt)}</span>
-                </div>
-                <div className={styles.releaseMeta}>
-                  <span>{item.tokenId ? `Token #${item.tokenId}` : '未上链'}</span>
-                  <span>{item.metadataStorageObject ? 'Metadata 就绪' : 'Metadata 待生成'}</span>
-                </div>
-              </button>
+              </div>
             ))}
           </div>
         </aside>

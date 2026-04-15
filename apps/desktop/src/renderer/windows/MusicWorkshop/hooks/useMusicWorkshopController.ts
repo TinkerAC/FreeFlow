@@ -19,6 +19,7 @@ import {
   autosaveReleaseThunk,
   buyAccessThunk,
   createReleaseThunk,
+  deleteReleaseThunk,
   publishReleaseThunk,
   refreshAccessThunk,
   refreshDashboardThunk,
@@ -260,6 +261,15 @@ export function useMusicWorkshopController() {
     dispatch(workshopActions.setSelectedRelease(release));
   }, [dispatch]);
 
+  const handleDeleteRelease = React.useCallback(async (releaseId: string) => {
+    if (!web25Session || !releaseId || busyState !== 'idle') return;
+    skipAutosaveRef.current = true;
+    await dispatch(deleteReleaseThunk({
+      baseUrl: web25BackendBaseUrl,
+      releaseId,
+    })).unwrap();
+  }, [busyState, dispatch, web25BackendBaseUrl, web25Session]);
+
   const hydrateMetadataFromFile = React.useCallback(async (file: File) => {
     const path = (file as File & { path?: string }).path;
     if (!path) {
@@ -447,6 +457,7 @@ export function useMusicWorkshopController() {
     handleSiweLogout,
     handleExitToGuide,
     handleSelectRelease,
+    handleDeleteRelease,
     refreshDashboard,
     onAudioSelected,
     onCoverSelected,
