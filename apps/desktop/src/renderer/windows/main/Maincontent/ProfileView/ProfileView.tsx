@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { useWeb3ModalAccount } from '@web3modal/ethers/react';
 import { useSetting } from '@renderer/core/config/SettingsContext';
 import { profileContext } from '@renderer/core/electronContextApi';
 import { logoutWeb25Session, useWeb25SessionState } from '@renderer/core/web25/auth';
@@ -9,7 +9,8 @@ import {
   uploadWeb25UserAvatar,
   type Web25UserProfile,
 } from '@renderer/core/web25/client';
-import { syncOwnedFreeFlowLibrary } from '@renderer/core/freeflow/ownedLibrary';
+import { getChainLibraryTracks, subscribeChainLibraryUpdated } from '@renderer/core/freeflow/chainLibrary';
+import type { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import styles from './ProfileView.module.css';
 
@@ -20,18 +21,16 @@ function formatAddress(value?: string) {
 
 export default function ProfileView() {
   const { address, chainId, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
   const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
   const { session, refresh, refreshing } = useWeb25SessionState(web25BaseUrl.value);
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [authBusy, setAuthBusy] = React.useState(false);
-  const [syncBusy, setSyncBusy] = React.useState(false);
   const [profileBusy, setProfileBusy] = React.useState(false);
   const [statusText, setStatusText] = React.useState('');
-  const [syncStats, setSyncStats] = React.useState<{ owned: number; indexed: number } | null>(null);
   const [userProfile, setUserProfile] = React.useState<Web25UserProfile | null>(null);
   const [draftDisplayName, setDraftDisplayName] = React.useState('');
+  const [chainTracks, setChainTracks] = React.useState<TrackEntity[]>([]);
 
   React.useEffect(() => {
     void refresh().catch(() => {
@@ -80,7 +79,6 @@ export default function ProfileView() {
       await logoutWeb25Session(web25BaseUrl.value, { clearLocalScope: 'all-profiles' });
       setUserProfile(null);
       setDraftDisplayName('');
-      setSyncStats(null);
       await refresh();
       await profileContext.exitToGuide();
     } catch (error) {
@@ -155,30 +153,17 @@ export default function ProfileView() {
     }
   }, [session, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
 
-  const handleSyncOwned = React.useCallback(async () => {
-    if (!walletProvider || !address) {
-      setStatusText('请返回 Profile 引导连接钱包');
-      return;
-    }
-    setSyncBusy(true);
-    setStatusText('');
-    try {
-      const result = await syncOwnedFreeFlowLibrary({
-        baseUrl: web25BaseUrl.value,
-        walletProvider,
-        account: address,
-      });
-      setSyncStats({
-        owned: result.ownedTracks.length,
-        indexed: result.indexedCount,
-      });
-      setStatusText(`已同步 ${result.ownedTracks.length} 条链上资源`);
-    } catch (error) {
-      setStatusText(`资源同步失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
-    } finally {
-      setSyncBusy(false);
-    }
-  }, [address, walletProvider, web25BaseUrl.value]);
+  const refreshChainLibraryStats = React.useCallback(async () => {
+    setChainTracks(await getChainLibraryTracks());
+  }, []);
+
+  React.useEffect(() => {
+    void refreshChainLibraryStats().catch(() => {
+    });
+    return subscribeChainLibraryUpdated(() => {
+      void refreshChainLibraryStats();
+    });
+  }, [refreshChainLibraryStats]);
 
   return (
     <ViewShell hideScrollbar>
@@ -364,22 +349,19 @@ export default function ProfileView() {
         </section>
 
         <section className={styles.block}>
-          <div className={styles.blockTitle}>链上音乐库同步</div>
-          <p className={styles.sub}>把当前钱包拥有访问权的资源同步到主音乐库。</p>
+          <div className={styles.blockTitle}>链上音乐库</div>
+          <p className={styles.sub}>当前 Profile 管理的链上音乐资源与本地下载状态。</p>
           <div className={styles.actions}>
             <button
               className={styles.primaryButton}
-              onClick={() => void handleSyncOwned()}
-              disabled={syncBusy}
+              onClick={() => void refreshChainLibraryStats()}
             >
-              {syncBusy ? '同步中...' : '同步拥有资源'}
+              刷新状态
             </button>
           </div>
-          {syncStats && (
-            <div className={styles.stats}>
-              已拥有 {syncStats.owned} / 已扫描 {syncStats.indexed}
-            </div>
-          )}
+          <div className={styles.stats}>
+            已入库 {chainTracks.length} / 已下载 {chainTracks.filter((track) => track.downloaded).length}
+          </div>
         </section>
 
         {statusText && <div className={styles.status}>{statusText}</div>}

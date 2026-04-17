@@ -19,6 +19,7 @@ export interface TrackRecordProps {
   download_source_gateway?: string;
   download_error?: string;
   downloaded_at?: Date;
+  freeflow_metadata_json?: string;
   created_at?: Date;
   modified_at?: Date;
 }
@@ -42,6 +43,7 @@ export class TrackRecord extends AbstractRecord implements TrackRecordProps {
   download_source_gateway?: string;
   download_error?: string;
   downloaded_at?: Date;
+  freeflow_metadata_json?: string;
 
   /**
    * 从 TrackEntity 创建 一个 TrackRecord 持久化对象,滤除id、创建时间、修改时间等
@@ -56,10 +58,22 @@ export class TrackRecord extends AbstractRecord implements TrackRecordProps {
     rec.album = entity.album;
     rec.duration = entity.duration;
     rec.cover_src = entity.cover_src;
+    if (entity.freeflow !== undefined) {
+      rec.freeflow_metadata_json = JSON.stringify(entity.freeflow);
+    }
     return rec;
   }
 
   toEntity(): TrackEntity {
+    let freeflow;
+    if (this.freeflow_metadata_json) {
+      try {
+        freeflow = JSON.parse(this.freeflow_metadata_json);
+      } catch {
+        freeflow = undefined;
+      }
+    }
+
     return {
       album: this.album,
       artist: this.artist,
@@ -78,6 +92,7 @@ export class TrackRecord extends AbstractRecord implements TrackRecordProps {
       platform_unique_id: this.platform_unique_id,
       played_count: this.played_count,
       title: this.title,
+      freeflow,
     };
   }
 }

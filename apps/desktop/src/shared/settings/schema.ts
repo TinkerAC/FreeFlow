@@ -135,20 +135,20 @@ export const ServiceSettings = z.object({
   /** 各内容提供商的开关（统一入口） */
   providers: z
     .object({
-      netease: z.boolean().default(true),
+      netease: z.boolean().default(false),
       freeflow: z.boolean().default(true),
-      qq: z.boolean().default(true),
-      bilibili: z.boolean().default(true),
-      youtubeMusic: z.boolean().default(true),
-      hifini: z.boolean().default(true),
+      qq: z.boolean().default(false),
+      bilibili: z.boolean().default(false),
+      youtubeMusic: z.boolean().default(false),
+      hifini: z.boolean().default(false),
     })
     .default({
-      netease: true,
+      netease: false,
       freeflow: true,
-      qq: true,
-      bilibili: true,
-      youtubeMusic: true,
-      hifini: true,
+      qq: false,
+      bilibili: false,
+      youtubeMusic: false,
+      hifini: false,
     }),
   youtubeMusic: z.object({
     cookie: z.string().default(''),
@@ -239,7 +239,7 @@ export const Settings = z.object({
   network: NetworkSettings.default({ port: 29321 }),
   services: ServiceSettings.default({
     hifiniCookie: { bbs_sid: '', bbs_token: '' },
-    providers: { netease: true, freeflow: true, qq: true, bilibili: true, youtubeMusic: true, hifini: true },
+    providers: { netease: false, freeflow: true, qq: false, bilibili: false, youtubeMusic: false, hifini: false },
     youtubeMusic: { cookie: '', visitorData: '' },
     pinata: {
       jwt: '',

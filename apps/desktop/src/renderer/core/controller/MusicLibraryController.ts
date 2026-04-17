@@ -40,7 +40,8 @@ export default class MusicLibraryController extends AbstractController<MusicLibr
       if (this._activatePlaylistEntity === newPlaylist) return; // 实例和ID都相同，确定无变化
     }
 
-    const oldActivePlaylistId = this._activatePlaylistEntity?.playlist_id;
+    const oldActivePlaylist = this._activatePlaylistEntity;
+    const oldActivePlaylistId = oldActivePlaylist?.playlist_id;
     const oldSelectedLibraryItem = this.selectedLibraryItem;
 
     this._activatePlaylistEntity = newPlaylist;
@@ -61,7 +62,11 @@ export default class MusicLibraryController extends AbstractController<MusicLibr
 
     // 仅当激活的歌单ID或选中索引确实发生变化时才通知
     // (考虑到 newPlaylist 可能与 _activatePlaylistEntity 是不同实例但id相同的情况)
-    if (oldActivePlaylistId !== this._activatePlaylistEntity?.playlist_id || oldSelectedLibraryItem !== this.selectedLibraryItem) {
+    if (
+      oldActivePlaylist !== this._activatePlaylistEntity
+      || oldActivePlaylistId !== this._activatePlaylistEntity?.playlist_id
+      || oldSelectedLibraryItem !== this.selectedLibraryItem
+    ) {
       super.notify();
     }
   }

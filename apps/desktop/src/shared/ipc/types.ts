@@ -43,6 +43,14 @@ export interface LibraryApi {
   increasePlayCount(track: TrackEntity): void;
 }
 
+export interface ChainLibraryApi {
+  getTracks(): Promise<TrackEntity[]>;
+
+  upsertTrack(track: TrackEntity): Promise<TrackEntity>;
+
+  removeTrack(track: TrackEntity): Promise<number>;
+}
+
 /** Lyrics */
 export interface LyricsApi {
   getLyrics(track: TrackEntity): Promise<Lyric>;
@@ -207,6 +215,7 @@ export interface CreatorsWorkshopApi {
 export interface MainApi {
   configApi: ConfigApi;
   libraryApi: LibraryApi;
+  chainLibraryApi: ChainLibraryApi;
   lyricsApi: LyricsApi;
   trackApi: TrackApi;
   playerApi: PlayerApi;

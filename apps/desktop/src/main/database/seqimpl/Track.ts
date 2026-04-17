@@ -20,6 +20,7 @@ export interface TrackCreationAttributes
     | 'download_source_gateway'
     | 'download_error'
     | 'downloaded_at'
+    | 'freeflow_metadata_json'
     | 'created_at'
     | 'modified_at'
   > {
@@ -44,6 +45,7 @@ export class Track
   public download_source_gateway?: string;
   public download_error?: string;
   public downloaded_at?: Date;
+  public freeflow_metadata_json?: string;
   public created_at?: Date;
   public modified_at?: Date;
 }
@@ -97,6 +99,7 @@ Track.init(
       defaultValue: '',
     },
     downloaded_at: DataTypes.DATE,
+    freeflow_metadata_json: DataTypes.TEXT,
   },
   {
     sequelize,

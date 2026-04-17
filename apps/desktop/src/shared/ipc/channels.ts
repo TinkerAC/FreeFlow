@@ -18,6 +18,11 @@ export const Channels = {
     DownloadTrack: 'library:download-track',
     IncreasePlayCount: 'library:increasePlayCount',
   },
+  ChainLibrary: {
+    GetTracks: 'chain-library:get-tracks',
+    UpsertTrack: 'chain-library:upsert-track',
+    RemoveTrack: 'chain-library:remove-track',
+  },
   Lyrics: {
     Get: 'lyrics:get',
   },

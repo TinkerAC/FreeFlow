@@ -32,6 +32,12 @@ const mainApi: MainApi = {
     increasePlayCount: (track) => ipcRenderer.send(Channels.Library.IncreasePlayCount, track),
   },
 
+  chainLibraryApi: {
+    getTracks: () => ipcRenderer.invoke(Channels.ChainLibrary.GetTracks) as Promise<TrackEntity[]>,
+    upsertTrack: (track) => ipcRenderer.invoke(Channels.ChainLibrary.UpsertTrack, track) as Promise<TrackEntity>,
+    removeTrack: (track) => ipcRenderer.invoke(Channels.ChainLibrary.RemoveTrack, track) as Promise<number>,
+  },
+
   lyricsApi: {
     getLyrics: (track) => ipcRenderer.invoke(Channels.Lyrics.Get, track) as Promise<Lyric>,
   },

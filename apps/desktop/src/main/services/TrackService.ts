@@ -62,6 +62,9 @@ export default class TrackService extends AbstractService {
 
     // only file_path or data_href is provided
     const trackModel = await this.trackRepository.findByPlatformAndPlatformUniqueId(platform, platform_unique_id);
+    if (!trackModel) {
+      throw new Error(`Track not found: ${platform}:${platform_unique_id}`);
+    }
     // this.logger.log('trackModel:', trackModel);
 
     switch (trackModel.platform) {
@@ -97,6 +100,9 @@ export default class TrackService extends AbstractService {
 
 
   public async addTrackToLibrary(track: TrackEntity): Promise<TrackEntity> {
+    if (track.platform === Platform.FREEFLOW) {
+      throw new Error('FreeFlow 资源需要购买或确认拥有后加入链上音乐库');
+    }
 
     const platform: string = track.platform;
     const platform_unique_id: string = track.platform_unique_id;
@@ -149,6 +155,53 @@ export default class TrackService extends AbstractService {
   //用于将下载后的本地文件绑定到数据库中的曲目
   public async bindLocalTrackFile(trackId: number, filePath: string): Promise<TrackEntity> {
     return await this.trackRepository.bindLocalFileToTrack(trackId, filePath);
+  }
+
+  public async getChainLibraryTracks(): Promise<TrackEntity[]> {
+    const tracks = await this.trackRepository.findAll();
+    return tracks.filter((track) => track.platform === Platform.FREEFLOW);
+  }
+
+  public async upsertChainLibraryTrack(track: TrackEntity): Promise<TrackEntity> {
+    if (track.platform !== Platform.FREEFLOW) {
+      throw new Error('链上音乐库只接受 FreeFlow 资源');
+    }
+    if (!track.platform_unique_id) {
+      throw new Error('链上资源缺少 resourceKey');
+    }
+
+    const current = await this.trackRepository.findByPlatformAndPlatformUniqueId(
+      track.platform,
+      track.platform_unique_id,
+    );
+
+    if (!current) {
+      return await this.trackRepository.create(track);
+    }
+
+    return await this.trackRepository.update({
+      ...current,
+      ...track,
+      id: current.id,
+      downloaded: current.downloaded,
+      download_status: current.download_status,
+      download_source_cid: current.download_source_cid,
+      download_source_gateway: current.download_source_gateway,
+      download_error: current.download_error,
+      downloaded_at: current.downloaded_at,
+    } as TrackEntity);
+  }
+
+  public async removeChainLibraryTrack(track: TrackEntity): Promise<number> {
+    if (track.id) {
+      return await this.trackRepository.delete(track.id);
+    }
+
+    const current = await this.trackRepository.findByPlatformAndPlatformUniqueId(
+      track.platform,
+      track.platform_unique_id,
+    );
+    return current?.id ? await this.trackRepository.delete(current.id) : 0;
   }
 
   public async markDownloadState(trackId: number, state: {

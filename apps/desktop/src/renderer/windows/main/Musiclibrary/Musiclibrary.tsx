@@ -9,48 +9,29 @@ import { useNavigation, ViewType } from '@renderer/core/navigation';
 import styles from './MusicLibrary.module.css';
 import clsx from 'clsx';
 import { Reorder } from 'framer-motion';
-import { Platform } from '@main/core/enum/Platform';
-import { useSetting } from '@renderer/core/config/SettingsContext';
-import { syncOwnedFreeFlowLibrary } from '@renderer/core/freeflow/ownedLibrary';
-import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import {
+  buildChainLibraryPlaylist,
+  getChainLibraryTracks,
+  isChainLibraryPlaylist,
+  subscribeChainLibraryUpdated,
+} from '@renderer/core/freeflow/chainLibrary';
+import type { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 
 interface MusicLibraryProps {
   musicLibraryController: MusicLibraryController;
 }
 
-const CHAIN_LIBRARY_TITLE = '链上音乐库';
-const CHAIN_LIBRARY_DESC = '当前钱包拥有访问权的链上资源';
-
-function asDisplayPlaylist(playlist: PlaylistEntity): PlaylistEntity {
-  if (playlist.playlist_id !== 0) {
-    return playlist;
-  }
-
-  return {
-    ...playlist,
-    platform: Platform.FREEFLOW,
-    platform_unique_id: 'freeflow-library',
-    title: CHAIN_LIBRARY_TITLE,
-    description: CHAIN_LIBRARY_DESC,
-    tracks: (playlist.tracks || []).filter((track) => track.platform === Platform.FREEFLOW),
-  };
-}
-
 export default function MusicLibrary({ musicLibraryController }: MusicLibraryProps) {
   const navigation = useNavigation();
-  const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
-  const { address, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
 
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [eventPlaylist, setEventPlaylist] = useState<PlaylistEntity | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState('');
 
   const [collapsed, setCollapsed] = useState<boolean>(true);
   const [playlists, setPlaylists] = useState<PlaylistEntity[]>(musicLibraryController.playlists);
   const [selectedItem, setSelectedItem] = useState<number>(musicLibraryController.selectedLibraryItem || 0);
+  const [chainTracks, setChainTracks] = useState<TrackEntity[]>([]);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const playlistsRef = useRef(playlists);
@@ -68,36 +49,26 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
     return () => unsubscribe();
   }, [musicLibraryController]);
 
-  const displayedPlaylists = useMemo(() => playlists.map(asDisplayPlaylist), [playlists]);
-
-  const syncOwnedTracks = React.useCallback(async () => {
-    if (!address || !walletProvider) return;
-    setSyncing(true);
-    setSyncError('');
-    try {
-      await syncOwnedFreeFlowLibrary({
-        baseUrl: web25BaseUrl.value,
-        walletProvider,
-        account: address,
-      });
-      await musicLibraryController.refreshPlaylists();
-    } catch (error) {
-      setSyncError(error instanceof Error ? error.message : String(error ?? '同步失败'));
-    } finally {
-      setSyncing(false);
-    }
-  }, [address, musicLibraryController, walletProvider, web25BaseUrl.value]);
+  const refreshChainLibrary = React.useCallback(async () => {
+    const tracks = await getChainLibraryTracks();
+    setChainTracks(tracks);
+  }, []);
 
   useEffect(() => {
-    if (!isConnected || !address || !walletProvider) return;
-    void syncOwnedTracks();
-  }, [address, isConnected, syncOwnedTracks, walletProvider]);
+    void refreshChainLibrary();
+    return subscribeChainLibraryUpdated(() => {
+      void refreshChainLibrary();
+    });
+  }, [refreshChainLibrary]);
+
+  const chainPlaylist = useMemo(() => buildChainLibraryPlaylist(chainTracks), [chainTracks]);
+  const selectedChainLibrary = isChainLibraryPlaylist(musicLibraryController.activePlaylist);
 
   const handleRightClick = (e: React.MouseEvent, playlistId: number) => {
     e.preventDefault();
-    if (playlistId === 0) return;
+    if (playlistId <= 0) return;
 
-    const p = displayedPlaylists.find((playlist) => playlist.playlist_id === playlistId) || null;
+    const p = playlists.find((playlist) => playlist.playlist_id === playlistId) || null;
     setEventPlaylist(p);
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setContextMenuVisible(true);
@@ -121,7 +92,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
   const handleDragEnd = async () => {
     const currentPlaylists = playlistsRef.current;
     const updates = currentPlaylists
-      .filter((playlist) => playlist.playlist_id !== 0)
+      .filter((playlist) => playlist.playlist_id && playlist.playlist_id > 0)
       .map((playlist, index) => ({
         playlist_id: playlist.playlist_id!,
         position: index,
@@ -157,14 +128,6 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
             >
               <i className="fas fa-plus" />
             </button>
-            <button
-              className={styles.iconBtn}
-              title="同步已拥有资源"
-              onClick={() => void syncOwnedTracks()}
-              disabled={!isConnected || !address || !walletProvider || syncing}
-            >
-              <i className={syncing ? 'fas fa-spinner fa-spin' : 'fas fa-rotate-right'} />
-            </button>
           </div>
         )}
       </div>
@@ -172,9 +135,9 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
       {!collapsed && (
         <div className={styles.toolbar}>
           <button className={clsx(styles.chip, styles.chipActive)}>歌单</button>
-          <button className={styles.chip}>{isConnected ? '钱包已连接' : '钱包未连接'}</button>
+          <button className={styles.chip}>链上资源 {chainTracks.length}</button>
           <div style={{ marginLeft: 'auto', opacity: .8 }}>
-            <i className="fas fa-cube" title="链上资源同步" />
+            <i className="fas fa-cube" title="链上音乐库" />
           </div>
         </div>
       )}
@@ -187,9 +150,21 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
             onReorder={handleReorder}
             className={styles.list}
           >
+            <Item
+              imgSrc={chainPlaylist?.tracks?.[0]?.cover_src || DefaultPlaylistCover}
+              altText="链上音乐库"
+              title={chainPlaylist.title}
+              description={chainPlaylist.description || ''}
+              index={-1}
+              isSelected={selectedChainLibrary}
+              onClick={() => {
+                musicLibraryController.activePlaylist = chainPlaylist;
+                navigation.push(ViewType.PLAYLIST);
+              }}
+              onRightClick={(e) => handleRightClick(e, chainPlaylist.playlist_id)}
+            />
             {playlists.length ? (
               playlists.map((item, index) => {
-                const displayItem = asDisplayPlaylist(item);
                 return (
                   <Reorder.Item
                     key={item.playlist_id}
@@ -199,27 +174,24 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                     whileDrag={{ scale: 1.02, boxShadow: '0 8px 20px rgba(0,0,0,0.15)', zIndex: 10 }}
                   >
                     <Item
-                      imgSrc={displayItem?.tracks?.[0]?.cover_src || DefaultPlaylistCover}
-                      altText={`${displayItem.title} key:${displayItem.playlist_id}`}
-                      title={displayItem.title}
-                      description={displayItem.description || ''}
+                      imgSrc={item?.tracks?.[0]?.cover_src || DefaultPlaylistCover}
+                      altText={`${item.title} key:${item.playlist_id}`}
+                      title={item.title}
+                      description={item.description || ''}
                       index={index}
-                      isSelected={selectedItem === index}
+                      isSelected={!selectedChainLibrary && selectedItem === index}
                       onClick={() => {
                         musicLibraryController.selectItem(index);
-                        musicLibraryController.activePlaylist = displayItem;
+                        musicLibraryController.activePlaylist = item;
                         navigation.push(ViewType.PLAYLIST);
                       }}
-                      onRightClick={(e) => handleRightClick(e, displayItem.playlist_id)}
+                      onRightClick={(e) => handleRightClick(e, item.playlist_id)}
                     />
                   </Reorder.Item>
                 );
               })
             ) : (
               <div style={{ textAlign: 'center', color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>暂无歌单</div>
-            )}
-            {!!syncError && (
-              <div style={{ marginTop: 8, fontSize: 12, color: 'rgb(var(--md-sys-color-error))' }}>{syncError}</div>
             )}
           </Reorder.Group>
         )}
@@ -231,8 +203,22 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
             onReorder={handleReorder}
             className={styles.grid}
           >
+            <div
+              className={clsx(styles.tile, selectedChainLibrary && styles.tileSelected)}
+              onClick={() => {
+                musicLibraryController.activePlaylist = chainPlaylist;
+                navigation.push(ViewType.PLAYLIST);
+              }}
+              title={chainPlaylist.title}
+              tabIndex={0}
+            >
+              <img
+                src={chainPlaylist?.tracks?.[0]?.cover_src || DefaultPlaylistCover}
+                alt="链上音乐库"
+                draggable={false}
+              />
+            </div>
             {playlists.map((item, index) => {
-              const displayItem = asDisplayPlaylist(item);
               return (
                 <Reorder.Item
                   key={item.playlist_id}
@@ -242,19 +228,19 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                   whileDrag={{ scale: 1.1, zIndex: 10 }}
                 >
                   <div
-                    className={clsx(styles.tile, selectedItem === index && styles.tileSelected)}
+                    className={clsx(styles.tile, !selectedChainLibrary && selectedItem === index && styles.tileSelected)}
                     onClick={() => {
                       musicLibraryController.selectItem(index);
-                      musicLibraryController.activePlaylist = displayItem;
+                      musicLibraryController.activePlaylist = item;
                       navigation.push(ViewType.PLAYLIST);
                     }}
-                    onContextMenu={(e) => handleRightClick(e, displayItem.playlist_id)}
-                    title={displayItem.title}
+                    onContextMenu={(e) => handleRightClick(e, item.playlist_id)}
+                    title={item.title}
                     tabIndex={0}
                   >
                     <img
-                      src={displayItem?.tracks?.[0]?.cover_src || DefaultPlaylistCover}
-                      alt={`${displayItem.title} key:${displayItem.playlist_id}`}
+                      src={item?.tracks?.[0]?.cover_src || DefaultPlaylistCover}
+                      alt={`${item.title} key:${item.playlist_id}`}
                       draggable={false}
                     />
                   </div>

@@ -7,6 +7,7 @@ import styles from './ContextMenu.module.css'; // 将使用下方新的 CSS 文�
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
+import { Platform } from '@main/core/enum/Platform';
 
 // Props 定义保持不变
 interface ContextMenuProps {
@@ -18,10 +19,11 @@ interface ContextMenuProps {
   addTrackToPlaylist: (t: TrackEntity, id: number) => void;
   playlists: PlaylistEntity[];
   player: PlayerController;
+  onDetailRequest?: (track: TrackEntity) => void;
 }
 
 export default function ContextMenu({
-                                      x, y, track, addToLibrary, handleCloseMenu, addTrackToPlaylist, playlists, player,
+                                      x, y, track, addToLibrary, handleCloseMenu, addTrackToPlaylist, playlists, player, onDetailRequest,
                                     }: ContextMenuProps) {
 
   // ✅ 统一使用健壮的 Refs 和 State 结构
@@ -86,6 +88,11 @@ export default function ContextMenu({
   };
 
   const handleAddToPlaylist = (p: PlaylistEntity) => {
+    if (track.platform === Platform.FREEFLOW) {
+      handleCloseMenu();
+      return;
+    }
+
     if (p.playlist_id === 0) {
       addToLibrary(track);
     } else {
@@ -111,20 +118,35 @@ export default function ContextMenu({
           <span>添加到下一首播放</span>
         </button>
 
-        <div className={styles.divider} />
+        {track.platform === Platform.FREEFLOW && (
+          <button
+            className={styles.item}
+            onClick={() => {
+              onDetailRequest?.(track);
+              handleCloseMenu();
+            }}
+          >
+            <span className={clsx('fas fa-circle-info', styles.icon)} />
+            <span>查看链上详情</span>
+          </button>
+        )}
 
-        <div
-          className={clsx(styles.item, styles.subWrap)}
-          onMouseEnter={(e) => openSubmenu(e.currentTarget)}
-          onMouseLeave={closeSubmenu}
-        >
-          <span className={clsx('fas fa-folder-plus', styles.icon)} />
-          <span>添加到…</span>
-          <span className={clsx('fas fa-chevron-right', styles.subCaret)} />
-        </div>
+        {track.platform !== Platform.FREEFLOW && <div className={styles.divider} />}
+
+        {track.platform !== Platform.FREEFLOW && (
+          <div
+            className={clsx(styles.item, styles.subWrap)}
+            onMouseEnter={(e) => openSubmenu(e.currentTarget)}
+            onMouseLeave={closeSubmenu}
+          >
+            <span className={clsx('fas fa-folder-plus', styles.icon)} />
+            <span>添加到…</span>
+            <span className={clsx('fas fa-chevron-right', styles.subCaret)} />
+          </div>
+        )}
       </div>
 
-      {subPos && (
+      {track.platform !== Platform.FREEFLOW && subPos && (
         <div
           ref={subMenuRef}
           className={styles.subMenu}

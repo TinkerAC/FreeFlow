@@ -171,7 +171,7 @@ export default function TopBar({ setSearchResults, player }: TopBarProps) {
             <input
               ref={inputRef}
               type="text"
-              placeholder={isShiftPressed && isInputFocused ? '安全搜索模式...' : '想播放什么？'}
+              placeholder={isShiftPressed && isInputFocused ? '安全搜索链上音乐...' : '搜索链上音乐'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && performNetworkSearch(searchTerm, e.shiftKey)}

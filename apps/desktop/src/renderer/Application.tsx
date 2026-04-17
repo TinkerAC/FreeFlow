@@ -26,7 +26,6 @@ import { usePlayerFactory } from '@renderer/hooks/usePlayerFactory';
 import { useIpcBridge } from '@renderer/hooks/useIPCBridge';
 
 import { ensureWeb3Modal } from '@renderer/core/web3/bootstrap';
-import { subscribeOwnedLibraryUpdated } from '@renderer/core/freeflow/ownedLibrary';
 
 ensureWeb3Modal();
 
@@ -67,13 +66,9 @@ const ApplicationContent: React.FC = () => {
     const unsubMusic = musicLibraryController.subscribe(() =>
       setIsMusicLibraryCollapsed(musicLibraryController.isMusicLibraryCollapsed),
     );
-    const unsubOwned = subscribeOwnedLibraryUpdated(() => {
-      void musicLibraryController.refreshPlaylists();
-    });
     return () => {
       unsubMain();
       unsubMusic();
-      unsubOwned();
     };
   }, [mainWindowController, musicLibraryController]);
 

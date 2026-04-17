@@ -7,6 +7,7 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import styles from './PlaylistView.module.css';
 import { useNavigation, ViewType } from '@renderer/core/navigation';
+import { Platform } from '@main/core/enum/Platform';
 
 interface PlaylistProps {
   filteredTracks: TrackEntity[];
@@ -163,7 +164,7 @@ export function Playlist({
             setMenu({ visible: false, x: 0, y: 0, track: null });
           }}
           onDetailRequest={(t) => {
-            navigation.push(ViewType.TRACK_DETAIL, t);
+            navigation.push(t.platform === Platform.FREEFLOW ? ViewType.FREEFLOW_TRACK_DETAIL : ViewType.TRACK_DETAIL, t);
             setMenu({ visible: false, x: 0, y: 0, track: null });
           }}
         />

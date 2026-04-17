@@ -1,5 +1,6 @@
 import type {
   ConfigApi,
+  ChainLibraryApi,
   LibraryApi,
   LyricsApi,
   MainApi,
@@ -21,6 +22,7 @@ const searchContext: SearchApi = mainApi.searchApi;
 const shortcutContext: ShortcutApi = mainApi.shortcutApi;
 const windowControlContext: WindowControlApi = mainApi.windowControlApi;
 const libraryContext: LibraryApi = mainApi.libraryApi;
+const chainLibraryContext: ChainLibraryApi = mainApi.chainLibraryApi;
 const lyricsContext: LyricsApi = mainApi.lyricsApi;
 const systemContext: SystemApi = mainApi.systemApi;
 const profileContext: ProfileApi = mainApi.profileApi;
@@ -33,6 +35,7 @@ export {
   shortcutContext,
   windowControlContext,
   libraryContext,
+  chainLibraryContext,
   lyricsContext,
   systemContext,
   profileContext,

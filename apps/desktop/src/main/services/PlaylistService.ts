@@ -30,6 +30,10 @@ export default class PlaylistService extends AbstractService {
       const validTracks: TrackEntity[] = [];
 
       for (const track of libraryTracks) {
+        if (track.platform === Platform.FREEFLOW) {
+          continue;
+        }
+
         if (track.platform == Platform.LOCAL) {
           const file_exist = await fileExists(track.platform_unique_id);
           if (!file_exist) {
@@ -102,6 +106,12 @@ export default class PlaylistService extends AbstractService {
                   modified_at: track.modified_at,
                   played_count: track.played_count,
                   downloaded: track.downloaded,
+                  download_status: track.download_status,
+                  download_source_cid: track.download_source_cid,
+                  download_source_gateway: track.download_source_gateway,
+                  download_error: track.download_error,
+                  downloaded_at: track.downloaded_at,
+                  freeflow: track.freeflow ?? info?.freeflow,
                 };
                 return merged;
               } catch (error) {
@@ -152,6 +162,19 @@ export default class PlaylistService extends AbstractService {
 
     this.logger.info(`正在添加歌曲到歌单，playlist_id: ${playlistId}, track:`, JSON.stringify(trackModel));
     try {
+      if (trackModel.platform === Platform.FREEFLOW) {
+        const existing = await this.trackRepository.findByPlatformAndPlatformUniqueId(
+          trackModel.platform,
+          trackModel.platform_unique_id,
+        );
+        if (!existing?.id) {
+          throw new Error('FreeFlow 资源需要先加入链上音乐库，不能直接缓存搜索结果');
+        }
+
+        await this.playlistRepository.createPlaylistDetail(playlistId, existing.id);
+        return existing.id;
+      }
+
       //如果不在库中,则添加到库中
       const track = await this.trackRepository.findOrCreate(trackModel);
       await this.playlistRepository.createPlaylistDetail(playlistId, track.id);

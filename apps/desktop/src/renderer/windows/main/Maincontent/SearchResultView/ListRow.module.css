@@ -21,6 +21,30 @@
     object-fit: cover;
 }
 
+.tracksLayout {
+    display: grid;
+    gap: 18px;
+}
+
+.featuredBlock,
+.listBlock {
+    display: grid;
+    gap: 8px;
+}
+
+.sectionTitle {
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.mainText {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
 .title {
     font-weight: 600;
     font-size: var(--font-ui, 14px);
@@ -47,6 +71,15 @@
     gap: 6px;
 }
 
+.badgeLine {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+    font-size: 12px;
+}
+
 .inlineDetailBtn {
     height: 24px;
     border-radius: 6px;
@@ -59,7 +92,9 @@
 }
 
 .big {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr auto;
+    padding: 14px;
+    background: rgba(var(--md-sys-color-surface-variant), .28);
 }
 
 .big .cover {
@@ -69,11 +104,16 @@
 }
 
 .big .title {
-    font-size: clamp(18px, 2vw, 24px);
+    font-size: 22px;
 }
 
 .big .sub {
-    font-size: clamp(12px, 1.3vw, 14px);
+    font-size: 14px;
+}
+
+.list {
+    display: grid;
+    gap: 8px;
 }
 
 /* 让哪个元素滚动，就把这个类加到哪个元素上 */

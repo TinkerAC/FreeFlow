@@ -8,16 +8,16 @@ import { DataTypes, Op, WhereOptions } from 'sequelize';
 
 @injectable()
 export class TrackRepositoryImpl implements TrackRepository {
-  private downloadColumnsReady: Promise<void> | null = null;
+  private storageColumnsReady: Promise<void> | null = null;
 
   private mapToRecord(row: Track): TrackRecord {
     return Object.assign(new TrackRecord(), row.get({ plain: true }));
   }
 
-  private async ensureDownloadColumns(): Promise<void> {
-    if (this.downloadColumnsReady) return this.downloadColumnsReady;
+  private async ensureStorageColumns(): Promise<void> {
+    if (this.storageColumnsReady) return this.storageColumnsReady;
 
-    this.downloadColumnsReady = (async () => {
+    this.storageColumnsReady = (async () => {
       const queryInterface = Track.sequelize!.getQueryInterface();
       const table = await queryInterface.describeTable('track');
       const ensureColumn = async (name: string, definition: any) => {
@@ -31,16 +31,19 @@ export class TrackRepositoryImpl implements TrackRepository {
       await ensureColumn('download_source_gateway', { type: DataTypes.TEXT, defaultValue: '' });
       await ensureColumn('download_error', { type: DataTypes.TEXT, defaultValue: '' });
       await ensureColumn('downloaded_at', { type: DataTypes.DATE, allowNull: true });
+      await ensureColumn('freeflow_metadata_json', { type: DataTypes.TEXT, allowNull: true });
     })();
 
-    return this.downloadColumnsReady;
+    return this.storageColumnsReady;
   }
 
   async delete(id: number): Promise<number> {
+    await this.ensureStorageColumns();
     return Track.destroy({ where: { id } });
   }
 
   async findAll(): Promise<TrackEntity[]> {
+    await this.ensureStorageColumns();
     const rows = await Track.findAll();
     return rows.map(row => this.mapToRecord(row).toEntity());
   }
@@ -49,21 +52,25 @@ export class TrackRepositoryImpl implements TrackRepository {
     platform: string,
     platformUniqueId: string,
   ): Promise<TrackEntity | null> {
+    await this.ensureStorageColumns();
     const row = await Track.findOne({ where: { platform, platform_unique_id: platformUniqueId } });
     return row ? this.mapToRecord(row).toEntity() : null;
   }
 
   async findById(id: number): Promise<TrackEntity | null> {
+    await this.ensureStorageColumns();
     const row = await Track.findByPk(id);
     return row ? this.mapToRecord(row).toEntity() : null;
   }
 
   async create(model: TrackEntity): Promise<TrackEntity> {
+    await this.ensureStorageColumns();
     const created = await Track.create(TrackRecord.fromEntity(model) as any);
     return this.mapToRecord(created).toEntity();
   }
 
   async update(entity: TrackEntity): Promise<TrackEntity> {
+    await this.ensureStorageColumns();
     const record = TrackRecord.fromEntity(entity);
     const where: WhereOptions = (entity.id !== undefined && entity.id !== null)
       ? { id: entity.id }
@@ -79,6 +86,7 @@ export class TrackRepositoryImpl implements TrackRepository {
     if (record.duration !== undefined && record.duration !== null) payload.duration = record.duration;
     if (record.cover_src !== undefined && record.cover_src !== null) payload.cover_src = record.cover_src;
     if (record.played_count !== undefined && record.played_count !== null) payload.played_count = record.played_count;
+    if (record.freeflow_metadata_json !== undefined) payload.freeflow_metadata_json = record.freeflow_metadata_json;
 
     await Track.update(payload, { where });
 
@@ -88,6 +96,7 @@ export class TrackRepositoryImpl implements TrackRepository {
   }
 
   async findOrCreate(model: TrackEntity): Promise<TrackEntity> {
+    await this.ensureStorageColumns();
     const [row] = await Track.findOrCreate({
       where: { platform: model.platform, platform_unique_id: model.platform_unique_id },
       defaults: TrackRecord.fromEntity(model) as any,
@@ -96,7 +105,7 @@ export class TrackRepositoryImpl implements TrackRepository {
   }
 
   async bindLocalFileToTrack(trackId: number, fileName: string): Promise<TrackEntity> {
-    await this.ensureDownloadColumns();
+    await this.ensureStorageColumns();
 
     const row = await Track.findByPk(trackId);
     if (!row) {
@@ -120,7 +129,7 @@ export class TrackRepositoryImpl implements TrackRepository {
     error?: string;
     downloadedAt?: Date | null;
   }): Promise<TrackEntity> {
-    await this.ensureDownloadColumns();
+    await this.ensureStorageColumns();
 
     const row = await Track.findByPk(trackId);
     if (!row) {
@@ -139,11 +148,13 @@ export class TrackRepositoryImpl implements TrackRepository {
   }
 
   async findLocalFilePathByPlatformAndPlatformUniqueId(platform: string, platformUniqueId: string): Promise<string | null> {
+    await this.ensureStorageColumns();
     const row = await Track.findOne({ where: { platform, platform_unique_id: platformUniqueId } });
     return row ? row.relative_local_path : null;
   }
 
   async increasePlayCount(track: TrackEntity): Promise<TrackEntity> {
+    await this.ensureStorageColumns();
     const row = await Track.findOne({ where: { platform: track.platform, platform_unique_id: track.platform_unique_id } });
     if (!row) {
       throw new Error(`Track not found for platform: ${track.platform}, unique ID: ${track.platform_unique_id}`);
@@ -158,6 +169,7 @@ export class TrackRepositoryImpl implements TrackRepository {
   }
 
   async localSearch(term: string, limit: number): Promise<TrackEntity[]> {
+    await this.ensureStorageColumns();
     const rows = await Track.findAll({
       where: {
         [Op.or]: [

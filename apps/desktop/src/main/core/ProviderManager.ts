@@ -4,7 +4,6 @@ import { DISymbol } from '@main/di/symbol';
 import { Platform } from '@main/core/enum/Platform';
 import { AbstractContentProvider } from '@main/contentProvider/AbstractContentProvider';
 import FreeFlowProvider from '@main/contentProvider/FreeFlow/FreeFlowProvider';
-import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { Logger } from 'winston';
 
 type ProviderToggles = {
@@ -25,11 +24,9 @@ export class ProviderManager {
 
   constructor(
     @inject(DISymbol.ConfigService) private readonly config: ConfigService,
-    @inject(DISymbol.NetEaseCloudMusic) private readonly netease: NetEaseCloudMusic,
     @inject(DISymbol.FreeFlowProvider) private readonly freeflow: FreeFlowProvider,
     @inject(DISymbol.Logger) private readonly logger: Logger,
   ) {
-    this.providers.set(Platform.NET_EASE_CLOUD_MUSIC, this.netease);
     this.providers.set(Platform.FREEFLOW, this.freeflow);
   }
 
@@ -39,7 +36,7 @@ export class ProviderManager {
   private readToggles(): Required<ProviderToggles> {
     const toggles = (this.config.get('services.providers') ?? {}) as ProviderToggles;
     return {
-      netease: toggles.netease !== false,
+      netease: false,
       freeflow: toggles.freeflow !== false,
     };
   }

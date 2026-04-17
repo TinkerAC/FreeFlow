@@ -10,7 +10,7 @@ import PlayerController from '@renderer/core/controller/PlayerController';
 import MusicLibraryController from '@renderer/core/controller/MusicLibraryController';
 import { PlaylistEntity } from '@src/shared/domainModel/playlistEntity';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
-import { Platform } from '@main/core/enum/Platform';
+import { isChainLibraryPlaylist } from '@renderer/core/freeflow/chainLibrary';
 
 // 仅在文本溢出时跑马灯
 function TtlMarquee({ text }: { text: string }) {
@@ -58,10 +58,8 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
 
   // 优先使用数据库中的 playlist_cover，如果没有则使用第一首歌曲的封面
   const coverImage = presentPlaylist?.playlist_cover || presentPlaylist?.tracks?.[0]?.cover_src || DefaultCover;
-  const isOnchainLibrary = presentPlaylist?.playlist_id === 0;
-  const playbackTracks = isOnchainLibrary
-    ? (presentPlaylist?.tracks || []).filter((track) => track.platform === Platform.FREEFLOW)
-    : (presentPlaylist?.tracks || []);
+  const isOnchainLibrary = isChainLibraryPlaylist(presentPlaylist);
+  const playbackTracks = presentPlaylist?.tracks || [];
 
   const [modalVisible, setModalVisible] = useState(false);
   const [filteredTracks, setFilteredTracks] = useState(presentPlaylist?.tracks || []);
@@ -75,9 +73,6 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
 
   const applySortAndFilter = () => {
     let tracks = presentPlaylist?.tracks || [];
-    if (isOnchainLibrary) {
-      tracks = tracks.filter((track) => track.platform === Platform.FREEFLOW);
-    }
 
     // 先过滤
     if (searchKeyword) {
@@ -117,7 +112,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
     setSortBy(newSortBy);
 
     // 如果选择默认排序，保存当前顺序到数据库
-    if (newSortBy === 'default' && presentPlaylist?.playlist_id) {
+    if (newSortBy === 'default' && presentPlaylist?.playlist_id && presentPlaylist.playlist_id > 0) {
       const updates = filteredTracks.map((track, index) => ({
         track_id: track.id!,
         position: index,
@@ -229,7 +224,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
                 <PlatformIconWrapper platform={presentPlaylist?.platform as any} />
               </span>
             </div>
-            <h1 className={styles.title} onClick={() => setModalVisible(true)}>
+            <h1 className={styles.title} onClick={() => !isOnchainLibrary && setModalVisible(true)}>
               {isOnchainLibrary ? '链上音乐库' : (presentPlaylist?.title || '未知歌单')}
             </h1>
             <p className={styles.sub}>
@@ -318,7 +313,7 @@ export default function PlaylistView({ musicLibraryController, player }: Playlis
             />
           </div>
 
-          {modalVisible && (
+          {!isOnchainLibrary && modalVisible && (
             <ModalModifyPlaylist
               onClose={() => setModalVisible(false)}
               musicLibraryController={musicLibraryController}

@@ -3,7 +3,7 @@ import { BrowserProvider, Contract, formatEther } from 'ethers';
 import { DefaultCover } from '@components/static';
 import { PlatformIcon } from '@components/PlatformIcon';
 import { useSetting } from '@renderer/core/config/SettingsContext';
-import { syncOwnedFreeFlowLibrary } from '@renderer/core/freeflow/ownedLibrary';
+import { mergeTrackWithFreeFlowInfo, upsertChainLibraryTrack } from '@renderer/core/freeflow/chainLibrary';
 import { resolveIndexedTrackResource } from '@renderer/core/web25/client';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
@@ -29,7 +29,9 @@ function mapToInfo(payload: Awaited<ReturnType<typeof resolveIndexedTrackResourc
     priceEth: payload.priceEth,
     royaltyBps: payload.royaltyBps,
     coverUrl: payload.coverUrl,
+    coverCid: payload.coverCid,
     audioUrl: payload.audioUrl,
+    audioCid: payload.audioCid,
     metadataUrl: payload.metadataUrl,
     metadataCid: payload.metadataCid,
     explorerUrl: payload.explorerUrl,
@@ -71,6 +73,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     payoutReceiver: null,
     owner: null,
   });
+  const savedResourceKeyRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -179,11 +182,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
       const buyTx = await platformHub.buyAccess(info.tokenId, { value: price });
       await buyTx.wait();
 
-      await syncOwnedFreeFlowLibrary({
-        baseUrl: web25BaseUrl.value,
-        walletProvider,
-        account: address,
-      });
+      await upsertChainLibraryTrack(mergeTrackWithFreeFlowInfo(track, info));
 
       await refreshAccess();
     } catch (err) {
@@ -196,6 +195,31 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
   const requiresPurchase = accessStatus.requiresPurchase ?? (info?.accessModel === 'purchase');
   const hasAccess = accessStatus.hasAccess;
   const canPlay = !requiresPurchase || !!hasAccess;
+
+  React.useEffect(() => {
+    if (!info || !address) return;
+
+    const ownerMatches = !!accessStatus.owner
+      && accessStatus.owner.toLowerCase() === address.toLowerCase();
+    const purchasedAccess = !!(accessStatus.requiresPurchase ?? (info.accessModel === 'purchase'))
+      && accessStatus.hasAccess === true;
+
+    if (!ownerMatches && !purchasedAccess) return;
+    if (savedResourceKeyRef.current === info.resourceKey) return;
+
+    savedResourceKeyRef.current = info.resourceKey;
+    void upsertChainLibraryTrack(mergeTrackWithFreeFlowInfo(track, info)).catch((err) => {
+      savedResourceKeyRef.current = null;
+      setAccessError(err instanceof Error ? err.message : String(err ?? '链上音乐库写入失败'));
+    });
+  }, [
+    accessStatus.hasAccess,
+    accessStatus.owner,
+    accessStatus.requiresPurchase,
+    address,
+    info,
+    track,
+  ]);
 
   return (
     <ViewShell padded hideScrollbar>

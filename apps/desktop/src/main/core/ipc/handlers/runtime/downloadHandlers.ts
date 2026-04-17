@@ -105,7 +105,7 @@ export function registerDownloadHandlers({
 
   ipcMain.handle(Channels.Library.DownloadTrack, async (_evt, track: TrackEntity) => {
     if (!track.id) {
-      throw new Error('下载前需要先把资源加入本地音乐库');
+      throw new Error('下载前需要先把资源加入链上音乐库或本地曲库');
     }
 
     const fallbackGateway = String(configService.get('services.pinata.gateway') ?? '').replace(/\/$/, '');
