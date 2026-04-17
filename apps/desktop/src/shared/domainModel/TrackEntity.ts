@@ -11,7 +11,9 @@ export interface FreeFlowTrackInfo {
   priceEth: string | null;
   royaltyBps: number | null;
   coverUrl: string | null;
+  coverCid?: string | null;
   audioUrl: string | null;
+  audioCid?: string | null;
   metadataUrl: string | null;
   metadataCid: string | null;
   explorerUrl: string | null;
@@ -37,6 +39,11 @@ export abstract class TrackEntity extends AbstractEntity {
   cover_src?: string;            // 封面图片地址
   created_at?: Date;             // 创建时间
   downloaded?: boolean;           // 是否已下载
+  download_status?: 'none' | 'downloading' | 'downloaded' | 'failed';
+  download_source_cid?: string;
+  download_source_gateway?: string;
+  download_error?: string;
+  downloaded_at?: Date;
   modified_at?: Date;           // 修改时间
   played_count?: number;         // 播放次数
   freeflow?: FreeFlowTrackInfo;  // FreeFlow 资源的链上/索引信息

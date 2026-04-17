@@ -131,7 +131,8 @@ export default function TrackDetailView({ track, player, musicLibraryController 
   // 下载
   const handleDownload = async () => {
     try {
-      await libraryContext.downFromHifini(track);
+      await libraryContext.downloadTrack(track);
+      await musicLibraryController.refreshPlaylists();
     } catch (error) {
       console.error('Failed to download:', error);
       alert('下载失败：' + (error instanceof Error ? error.message : String(error)));

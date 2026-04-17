@@ -9,6 +9,7 @@ import type {
   MetadataWriteRequest,
   MetadataWriteResult,
 } from '@src/shared/metadata/metadataEditor';
+import type { TrackMetadataValidationResult } from '@src/shared/metadata/metadataValidation';
 import type { ProfileMetadataPatch, ProfileSummary, WalletProfileInput } from '@src/shared/profile/profile';
 
 /** Config */
@@ -35,7 +36,9 @@ export interface LibraryApi {
 
   removeTrackFromLibrary(track: TrackEntity): Promise<void>;
 
-  downFromHifini(track: TrackEntity): void;
+  downloadTrack(track: TrackEntity): Promise<TrackEntity>;
+
+  downFromHifini(track: TrackEntity): Promise<TrackEntity>;
 
   increasePlayCount(track: TrackEntity): void;
 }
@@ -197,6 +200,7 @@ export interface CreatorsWorkshopApi {
   show(): Promise<void>;
   readMetadata(filePath: string): Promise<EditableTrackMetadata>;
   writeMetadata(payload: MetadataWriteRequest): Promise<MetadataWriteResult>;
+  validateMetadata(filePath: string): Promise<TrackMetadataValidationResult>;
 }
 
 /** 主聚合 */

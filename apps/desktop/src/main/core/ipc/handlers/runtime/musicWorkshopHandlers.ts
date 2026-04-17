@@ -3,6 +3,7 @@ import { Channels } from '@src/shared/ipc/channels';
 import { IpcContext } from './ipcContext';
 import { WindowKey } from '@main/window/windowManager';
 import { MetadataEditorService } from '@main/core/audio/MetadataEditorService';
+import { AudioMetadataValidationService } from '@main/core/audio/AudioMetadataValidationService';
 import type { MetadataWriteRequest } from '@src/shared/metadata/metadataEditor';
 
 export function registerMusicWorkshopHandlers(ctx: IpcContext): void {
@@ -21,5 +22,9 @@ export function registerMusicWorkshopHandlers(ctx: IpcContext): void {
 
   ipcMain.handle(Channels.CreatorsWorkshop.WriteMetadata, async (_event, payload: MetadataWriteRequest) => {
     return await MetadataEditorService.writeMetadata(payload);
+  });
+
+  ipcMain.handle(Channels.CreatorsWorkshop.ValidateMetadata, async (_event, filePath: string) => {
+    return await AudioMetadataValidationService.validateFile(filePath);
   });
 }

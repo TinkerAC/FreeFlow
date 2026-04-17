@@ -1,83 +1,141 @@
 import { ipcMain } from 'electron';
-import * as os from 'node:os';
-import * as path from 'path';
-import fs from 'fs';
-import crypto from 'node:crypto';
-import chalk from 'chalk';
+import path from 'node:path';
 import { Channels } from '@src/shared/ipc/channels';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { WindowKey } from '@main/window/windowManager';
 import { IpcContext } from './ipcContext';
+
+function sanitizeFileName(raw: string) {
+  return raw.trim().replace(/[<>:"/\\|?*\u0000-\u001f]+/g, '_') || `freeflow-${Date.now()}`;
+}
+
+function extractCidFromIpfsUri(value?: string | null) {
+  if (!value) return '';
+  const trimmed = value.trim();
+  if (trimmed.startsWith('ipfs://')) {
+    return trimmed.replace(/^ipfs:\/\//, '').split('/')[0] ?? '';
+  }
+  return '';
+}
+
+function extractCidFromGatewayUrl(value?: string | null) {
+  if (!value) return '';
+  try {
+    const url = new URL(value);
+    const parts = url.pathname.split('/').filter(Boolean);
+    const ipfsIndex = parts.findIndex((part) => part === 'ipfs');
+    if (ipfsIndex >= 0) return parts[ipfsIndex + 1] ?? '';
+    return parts.at(-1) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function extractGatewayBaseUrl(audioUrl?: string | null) {
+  if (!audioUrl) return '';
+  try {
+    const url = new URL(audioUrl);
+    const parts = url.pathname.split('/').filter(Boolean);
+    const ipfsIndex = parts.findIndex((part) => part === 'ipfs');
+    const baseParts = ipfsIndex >= 0 ? parts.slice(0, ipfsIndex + 1) : parts.slice(0, -1);
+    url.pathname = `/${baseParts.join('/')}`;
+    url.search = '';
+    url.hash = '';
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+}
+
+function getMetadataAudioUri(track: TrackEntity) {
+  const doc = track.freeflow?.metadataDocument;
+  if (!doc || typeof doc !== 'object') return '';
+  const properties = (doc as Record<string, unknown>).properties;
+  if (!properties || typeof properties !== 'object') return '';
+  const media = (properties as Record<string, unknown>).media;
+  if (!media || typeof media !== 'object') return '';
+  const audio = (media as Record<string, unknown>).audio;
+  if (!audio || typeof audio !== 'object') return '';
+  const uri = (audio as Record<string, unknown>).uri;
+  return typeof uri === 'string' ? uri : '';
+}
+
+function getAudioExtension(track: TrackEntity) {
+  const audioUrl = track.freeflow?.audioUrl;
+  if (audioUrl) {
+    try {
+      const ext = path.extname(new URL(audioUrl).pathname);
+      if (ext) return ext;
+    } catch {
+      // ignore invalid URL and fall through
+    }
+  }
+  return '.mp3';
+}
+
+function resolveDownloadInput(track: TrackEntity, fallbackGateway: string) {
+  const audioUrl = track.freeflow?.audioUrl ?? '';
+  const metadataAudioUri = getMetadataAudioUri(track);
+  const cid = track.freeflow?.audioCid
+    || extractCidFromIpfsUri(metadataAudioUri)
+    || extractCidFromGatewayUrl(audioUrl);
+  const gatewayBaseUrl = fallbackGateway.trim()
+    || extractGatewayBaseUrl(audioUrl);
+
+  if (!cid || !gatewayBaseUrl) {
+    throw new Error('该资源缺少可下载的 IPFS CID 或 Pinata gateway');
+  }
+
+  const baseName = sanitizeFileName(`${track.artist || 'Unknown Artist'} - ${track.title || cid}`);
+  return {
+    cid,
+    gatewayBaseUrl,
+    fileName: `${baseName}${getAudioExtension(track)}`,
+  };
+}
 
 export function registerDownloadHandlers({
                                            fileCacheManager,
-                                           downloader,
-                                           windowManager,
-                                           dataPath,
+                                           ipfsDownloadService,
+                                           configService,
                                            trackService,
                                          }: IpcContext): void {
   ipcMain.handle(Channels.System.CalcFileCacheDiskUsage, async () => {
     return await fileCacheManager.getDiskUsage();
   });
 
-  ipcMain.on(Channels.Library.DownloadFromHifini, async (_evt, track: TrackEntity) => {
-    const [rawLink] = await downloader.getLanzouDirectLink(track.platform_unique_id);
-    if (!rawLink) return;
+  ipcMain.handle(Channels.Library.DownloadTrack, async (_evt, track: TrackEntity) => {
+    if (!track.id) {
+      throw new Error('下载前需要先把资源加入本地音乐库');
+    }
 
-    const token = crypto.randomUUID();
-    downloader.registerDownload(token, track.id);
+    const fallbackGateway = String(configService.get('services.pinata.gateway') ?? '').replace(/\/$/, '');
+    const input = resolveDownloadInput(track, fallbackGateway);
 
-    const worker = windowManager.ensure(WindowKey.WORKER);
-    const ses = worker.webContents.session;
-    ses.once('will-download', (event, item) => {
-      const fileName = item.getFilename();
-      const total = item.getTotalBytes();
-      const savePath = path.join(os.tmpdir(), fileName);
-
-      item.setSavePath(savePath);
-      downloader.fillMeta(token, fileName, total, savePath);
-
-      item.on('updated', (_e, state) => {
-        if (state === 'progressing') {
-          const received = item.getReceivedBytes();
-          void received; // place-holder log if needed
-        }
-      });
-
-      item.once('done', async (_e, state) => {
-        if (state !== 'completed') {
-          console.error(chalk.red(`[下载失败] ${fileName}`));
-          downloader.delete(token);
-          return;
-        }
-
-        console.log(chalk.green(`[下载完成] ${fileName}`));
-
-        let finalFlac = '';
-        try {
-          if (fileName.toLowerCase().endsWith('.zip')) {
-            finalFlac = await downloader.extractFlacFile(savePath, dataPath.musicDir);
-          } else if (fileName.toLowerCase().endsWith('.flac')) {
-            finalFlac = fileName;
-            const dest = path.join(dataPath.musicDir, finalFlac);
-            fs.copyFileSync(savePath, dest);
-            console.log(chalk.green(`[FLAC 拷贝完成] → ${dest}`));
-          } else {
-            console.warn('未知格式，忽略');
-          }
-
-          await trackService.bindLocalTrackFile(track.id, finalFlac);
-          console.log(chalk.green(`[数据库绑定完成] ${track.id} → ${finalFlac}`));
-        } catch (err) {
-          console.error(chalk.red('后处理失败:'), err);
-        } finally {
-          downloader.delete(token);
-          fs.unlink(savePath, () => void 0);
-        }
-      });
+    await trackService.markDownloadState(track.id, {
+      status: 'downloading',
+      sourceCid: input.cid,
+      sourceGateway: input.gatewayBaseUrl,
+      error: '',
     });
 
-    ses.downloadURL(rawLink);
+    try {
+      const result = await ipfsDownloadService.download(input);
+      return await trackService.markDownloadState(track.id, {
+        status: 'downloaded',
+        localPath: result.relativePath,
+        sourceCid: result.cid,
+        sourceGateway: result.gatewayUrl,
+        error: '',
+        downloadedAt: new Date(),
+      });
+    } catch (error) {
+      await trackService.markDownloadState(track.id, {
+        status: 'failed',
+        sourceCid: input.cid,
+        sourceGateway: input.gatewayBaseUrl,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   });
 }
-

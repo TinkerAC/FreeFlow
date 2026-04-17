@@ -22,6 +22,15 @@ export default interface TrackRepository {
    */
   bindLocalFileToTrack(trackId: number, fileName: string): Promise<TrackEntity>;
 
+  updateDownloadState(trackId: number, state: {
+    status: 'none' | 'downloading' | 'downloaded' | 'failed';
+    localPath?: string;
+    sourceCid?: string;
+    sourceGateway?: string;
+    error?: string;
+    downloadedAt?: Date | null;
+  }): Promise<TrackEntity>;
+
 
   findLocalFilePathByPlatformAndPlatformUniqueId(
     platform: string, platformUniqueId: string,

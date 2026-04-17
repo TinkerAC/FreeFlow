@@ -7,7 +7,7 @@ import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import { LyricService } from '@main/services/LyricService';
 import { FileCacheManager } from '@main/core/FileCacheManager';
 import { WindowManager } from '@main/window/windowManager';
-import { HifiniDownloader } from '@main/services/Downloader';
+import { IpfsDownloadService } from '@main/services/IpfsDownloadService';
 import { DISymbol } from '@main/di/symbol';
 import { DataPath } from '@main/core/PathConfig';
 import Bilibili from '@main/contentProvider/Bilibili/Bilibili';
@@ -45,7 +45,7 @@ export default class IpcController {
     @inject(DISymbol.QQMusic) private readonly qqMusic: QQMusic,
     @inject(DISymbol.LyricService) private readonly lyricService: LyricService,
     @inject(DISymbol.FileCacheManager) private readonly fileCacheManager: FileCacheManager,
-    @inject(DISymbol.HifiniDownloader) private readonly downloader: HifiniDownloader,
+    @inject(DISymbol.IpfsDownloadService) private readonly ipfsDownloadService: IpfsDownloadService,
     @inject(DISymbol.WindowManager) private readonly windowManager: WindowManager,
     @inject(DISymbol.DataPath) private readonly dataPath: DataPath,
     @inject(DISymbol.Bilibili) private readonly bilibili: Bilibili,
@@ -68,7 +68,7 @@ export default class IpcController {
       qqMusic: this.qqMusic,
       lyricService: this.lyricService,
       fileCacheManager: this.fileCacheManager,
-      downloader: this.downloader,
+      ipfsDownloadService: this.ipfsDownloadService,
       dataPath: this.dataPath,
       bilibili: this.bilibili,
       aiText: this.aiText,

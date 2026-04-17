@@ -114,7 +114,6 @@ async function launchMainApplication(profile: ProfileSummary): Promise<void> {
 
     ipcController.register();
     windowManager.activate(WindowKey.MAIN);
-    windowManager.ensure(WindowKey.WORKER);
     closeProfileGuide();
 
     trayManager.createTray();

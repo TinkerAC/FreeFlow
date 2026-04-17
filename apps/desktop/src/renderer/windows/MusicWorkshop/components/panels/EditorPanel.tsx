@@ -59,6 +59,20 @@ export default function EditorPanel({ controller }: EditorPanelProps) {
             <span>{controller.audioFile ? formatBytes(controller.audioFile.size) : (release.audioStorageObject ? formatBytes(release.audioStorageObject.size) : '等待挂载')}</span>
             <span>{controller.audioFile?.type || release.audioStorageObject?.mimeType || 'audio/*'}</span>
           </div>
+          {controller.audioMetadataValidation ? (
+            <div className={styles.noticeList}>
+              {controller.audioMetadataValidation.ok ? (
+                <div className={styles.noticeInfo}>元数据已通过：标题、艺术家、流派和歌词完整。</div>
+              ) : (
+                <>
+                  <div className={styles.noticeWarning}>上传前需要补全必填元数据。</div>
+                  {controller.audioMetadataValidation.issues.map((issue) => (
+                    <div key={issue.field} className={styles.noticeWarning}>{issue.message}</div>
+                  ))}
+                </>
+              )}
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.assetBox}>

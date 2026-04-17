@@ -15,6 +15,7 @@ export const Channels = {
     AddTrackToLibrary: 'library:addTrack',
     RemoveTrackFromLibrary: 'library:removeTrack',
     DownloadFromHifini: 'library:downloadFromHifini',
+    DownloadTrack: 'library:download-track',
     IncreasePlayCount: 'library:increasePlayCount',
   },
   Lyrics: {
@@ -86,6 +87,7 @@ export const Channels = {
     Show: 'creators-workshop:show',
     ReadMetadata: 'creators-workshop:read-metadata',
     WriteMetadata: 'creators-workshop:write-metadata',
+    ValidateMetadata: 'creators-workshop:validate-metadata',
   },
 } as const;
 

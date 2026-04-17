@@ -4,12 +4,36 @@ import { injectable } from 'inversify';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { TrackRecord } from '@main/database/record/TrackRecord';
 import { Track } from '@main/database/seqimpl/Track';
-import { Op, WhereOptions } from 'sequelize';
+import { DataTypes, Op, WhereOptions } from 'sequelize';
 
 @injectable()
 export class TrackRepositoryImpl implements TrackRepository {
+  private downloadColumnsReady: Promise<void> | null = null;
+
   private mapToRecord(row: Track): TrackRecord {
     return Object.assign(new TrackRecord(), row.get({ plain: true }));
+  }
+
+  private async ensureDownloadColumns(): Promise<void> {
+    if (this.downloadColumnsReady) return this.downloadColumnsReady;
+
+    this.downloadColumnsReady = (async () => {
+      const queryInterface = Track.sequelize!.getQueryInterface();
+      const table = await queryInterface.describeTable('track');
+      const ensureColumn = async (name: string, definition: any) => {
+        if (!Object.prototype.hasOwnProperty.call(table, name)) {
+          await queryInterface.addColumn('track', name, definition);
+        }
+      };
+
+      await ensureColumn('download_status', { type: DataTypes.TEXT, defaultValue: 'none' });
+      await ensureColumn('download_source_cid', { type: DataTypes.TEXT, defaultValue: '' });
+      await ensureColumn('download_source_gateway', { type: DataTypes.TEXT, defaultValue: '' });
+      await ensureColumn('download_error', { type: DataTypes.TEXT, defaultValue: '' });
+      await ensureColumn('downloaded_at', { type: DataTypes.DATE, allowNull: true });
+    })();
+
+    return this.downloadColumnsReady;
   }
 
   async delete(id: number): Promise<number> {
@@ -72,6 +96,7 @@ export class TrackRepositoryImpl implements TrackRepository {
   }
 
   async bindLocalFileToTrack(trackId: number, fileName: string): Promise<TrackEntity> {
+    await this.ensureDownloadColumns();
 
     const row = await Track.findByPk(trackId);
     if (!row) {
@@ -79,8 +104,37 @@ export class TrackRepositoryImpl implements TrackRepository {
     }
 
     row.relative_local_path = fileName;
+    row.download_status = 'downloaded';
+    row.download_error = '';
+    row.downloaded_at = new Date();
     await row.save();
 
+    return this.mapToRecord(row).toEntity();
+  }
+
+  async updateDownloadState(trackId: number, state: {
+    status: 'none' | 'downloading' | 'downloaded' | 'failed';
+    localPath?: string;
+    sourceCid?: string;
+    sourceGateway?: string;
+    error?: string;
+    downloadedAt?: Date | null;
+  }): Promise<TrackEntity> {
+    await this.ensureDownloadColumns();
+
+    const row = await Track.findByPk(trackId);
+    if (!row) {
+      throw new Error(`Track #${trackId} 查询不到记录`);
+    }
+
+    row.download_status = state.status;
+    if (state.localPath !== undefined) row.relative_local_path = state.localPath;
+    if (state.sourceCid !== undefined) row.download_source_cid = state.sourceCid;
+    if (state.sourceGateway !== undefined) row.download_source_gateway = state.sourceGateway;
+    if (state.error !== undefined) row.download_error = state.error;
+    if (state.downloadedAt !== undefined) row.downloaded_at = state.downloadedAt ?? undefined;
+
+    await row.save();
     return this.mapToRecord(row).toEntity();
   }
 

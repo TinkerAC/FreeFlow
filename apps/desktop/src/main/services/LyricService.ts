@@ -4,7 +4,7 @@ import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
 import { distance } from 'fastest-levenshtein';
 import { DISymbol } from '@main/di/symbol';
-import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
+import type YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
 import { ProviderManager } from '@main/core/ProviderManager';
 import { Logger } from 'winston';
 import { Platform } from '@main/core/enum/Platform';
@@ -43,7 +43,7 @@ export class LyricService {
     // 1) 首选该平台 Provider (最快路径)
     try {
       const preferredLyric: Lyric = await this.getLyricFromPreferredProvider(platform as Platform, platform_unique_id);
-      if (preferredLyric.isValid()) {
+      if (preferredLyric?.isValid()) {
         this.logger.info(`从首选平台 [${platform}] 成功获取歌词`);
         return preferredLyric;
       }
