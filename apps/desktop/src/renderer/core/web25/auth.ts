@@ -21,7 +21,11 @@ type WalletProviderLike = ConstructorParameters<typeof BrowserProvider>[0];
 type LoginInput = {
   baseUrl: string;
   walletProvider: WalletProviderLike;
-  fallbackAddress?: string | null;
+  expectedAddress?: string | null;
+};
+
+type RequestingProvider = {
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
 };
 
 export async function refreshWeb25Session(baseUrl: string) {
@@ -32,8 +36,30 @@ export async function refreshWeb25Session(baseUrl: string) {
 
 export async function loginWeb25WithSiwe(input: LoginInput) {
   const provider = new BrowserProvider(input.walletProvider);
-  const signer = await provider.getSigner();
-  const signerAddress = input.fallbackAddress || await signer.getAddress();
+  const injectedProvider = input.walletProvider as RequestingProvider;
+  const expectedAddress = input.expectedAddress?.toLowerCase();
+
+  const requestedAccounts = await injectedProvider.request({ method: 'eth_requestAccounts' })
+    .catch((): null => null);
+  const accounts = Array.isArray(requestedAccounts)
+    ? requestedAccounts.filter((item): item is string => typeof item === 'string')
+    : [];
+  if (expectedAddress && accounts.length > 0 && !accounts.some((item) => item.toLowerCase() === expectedAddress)) {
+    throw new Error(
+      `当前钱包没有暴露目标账户 ${input.expectedAddress}。当前钱包返回账户: ${accounts.join(', ')}。请在钱包中切换账户后重试。`,
+    );
+  }
+
+  const signer = expectedAddress
+    ? await provider.getSigner(input.expectedAddress!)
+    : await provider.getSigner();
+  const signerAddress = await signer.getAddress();
+  if (expectedAddress && expectedAddress !== signerAddress.toLowerCase()) {
+    const connected = accounts.length ? ` 当前钱包返回账户: ${accounts.join(', ')}。` : '';
+    throw new Error(
+      `当前签名账户 ${signerAddress} 与目标账户 ${input.expectedAddress} 不一致。${connected}请在钱包中切换账户后重试。`,
+    );
+  }
   const network = await provider.getNetwork();
   const chainId = Number(network.chainId);
 

@@ -2,7 +2,6 @@
 import express, { Application, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { isPortOccupied } from '@src/utils/netUtils';
-import HifiniMusic from '@main/contentProvider/Hifini/HifiniMusic';
 import NetEaseCloudMusic from '@main/contentProvider/NetEaseCloudMusic/NetEaseCloudMusic';
 import { QQMusic } from '@main/contentProvider/QQMusic/QQMusic';
 import YouTubeMusic from '@main/contentProvider/YouTubeMusic/YouTubeMusic';
@@ -37,7 +36,6 @@ class ProxyServerManager {
   private pendingLinkPromises: Map<string, Promise<string>>;
 
   constructor(
-    @inject(DISymbol.HifiniMusic) private readonly hifiniMusic: HifiniMusic,
     @inject(DISymbol.NetEaseCloudMusic) private readonly netEaseCloudMusic: NetEaseCloudMusic,
     @inject(DISymbol.QQMusic) private readonly qqMusic: QQMusic,
     @inject(DISymbol.Store) private readonly store: Store,
@@ -451,8 +449,6 @@ class ProxyServerManager {
       throw new BadRequestError(`Provider disabled: ${platform}`);
     }
     switch (platform) {
-      case Platform.HIFINI:
-        return this.hifiniMusic.getTrackLink(platformUniqueId, _forceReload);
       case Platform.NET_EASE_CLOUD_MUSIC:
         return this.netEaseCloudMusic.getTrackLink(platformUniqueId);
       case Platform.QQ_MUSIC:

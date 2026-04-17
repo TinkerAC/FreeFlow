@@ -8,7 +8,7 @@ import { buildWalletProfileId, type ProfileSummary } from '@src/shared/profile/p
 import { DEFAULT_SEPOLIA_CONTRACTS } from '@src/shared/web3/freeflowContracts';
 import styles from './ProfileGuide.module.css';
 
-type GuideMode = 'select' | 'bind';
+type GuideMode = 'select' | 'create';
 
 type RequestingProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
@@ -94,24 +94,39 @@ export default function ProfileGuide() {
   const [siweBusy, setSiweBusy] = useState(false);
   const [siweSession, setSiweSession] = useState<Web25Session | null>(null);
   const [web25BaseUrl, setWeb25BaseUrl] = useState('http://localhost:8787');
-  const [status, setStatus] = useState('连接钱包并完成 SIWE 登录后创建 Profile。');
+  const [status, setStatus] = useState('选择 Profile，或连接钱包创建新的本地身份。');
   const [error, setError] = useState<string | null>(null);
+
   const numericChainId = typeof chainId === 'number' ? chainId : Number(chainId);
+  const isSepolia = numericChainId === REQUIRED_CHAIN_ID;
+  const connectedAddress = address?.toLowerCase();
+  const actionBusy = busy || siweBusy;
 
   const walletProfiles = useMemo(
     () => profiles.filter((profile) => profile.type === 'wallet'),
     [profiles],
   );
+
   const selectedProfile = useMemo(
-    () => walletProfiles.find((profile) => profile.id === selectedProfileId) ?? walletProfiles[0] ?? null,
+    () => walletProfiles.find((profile) => profile.id === selectedProfileId) ?? null,
     [selectedProfileId, walletProfiles],
   );
 
-  const isSepolia = numericChainId === REQUIRED_CHAIN_ID;
-  const selectedAddress = selectedProfile?.walletAddress?.toLowerCase();
-  const connectedAddress = address?.toLowerCase();
-  const selectedWalletConnected = Boolean(selectedAddress && connectedAddress === selectedAddress);
-  const actionBusy = busy || siweBusy;
+  const currentWalletProfile = useMemo(
+    () => walletProfiles.find((profile) => (
+      !!connectedAddress && profile.walletAddress?.toLowerCase() === connectedAddress
+    )) ?? null,
+    [connectedAddress, walletProfiles],
+  );
+
+  const selectedWalletConnected = Boolean(
+    selectedProfile?.walletAddress && connectedAddress === selectedProfile.walletAddress.toLowerCase(),
+  );
+
+  const createProfileId = useMemo(
+    () => resolveProfileId(address),
+    [address],
+  );
 
   const hasSiweForAddress = useCallback((targetAddress?: string) => {
     if (!targetAddress || !siweSession) return false;
@@ -120,17 +135,27 @@ export default function ProfileGuide() {
   }, [siweSession]);
 
   const selectedSiweReady = hasSiweForAddress(selectedProfile?.walletAddress);
-  const boundSiweReady = hasSiweForAddress(address);
-  const canEnterSelected = Boolean(selectedProfile && selectedWalletConnected && isSepolia && selectedSiweReady && !actionBusy);
-  const canEnterBoundWallet = Boolean(address && isConnected && isSepolia && boundSiweReady && !actionBusy);
+  const createSiweReady = hasSiweForAddress(address);
 
-  const selectedActionLabel = !selectedWalletConnected
+  const selectedActionLabel = !selectedProfile
+    ? '选择 Profile'
+    : !selectedWalletConnected
+      ? '连接此钱包'
+      : !isSepolia
+        ? '启用 Sepolia'
+        : !selectedSiweReady
+          ? 'SIWE 登录'
+          : '进入主界面';
+
+  const createActionLabel = !isConnected
     ? '连接钱包'
     : !isSepolia
       ? '启用 Sepolia'
-      : !selectedSiweReady
+      : !createSiweReady
         ? 'SIWE 登录'
-        : '进入主界面';
+        : currentWalletProfile
+          ? '进入已有 Profile'
+          : '创建并进入';
 
   const reloadProfiles = useCallback(async () => {
     const items = await profileContext.listProfiles();
@@ -157,15 +182,28 @@ export default function ProfileGuide() {
         ]);
         if (cancelled) return;
 
-        setProfiles(items);
         const resolvedBaseUrl = typeof configuredBaseUrl === 'string' && configuredBaseUrl.trim()
           ? configuredBaseUrl.trim()
           : 'http://localhost:8787';
+
+        setProfiles(items);
         setWeb25BaseUrl(resolvedBaseUrl);
         setLoaded(true);
 
         const runtimeProfileId = getRuntimeProfileId();
-        if (runtimeProfileId) setRuntimeProfileId(runtimeProfileId);
+        const initialWalletProfile = items.find((profile) => profile.type === 'wallet' && profile.id === runtimeProfileId)
+          ?? items.find((profile) => profile.type === 'wallet')
+          ?? null;
+
+        if (initialWalletProfile) {
+          setSelectedProfileId(initialWalletProfile.id);
+          setMode('select');
+          setRuntimeProfileId(initialWalletProfile.id);
+        } else {
+          setSelectedProfileId('');
+          setMode('create');
+        }
+
         await refreshSiweState(resolvedBaseUrl);
       } catch (err) {
         if (cancelled) return;
@@ -182,7 +220,7 @@ export default function ProfileGuide() {
   useEffect(() => {
     if (!loaded) return;
     if (!walletProfiles.length) {
-      setMode('bind');
+      setMode('create');
       setSelectedProfileId('');
       return;
     }
@@ -193,13 +231,20 @@ export default function ProfileGuide() {
   }, [loaded, walletProfiles]);
 
   useEffect(() => {
-    if (!selectedProfile?.id || !web25BaseUrl) return;
-    setRuntimeProfileId(selectedProfile.id);
+    if (!loaded || !web25BaseUrl) return;
+
+    const nextProfileId = mode === 'create'
+      ? createProfileId
+      : selectedProfile?.id ?? '';
+
+    if (!nextProfileId) return;
+    setRuntimeProfileId(nextProfileId);
     void refreshSiweState(web25BaseUrl);
-  }, [refreshSiweState, selectedProfile?.id, web25BaseUrl]);
+  }, [createProfileId, loaded, mode, refreshSiweState, selectedProfile?.id, web25BaseUrl]);
 
   async function connectWallet() {
     setError(null);
+    setStatus('请选择要用于 Profile 的钱包账户。');
     await open();
   }
 
@@ -240,7 +285,7 @@ export default function ProfileGuide() {
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: REQUIRED_CHAIN_HEX }],
         });
-        setStatus('Sepolia 已添加。');
+        setStatus('Sepolia 已添加并启用。');
         return;
       }
 
@@ -278,44 +323,40 @@ export default function ProfileGuide() {
     }
 
     const profileId = resolveProfileId(targetAddress, explicitProfileId);
-    if (profileId) {
-      setRuntimeProfileId(profileId);
-    }
+    if (profileId) setRuntimeProfileId(profileId);
 
     setError(null);
     setSiweBusy(true);
-    setStatus('正在进行 SIWE 登录。');
+    setStatus(`正在为 ${formatAddress(targetAddress)} 发起 SIWE 登录。`);
     try {
       const session = await loginWeb25WithSiwe({
         baseUrl: web25BaseUrl,
         walletProvider,
-        fallbackAddress: targetAddress,
+        expectedAddress: targetAddress,
       });
       setSiweSession(session);
-      await syncProfileMetadata(profileId);
+      if (explicitProfileId) await syncProfileMetadata(profileId);
       setStatus(`SIWE 登录成功：${formatAddress(session.address)}`);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-      setStatus('SIWE 登录失败，请检查钱包签名和后端地址。');
+      setStatus('SIWE 登录失败，请检查钱包当前账户、签名确认和后端地址。');
       return false;
     } finally {
       setSiweBusy(false);
     }
   }
 
-  async function enterWalletProfile(profileAddress?: string) {
-    const targetAddress = profileAddress ?? address;
+  async function enterWalletProfile(profileAddress?: string, explicitProfileId?: string) {
+    const targetAddress = profileAddress ?? siweSession?.address ?? address;
     if (!targetAddress) return;
     if (!hasSiweForAddress(targetAddress)) {
       setStatus('请先完成 SIWE 登录。');
       return;
     }
 
-    const profileId = resolveProfileId(targetAddress, selectedProfile?.id);
-    if (profileId) {
-      setRuntimeProfileId(profileId);
-    }
+    const profileId = resolveProfileId(targetAddress, explicitProfileId);
+    if (profileId) setRuntimeProfileId(profileId);
 
     setBusy(true);
     setError(null);
@@ -325,6 +366,7 @@ export default function ProfileGuide() {
         address: targetAddress,
         chainId: REQUIRED_CHAIN_ID,
       });
+      await syncProfileMetadata(profileId);
       setStatus('Profile 已加载。');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -348,38 +390,59 @@ export default function ProfileGuide() {
       const ok = await performSiweLogin(selectedProfile.walletAddress, selectedProfile.id);
       if (!ok) return;
     }
-    await enterWalletProfile(selectedProfile.walletAddress);
+    await enterWalletProfile(selectedProfile.walletAddress, selectedProfile.id);
   }
 
-  const bindFlow = (
-    <section className={styles.bindPanel}>
-      <div className={styles.bindHeader}>
+  async function useCurrentWalletProfile() {
+    if (!isConnected || !address) {
+      await connectWallet();
+      return;
+    }
+    if (!isSepolia) {
+      await switchToSepolia();
+      return;
+    }
+    if (!createSiweReady) {
+      const ok = await performSiweLogin(address);
+      if (!ok) return;
+    }
+    await enterWalletProfile(address);
+  }
+
+  const createPanel = (
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
         <div>
-          <p>New Profile</p>
-          <h2>绑定钱包与 SIWE</h2>
+          <p>Wallet Profile</p>
+          <h1>连接当前钱包</h1>
+          <span>为当前钱包地址创建或恢复本地 Profile。</span>
         </div>
         {walletProfiles.length > 0 && (
           <button type="button" className={styles.textButton} onClick={() => setMode('select')} disabled={actionBusy}>
-            返回
+            返回选择
           </button>
         )}
       </div>
 
-      <div className={styles.steps}>
+      <div className={styles.identityCard}>
+        <div className={styles.largeAvatar}>{address ? address.slice(2, 4).toUpperCase() : 'FF'}</div>
+        <div className={styles.identityText}>
+          <strong>{formatAddress(address)}</strong>
+          <span>{currentWalletProfile ? '该地址已有本地 Profile' : '将使用当前钱包地址创建 Profile'}</span>
+        </div>
+      </div>
+
+      <div className={styles.stepGrid}>
         <button type="button" className={styles.step} onClick={connectWallet} disabled={actionBusy}>
           <span className={isConnected ? styles.stepDone : styles.stepIndex}>1</span>
-          <span>
-            <strong>{isConnected ? formatAddress(address) : '连接钱包'}</strong>
-            <small>选择用于本地 Profile 的钱包</small>
-          </span>
+          <strong>{isConnected ? '钱包已连接' : '连接钱包'}</strong>
+          <small>{isConnected ? formatAddress(address) : '选择要使用的账户'}</small>
         </button>
 
         <button type="button" className={styles.step} onClick={switchToSepolia} disabled={actionBusy || !isConnected || isSepolia}>
           <span className={isSepolia ? styles.stepDone : styles.stepIndex}>2</span>
-          <span>
-            <strong>{isSepolia ? 'Sepolia 已启用' : '启用 Sepolia'}</strong>
-            <small>当前网络: {chainId ?? '未连接'}</small>
-          </span>
+          <strong>{isSepolia ? 'Sepolia 已启用' : '启用 Sepolia'}</strong>
+          <small>当前网络: {chainId ?? '未连接'}</small>
         </button>
 
         <button
@@ -390,35 +453,49 @@ export default function ProfileGuide() {
           }}
           disabled={actionBusy || !isConnected || !isSepolia || !address}
         >
-          <span className={boundSiweReady ? styles.stepDone : styles.stepIndex}>3</span>
-          <span>
-            <strong>{boundSiweReady ? 'SIWE 已登录' : '执行 SIWE 登录'}</strong>
-            <small>{siweSession ? `会话地址: ${formatAddress(siweSession.address)}` : '登录后可进入主界面'}</small>
-          </span>
-        </button>
-
-        <button type="button" className={styles.primaryAction} onClick={() => void enterWalletProfile()} disabled={!canEnterBoundWallet}>
-          {actionBusy ? '处理中' : '创建并进入主界面'}
+          <span className={createSiweReady ? styles.stepDone : styles.stepIndex}>3</span>
+          <strong>{createSiweReady ? 'SIWE 已登录' : 'SIWE 登录'}</strong>
+          <small>{siweSession ? `会话地址: ${formatAddress(siweSession.address)}` : '用当前账户签名'}</small>
         </button>
       </div>
+
+      <button type="button" className={styles.primaryAction} onClick={() => void useCurrentWalletProfile()} disabled={actionBusy}>
+        {actionBusy ? '处理中' : createActionLabel}
+      </button>
 
       <p className={styles.status}>{status}</p>
     </section>
   );
 
-  const selector = (
-    <section className={styles.selectorPanel}>
-      <div className={styles.titleBlock}>
-        <p>Choose Profile</p>
-        <h1>FreeFlow</h1>
+  const selectorPanel = (
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
+        <div>
+          <p>Choose Profile</p>
+          <h1>FreeFlow</h1>
+          <span>选择一个本地身份，或连接当前钱包创建新身份。</span>
+        </div>
+        <button
+          type="button"
+          className={styles.textButton}
+          onClick={() => {
+            setMode('create');
+            setSelectedProfileId('');
+            setError(null);
+            setStatus('连接钱包并完成 SIWE 登录。');
+          }}
+          disabled={actionBusy}
+        >
+          新建 Profile
+        </button>
       </div>
 
-      <div className={styles.avatarRow}>
+      <div className={styles.profileList}>
         {walletProfiles.map((profile) => (
           <button
             type="button"
             key={profile.id}
-            className={`${styles.avatarTile} ${selectedProfile?.id === profile.id ? styles.avatarTileActive : ''}`}
+            className={`${styles.profileTile} ${selectedProfile?.id === profile.id ? styles.profileTileActive : ''}`}
             onClick={() => setSelectedProfileId(profile.id)}
           >
             <div className={styles.avatarFace}>
@@ -428,41 +505,34 @@ export default function ProfileGuide() {
                 <span>{avatarLabel(profile)}</span>
               )}
             </div>
-            <small>{profile.web25DisplayName || formatAddress(profile.walletAddress)}</small>
+            <div>
+              <strong>{profile.web25DisplayName || formatAddress(profile.walletAddress)}</strong>
+              <small>{formatAddress(profile.walletAddress)}</small>
+            </div>
           </button>
         ))}
-
-        <button type="button" className={styles.addTile} onClick={() => setMode('bind')} aria-label="添加 Profile">
-          <span>+</span>
-          <small>添加</small>
-        </button>
       </div>
 
       {selectedProfile && (
-        <div className={styles.profileDetails}>
-          <div className={styles.profileIdentity}>
-            <div className={styles.profileAvatarLarge}>
+        <div className={styles.details}>
+          <div className={styles.identityCard}>
+            <div className={styles.largeAvatar}>
               {selectedProfile.web25AvatarUrl ? (
                 <img src={selectedProfile.web25AvatarUrl} alt={selectedProfile.web25DisplayName || selectedProfile.name} />
               ) : (
                 <span>{avatarLabel(selectedProfile)}</span>
               )}
             </div>
-            <div>
-              <h2>{selectedProfile.web25DisplayName || formatAddress(selectedProfile.walletAddress)}</h2>
-              <p>{formatAddress(selectedProfile.walletAddress)}</p>
-              <p>{selectedWalletConnected ? '当前钱包已匹配' : '需要连接此钱包后进入'}</p>
+            <div className={styles.identityText}>
+              <strong>{selectedProfile.web25DisplayName || formatAddress(selectedProfile.walletAddress)}</strong>
+              <span>{selectedWalletConnected ? '当前钱包已匹配' : `需要连接 ${formatAddress(selectedProfile.walletAddress)}`}</span>
             </div>
           </div>
 
-          <dl>
+          <dl className={styles.metaGrid}>
             <div>
               <dt>Network</dt>
               <dd>Sepolia</dd>
-            </div>
-            <div>
-              <dt>Profile</dt>
-              <dd>{selectedProfile.id}</dd>
             </div>
             <div>
               <dt>SIWE</dt>
@@ -474,11 +544,13 @@ export default function ProfileGuide() {
             </div>
           </dl>
 
-          <button type="button" className={styles.primaryAction} onClick={() => void useSelectedProfile()} disabled={actionBusy}>
-            {selectedActionLabel}
+          <button type="button" className={styles.primaryAction} onClick={() => void useSelectedProfile()} disabled={actionBusy || !selectedProfile}>
+            {actionBusy ? '处理中' : selectedActionLabel}
           </button>
         </div>
       )}
+
+      <p className={styles.status}>{status}</p>
     </section>
   );
 
@@ -486,7 +558,7 @@ export default function ProfileGuide() {
     <main className={styles.window}>
       <WindowChrome />
       <div className={styles.content}>
-        {loaded && walletProfiles.length > 0 && mode === 'select' ? selector : bindFlow}
+        {loaded && mode === 'select' && walletProfiles.length > 0 ? selectorPanel : createPanel}
       </div>
       {error && <div className={styles.error}>{error}</div>}
     </main>
