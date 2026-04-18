@@ -4,13 +4,13 @@ import { DefaultCover } from '@components/static';
 import { PlatformIcon } from '@components/PlatformIcon';
 import { useSetting } from '@renderer/core/config/SettingsContext';
 import { mergeTrackWithFreeFlowInfo, upsertChainLibraryTrack } from '@renderer/core/freeflow/chainLibrary';
-import { resolveIndexedTrackResource } from '@renderer/core/web25/client';
+import { resolveIndexedTrackResource, upsertWeb25Purchase } from '@renderer/core/web25/client';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { profileContext } from '@renderer/core/electronContextApi';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import { FreeFlowTrackInfo, TrackEntity } from '@src/shared/domainModel/TrackEntity';
-import { DEFAULT_SEPOLIA_CONTRACTS, MUSIC_ASSET_ABI, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
+import { DEFAULT_SEPOLIA_CONTRACTS, MUSIC_ACCESS_1155_ABI, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import styles from './FreeFlowTrackDetailView.module.css';
 
 interface FreeFlowTrackDetailViewProps {
@@ -27,7 +27,6 @@ function mapToInfo(payload: Awaited<ReturnType<typeof resolveIndexedTrackResourc
     accessModel: payload.accessModel,
     previewSeconds: payload.previewSeconds,
     priceEth: payload.priceEth,
-    royaltyBps: payload.royaltyBps,
     coverUrl: payload.coverUrl,
     coverCid: payload.coverCid,
     audioUrl: payload.audioUrl,
@@ -57,23 +56,26 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
   const [error, setError] = React.useState('');
   const [refreshingAccess, setRefreshingAccess] = React.useState(false);
   const [buying, setBuying] = React.useState(false);
+  const [addingToLibrary, setAddingToLibrary] = React.useState(false);
   const [accessError, setAccessError] = React.useState('');
+  const [libraryMessage, setLibraryMessage] = React.useState('');
   const [accessStatus, setAccessStatus] = React.useState<{
     hasAccess: boolean | null;
     requiresPurchase: boolean | null;
     active: boolean | null;
     priceEth: string | null;
     payoutReceiver: string | null;
-    owner: string | null;
+    creator: string | null;
+    ownedBalance: string | null;
   }>({
     hasAccess: null,
     requiresPurchase: info?.accessModel === 'purchase',
     active: true,
     priceEth: info?.priceEth ?? null,
     payoutReceiver: null,
-    owner: null,
+    creator: null,
+    ownedBalance: null,
   });
-  const savedResourceKeyRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -81,6 +83,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     const nextInfo = track.freeflow ?? null;
     setInfo(nextInfo);
     setError('');
+    setLibraryMessage('');
 
     const needFetch = !nextInfo || (!nextInfo.audioUrl && !nextInfo.metadataUrl);
     if (!needFetch) return () => {
@@ -118,16 +121,12 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
       const [creator, payoutReceiver, price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(info.tokenId);
 
       let hasAccess: boolean | null = null;
+      let ownedBalance: bigint | null = null;
       if (address) {
-        hasAccess = requiresPurchase ? await platformHub.hasAccess(address, info.tokenId) : true;
-      }
-
-      let owner: string | null = null;
-      if (info.contractAddress) {
-        const musicAsset = new Contract(info.contractAddress, MUSIC_ASSET_ABI, provider);
-        owner = await musicAsset.ownerOf(info.tokenId).catch((): null => null);
-        if (owner && address && owner.toLowerCase() === address.toLowerCase()) {
-          hasAccess = true;
+        hasAccess = await platformHub.hasAccess(address, info.tokenId);
+        if (info.contractAddress) {
+          const musicAccess = new Contract(info.contractAddress, MUSIC_ACCESS_1155_ABI, provider);
+          ownedBalance = await musicAccess.balanceOf(address, info.tokenId).catch((): null => null);
         }
       }
 
@@ -138,7 +137,8 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
         active,
         priceEth: nextPriceEth,
         payoutReceiver: typeof payoutReceiver === 'string' ? payoutReceiver : null,
-        owner,
+        creator: typeof creator === 'string' ? creator : null,
+        ownedBalance: ownedBalance?.toString() ?? null,
       });
 
       if (nextPriceEth !== info.priceEth) {
@@ -181,8 +181,18 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
 
       const buyTx = await platformHub.buyAccess(info.tokenId, { value: price });
       await buyTx.wait();
-
-      await upsertChainLibraryTrack(mergeTrackWithFreeFlowInfo(track, info));
+      const purchaseChainId = info.chainId ?? DEFAULT_SEPOLIA_CONTRACTS.chainId;
+      if (info.releaseId) {
+        await upsertWeb25Purchase(web25BaseUrl.value, {
+          releaseId: info.releaseId,
+          walletAddress: address,
+          chainId: purchaseChainId,
+          txHash: buyTx.hash,
+          amountWei: price.toString(),
+          status: 'confirmed',
+          purchasedAt: new Date().toISOString(),
+        }).catch((): undefined => undefined);
+      }
 
       await refreshAccess();
     } catch (err) {
@@ -195,31 +205,27 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
   const requiresPurchase = accessStatus.requiresPurchase ?? (info?.accessModel === 'purchase');
   const hasAccess = accessStatus.hasAccess;
   const canPlay = !requiresPurchase || !!hasAccess;
+  const canAddToChainLibrary = !!info && canPlay;
 
-  React.useEffect(() => {
-    if (!info || !address) return;
+  const handleAddToChainLibrary = React.useCallback(async () => {
+    if (!info) return;
+    if (!canPlay) {
+      setAccessError('该资源需要先获得访问权后才能加入链上音乐库');
+      return;
+    }
 
-    const ownerMatches = !!accessStatus.owner
-      && accessStatus.owner.toLowerCase() === address.toLowerCase();
-    const purchasedAccess = !!(accessStatus.requiresPurchase ?? (info.accessModel === 'purchase'))
-      && accessStatus.hasAccess === true;
-
-    if (!ownerMatches && !purchasedAccess) return;
-    if (savedResourceKeyRef.current === info.resourceKey) return;
-
-    savedResourceKeyRef.current = info.resourceKey;
-    void upsertChainLibraryTrack(mergeTrackWithFreeFlowInfo(track, info)).catch((err) => {
-      savedResourceKeyRef.current = null;
+    setAddingToLibrary(true);
+    setAccessError('');
+    setLibraryMessage('');
+    try {
+      await upsertChainLibraryTrack(mergeTrackWithFreeFlowInfo(track, info));
+      setLibraryMessage('已添加到链上音乐库');
+    } catch (err) {
       setAccessError(err instanceof Error ? err.message : String(err ?? '链上音乐库写入失败'));
-    });
-  }, [
-    accessStatus.hasAccess,
-    accessStatus.owner,
-    accessStatus.requiresPurchase,
-    address,
-    info,
-    track,
-  ]);
+    } finally {
+      setAddingToLibrary(false);
+    }
+  }, [canPlay, info, track]);
 
   return (
     <ViewShell padded hideScrollbar>
@@ -269,6 +275,14 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
               )}
               <button
                 className={styles.ghostButton}
+                onClick={() => void handleAddToChainLibrary()}
+                disabled={!canAddToChainLibrary || addingToLibrary}
+                title={canAddToChainLibrary ? '添加到链上音乐库' : '需要先获得访问权'}
+              >
+                {addingToLibrary ? '添加中...' : '添加到链上音乐库'}
+              </button>
+              <button
+                className={styles.ghostButton}
                 onClick={() => void refreshAccess()}
                 disabled={!walletProvider || !info?.tokenId || refreshingAccess}
               >
@@ -291,14 +305,18 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
                 <span className={styles.accessBadge}>
                   {hasAccess ? '已授权' : '未授权'}
                 </span>
-                {accessStatus.owner && (
-                  <span className={styles.accessMeta}>Owner: {accessStatus.owner.slice(0, 8)}...{accessStatus.owner.slice(-6)}</span>
+                {accessStatus.creator && (
+                  <span className={styles.accessMeta}>Creator: {accessStatus.creator.slice(0, 8)}...{accessStatus.creator.slice(-6)}</span>
+                )}
+                {accessStatus.ownedBalance !== null && (
+                  <span className={styles.accessMeta}>Balance: {accessStatus.ownedBalance}</span>
                 )}
                 {accessStatus.payoutReceiver && (
                   <span className={styles.accessMeta}>Splitter: {accessStatus.payoutReceiver.slice(0, 8)}...{accessStatus.payoutReceiver.slice(-6)}</span>
                 )}
               </div>
             )}
+            {libraryMessage && <div className={styles.notice}>{libraryMessage}</div>}
             {accessError && <div className={styles.error}>链上状态同步失败: {accessError}</div>}
           </div>
         </section>
@@ -317,8 +335,8 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
             <div className={styles.value}>{info?.previewSeconds ?? '-'}</div>
           </div>
           <div className={styles.item}>
-            <div className={styles.label}>版税(BPS)</div>
-            <div className={styles.value}>{info?.royaltyBps ?? '-'}</div>
+            <div className={styles.label}>访问凭证余额</div>
+            <div className={styles.value}>{accessStatus.ownedBalance ?? '-'}</div>
           </div>
           <div className={styles.item}>
             <div className={styles.label}>Token ID</div>

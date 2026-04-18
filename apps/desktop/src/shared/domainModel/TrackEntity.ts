@@ -9,7 +9,6 @@ export interface FreeFlowTrackInfo {
   accessModel: string | null;
   previewSeconds: number | null;
   priceEth: string | null;
-  royaltyBps: number | null;
   coverUrl: string | null;
   coverCid?: string | null;
   audioUrl: string | null;

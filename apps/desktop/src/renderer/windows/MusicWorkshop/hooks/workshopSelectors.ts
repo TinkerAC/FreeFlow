@@ -18,10 +18,7 @@ export const selectEffectiveWeb3Settings = createSelector(
     chainName: workshop.selectedRelease?.chainName ?? DEFAULT_SEPOLIA_CONTRACTS.chainName,
     explorerUrl: workshop.selectedRelease?.explorerUrl ?? DEFAULT_SEPOLIA_CONTRACTS.explorerUrl,
     musicAssetAddress: workshop.selectedRelease?.musicAssetAddress ?? DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress,
-    royaltySplitterFactoryAddress: workshop.selectedRelease?.royaltySplitterFactoryAddress
-      ?? DEFAULT_SEPOLIA_CONTRACTS.royaltySplitterFactoryAddress,
     platformHubAddress: workshop.selectedRelease?.platformHubAddress ?? DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress,
-    defaultRoyaltyBps: DEFAULT_SEPOLIA_CONTRACTS.defaultRoyaltyBps,
     platformFeeBps: DEFAULT_SEPOLIA_CONTRACTS.platformFeeBps,
   }),
 );

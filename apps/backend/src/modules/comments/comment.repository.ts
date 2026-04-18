@@ -1,4 +1,4 @@
-import { CommentStatus, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../infra/database/prisma.js';
 
 const commentInclude = {
@@ -7,53 +7,38 @@ const commentInclude = {
       primaryWalletIdentity: true,
     },
   },
-  replies: {
-    where: {
-      status: CommentStatus.PUBLISHED,
-      deletedAt: null,
-    },
-    orderBy: {
-      createdAt: 'asc',
-    },
-    take: 5,
-    include: {
-      user: {
-        include: {
-          primaryWalletIdentity: true,
-        },
-      },
-    },
-  },
 } satisfies Prisma.CommentInclude;
 
 export class CommentRepository {
-  async findResourceByKey(resourceKey: string) {
-    return prisma.resource.findUnique({
+  async findReleaseById(releaseId: string) {
+    return prisma.creatorRelease.findUnique({
       where: {
-        resourceKey,
+        id: releaseId,
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
       },
     });
   }
 
-  async listByResourceKey(input: {
-    resourceKey: string;
+  async listByReleaseId(input: {
+    releaseId: string;
     limit: number;
     cursor?: string | undefined;
   }) {
-    const resource = await this.findResourceByKey(input.resourceKey);
-    if (!resource) {
+    const release = await this.findReleaseById(input.releaseId);
+    if (!release) {
       return {
-        resource: null,
+        release: null,
         comments: [],
       };
     }
 
     const comments = await prisma.comment.findMany({
       where: {
-        resourceId: resource.id,
-        parentId: null,
-        status: CommentStatus.PUBLISHED,
-        deletedAt: null,
+        releaseId: release.id,
       },
       include: commentInclude,
       orderBy: [
@@ -70,40 +55,28 @@ export class CommentRepository {
     });
 
     return {
-      resource,
+      release,
       comments,
     };
   }
 
   async create(input: {
-    resourceId: string;
+    releaseId: string;
     userId: string;
-    parentId?: string | null;
     body: string;
   }) {
     return prisma.comment.create({
       data: {
-        resourceId: input.resourceId,
+        releaseId: input.releaseId,
         userId: input.userId,
-        parentId: input.parentId ?? null,
         body: input.body,
       },
       include: commentInclude,
     });
   }
-
-  async findPublishedComment(commentId: string) {
-    return prisma.comment.findFirst({
-      where: {
-        id: commentId,
-        status: CommentStatus.PUBLISHED,
-        deletedAt: null,
-      },
-    });
-  }
 }
 
 export type PersistedComment = Awaited<ReturnType<CommentRepository['create']>>;
-export type PersistedCommentListItem = Awaited<ReturnType<CommentRepository['listByResourceKey']>>['comments'][number];
+export type PersistedCommentListItem = Awaited<ReturnType<CommentRepository['listByReleaseId']>>['comments'][number];
 
 export const commentRepository = new CommentRepository();

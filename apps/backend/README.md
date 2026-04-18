@@ -8,7 +8,7 @@ Node.js backend for SIWE authentication and server-controlled Pinata uploads.
 - PostgreSQL-backed users, wallet identities, SIWE nonces, and sessions
 - Server-side Pinata upload proxy
 - Persistent storage metadata for uploaded Pinata objects
-- Foundation tables for resources, comments, reactions, reports, and moderation logs
+- Creator release workflow records, purchase history projections, and single-level comments
 
 ## Quick start
 
@@ -45,12 +45,8 @@ Core persisted entities:
 - `StorageObject`
 - `StorageUpload`
 - `CreatorRelease`
-- `Resource`
 - `Purchase`
 - `Comment`
-- `CommentReaction`
-- `CommentReport`
-- `CommentModerationLog`
 
 ## API
 
@@ -60,6 +56,13 @@ Core persisted entities:
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/storage/pinata/config`
 - `POST /api/v1/storage/pinata/files`
+- `GET /api/v1/resources/search`
+- `GET /api/v1/resources/resolve`
+- `GET /api/v1/releases`
+- `POST /api/v1/releases`
+- `POST /api/v1/purchases`
+- `GET /api/v1/comments`
+- `POST /api/v1/comments`
 - `GET /api/v1/system/health`
 
 `/api/v1/storage/pinata/files` requires an authenticated SIWE session.

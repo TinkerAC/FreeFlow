@@ -4,17 +4,14 @@ type CommentRecord = PersistedComment | PersistedCommentListItem;
 
 export type CommentPayload = {
   id: string;
-  resourceId: string;
-  parentId: string | null;
+  releaseId: string;
   body: string;
-  status: string;
   author: {
     userId: string;
     displayName: string;
     avatarUrl: string | null;
     walletAddress: string | null;
   };
-  replies: CommentPayload[];
   createdAt: string;
   updatedAt: string;
 };
@@ -30,17 +27,14 @@ export function mapCommentRecord(comment: CommentRecord): CommentPayload {
 
   return {
     id: comment.id,
-    resourceId: comment.resourceId,
-    parentId: comment.parentId,
+    releaseId: comment.releaseId,
     body: comment.body,
-    status: comment.status,
     author: {
       userId: user.id,
       displayName: user.displayName || formatAddress(walletAddress) || 'FreeFlow User',
       avatarUrl: user.avatarUrl ?? null,
       walletAddress,
     },
-    replies: comment.replies?.map((reply) => mapCommentRecord(reply as CommentRecord)) ?? [],
     createdAt: comment.createdAt.toISOString(),
     updatedAt: comment.updatedAt.toISOString(),
   };

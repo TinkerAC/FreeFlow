@@ -1,5 +1,5 @@
 import { env } from '../../config/env.js';
-import type { PersistedResourceRecord } from './resource.repository.js';
+import { buildReleaseResourceKey, type PersistedResourceRecord } from './resource.repository.js';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -59,44 +59,44 @@ function mapStorageObject(record: {
   };
 }
 
-/**
- * 对外的资源检索结构，给桌面端搜索和详情页共用。
- */
-export function mapResourceRecord(record: PersistedResourceRecord) {
-  const release = record.publishedRelease;
-  const metadata = getMetadataRecord(release?.metadataDocument ?? null);
-  const metadataStorage = mapStorageObject(release?.metadataStorageObject ?? null);
-  const audioStorage = mapStorageObject(release?.audioStorageObject ?? null);
-  const coverStorage = mapStorageObject(release?.coverStorageObject ?? null);
+export function mapResourceRecord(release: PersistedResourceRecord) {
+  const metadata = getMetadataRecord(release.metadataDocument ?? null);
+  const metadataStorage = mapStorageObject(release.metadataStorageObject ?? null);
+  const audioStorage = mapStorageObject(release.audioStorageObject ?? null);
+  const coverStorage = mapStorageObject(release.coverStorageObject ?? null);
+  const resourceKey = buildReleaseResourceKey({
+    chainId: release.chainId,
+    musicAssetAddress: release.musicAssetAddress,
+    tokenId: release.tokenId,
+  }) ?? release.id;
 
   return {
-    id: record.id,
-    resourceKey: record.resourceKey,
-    type: record.type,
-    title: record.title ?? release?.title ?? null,
-    artistName: release?.artistName ?? null,
-    albumName: release?.albumName ?? null,
-    chainId: record.chainId ?? release?.chainId ?? null,
-    contractAddress: record.contractAddress ?? release?.musicAssetAddress ?? null,
-    tokenId: record.tokenId ?? release?.tokenId ?? null,
-    contentCid: record.contentCid ?? null,
+    id: release.id,
+    resourceKey,
+    type: 'TRACK',
+    title: release.title,
+    artistName: release.artistName ?? null,
+    albumName: release.albumName ?? null,
+    chainId: release.chainId ?? null,
+    contractAddress: release.musicAssetAddress ?? null,
+    tokenId: release.tokenId ?? null,
+    contentCid: metadataStorage?.cid ?? null,
     coverUrl: coverStorage?.gatewayUrl ?? pickMetadataImage(metadata),
     audioUrl: audioStorage?.gatewayUrl ?? pickMetadataAudioGateway(metadata),
     audioCid: audioStorage?.cid ?? null,
     coverCid: coverStorage?.cid ?? null,
     metadataUrl: metadataStorage?.gatewayUrl ?? null,
     metadataCid: metadataStorage?.cid ?? null,
-    accessModel: release?.accessModel ?? null,
-    previewSeconds: release?.previewSeconds ?? null,
-    priceEth: release?.priceEth ?? null,
-    royaltyBps: release?.royaltyBps ?? null,
-    explorerUrl: release?.explorerUrl ?? null,
-    platformHubAddress: release?.platformHubAddress ?? null,
-    publishTxHash: release?.publishTxHash ?? null,
-    releaseId: release?.id ?? null,
-    status: release?.status ?? null,
-    metadataDocument: release?.metadataDocument ?? null,
-    createdAt: record.createdAt.toISOString(),
-    updatedAt: record.updatedAt.toISOString(),
+    accessModel: release.accessModel ?? null,
+    previewSeconds: release.previewSeconds ?? null,
+    priceEth: release.priceEth ?? null,
+    explorerUrl: release.explorerUrl ?? null,
+    platformHubAddress: release.platformHubAddress ?? null,
+    publishTxHash: release.publishTxHash ?? null,
+    releaseId: release.id,
+    status: release.status ?? null,
+    metadataDocument: release.metadataDocument ?? null,
+    createdAt: release.createdAt.toISOString(),
+    updatedAt: release.updatedAt.toISOString(),
   };
 }

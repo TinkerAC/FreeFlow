@@ -32,7 +32,7 @@ export function toNullableString(value: string | null) {
 
 /**
  * `statusMessage` 是短状态摘要，数据库列限制为 255 字符。
- * 完整发布日志保存在 `activityLog` / `latestError`，这里不让长日志阻断发布流程。
+ * 完整错误详情保存在 `latestError`，这里不让长日志阻断发布流程。
  */
 export function toNullableStatusMessage(value: string | null) {
   const normalized = toNullableString(value);

@@ -35,7 +35,8 @@ export default function AccessPanel({ controller }: AccessPanelProps) {
               <div className={styles.infoLabel}>当前授权</div>
               <div className={styles.infoBody}>Token #{controller.accessCheck.tokenId || 'pending'}{'\n'}Requires
                 purchase: {String(controller.accessCheck.requiresPurchase)}{'\n'}Active: {String(controller.accessCheck.active)}{'\n'}Has
-                access: {String(controller.accessCheck.hasAccess)}</div>
+                access: {String(controller.accessCheck.hasAccess)}{'\n'}ERC-1155
+                balance: {controller.accessCheck.ownedBalance || '0'}</div>
             </div>
             <div className={styles.infoCard}>
               <div className={styles.infoLabel}>价格与分账</div>

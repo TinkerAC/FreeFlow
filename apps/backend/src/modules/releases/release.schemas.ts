@@ -2,7 +2,6 @@ import { z } from 'zod';
 import {
   CREATOR_RELEASE_CLIENT_UPDATE_STATUSES,
   RELEASE_ACCESS_MODELS,
-  RELEASE_ACTIVITY_LEVELS,
 } from '@freeflow/web25-shared';
 
 const optionalNullableChainName = z.string().trim().max(64).optional().nullable();
@@ -25,12 +24,6 @@ const optionalNullableBlockNumber = z.preprocess((value) => {
  */
 const ClientEditableCreatorReleaseStatusSchema = z.enum(CREATOR_RELEASE_CLIENT_UPDATE_STATUSES);
 const ReleaseAccessModelSchema = z.enum(RELEASE_ACCESS_MODELS);
-
-export const ReleaseActivityEntrySchema = z.object({
-  message: z.string().min(1).max(20_000),
-  level: z.enum(RELEASE_ACTIVITY_LEVELS).default('info'),
-  at: z.string().datetime().optional(),
-});
 
 export const ReleaseSplitRecipientSchema = z.object({
   id: z.string().min(1).max(64),
@@ -57,7 +50,6 @@ export const UpdateCreatorReleaseSchema = z.object({
   accessModel: ReleaseAccessModelSchema.optional(),
   previewSeconds: z.number().int().min(0).max(3600).optional(),
   priceEth: z.string().trim().max(64).optional(),
-  royaltyBps: z.number().int().min(0).max(10_000).optional(),
   audioSourceName: z.string().trim().max(255).optional().nullable(),
   coverSourceName: z.string().trim().max(255).optional().nullable(),
   audioStorageObjectId: z.string().trim().min(1).optional().nullable(),
@@ -67,15 +59,13 @@ export const UpdateCreatorReleaseSchema = z.object({
   chainName: optionalNullableChainName,
   explorerUrl: optionalNullableExplorerUrl,
   musicAssetAddress: optionalNullableAddress,
-  royaltySplitterFactoryAddress: optionalNullableAddress,
   platformHubAddress: optionalNullableAddress,
   splitterAddress: optionalNullableAddress,
   publishTxHash: optionalNullableHash,
   publishBlockNumber: optionalNullableBlockNumber,
   tokenId: optionalNullableTokenId,
   metadataDocument: z.unknown().optional().nullable(),
-  royaltySplits: z.array(ReleaseSplitRecipientSchema).optional().nullable(),
-  activityEntry: ReleaseActivityEntrySchema.optional(),
+  revenueSplits: z.array(ReleaseSplitRecipientSchema).optional().nullable(),
   statusMessage: z.string().trim().max(255).optional().nullable(),
   latestError: z.string().trim().max(20_000).optional().nullable(),
 });

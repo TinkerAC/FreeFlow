@@ -12,8 +12,8 @@ const defaultMusicDir = path.join(repoRoot, 'TestMusicResouerces');
 const defaultDeploymentFile = path.join(repoRoot, 'packages/contracts/deployments/sepolia-suite.json');
 
 const PLATFORM_HUB_ABI = [
-  'event TrackPublished(uint256 indexed tokenId, address indexed creator, address indexed payoutReceiver, bool requiresPurchase, bool active, uint256 price, uint96 royaltyBps)',
-  'function publishTrack(string tokenURI_, uint96 royaltyBps, bool requiresPurchase, uint256 price, bool saleActive, address[] payees, uint256[] shares) returns (uint256 tokenId, address splitter)',
+  'event TrackPublished(uint256 indexed tokenId, address indexed creator, address indexed payoutReceiver, bool requiresPurchase, bool active, uint256 price)',
+  'function publishTrack(string tokenURI_, bool requiresPurchase, uint256 price, bool saleActive, address[] payees, uint256[] shares) returns (uint256 tokenId, address splitter)',
 ];
 
 function loadEnvFile(filePath) {
@@ -159,7 +159,6 @@ function buildMetadataDocument(input) {
       { trait_type: 'Album', value: input.album },
       { trait_type: 'Genre', value: input.genre },
       { trait_type: 'Access Model', value: input.accessModel },
-      { trait_type: 'Royalty BPS', value: input.royaltyBps },
     ],
     properties: {
       media: {
@@ -193,7 +192,6 @@ async function publishOnChain(input) {
   const hub = new Contract(input.platformHubAddress, PLATFORM_HUB_ABI, wallet);
   const tx = await hub.publishTrack(
     input.metadataUri,
-    input.royaltyBps,
     input.accessModel === 'purchase',
     input.accessModel === 'purchase' ? parseEther(input.priceEth || '0') : 0n,
     true,
@@ -241,6 +239,7 @@ async function main() {
   if (!creatorPrivateKey) throw new Error('TEST_CREATOR_PRIVATE_KEY is missing');
 
   const deployment = JSON.parse(await fs.readFile(defaultDeploymentFile, 'utf8'));
+  const musicAccessAddress = deployment.contracts.musicAccess1155 || deployment.contracts.musicAsset;
   const chainId = Number(deployment.chainId || 11155111);
   const wallet = new Wallet(creatorPrivateKey.startsWith('0x') ? creatorPrivateKey : `0x${creatorPrivateKey}`);
   const files = await collectAudioFiles(musicDir);
@@ -305,7 +304,6 @@ async function main() {
       lyrics,
       description: `Published from TestMusicResouerces: ${path.basename(filePath)}`,
       accessModel: 'open',
-      royaltyBps: 1000,
       audioCid: audioUpload.cid,
       audioGatewayUrl: audioUpload.gatewayUrl,
       audioMimeType: audioUpload.mimeType,
@@ -313,7 +311,7 @@ async function main() {
       coverGatewayUrl: coverUpload?.gatewayUrl ?? null,
       coverMimeType: coverUpload?.mimeType ?? null,
       chainName: deployment.network,
-      musicAssetAddress: deployment.contracts.musicAsset,
+      musicAssetAddress: musicAccessAddress,
     });
 
     const metadataBuffer = Buffer.from(JSON.stringify(metadataDocument, null, 2), 'utf8');
@@ -335,7 +333,6 @@ async function main() {
         status: 'METADATA_UPLOADED',
         currentStage: execute ? 'publish' : 'storage',
         accessModel: 'open',
-        royaltyBps: 1000,
         audioSourceName: path.basename(filePath),
         audioStorageObjectId: audioUpload.storageObjectId,
         coverStorageObjectId: coverUpload?.storageObjectId ?? null,
@@ -344,10 +341,9 @@ async function main() {
         chainId,
         chainName: deployment.network,
         explorerUrl: 'https://sepolia.etherscan.io',
-        musicAssetAddress: deployment.contracts.musicAsset,
-        royaltySplitterFactoryAddress: deployment.contracts.royaltySplitterFactory,
+        musicAssetAddress: musicAccessAddress,
         platformHubAddress: deployment.contracts.platformHub,
-        royaltySplits: [{ id: 'test-creator', label: 'TestCreator', address: wallet.address, share: 100 }],
+        revenueSplits: [{ id: 'test-creator', label: 'TestCreator', address: wallet.address, share: 100 }],
         statusMessage: execute ? 'Metadata uploaded; publishing on chain' : 'Metadata uploaded',
       }),
     });
@@ -362,7 +358,6 @@ async function main() {
       rpcUrl,
       platformHubAddress: deployment.contracts.platformHub,
       metadataUri: `ipfs://${metadataUpload.cid}`,
-      royaltyBps: 1000,
       accessModel: 'open',
       priceEth: '0',
     });

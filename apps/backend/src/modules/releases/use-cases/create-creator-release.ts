@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { mapReleaseRecord } from '../release.mapper.js';
 import { releaseRepository } from '../release.repository.js';
 import { normalizeNullableString, slugifyReleaseValue } from '../release.utils.js';
@@ -16,15 +15,7 @@ export async function createCreatorRelease(
     title,
     slug: `${slugifyReleaseValue(title)}-${Date.now().toString(36)}`,
     accessModel: input.accessModel ?? 'purchase',
-    activityLog: [
-      {
-        message: 'Draft created',
-        level: 'info',
-        at: new Date().toISOString(),
-      },
-    ] as Prisma.InputJsonValue,
     statusMessage: 'Draft created',
-    lastActivityAt: new Date(),
   };
 
   if (input.artistName !== undefined) {

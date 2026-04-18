@@ -5,20 +5,19 @@ import type { CreateCommentInput, ListCommentsQuery } from './comment.schemas.js
 
 export class CommentService {
   async listComments(input: ListCommentsQuery) {
-    const payload = await commentRepository.listByResourceKey(input);
-    if (!payload.resource) {
-      throw new AppError(404, 'Resource not found', 'RESOURCE_NOT_FOUND');
+    const payload = await commentRepository.listByReleaseId(input);
+    if (!payload.release) {
+      throw new AppError(404, 'Release not found', 'RELEASE_NOT_FOUND');
     }
 
     const hasMore = payload.comments.length > input.limit;
     const pageItems = hasMore ? payload.comments.slice(0, input.limit) : payload.comments;
 
     return {
-      resource: {
-        id: payload.resource.id,
-        resourceKey: payload.resource.resourceKey,
-        type: payload.resource.type,
-        title: payload.resource.title,
+      release: {
+        id: payload.release.id,
+        title: payload.release.title,
+        status: payload.release.status,
       },
       items: pageItems.map(mapCommentRecord),
       nextCursor: hasMore ? pageItems.at(-1)?.id ?? null : null,
@@ -26,23 +25,14 @@ export class CommentService {
   }
 
   async createComment(userId: string, input: CreateCommentInput) {
-    const resource = await commentRepository.findResourceByKey(input.resourceKey);
-    if (!resource) {
-      throw new AppError(404, 'Resource not found', 'RESOURCE_NOT_FOUND');
-    }
-
-    const parentId = input.parentId?.trim() || null;
-    if (parentId) {
-      const parent = await commentRepository.findPublishedComment(parentId);
-      if (!parent || parent.resourceId !== resource.id) {
-        throw new AppError(400, 'Parent comment not found for resource', 'PARENT_COMMENT_NOT_FOUND');
-      }
+    const release = await commentRepository.findReleaseById(input.releaseId);
+    if (!release) {
+      throw new AppError(404, 'Release not found', 'RELEASE_NOT_FOUND');
     }
 
     const comment = await commentRepository.create({
-      resourceId: resource.id,
+      releaseId: release.id,
       userId,
-      parentId,
       body: input.body.trim(),
     });
 

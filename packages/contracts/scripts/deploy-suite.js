@@ -21,10 +21,10 @@ async function main() {
   console.log(`Deploying FreeFlow suite to ${hre.network.name} (chainId=${network.chainId})`);
   console.log(`Deployer: ${deployerAddress}`);
 
-  // 先部署作品 NFT 合约，平台中枢后续会依赖它进行铸造。
-  const MusicAsset = await hre.ethers.getContractFactory("MusicAsset");
-  const musicAsset = await MusicAsset.deploy("FreeFlow Music Release", "FFM", deployerAddress);
-  await musicAsset.waitForDeployment();
+  // 先部署 ERC-1155 访问凭证合约，平台中枢后续会依赖它创建歌曲 token 和铸造购买凭证。
+  const MusicAccess1155 = await hre.ethers.getContractFactory("MusicAccess1155");
+  const musicAccess = await MusicAccess1155.deploy(deployerAddress);
+  await musicAccess.waitForDeployment();
 
   // 分账工厂用于为每个作品创建独立的收益拆分合约。
   const RoyaltySplitterFactory = await hre.ethers.getContractFactory("RoyaltySplitterFactory");
@@ -34,16 +34,16 @@ async function main() {
   // 平台中枢负责作品发布、收费访问和平台费用管理。
   const PlatformHub = await hre.ethers.getContractFactory("PlatformHub");
   const platformHub = await PlatformHub.deploy(
-    await musicAsset.getAddress(),
+    await musicAccess.getAddress(),
     await royaltySplitterFactory.getAddress(),
     deployerAddress,
     500
   );
   await platformHub.waitForDeployment();
 
-  // 授予平台中枢铸造权限，使其能够在 publishTrack 时创建作品 NFT。
-  const minterRole = await musicAsset.MINTER_ROLE();
-  const grantRoleTx = await musicAsset.grantRole(minterRole, await platformHub.getAddress());
+  // 授予平台中枢铸造权限，使其能够在 publishTrack 和 buyAccess 中创建访问凭证。
+  const minterRole = await musicAccess.MINTER_ROLE();
+  const grantRoleTx = await musicAccess.grantRole(minterRole, await platformHub.getAddress());
   await grantRoleTx.wait();
 
   // 汇总部署产物和关键交易哈希，方便前端或脚本复用。
@@ -53,12 +53,14 @@ async function main() {
     deployedAt: new Date().toISOString(),
     deployer: deployerAddress,
     contracts: {
-      musicAsset: await musicAsset.getAddress(),
+      musicAccess1155: await musicAccess.getAddress(),
+      musicAsset: await musicAccess.getAddress(),
       royaltySplitterFactory: await royaltySplitterFactory.getAddress(),
       platformHub: await platformHub.getAddress(),
     },
     transactions: {
-      musicAsset: musicAsset.deploymentTransaction().hash,
+      musicAccess1155: musicAccess.deploymentTransaction().hash,
+      musicAsset: musicAccess.deploymentTransaction().hash,
       royaltySplitterFactory: royaltySplitterFactory.deploymentTransaction().hash,
       platformHub: platformHub.deploymentTransaction().hash,
       grantMinterRole: grantRoleTx.hash,

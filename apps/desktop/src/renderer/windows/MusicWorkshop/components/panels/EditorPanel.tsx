@@ -37,7 +37,6 @@ export default function EditorPanel({ controller }: EditorPanelProps) {
           </div>
           <div className={styles.formRowTwo}>
             <label className={styles.label}>价格 ETH<input className={styles.input} value={release.priceEth} onChange={(e) => controller.updateLocalRelease({ priceEth: e.target.value })} /></label>
-            <label className={styles.label}>版税 BPS<input className={styles.input} type="number" value={release.royaltyBps} onChange={(e) => controller.updateLocalRelease({ royaltyBps: Number(e.target.value) || 0 })} /></label>
           </div>
         </div>
       </section>

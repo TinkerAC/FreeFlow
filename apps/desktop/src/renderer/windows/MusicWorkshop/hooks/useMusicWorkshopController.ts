@@ -159,7 +159,6 @@ export function useMusicWorkshopController() {
       accessModel: selectedRelease.accessModel,
       previewSeconds: selectedRelease.previewSeconds,
       priceEth: selectedRelease.priceEth,
-      royaltyBps: selectedRelease.royaltyBps,
       audioSourceName: selectedRelease.audioSourceName,
       audioSourcePath: selectedRelease.audioSourcePath,
       coverSourceName: selectedRelease.coverSourceName,
@@ -169,15 +168,13 @@ export function useMusicWorkshopController() {
       metadataStorageObjectId: selectedRelease.metadataStorageObjectId,
       splitterAddress: selectedRelease.splitterAddress,
       publishTxHash: selectedRelease.publishTxHash,
-      purchaseTxHash: selectedRelease.purchaseTxHash,
       tokenId: selectedRelease.tokenId,
       chainId: effectiveWeb3Settings.chainId,
       chainName: effectiveWeb3Settings.chainName,
       explorerUrl: effectiveWeb3Settings.explorerUrl,
       musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
-      royaltySplitterFactoryAddress: effectiveWeb3Settings.royaltySplitterFactoryAddress,
       platformHubAddress: effectiveWeb3Settings.platformHubAddress,
-      royaltySplits: selectedRelease.royaltySplits,
+      revenueSplits: selectedRelease.revenueSplits,
       metadataDocument,
       latestError: selectedRelease.latestError,
       statusMessage: selectedRelease.statusMessage,
@@ -377,6 +374,7 @@ export function useMusicWorkshopController() {
       walletProvider,
       tokenId: selectedRelease.tokenId,
       platformHubAddress: effectiveWeb3Settings.platformHubAddress,
+      musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
       fallbackAddress: address,
     })).unwrap();
     setAccessCheck(next);
@@ -397,7 +395,7 @@ export function useMusicWorkshopController() {
 
   const activeSplits = React.useMemo(
     () => selectedRelease
-      ? (selectedRelease.royaltySplits.length ? selectedRelease.royaltySplits : defaultSplits(address))
+      ? (selectedRelease.revenueSplits.length ? selectedRelease.revenueSplits : defaultSplits(address))
       : [],
     [address, selectedRelease],
   );
@@ -405,16 +403,16 @@ export function useMusicWorkshopController() {
   const needsAudioReattach = !!selectedRelease?.audioSourceName && !audioFile && !selectedRelease.audioStorageObject;
   const needsCoverReattach = !!selectedRelease?.coverSourceName && !coverFile && !selectedRelease.coverStorageObject;
 
-  const updateSplitAt = React.useCallback((index: number, patch: Partial<CreatorReleaseRecord['royaltySplits'][number]>) => {
+  const updateSplitAt = React.useCallback((index: number, patch: Partial<CreatorReleaseRecord['revenueSplits'][number]>) => {
     if (!selectedRelease) return;
     const next = [...activeSplits];
     next[index] = { ...next[index], ...patch };
-    updateLocalRelease({ royaltySplits: next });
+    updateLocalRelease({ revenueSplits: next });
   }, [activeSplits, selectedRelease, updateLocalRelease]);
 
   const addSplit = React.useCallback(() => {
     updateLocalRelease({
-      royaltySplits: [
+      revenueSplits: [
         ...activeSplits,
         {
           id: `split-${Date.now()}`,
@@ -428,7 +426,7 @@ export function useMusicWorkshopController() {
 
   const removeSplit = React.useCallback((splitId: string) => {
     updateLocalRelease({
-      royaltySplits: activeSplits.length > 1
+      revenueSplits: activeSplits.length > 1
         ? activeSplits.filter((split) => split.id !== splitId)
         : activeSplits,
     });

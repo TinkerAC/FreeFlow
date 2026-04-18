@@ -8,13 +8,17 @@ type ActivityPanelProps = {
   controller: MusicWorkshopController;
 };
 
+type ActivityEntry = {
+  message: string;
+  level: 'info' | 'success' | 'warning' | 'error';
+  at: string;
+};
+
 export default function ActivityPanel({ controller }: ActivityPanelProps) {
   const release = controller.selectedRelease;
   if (!release) return null;
 
-  const activityLog = release.activityLog.length
-    ? release.activityLog
-    : [{ message: release.statusMessage || '等待活动', level: 'info' as const, at: release.updatedAt }];
+  const activityLog: ActivityEntry[] = [{ message: release.statusMessage || '等待活动', level: 'info', at: release.updatedAt }];
 
   return (
     <div className={styles.panelGrid}>
@@ -49,9 +53,9 @@ export default function ActivityPanel({ controller }: ActivityPanelProps) {
             </div>
           </div>
           <div className={styles.statusItem}>
-            <div className={styles.statusTitle}>Publish / Purchase Tx</div>
+            <div className={styles.statusTitle}>Publish Tx</div>
             <div className={`${styles.statusValue} ${styles.monospace}`}>
-              {release.publishTxHash || 'publish pending'}{'\n'}{release.purchaseTxHash || 'purchase pending'}
+              {release.publishTxHash || 'publish pending'}
             </div>
           </div>
         </div>

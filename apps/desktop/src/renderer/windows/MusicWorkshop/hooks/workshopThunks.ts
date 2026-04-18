@@ -8,6 +8,7 @@ import {
   getPinataConfig,
   listCreatorReleases,
   updateCreatorRelease,
+  upsertWeb25Purchase,
   uploadFileToWeb25Pinata,
   type Web25Session,
 } from '@renderer/core/web25/client';
@@ -15,7 +16,7 @@ import {
   logoutWeb25Session,
   refreshWeb25Session,
 } from '@renderer/core/web25/auth';
-import { PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
+import { MUSIC_ACCESS_1155_ABI, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import { type AccessCheckState, defaultSplits, EMPTY_DASHBOARD, metadataUriForRelease, slugify } from '../workshopHelpers';
 import type { MusicWorkshopRootState } from './workshopStore';
 
@@ -26,14 +27,12 @@ export type EffectiveWeb3Settings = {
   chainName: string;
   explorerUrl: string;
   musicAssetAddress: string;
-  royaltySplitterFactoryAddress: string;
   platformHubAddress: string;
-  defaultRoyaltyBps: number;
   platformFeeBps: number;
 };
 
 function normalizeSplits(release: CreatorReleaseRecord, fallbackAddress: string) {
-  const source = release.royaltySplits.length ? release.royaltySplits : defaultSplits(fallbackAddress);
+  const source = release.revenueSplits.length ? release.revenueSplits : defaultSplits(fallbackAddress);
   const normalized = source
     .map((item) => ({ ...item, address: item.address.trim(), share: Number(item.share || 0) }))
     .filter((item) => item.address && item.share > 0);
@@ -85,7 +84,7 @@ export const refreshDashboardThunk = createAsyncThunk<
 );
 
 export const deleteReleaseThunk = createAsyncThunk<
-  { releaseId: string; deletedPublishedResource: boolean; deletedStorageUploadCount: number; deletedStorageObjectCount: number },
+  { releaseId: string; deletedStorageUploadCount: number; deletedStorageObjectCount: number },
   { baseUrl: string; releaseId: string }
 >(
   'musicWorkshop/deleteRelease',
@@ -107,7 +106,7 @@ export const createReleaseThunk = createAsyncThunk<
 
     return {
       ...created,
-      royaltySplits: created.royaltySplits.length ? created.royaltySplits : defaultSplits(address || undefined),
+      revenueSplits: created.revenueSplits.length ? created.revenueSplits : defaultSplits(address || undefined),
     };
   },
 );
@@ -293,14 +292,12 @@ export const publishReleaseThunk = createAsyncThunk<
         chainName: effectiveWeb3Settings.chainName,
         explorerUrl: effectiveWeb3Settings.explorerUrl,
         musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
-        royaltySplitterFactoryAddress: effectiveWeb3Settings.royaltySplitterFactoryAddress,
         platformHubAddress: effectiveWeb3Settings.platformHubAddress,
-        royaltySplits: splits,
+        revenueSplits: splits,
       });
 
       const publishTx = await platformHub.publishTrack(
         metadataUri,
-        release.royaltyBps,
         requiresPurchase,
         priceWei,
         true,
@@ -375,6 +372,7 @@ export const publishReleaseThunk = createAsyncThunk<
           requiresPurchase,
           active: true,
           hasAccess: requiresPurchase ? null : true,
+          ownedBalance: '0',
           platformFeeEth: '',
           creatorProceedsEth: '',
           lastUpdated: '已根据链上回执更新作品编号',
@@ -398,16 +396,24 @@ export const publishReleaseThunk = createAsyncThunk<
 
 export const refreshAccessThunk = createAsyncThunk<
   AccessCheckState,
-  { walletProvider: WalletProviderLike; tokenId: string; platformHubAddress: string; fallbackAddress?: string | null }
+  {
+    walletProvider: WalletProviderLike;
+    tokenId: string;
+    platformHubAddress: string;
+    musicAssetAddress: string;
+    fallbackAddress?: string | null;
+  }
 >(
   'musicWorkshop/refreshAccess',
-  async ({ walletProvider, tokenId, platformHubAddress, fallbackAddress }) => {
+  async ({ walletProvider, tokenId, platformHubAddress, musicAssetAddress, fallbackAddress }) => {
     const provider = new BrowserProvider(walletProvider);
     const signer = await provider.getSigner();
     const currentAddress = fallbackAddress || await signer.getAddress();
     const platformHub = new Contract(platformHubAddress, PLATFORM_HUB_ABI, signer);
+    const musicAccess = new Contract(musicAssetAddress, MUSIC_ACCESS_1155_ABI, signer);
     const [creator, payoutReceiver, price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(tokenId);
     const hasAccess = await platformHub.hasAccess(currentAddress, tokenId);
+    const ownedBalance = await musicAccess.balanceOf(currentAddress, tokenId);
     const [, platformFee, creatorProceeds] = await platformHub.paymentPreview(tokenId);
 
     return {
@@ -418,6 +424,7 @@ export const refreshAccessThunk = createAsyncThunk<
       requiresPurchase,
       active,
       hasAccess,
+      ownedBalance: ownedBalance.toString(),
       platformFeeEth: formatEther(platformFee),
       creatorProceedsEth: formatEther(creatorProceeds),
       lastUpdated: `已查询 ${currentAddress.slice(0, 6)}... 的授权状态`,
@@ -439,19 +446,34 @@ export const buyAccessThunk = createAsyncThunk<
   async ({ baseUrl, releaseId, tokenId, walletProvider, platformHubAddress }) => {
     const provider = new BrowserProvider(walletProvider);
     const signer = await provider.getSigner();
+    const buyerAddress = await signer.getAddress();
     const platformHub = new Contract(platformHubAddress, PLATFORM_HUB_ABI, signer);
-    const [, , price, requiresPurchase] = await platformHub.getTrackSaleConfig(tokenId);
+    const [, , price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(tokenId);
     if (!requiresPurchase) {
       return null;
+    }
+    if (!active) {
+      throw new Error('该作品当前未开放购买');
+    }
+    const hasAccess = await platformHub.hasAccess(buyerAddress, tokenId);
+    if (hasAccess) {
+      throw new Error('当前钱包已经拥有访问权');
     }
 
     const buyTx = await platformHub.buyAccess(tokenId, { value: price });
     await buyTx.wait();
+    await upsertWeb25Purchase(baseUrl, {
+      releaseId,
+      walletAddress: buyerAddress,
+      chainId: Number((await provider.getNetwork()).chainId),
+      txHash: buyTx.hash,
+      amountWei: price.toString(),
+      status: 'confirmed',
+      purchasedAt: new Date().toISOString(),
+    });
 
     return await updateCreatorRelease(baseUrl, releaseId, {
-      purchaseTxHash: buyTx.hash,
       statusMessage: `访问权购买成功：${buyTx.hash.slice(0, 10)}...`,
-      activityEntry: { message: `Access purchased: ${buyTx.hash}`, level: 'success' },
     });
   },
 );

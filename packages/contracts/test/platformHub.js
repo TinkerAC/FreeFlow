@@ -5,9 +5,9 @@ describe("PlatformHub", function () {
   async function deployFixture() {
     const [owner, creator, collaborator, buyer] = await ethers.getSigners();
 
-    const MusicAsset = await ethers.getContractFactory("MusicAsset");
-    const musicAsset = await MusicAsset.deploy("FreeFlow Music Release", "FFM", owner.address);
-    await musicAsset.waitForDeployment();
+    const MusicAccess1155 = await ethers.getContractFactory("MusicAccess1155");
+    const musicAccess = await MusicAccess1155.deploy(owner.address);
+    await musicAccess.waitForDeployment();
 
     const RoyaltySplitterFactory = await ethers.getContractFactory("RoyaltySplitterFactory");
     const royaltySplitterFactory = await RoyaltySplitterFactory.deploy();
@@ -15,25 +15,24 @@ describe("PlatformHub", function () {
 
     const PlatformHub = await ethers.getContractFactory("PlatformHub");
     const platformHub = await PlatformHub.deploy(
-      await musicAsset.getAddress(),
+      await musicAccess.getAddress(),
       await royaltySplitterFactory.getAddress(),
       owner.address,
       500
     );
     await platformHub.waitForDeployment();
 
-    const minterRole = await musicAsset.MINTER_ROLE();
-    await (await musicAsset.grantRole(minterRole, await platformHub.getAddress())).wait();
+    const minterRole = await musicAccess.MINTER_ROLE();
+    await (await musicAccess.grantRole(minterRole, await platformHub.getAddress())).wait();
 
-    return { owner, creator, collaborator, buyer, musicAsset, platformHub };
+    return { owner, creator, collaborator, buyer, musicAccess, platformHub };
   }
 
-  it("publishes a paid track and grants buyer access after payment", async function () {
-    const { creator, collaborator, buyer, musicAsset, platformHub } = await deployFixture();
+  it("publishes a paid track and mints buyer access after payment", async function () {
+    const { creator, collaborator, buyer, musicAccess, platformHub } = await deployFixture();
     const price = ethers.parseEther("0.1");
     const publishArgs = [
       "ipfs://track-1",
-      1200,
       true,
       price,
       true,
@@ -44,10 +43,13 @@ describe("PlatformHub", function () {
     const [tokenId, splitterAddress] = await platformHub.connect(creator).publishTrack.staticCall(...publishArgs);
     await (await platformHub.connect(creator).publishTrack(...publishArgs)).wait();
 
-    assert.equal(await musicAsset.ownerOf(tokenId), creator.address);
+    assert.equal(await musicAccess.creatorOf(tokenId), creator.address);
+    assert.equal(await musicAccess.uri(tokenId), "ipfs://track-1");
+    assert.equal(await musicAccess.balanceOf(buyer.address, tokenId), 0n);
     assert.equal(await platformHub.hasAccess(buyer.address, tokenId), false);
 
     await (await platformHub.connect(buyer).buyAccess(tokenId, { value: price })).wait();
+    assert.equal(await musicAccess.balanceOf(buyer.address, tokenId), 1n);
     assert.equal(await platformHub.hasAccess(buyer.address, tokenId), true);
 
     const preview = await platformHub.paymentPreview(tokenId);
@@ -62,7 +64,6 @@ describe("PlatformHub", function () {
     const { creator, buyer, platformHub } = await deployFixture();
     const publishArgs = [
       "ipfs://track-open",
-      500,
       false,
       0,
       true,
@@ -76,12 +77,33 @@ describe("PlatformHub", function () {
     assert.equal(await platformHub.hasAccess(buyer.address, tokenId), true);
   });
 
+  it("blocks normal ERC-1155 transfers between users", async function () {
+    const { creator, buyer, collaborator, musicAccess, platformHub } = await deployFixture();
+    const price = ethers.parseEther("0.03");
+    const publishArgs = [
+      "ipfs://track-non-transferable",
+      true,
+      price,
+      true,
+      [creator.address],
+      [100],
+    ];
+
+    const [tokenId] = await platformHub.connect(creator).publishTrack.staticCall(...publishArgs);
+    await (await platformHub.connect(creator).publishTrack(...publishArgs)).wait();
+    await (await platformHub.connect(buyer).buyAccess(tokenId, { value: price })).wait();
+
+    await assert.rejects(
+      musicAccess.connect(buyer).safeTransferFrom(buyer.address, collaborator.address, tokenId, 1, "0x"),
+      /NonTransferableAccessToken/
+    );
+  });
+
   it("allows only the creator to update sale configuration", async function () {
     const { creator, buyer, platformHub } = await deployFixture();
     const price = ethers.parseEther("0.02");
     const publishArgs = [
       "ipfs://track-editable",
-      1000,
       true,
       price,
       true,

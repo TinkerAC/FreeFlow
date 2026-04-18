@@ -30,6 +30,7 @@ export type AccessCheckState = {
   requiresPurchase: boolean | null;
   active: boolean | null;
   hasAccess: boolean | null;
+  ownedBalance: string;
   platformFeeEth: string;
   creatorProceedsEth: string;
   lastUpdated: string;
@@ -45,6 +46,7 @@ export const DEFAULT_ACCESS_CHECK_STATE: AccessCheckState = {
   requiresPurchase: null,
   active: null,
   hasAccess: null,
+  ownedBalance: '',
   platformFeeEth: '',
   creatorProceedsEth: '',
   lastUpdated: '尚未查询购买权限',
@@ -276,7 +278,6 @@ export function buildMetadataDocument(
       { trait_type: 'Genre', value: release.genreLabel || 'Unspecified' },
       { trait_type: 'Access Model', value: release.accessModel === 'purchase' ? 'Purchase Required' : 'Open Access' },
       { trait_type: 'Preview Seconds', value: release.previewSeconds },
-      { trait_type: 'Royalty BPS', value: release.royaltyBps },
     ],
     properties: {
       media: {

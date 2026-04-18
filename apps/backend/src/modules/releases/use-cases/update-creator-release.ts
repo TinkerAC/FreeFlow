@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { CREATOR_RELEASE_PUBLISHED_STATUS } from '@freeflow/web25-shared';
 import { AppError } from '../../../core/errors/app-error.js';
-import { mapReleaseRecord, parseActivityLog } from '../release.mapper.js';
+import { mapReleaseRecord } from '../release.mapper.js';
 import { releaseRepository } from '../release.repository.js';
 import {
   asJsonValue,
@@ -20,18 +20,7 @@ function buildReleaseUpdateData(
   existing: PersistedCreatorRelease,
   input: UpdateCreatorReleaseInput,
 ) {
-  const nextActivityLog = parseActivityLog(existing.activityLog);
-  if (input.activityEntry) {
-    nextActivityLog.unshift({
-      message: input.activityEntry.message,
-      level: input.activityEntry.level,
-      at: input.activityEntry.at ?? new Date().toISOString(),
-    });
-  }
-
-  const data: Prisma.CreatorReleaseUpdateInput = {
-    lastActivityAt: new Date(),
-  };
+  const data: Prisma.CreatorReleaseUpdateInput = {};
 
   if (input.title !== undefined) {
     data.title = input.title.trim();
@@ -54,7 +43,6 @@ function buildReleaseUpdateData(
   if (input.accessModel !== undefined) data.accessModel = input.accessModel;
   if (input.previewSeconds !== undefined) data.previewSeconds = input.previewSeconds;
   if (input.priceEth !== undefined) data.priceEth = input.priceEth.trim();
-  if (input.royaltyBps !== undefined) data.royaltyBps = input.royaltyBps;
   if (input.audioSourceName !== undefined) data.audioSourceName = toNullableString(input.audioSourceName);
   if (input.coverSourceName !== undefined) data.coverSourceName = toNullableString(input.coverSourceName);
   if (input.audioStorageObjectId !== undefined) {
@@ -76,26 +64,15 @@ function buildReleaseUpdateData(
   if (input.chainName !== undefined) data.chainName = toNullableString(input.chainName);
   if (input.explorerUrl !== undefined) data.explorerUrl = toNullableString(input.explorerUrl);
   if (input.musicAssetAddress !== undefined) data.musicAssetAddress = toNullableString(input.musicAssetAddress);
-  if (input.royaltySplitterFactoryAddress !== undefined) {
-    data.royaltySplitterFactoryAddress = toNullableString(input.royaltySplitterFactoryAddress);
-  }
   if (input.platformHubAddress !== undefined) data.platformHubAddress = toNullableString(input.platformHubAddress);
   if (input.splitterAddress !== undefined) data.splitterAddress = toNullableString(input.splitterAddress);
   if (input.publishTxHash !== undefined) data.publishTxHash = toNullableString(input.publishTxHash);
   if (input.publishBlockNumber !== undefined) data.publishBlockNumber = input.publishBlockNumber;
   if (input.tokenId !== undefined) data.tokenId = toNullableString(input.tokenId);
   if (input.metadataDocument !== undefined) data.metadataDocument = asJsonValue(input.metadataDocument);
-  if (input.royaltySplits !== undefined) data.royaltySplits = asJsonValue(input.royaltySplits);
+  if (input.revenueSplits !== undefined) data.revenueSplits = asJsonValue(input.revenueSplits);
   if (input.statusMessage !== undefined) data.statusMessage = toNullableStatusMessage(input.statusMessage);
   if (input.latestError !== undefined) data.latestError = toNullableString(input.latestError);
-
-  if (input.activityEntry) {
-    // 活动日志只保留最近 30 条，避免单条记录无限膨胀。
-    data.activityLog = nextActivityLog.slice(0, 30) as Prisma.InputJsonValue;
-    if (input.statusMessage === undefined) {
-      data.statusMessage = toNullableStatusMessage(input.activityEntry.message);
-    }
-  }
 
   return data;
 }
@@ -123,34 +100,8 @@ async function assertStorageLinksBelongToCreator(
   ]);
 }
 
-async function syncPublishedTrackResource(
-  creatorUserId: string,
-  release: PersistedCreatorRelease,
-) {
-  if (
-    release.status !== CREATOR_RELEASE_PUBLISHED_STATUS ||
-    !release.chainId ||
-    !release.musicAssetAddress ||
-    !release.tokenId
-  ) {
-    return false;
-  }
-
-  await releaseRepository.upsertPublishedTrackResource({
-    releaseId: release.id,
-    creatorUserId,
-    chainId: release.chainId,
-    musicAssetAddress: release.musicAssetAddress,
-    tokenId: release.tokenId,
-    contentCid: release.metadataStorageObject?.cid ?? null,
-    title: release.title,
-  });
-
-  return true;
-}
-
 /**
- * 更新发行草稿的可变字段，并在发布成功后同步资源索引。
+ * 更新发行草稿的可变字段。链上发布结果由前端根据交易回执主动回写。
  */
 export async function updateCreatorRelease(
   creatorUserId: string,
@@ -170,10 +121,5 @@ export async function updateCreatorRelease(
     throw new AppError(404, 'Release not found', 'RELEASE_NOT_FOUND');
   }
 
-  const didSyncResource = await syncPublishedTrackResource(creatorUserId, updated);
-  const finalRecord = didSyncResource
-    ? await releaseRepository.findByIdForCreator(creatorUserId, releaseId)
-    : updated;
-
-  return mapReleaseRecord(finalRecord ?? updated);
+  return mapReleaseRecord(updated);
 }

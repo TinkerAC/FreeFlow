@@ -2,7 +2,6 @@ import type {
   CreatorReleaseClientUpdateStatus,
   CreatorReleaseStatus,
   ReleaseAccessModel,
-  ReleaseActivityLevel,
 } from '@freeflow/web25-shared';
 import { readWeb25SessionTokenSnapshot } from './sessionSync';
 
@@ -68,12 +67,6 @@ export type PinataConfigPayload = {
   maxFileSizeBytes: number;
 };
 
-export type CreatorReleaseActivity = {
-  message: string;
-  level: ReleaseActivityLevel;
-  at: string;
-};
-
 export type CreatorReleaseSplit = {
   id: string;
   label: string;
@@ -108,7 +101,6 @@ export type CreatorReleaseRecord = {
   accessModel: ReleaseAccessModel;
   previewSeconds: number;
   priceEth: string;
-  royaltyBps: number;
   audioSourceName: string | null;
   audioSourcePath: string | null;
   coverSourceName: string | null;
@@ -122,21 +114,17 @@ export type CreatorReleaseRecord = {
   splitterAddress: string | null;
   publishTxHash: string | null;
   publishBlockNumber: string | null;
-  purchaseTxHash: string | null;
   tokenId: string | null;
   chainId: number | null;
   chainName: string | null;
   explorerUrl: string | null;
   musicAssetAddress: string | null;
-  royaltySplitterFactoryAddress: string | null;
   platformHubAddress: string | null;
   metadataDocument: unknown | null;
-  royaltySplits: CreatorReleaseSplit[];
-  activityLog: CreatorReleaseActivity[];
+  revenueSplits: CreatorReleaseSplit[];
   statusMessage: string | null;
   latestError: string | null;
   publishedAt: string | null;
-  lastActivityAt: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -153,7 +141,6 @@ export type CreatorReleaseDashboard = {
 
 export type DeleteCreatorReleaseResult = {
   releaseId: string;
-  deletedPublishedResource: boolean;
   deletedStorageUploadCount: number;
   deletedStorageObjectCount: number;
 };
@@ -161,11 +148,6 @@ export type DeleteCreatorReleaseResult = {
 export type UpdateCreatorReleasePayload = Record<string, unknown> & {
   status?: CreatorReleaseClientUpdateStatus;
   accessModel?: ReleaseAccessModel;
-  activityEntry?: {
-    message: string;
-    level?: ReleaseActivityLevel;
-    at?: string;
-  };
 };
 
 export type IndexedTrackResource = {
@@ -188,7 +170,6 @@ export type IndexedTrackResource = {
   accessModel: ReleaseAccessModel | null;
   previewSeconds: number | null;
   priceEth: string | null;
-  royaltyBps: number | null;
   explorerUrl: string | null;
   platformHubAddress: string | null;
   publishTxHash: string | null;
@@ -201,30 +182,40 @@ export type IndexedTrackResource = {
 
 export type Web25Comment = {
   id: string;
-  resourceId: string;
-  parentId: string | null;
+  releaseId: string;
   body: string;
-  status: string;
   author: {
     userId: string;
     displayName: string;
     avatarUrl: string | null;
     walletAddress: string | null;
   };
-  replies: Web25Comment[];
   createdAt: string;
   updatedAt: string;
 };
 
 export type Web25CommentList = {
-  resource: {
+  release: {
     id: string;
-    resourceKey: string;
-    type: string;
     title: string | null;
+    status: CreatorReleaseStatus;
   };
   items: Web25Comment[];
   nextCursor: string | null;
+};
+
+export type Web25PurchaseRecord = {
+  id: string;
+  releaseId: string;
+  buyerUserId: string;
+  walletAddress: string;
+  chainId: number;
+  txHash: string;
+  amountWei: string;
+  status: 'pending' | 'confirmed' | 'failed' | 'refunded';
+  purchasedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 let sessionToken: string | null = null;
@@ -501,13 +492,13 @@ export async function resolveIndexedTrackResource(baseUrl: string, resourceKey: 
 export async function listWeb25Comments(
   baseUrl: string,
   input: {
-    resourceKey: string;
+    releaseId: string;
     limit?: number;
     cursor?: string | null;
   },
 ) {
   const query = new URLSearchParams({
-    resourceKey: input.resourceKey,
+    releaseId: input.releaseId,
     limit: String(input.limit ?? 30),
   });
   if (input.cursor) query.set('cursor', input.cursor);
@@ -521,14 +512,35 @@ export async function listWeb25Comments(
 export async function createWeb25Comment(
   baseUrl: string,
   input: {
-    resourceKey: string;
+    releaseId: string;
     body: string;
-    parentId?: string | null;
   },
 ) {
   return await requestWeb25<Web25Comment>(
     baseUrl,
     '/api/v1/comments',
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function upsertWeb25Purchase(
+  baseUrl: string,
+  input: {
+    releaseId: string;
+    walletAddress: string;
+    chainId: number;
+    txHash: string;
+    amountWei: string;
+    status?: Web25PurchaseRecord['status'];
+    purchasedAt?: string | null;
+  },
+) {
+  return await requestWeb25<Web25PurchaseRecord>(
+    baseUrl,
+    '/api/v1/purchases',
     {
       method: 'POST',
       body: JSON.stringify(input),

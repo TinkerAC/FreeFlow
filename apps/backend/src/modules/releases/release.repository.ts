@@ -1,4 +1,4 @@
-import { Prisma, ResourceType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../infra/database/prisma.js';
 
 const storageObjectInclude = {
@@ -20,7 +20,6 @@ const releaseInclude = {
   metadataStorageObject: {
     include: storageObjectInclude,
   },
-  publishedResource: true,
 } satisfies Prisma.CreatorReleaseInclude;
 
 /**
@@ -96,62 +95,6 @@ export class ReleaseRepository {
     });
   }
 
-  async upsertPublishedTrackResource(input: {
-    releaseId: string;
-    creatorUserId: string;
-    chainId: number;
-    musicAssetAddress: string;
-    tokenId: string;
-    contentCid?: string | null;
-    title?: string | null;
-  }) {
-    const contractAddressLower = input.musicAssetAddress.toLowerCase();
-    const resourceKey = [
-      'chain',
-      input.chainId,
-      contractAddressLower,
-      input.tokenId,
-    ].join(':');
-
-    const resource = await prisma.resource.upsert({
-      where: {
-        resourceKey,
-      },
-      update: {
-        type: ResourceType.TRACK,
-        chainId: input.chainId,
-        contractAddress: input.musicAssetAddress,
-        contractAddressLower,
-        tokenId: input.tokenId,
-        contentCid: input.contentCid ?? null,
-        title: input.title ?? null,
-        ownerUserId: input.creatorUserId,
-      },
-      create: {
-        resourceKey,
-        type: ResourceType.TRACK,
-        chainId: input.chainId,
-        contractAddress: input.musicAssetAddress,
-        contractAddressLower,
-        tokenId: input.tokenId,
-        contentCid: input.contentCid ?? null,
-        title: input.title ?? null,
-        ownerUserId: input.creatorUserId,
-      },
-    });
-
-    await prisma.creatorRelease.update({
-      where: {
-        id: input.releaseId,
-      },
-      data: {
-        publishedResourceId: resource.id,
-      },
-    });
-
-    return resource;
-  }
-
   async deleteForCreator(creatorUserId: string, releaseId: string) {
     return prisma.$transaction(async (tx) => {
       const existing = await tx.creatorRelease.findFirst({
@@ -164,7 +107,6 @@ export class ReleaseRepository {
           audioStorageObjectId: true,
           coverStorageObjectId: true,
           metadataStorageObjectId: true,
-          publishedResourceId: true,
         },
       });
 
@@ -177,14 +119,6 @@ export class ReleaseRepository {
         existing.coverStorageObjectId,
         existing.metadataStorageObjectId,
       ].filter((id): id is string => Boolean(id))));
-
-      if (existing.publishedResourceId) {
-        await tx.resource.deleteMany({
-          where: {
-            id: existing.publishedResourceId,
-          },
-        });
-      }
 
       await tx.creatorRelease.delete({
         where: {
@@ -227,7 +161,6 @@ export class ReleaseRepository {
 
       return {
         releaseId: existing.id,
-        deletedPublishedResource: Boolean(existing.publishedResourceId),
         deletedStorageUploadCount: deletedStorageUploads.count,
         deletedStorageObjectCount: deletedStorageObjects.count,
       };

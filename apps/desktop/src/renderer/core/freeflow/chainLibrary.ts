@@ -39,7 +39,6 @@ export function toFreeFlowTrackInfo(item: IndexedTrackResource): FreeFlowTrackIn
     accessModel: item.accessModel,
     previewSeconds: item.previewSeconds,
     priceEth: item.priceEth,
-    royaltyBps: item.royaltyBps,
     coverUrl: item.coverUrl,
     coverCid: item.coverCid,
     audioUrl: item.audioUrl,

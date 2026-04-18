@@ -154,9 +154,14 @@
 }
 
 .loading,
+.notice,
 .error {
     font-size: 13px;
     color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.notice {
+    color: rgb(var(--md-sys-color-primary));
 }
 
 .error {

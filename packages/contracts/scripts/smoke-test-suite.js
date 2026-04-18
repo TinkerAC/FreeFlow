@@ -29,6 +29,10 @@ async function main() {
   const PlatformHub = await hre.ethers.getContractFactory("PlatformHub");
   const platformHub = PlatformHub.attach(deployment.contracts.platformHub).connect(creator);
 
+  const MusicAccess1155 = await hre.ethers.getContractFactory("MusicAccess1155");
+  const musicAccess = MusicAccess1155.attach(
+    deployment.contracts.musicAccess1155 || deployment.contracts.musicAsset
+  );
   const RoyaltySplitter = await hre.ethers.getContractFactory("RoyaltySplitter");
 
   // 先给测试买家转入足够的原生代币，用于后续购买访问权限。
@@ -42,7 +46,6 @@ async function main() {
   // 用 staticCall 预演发布结果，提前拿到 tokenId 和 splitter 地址，便于后续断言。
   const [predictedTokenId, predictedSplitter] = await platformHub.publishTrack.staticCall(
     tokenUri,
-    1000,
     true,
     publishPrice,
     true,
@@ -53,7 +56,6 @@ async function main() {
   // 实际发布作品，创建 NFT 和收益分账配置。
   const publishTx = await platformHub.publishTrack(
     tokenUri,
-    1000,
     true,
     publishPrice,
     true,
@@ -72,6 +74,7 @@ async function main() {
 
   // 购买后应获得访问权限，同时创作者收益进入对应的分账合约。
   const hasAccessAfter = await platformHub.hasAccess(buyer.address, predictedTokenId);
+  const buyerBalance = await musicAccess.balanceOf(buyer.address, predictedTokenId);
   const splitter = RoyaltySplitter.attach(predictedSplitter).connect(creator);
   const releasable = await splitter.releasable(creatorAddress);
   const releaseTx = await splitter.release(creatorAddress);
@@ -87,6 +90,7 @@ async function main() {
     splitter: predictedSplitter,
     hasAccessBefore,
     hasAccessAfter,
+    buyerBalance: buyerBalance.toString(),
     releasable: releasable.toString(),
   }, null, 2));
 }

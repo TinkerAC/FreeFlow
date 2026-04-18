@@ -1,5 +1,5 @@
 import { CREATOR_RELEASE_PUBLISHED_STATUS } from '@freeflow/web25-shared';
-import { Prisma, ResourceType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../infra/database/prisma.js';
 
 const storageObjectInclude = {
@@ -11,56 +11,72 @@ const storageObjectInclude = {
   },
 } satisfies Prisma.StorageObjectInclude;
 
-const resourceInclude = {
-  publishedRelease: {
-    include: {
-      audioStorageObject: {
-        include: storageObjectInclude,
-      },
-      coverStorageObject: {
-        include: storageObjectInclude,
-      },
-      metadataStorageObject: {
-        include: storageObjectInclude,
-      },
-    },
+const releaseInclude = {
+  audioStorageObject: {
+    include: storageObjectInclude,
   },
-} satisfies Prisma.ResourceInclude;
+  coverStorageObject: {
+    include: storageObjectInclude,
+  },
+  metadataStorageObject: {
+    include: storageObjectInclude,
+  },
+} satisfies Prisma.CreatorReleaseInclude;
 
-/**
- * 资源索引仓储。
- * 这里只负责持久化查询，业务筛选逻辑由 service 组合。
- */
+export function buildReleaseResourceKey(input: {
+  chainId: number | null;
+  musicAssetAddress: string | null;
+  tokenId: string | null;
+}) {
+  if (!input.chainId || !input.musicAssetAddress || !input.tokenId) return null;
+  return [
+    'chain',
+    input.chainId,
+    input.musicAssetAddress.toLowerCase(),
+    input.tokenId,
+  ].join(':');
+}
+
+function parseReleaseResourceKey(resourceKey: string) {
+  const [kind, chainIdRaw, contractAddressLower, tokenId] = resourceKey.split(':');
+  const chainId = Number(chainIdRaw);
+  if (kind !== 'chain' || !Number.isInteger(chainId) || !contractAddressLower || !tokenId) {
+    return null;
+  }
+  return {
+    chainId,
+    contractAddressLower,
+    tokenId,
+  };
+}
+
 export class ResourceRepository {
   async searchPublishedTracks(keyword: string, limit: number) {
     const normalized = keyword.trim();
 
-    const where: Prisma.ResourceWhereInput = {
-      type: ResourceType.TRACK,
-      publishedRelease: {
-        is: {
-          status: CREATOR_RELEASE_PUBLISHED_STATUS,
-        },
-      },
+    const where: Prisma.CreatorReleaseWhereInput = {
+      status: CREATOR_RELEASE_PUBLISHED_STATUS,
+      chainId: { not: null },
+      musicAssetAddress: { not: null },
+      tokenId: { not: null },
     };
 
     if (normalized) {
       const lowered = normalized.toLowerCase();
       where.OR = [
         { title: { contains: normalized, mode: 'insensitive' } },
+        { artistName: { contains: normalized, mode: 'insensitive' } },
+        { albumName: { contains: normalized, mode: 'insensitive' } },
+        { genreLabel: { contains: normalized, mode: 'insensitive' } },
         { tokenId: { contains: normalized, mode: 'insensitive' } },
-        { contentCid: { contains: normalized, mode: 'insensitive' } },
-        { contractAddressLower: { contains: lowered } },
-        { resourceKey: { contains: lowered, mode: 'insensitive' } },
-        { publishedRelease: { is: { title: { contains: normalized, mode: 'insensitive' } } } },
-        { publishedRelease: { is: { artistName: { contains: normalized, mode: 'insensitive' } } } },
-        { publishedRelease: { is: { albumName: { contains: normalized, mode: 'insensitive' } } } },
+        { musicAssetAddress: { contains: lowered, mode: 'insensitive' } },
+        { metadataStorageObject: { is: { cid: { contains: normalized, mode: 'insensitive' } } } },
       ];
     }
 
-    return prisma.resource.findMany({
+    return prisma.creatorRelease.findMany({
       where,
-      include: resourceInclude,
+      include: releaseInclude,
       orderBy: [
         { updatedAt: 'desc' },
         { createdAt: 'desc' },
@@ -70,17 +86,20 @@ export class ResourceRepository {
   }
 
   async findPublishedTrackByResourceKey(resourceKey: string) {
-    return prisma.resource.findFirst({
+    const parsed = parseReleaseResourceKey(resourceKey);
+    if (!parsed) return null;
+
+    return prisma.creatorRelease.findFirst({
       where: {
-        resourceKey,
-        type: ResourceType.TRACK,
-        publishedRelease: {
-          is: {
-            status: CREATOR_RELEASE_PUBLISHED_STATUS,
-          },
+        status: CREATOR_RELEASE_PUBLISHED_STATUS,
+        chainId: parsed.chainId,
+        musicAssetAddress: {
+          equals: parsed.contractAddressLower,
+          mode: 'insensitive',
         },
+        tokenId: parsed.tokenId,
       },
-      include: resourceInclude,
+      include: releaseInclude,
     });
   }
 }

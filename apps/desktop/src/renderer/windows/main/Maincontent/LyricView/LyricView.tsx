@@ -74,10 +74,10 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     loadLyrics();
   }, [loadLyrics]);
 
-  const currentResourceKey = player.playQueue.currentTrack?.freeflow?.resourceKey ?? '';
+  const currentReleaseId = player.playQueue.currentTrack?.freeflow?.releaseId ?? '';
 
   const loadComments = useCallback(async () => {
-    if (!currentResourceKey) {
+    if (!currentReleaseId) {
       setComments([]);
       setCommentsError(null);
       return;
@@ -87,7 +87,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     setCommentsError(null);
     try {
       const payload = await listWeb25Comments(web25BaseUrl.value, {
-        resourceKey: currentResourceKey,
+        releaseId: currentReleaseId,
         limit: 30,
       });
       setComments(payload.items);
@@ -96,7 +96,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     } finally {
       setCommentsLoading(false);
     }
-  }, [currentResourceKey, web25BaseUrl.value]);
+  }, [currentReleaseId, web25BaseUrl.value]);
 
   useEffect(() => {
     void loadComments();
@@ -104,13 +104,13 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
 
   const submitComment = useCallback(async () => {
     const body = commentDraft.trim();
-    if (!currentResourceKey || !body || !session) return;
+    if (!currentReleaseId || !body || !session) return;
 
     setCommentBusy(true);
     setCommentsError(null);
     try {
       const created = await createWeb25Comment(web25BaseUrl.value, {
-        resourceKey: currentResourceKey,
+        releaseId: currentReleaseId,
         body,
       });
       setComments((prev) => [created, ...prev]);
@@ -120,7 +120,7 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
     } finally {
       setCommentBusy(false);
     }
-  }, [commentDraft, currentResourceKey, session, web25BaseUrl.value]);
+  }, [commentDraft, currentReleaseId, session, web25BaseUrl.value]);
 
   const hasOrigin = !!lyric?.originLines.length;
   const hasPronunciation = !!lyric?.pronunciationLines.length;
@@ -188,16 +188,16 @@ const LyricView: React.FC<LyricViewProps> = ({ player }) => {
         <div className={styles.commentsHeader}>
           <div>
             <h2>评论</h2>
-            <p>{currentResourceKey ? `${comments.length} 条讨论` : '仅 FreeFlow 资源支持评论'}</p>
+            <p>{currentReleaseId ? `${comments.length} 条讨论` : '仅 FreeFlow 资源支持评论'}</p>
           </div>
-          {currentResourceKey ? (
+          {currentReleaseId ? (
             <button type="button" className={styles.refreshButton} onClick={() => void loadComments()} disabled={commentsLoading}>
               {commentsLoading ? '刷新中' : '刷新'}
             </button>
           ) : null}
         </div>
 
-        {currentResourceKey ? (
+        {currentReleaseId ? (
           <>
             <div className={styles.commentComposer}>
               <textarea
