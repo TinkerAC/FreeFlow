@@ -4,6 +4,7 @@ import type {
   ReleaseAccessModel,
   ReleaseActivityLevel,
 } from '@freeflow/web25-shared';
+import { readWeb25SessionTokenSnapshot } from './sessionSync';
 
 type ApiSuccessEnvelope<TData> = {
   ok: true;
@@ -228,6 +229,16 @@ export type Web25CommentList = {
 
 let sessionToken: string | null = null;
 
+export function setWeb25SessionToken(token: string | null) {
+  sessionToken = token?.trim() || null;
+}
+
+function resolveSessionToken() {
+  if (sessionToken) return sessionToken;
+  sessionToken = readWeb25SessionTokenSnapshot();
+  return sessionToken;
+}
+
 function joinUrl(baseUrl: string, path: string) {
   return `${baseUrl.replace(/\/$/, '')}${path}`;
 }
@@ -239,8 +250,9 @@ async function requestWeb25<TData>(
 ): Promise<TData> {
   const headers = new Headers(init.headers ?? {});
 
-  if (sessionToken) {
-    headers.set('Authorization', `Bearer ${sessionToken}`);
+  const token = resolveSessionToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
@@ -321,15 +333,17 @@ export async function getWeb25Session(baseUrl: string) {
 }
 
 export async function logoutWeb25(baseUrl: string) {
-  sessionToken = null;
-  const payload = await requestWeb25<{ loggedOut: boolean }>(
-    baseUrl,
-    '/api/v1/auth/logout',
-    {
-      method: 'POST',
-    },
-  );
-  return payload;
+  try {
+    return await requestWeb25<{ loggedOut: boolean }>(
+      baseUrl,
+      '/api/v1/auth/logout',
+      {
+        method: 'POST',
+      },
+    );
+  } finally {
+    sessionToken = null;
+  }
 }
 
 export async function getCurrentWeb25UserProfile(baseUrl: string) {

@@ -45,7 +45,6 @@ export default function ContextMenu({
     const activePlaylistId = activePlaylist?.playlist_id ?? null;
     if (activePlaylistId === null) return;
     if (activeIsChainLibrary) await removeChainLibraryTrack(track);
-    else if (activePlaylistId === 0) await libraryContext.removeTrackFromLibrary(track);
     else await playlistContext.removeTrackFromPlaylist(activePlaylistId, track);
     if (!activeIsChainLibrary) {
       await musicLibraryController.refreshPlaylists();
@@ -58,8 +57,7 @@ export default function ContextMenu({
   };
 
   const addToTarget = async (playlistId: number) => {
-    if (playlistId === 0) await libraryContext.addTrackToLibrary(track);
-    else await playlistContext.addTrackToPlaylist(track, playlistId);
+    await playlistContext.addTrackToPlaylist(track, playlistId);
     await musicLibraryController.refreshPlaylists();
   };
 

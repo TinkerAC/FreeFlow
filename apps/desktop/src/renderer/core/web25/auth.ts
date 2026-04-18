@@ -5,6 +5,7 @@ import {
   getWeb25Session,
   logoutWeb25,
   requestSiweNonce,
+  setWeb25SessionToken,
   verifySiweSession,
   type Web25Session,
 } from './client';
@@ -76,7 +77,7 @@ export async function loginWeb25WithSiwe(input: LoginInput) {
   });
   const signature = await signer.signMessage(message);
   const verified = await verifySiweSession(input.baseUrl, { message, signature });
-  writeWeb25SessionSnapshot(verified.session);
+  writeWeb25SessionSnapshot(verified.session, verified.sessionToken);
   return verified.session;
 }
 
@@ -89,6 +90,7 @@ export async function logoutWeb25Session(
   } catch {
     // Local cleanup still applies when backend logout fails (offline/restart scenarios).
   } finally {
+    setWeb25SessionToken(null);
     clearWeb25SessionSnapshots(options.clearLocalScope ?? 'all-profiles');
   }
 }

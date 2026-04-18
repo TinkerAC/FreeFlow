@@ -5,7 +5,7 @@ import styles from './SearchResultView.module.css';
 
 import TabNav, { TabKey } from './TabNav';
 import ContextMenu from './ContextMenu';
-import { libraryContext, playlistContext } from '@renderer/core/electronContextApi';
+import { playlistContext } from '@renderer/core/electronContextApi';
 import PlaylistsTab from './PlaylistTab';
 import TracksTab from './TrackTab';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
@@ -73,9 +73,6 @@ export default function SearchResultView({
             y={contextMenu.y}
             track={selectedTrackRef.current}
             player={player}
-            addToLibrary={(t) => t.platform === Platform.FREEFLOW ? undefined : libraryContext.addTrackToLibrary(t).then(() => {
-              musicLibraryController.refreshPlaylists();
-            })}
             addTrackToPlaylist={(t, id) => t.platform === Platform.FREEFLOW ? undefined : playlistContext.addTrackToPlaylist(t, id).then(() => {
               musicLibraryController.refreshPlaylists();
             })}

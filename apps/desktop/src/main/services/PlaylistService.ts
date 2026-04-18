@@ -1,7 +1,6 @@
 import { inject } from 'inversify';
 import PlaylistRepository from '@main/database/repository/PlaylistRepository';
 import TrackRepository from '@main/database/repository/TrackRepository';
-import { fileExists } from '@src/utils/helpers';
 import TrackService from '@main/services/TrackService';
 import { Platform } from '@main/core/enum/Platform';
 import { TrackEntity } from '@src/shared/domainModel/TrackEntity';
@@ -25,63 +24,17 @@ export default class PlaylistService extends AbstractService {
 
   public async getPlaylists(): Promise<PlaylistEntity[]> {
     try {
-      // Step 1: 获取库中的所有 TrackRecord，并检查文件是否存在
-      const libraryTracks: TrackEntity[] = await this.trackRepository.findAll();
-      const validTracks: TrackEntity[] = [];
-
-      for (const track of libraryTracks) {
-        if (track.platform === Platform.FREEFLOW) {
-          continue;
-        }
-
-        if (track.platform == Platform.LOCAL) {
-          const file_exist = await fileExists(track.platform_unique_id);
-          if (!file_exist) {
-            this.logger.warn(`歌曲文件不存在: ${track.platform_unique_id}`);
-          } else {
-            validTracks.push(track); // 仅保留存在的文件
-          }
-        } else {
-          validTracks.push(track); // 网络资源直接保留
-        }
-      }
-
-      this.logger.info(`库中有效歌曲数量: ${validTracks.length} / ${libraryTracks.length}`);
-
-      // Step 2: 获取所有歌单的基本信息
       const playlists: PlaylistEntity[] = await this.playlistRepository.findAll();
 
       this.logger.info(chalk.green('PlaylistService: 获取到歌单数量:', playlists.length));
 
-      // Step 3: 获取每个歌单对应的歌曲列表，并过滤无效歌曲
       for (const playlist of playlists) {
-
-        // 根据歌曲ID从有效歌曲列表中获取歌曲
-        // 过滤不存在的歌曲
         playlist.tracks = await this.trackService.findTracksByPlaylistId(playlist.playlist_id);
         this.logger.info(`歌单: ${playlist.title} 获取到有效歌曲数量: ${playlist.tracks.length}`);
       }
 
-      // Step 4: 添加音乐库歌单
-      playlists.push(
-        {
-          playlist_id: 0,
-          platform: Platform.LOCAL,
-          platform_unique_id: '0',
-          title: '音乐库',
-          created_at: new Date(),
-          tracks: validTracks,
-          creator: '系统',
-          description: '所有库中的音乐文件',
-          modified_at: new Date(),
-          playlist_cover: '',
-        },
-      );
-
       this.logger.info(`共获取到歌单数量: ${playlists.length}`);
-      // this.logger.info('歌单信息:', playlist_result);
 
-      // Step 5: 获取每首歌曲的详细信息,如 封面、时长等
       return await Promise.all(
         playlists.map(async (playlist: PlaylistEntity) => {
           const tracksWithInfo = await Promise.allSettled(

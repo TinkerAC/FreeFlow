@@ -35,6 +35,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
 
   const rootRef = useRef<HTMLDivElement>(null);
   const playlistsRef = useRef(playlists);
+  const defaultedToChainRef = useRef(false);
 
   useEffect(() => {
     playlistsRef.current = playlists;
@@ -62,7 +63,25 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
   }, [refreshChainLibrary]);
 
   const chainPlaylist = useMemo(() => buildChainLibraryPlaylist(chainTracks), [chainTracks]);
-  const selectedChainLibrary = isChainLibraryPlaylist(musicLibraryController.activePlaylist);
+  const visiblePlaylists = useMemo(
+    () => playlists.filter((playlist) => (playlist.playlist_id ?? 0) > 0),
+    [playlists],
+  );
+  const activePlaylist = musicLibraryController.activePlaylist;
+  const selectedChainLibrary = isChainLibraryPlaylist(activePlaylist);
+
+  useEffect(() => {
+    if (activePlaylist?.playlist_id === 0 || isChainLibraryPlaylist(activePlaylist)) {
+      musicLibraryController.activePlaylist = chainPlaylist;
+      defaultedToChainRef.current = true;
+      return;
+    }
+
+    if (!defaultedToChainRef.current) {
+      musicLibraryController.activePlaylist = chainPlaylist;
+      defaultedToChainRef.current = true;
+    }
+  }, [activePlaylist, chainPlaylist, musicLibraryController]);
 
   const handleRightClick = (e: React.MouseEvent, playlistId: number) => {
     e.preventDefault();
@@ -111,13 +130,13 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
       <div className={styles.header}>
         <button
           className={clsx(styles.iconBtn, styles.menuBtn)}
-          title={collapsed ? '展开音乐库' : '收起音乐库'}
+          title={collapsed ? '展开 FreeFlow' : '收起 FreeFlow'}
           onClick={() => musicLibraryController.toggleMusicLibraryCollapse()}
         >
           <i className="fas fa-bars" />
         </button>
 
-        {!collapsed && <div className={styles.title}>音乐库</div>}
+        {!collapsed && <div className={styles.title}>FreeFlow</div>}
 
         {!collapsed && (
           <div className={styles.headerActions}>
@@ -146,7 +165,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
         {!collapsed && (
           <Reorder.Group
             axis="y"
-            values={playlists}
+            values={visiblePlaylists}
             onReorder={handleReorder}
             className={styles.list}
           >
@@ -163,8 +182,8 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
               }}
               onRightClick={(e) => handleRightClick(e, chainPlaylist.playlist_id)}
             />
-            {playlists.length ? (
-              playlists.map((item, index) => {
+            {visiblePlaylists.map((item, index) => {
+                const controllerIndex = playlists.findIndex((playlist) => playlist.playlist_id === item.playlist_id);
                 return (
                   <Reorder.Item
                     key={item.playlist_id}
@@ -179,9 +198,9 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                       title={item.title}
                       description={item.description || ''}
                       index={index}
-                      isSelected={!selectedChainLibrary && selectedItem === index}
+                      isSelected={!selectedChainLibrary && selectedItem === controllerIndex}
                       onClick={() => {
-                        musicLibraryController.selectItem(index);
+                        musicLibraryController.selectItem(controllerIndex);
                         musicLibraryController.activePlaylist = item;
                         navigation.push(ViewType.PLAYLIST);
                       }}
@@ -189,17 +208,14 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                     />
                   </Reorder.Item>
                 );
-              })
-            ) : (
-              <div style={{ textAlign: 'center', color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>暂无歌单</div>
-            )}
+              })}
           </Reorder.Group>
         )}
 
         {collapsed && (
           <Reorder.Group
             axis="y"
-            values={playlists}
+            values={visiblePlaylists}
             onReorder={handleReorder}
             className={styles.grid}
           >
@@ -218,7 +234,8 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                 draggable={false}
               />
             </div>
-            {playlists.map((item, index) => {
+            {visiblePlaylists.map((item, index) => {
+              const controllerIndex = playlists.findIndex((playlist) => playlist.playlist_id === item.playlist_id);
               return (
                 <Reorder.Item
                   key={item.playlist_id}
@@ -228,9 +245,9 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
                   whileDrag={{ scale: 1.1, zIndex: 10 }}
                 >
                   <div
-                    className={clsx(styles.tile, !selectedChainLibrary && selectedItem === index && styles.tileSelected)}
+                    className={clsx(styles.tile, !selectedChainLibrary && selectedItem === controllerIndex && styles.tileSelected)}
                     onClick={() => {
-                      musicLibraryController.selectItem(index);
+                      musicLibraryController.selectItem(controllerIndex);
                       musicLibraryController.activePlaylist = item;
                       navigation.push(ViewType.PLAYLIST);
                     }}

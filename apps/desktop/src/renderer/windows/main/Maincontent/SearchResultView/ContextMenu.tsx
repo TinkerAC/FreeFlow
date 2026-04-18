@@ -14,7 +14,6 @@ interface ContextMenuProps {
   x: number;
   y: number;
   track: TrackEntity;
-  addToLibrary: (t: TrackEntity) => void;
   handleCloseMenu: () => void;
   addTrackToPlaylist: (t: TrackEntity, id: number) => void;
   playlists: PlaylistEntity[];
@@ -23,7 +22,7 @@ interface ContextMenuProps {
 }
 
 export default function ContextMenu({
-                                      x, y, track, addToLibrary, handleCloseMenu, addTrackToPlaylist, playlists, player, onDetailRequest,
+                                      x, y, track, handleCloseMenu, addTrackToPlaylist, playlists, player, onDetailRequest,
                                     }: ContextMenuProps) {
 
   // ✅ 统一使用健壮的 Refs 和 State 结构
@@ -93,11 +92,7 @@ export default function ContextMenu({
       return;
     }
 
-    if (p.playlist_id === 0) {
-      addToLibrary(track);
-    } else {
-      addTrackToPlaylist(track, p.playlist_id);
-    }
+    if (p.playlist_id) addTrackToPlaylist(track, p.playlist_id);
     handleCloseMenu();
   };
 

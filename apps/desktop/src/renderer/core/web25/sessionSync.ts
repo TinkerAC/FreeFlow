@@ -2,6 +2,7 @@ import type { Web25Session } from './client';
 import { getRuntimeProfileId } from '@renderer/core/profile/runtimeProfile';
 
 const WEB25_SESSION_STORAGE_KEY_PREFIX = 'freeflow.web25.session';
+const WEB25_SESSION_TOKEN_STORAGE_KEY_PREFIX = 'freeflow.web25.session-token';
 const WEB25_SESSION_CHANNEL_PREFIX = 'freeflow.web25.session.channel';
 const WEB25_SESSION_EVENT_PREFIX = 'freeflow:web25-session-updated';
 
@@ -12,8 +13,16 @@ function getSessionStorageKey() {
   return `${WEB25_SESSION_STORAGE_KEY_PREFIX}.${getRuntimeProfileId()}`;
 }
 
+function getSessionTokenStorageKey() {
+  return `${WEB25_SESSION_TOKEN_STORAGE_KEY_PREFIX}.${getRuntimeProfileId()}`;
+}
+
 function isWeb25SessionStorageKey(key: string) {
   return key.startsWith(`${WEB25_SESSION_STORAGE_KEY_PREFIX}.`);
+}
+
+function isWeb25SessionTokenStorageKey(key: string) {
+  return key.startsWith(`${WEB25_SESSION_TOKEN_STORAGE_KEY_PREFIX}.`);
 }
 
 function getSessionChannelName() {
@@ -65,6 +74,12 @@ export function readWeb25SessionSnapshot(): Web25Session | null {
   }
 }
 
+export function readWeb25SessionTokenSnapshot(): string | null {
+  if (typeof window === 'undefined') return null;
+  const token = window.localStorage.getItem(getSessionTokenStorageKey());
+  return token?.trim() || null;
+}
+
 function emitWeb25Session(session: Web25Session | null) {
   if (typeof window === 'undefined') return;
 
@@ -77,15 +92,26 @@ function emitWeb25Session(session: Web25Session | null) {
   channel.postMessage(session);
 }
 
-export function writeWeb25SessionSnapshot(session: Web25Session | null) {
+export function writeWeb25SessionSnapshot(session: Web25Session | null, sessionToken?: string | null) {
   if (typeof window === 'undefined') return;
   const storageKey = getSessionStorageKey();
+  const tokenStorageKey = getSessionTokenStorageKey();
 
   if (!session) {
     window.localStorage.removeItem(storageKey);
+    window.localStorage.removeItem(tokenStorageKey);
   } else {
     window.localStorage.setItem(storageKey, JSON.stringify(session));
   }
+
+  if (sessionToken !== undefined) {
+    if (sessionToken) {
+      window.localStorage.setItem(tokenStorageKey, sessionToken);
+    } else {
+      window.localStorage.removeItem(tokenStorageKey);
+    }
+  }
+
   emitWeb25Session(session);
 }
 
@@ -99,6 +125,9 @@ export function clearWeb25SessionSnapshots(scope: Web25SessionClearScope = 'curr
     for (let index = 0; index < window.localStorage.length; index += 1) {
       const key = window.localStorage.key(index);
       if (key && isWeb25SessionStorageKey(key)) {
+        keysToDelete.push(key);
+      }
+      if (key && isWeb25SessionTokenStorageKey(key)) {
         keysToDelete.push(key);
       }
     }

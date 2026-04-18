@@ -16,6 +16,7 @@ type RequestingProvider = {
 
 const REQUIRED_CHAIN_ID = DEFAULT_SEPOLIA_CONTRACTS.chainId;
 const REQUIRED_CHAIN_HEX = `0x${REQUIRED_CHAIN_ID.toString(16)}`;
+const SKIP_AUTO_ENTER_STORAGE_KEY = 'freeflow.profile-guide.skip-auto-enter-once';
 
 function formatAddress(address?: string): string {
   if (!address) return '未连接';
@@ -52,6 +53,13 @@ function resolveProfileId(targetAddress?: string, explicitProfileId?: string): s
   } catch {
     return '';
   }
+}
+
+function consumeSkipAutoEnterFlag(): boolean {
+  if (typeof window === 'undefined') return false;
+  const shouldSkip = window.localStorage.getItem(SKIP_AUTO_ENTER_STORAGE_KEY) === '1';
+  if (shouldSkip) window.localStorage.removeItem(SKIP_AUTO_ENTER_STORAGE_KEY);
+  return shouldSkip;
 }
 
 function WindowChrome() {
@@ -167,8 +175,10 @@ export default function ProfileGuide() {
     try {
       const session = await refreshWeb25Session(baseUrl);
       setSiweSession(session);
+      return session;
     } catch {
       setSiweSession(null);
+      return null;
     }
   }, []);
 
@@ -204,7 +214,20 @@ export default function ProfileGuide() {
           setMode('create');
         }
 
-        await refreshSiweState(resolvedBaseUrl);
+        const restoredSession = await refreshSiweState(resolvedBaseUrl);
+        const skipAutoEnter = consumeSkipAutoEnterFlag();
+        const canRestoreProfile = !!initialWalletProfile?.walletAddress
+          && !!restoredSession
+          && restoredSession.chainId === REQUIRED_CHAIN_ID
+          && restoredSession.address.toLowerCase() === initialWalletProfile.walletAddress.toLowerCase();
+
+        if (!cancelled && canRestoreProfile && !skipAutoEnter) {
+          setStatus('已恢复登录状态，正在进入主界面。');
+          await profileContext.enterWalletProfile({
+            address: initialWalletProfile.walletAddress,
+            chainId: REQUIRED_CHAIN_ID,
+          });
+        }
       } catch (err) {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : String(err));
