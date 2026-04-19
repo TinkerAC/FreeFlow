@@ -1,0 +1,121 @@
+% 第七章 系统测试与效果分析
+
+\chapter{系统测试与效果分析}
+
+\section{测试环境}
+
+系统测试环境应在最终论文中结合实际设备填写。当前可先按表\ref{tab:test_environment}整理。
+
+\begin{table}[htbp]
+  \linespread{1.5}
+  \zihao{5}
+  \songti
+  \centering
+  \caption{系统测试环境}\label{tab:test_environment}
+  \begin{tabular}{|l|p{10cm}|}
+  \hline
+  类别 & 环境说明 \\ \hline
+  操作系统 & macOS，后续可补充Windows测试环境 \\ \hline
+  桌面端 & Electron、React、TypeScript \\ \hline
+  后端 & Node.js、Express、Prisma \\ \hline
+  数据库 & PostgreSQL、SQLite \\ \hline
+  区块链网络 & Sepolia测试网 \\ \hline
+  存储服务 & Pinata/IPFS \\ \hline
+  钱包 & MetaMask或WalletConnect兼容钱包 \\ \hline
+  \end{tabular}
+\end{table}
+
+\section{后端接口测试}
+
+后端接口测试应覆盖认证、上传、发行、检索、购买和评论等模块。测试方法可采用手动接口请求、桌面端联调和日志观察相结合的方式。
+
+\begin{table}[htbp]
+  \linespread{1.5}
+  \zihao{5}
+  \songti
+  \centering
+  \caption{后端接口测试用例占位}\label{tab:api_tests}
+  \begin{tabular}{|l|l|p{7cm}|l|}
+  \hline
+  编号 & 模块 & 测试内容 & 预期结果 \\ \hline
+  API-01 & 认证 & 申请SIWE nonce并完成签名验证 & 返回会话token \\ \hline
+  API-02 & 上传 & 上传音频文件到Pinata & 返回CID和storageObjectId \\ \hline
+  API-03 & 发行 & 创建并更新发行草稿 & 草稿状态正确保存 \\ \hline
+  API-04 & 检索 & 使用标题关键词检索资源 & 返回目标资源和排序原因 \\ \hline
+  API-05 & 购买 & 写入购买交易记录 & purchase记录创建或更新成功 \\ \hline
+  API-06 & 评论 & 登录用户发表评论 & 评论出现在列表首位 \\ \hline
+  \end{tabular}
+\end{table}
+
+\section{智能合约测试}
+
+合约测试主要验证PlatformHub、MusicAccess1155和RoyaltySplitter的核心逻辑。当前项目已覆盖以下测试点：
+
+\begin{enumerate}
+  \item 付费作品发布后，用户支付正确金额可获得访问凭证。
+  \item 公开作品发布后，用户默认拥有访问权限。
+  \item ERC-1155访问凭证不可在用户之间转让。
+  \item 只有创作者可以修改作品销售配置。
+\end{enumerate}
+
+后续正式论文应补充合约测试命令、测试截图和Sepolia烟雾测试结果。
+
+\section{核心业务流程测试}
+
+核心业务流程测试应覆盖从创作者发布到用户购买播放的完整链路。
+
+\begin{table}[htbp]
+  \linespread{1.5}
+  \zihao{5}
+  \songti
+  \centering
+  \caption{核心业务流程测试用例}\label{tab:business_tests}
+  \begin{tabular}{|l|p{5.5cm}|p{5.5cm}|}
+  \hline
+  编号 & 测试流程 & 预期结果 \\ \hline
+  T01 & 用户完成SIWE登录 & Profile地址与会话地址一致 \\ \hline
+  T02 & 创作者创建发行草稿 & 系统生成DRAFT状态发行记录 \\ \hline
+  T03 & 上传音频、封面和metadata & 数据库保存CID和gateway地址 \\ \hline
+  T04 & 调用合约发布作品 & 生成tokenId、splitter和发布交易哈希 \\ \hline
+  T05 & 用户检索已发布作品 & 搜索结果展示作品并包含排序原因 \\ \hline
+  T06 & 用户购买付费作品 & ERC-1155余额变为1，后端记录purchase \\ \hline
+  T07 & 用户播放链上音乐 & 音频代理能够返回可播放音频流 \\ \hline
+  T08 & 用户发表评论 & 评论写入后端并显示在评论列表 \\ \hline
+  \end{tabular}
+\end{table}
+
+\section{检索排序模块测试}
+
+检索排序测试建议设置多个查询集合，包括文本查询、链上身份查询和扰动查询。对比策略包括数据库contains基线、仅文本评分、文本加链上身份字段和完整算法。
+
+\begin{table}[htbp]
+  \linespread{1.5}
+  \zihao{5}
+  \songti
+  \centering
+  \caption{检索排序指标对比表占位}\label{tab:ranking_metrics}
+  \begin{tabular}{|l|l|l|l|l|}
+  \hline
+  方法 & Precision@10 & MRR & nDCG@10 & 平均响应时间 \\ \hline
+  SQL contains基线 & 待测 & 待测 & 待测 & 待测 \\ \hline
+  仅文本评分 & 待测 & 待测 & 待测 & 待测 \\ \hline
+  文本+链上身份字段 & 待测 & 待测 & 待测 & 待测 \\ \hline
+  完整排序算法 & 待测 & 待测 & 待测 & 待测 \\ \hline
+  \end{tabular}
+\end{table}
+
+\section{性能测试与结果分析}
+
+性能测试建议从检索响应时间、播放启动时间和发布流程耗时三个方面展开。
+
+\begin{enumerate}
+  \item 检索响应时间：分别在50、100、300和500条候选数据下测试平均响应时间和P95响应时间。
+  \item 播放启动时间：比较缓存命中和缓存未命中时，从点击播放到开始播放的耗时。
+  \item 发布流程耗时：统计音频上传、metadata上传和链上交易确认的耗时。
+\end{enumerate}
+
+后续正式论文应补充折线图或柱状图展示测试结果。
+
+\section{本章小结}
+
+本章规划了FreeFlow系统测试方案，包括接口测试、合约测试、业务流程测试、检索排序测试和性能测试。当前数据为占位内容，后续应结合实际测试结果补充数值、截图和分析。

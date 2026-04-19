@@ -1,0 +1,53 @@
+% 第五章 系统核心模块实现
+
+\chapter{系统核心模块实现}
+
+\section{Profile与SIWE登录模块实现}
+
+系统首先通过Profile引导窗口连接用户钱包。后端生成nonce后，桌面端构造SIWE消息并请求钱包签名，后端对签名消息进行解析和验签。验证通过后，系统创建或更新用户、钱包身份和登录会话，并将会话token同步到桌面端Web2.5客户端。
+
+本节后续应补充SIWE登录流程图、Profile界面截图和核心接口说明。
+
+\section{创作者工作台模块实现}
+
+Creators Workshop是创作者进行链上音乐发布的主要入口。该模块支持发行项目列表、草稿创建、作品信息编辑、素材状态展示、metadata上传、链上发布和访问查询。系统通过Redux状态管理工作台内部状态，并通过Web2.5 API与后端同步发行草稿。
+
+发行状态主要包括DRAFT、ASSETS\_PENDING、ASSETS\_UPLOADED、METADATA\_UPLOADED、PUBLISHING、PUBLISHED和FAILED。每个状态对应不同的操作权限和界面提示。
+
+本节后续应补充创作者工作台界面截图和状态流转图。
+
+\section{IPFS素材上传与metadata模块实现}
+
+创作者选择音频和封面后，桌面端将文件提交给后端Pinata上传接口。后端读取文件内容，调用Pinata API上传，并把返回CID、文件大小、MIME类型和Pinata ID记录到数据库。
+
+metadata JSON由桌面端根据作品信息、音频CID、封面CID、访问模式、价格、链上合约地址和歌词信息生成。metadata上传成功后，系统将metadataStorageObjectId和metadataDocument回写到发行记录中。
+
+本节后续应补充metadata JSON字段说明表。
+
+\section{链上发布与收益分账模块实现}
+
+metadata准备完成后，创作者可调用PlatformHub合约的publishTrack方法发布作品。该方法内部创建收益分账合约、创建音乐访问凭证tokenId，并保存作品的销售配置。交易确认后，桌面端解析TrackPublished事件，获取tokenId、creator和splitter地址，并将交易哈希、区块号和tokenId回写后端。
+
+收益分账由RoyaltySplitter合约完成。创作者可配置多个收款地址及其份额，购买收益进入分账合约后，各收款人可按份额提取。
+
+\section{链上音乐详情、购买与访问验证模块实现}
+
+用户在搜索结果中打开FreeFlow链上音乐详情页后，系统根据resourceKey解析后端资源索引，并读取链上销售配置。详情页会展示访问状态、价格、创作者地址、metadata链接和发布交易链接。
+
+对于公开作品，用户可直接加入链上音乐库。对于付费作品，系统调用PlatformHub的buyAccess方法完成购买，购买成功后记录purchase，并再次查询ERC-1155余额确认访问凭证状态。
+
+本节后续应补充链上详情页截图和购买流程时序图。
+
+\section{播放器、音频代理与链上音乐库模块实现}
+
+FreeFlow使用桌面端音频代理统一处理播放请求。播放器请求本地代理接口后，代理服务优先读取本地文件，其次读取磁盘缓存，最后从FreeFlowProvider解析到的IPFS gateway地址拉取音频流。代理服务支持Range请求，因此用户可以拖动进度条进行分段播放。
+
+链上音乐库用于管理公开或已购买的链上资源。用户将资源加入链上音乐库后，系统会在本地数据库中保存TrackEntity及其freeflow字段，后续可以进行播放、下载和管理。
+
+\section{评论与用户互动模块实现}
+
+评论模块由后端comments模块和桌面端CommentView共同实现。用户登录后可以针对某个releaseId发表评论，后端保存评论内容、用户ID和时间信息。桌面端展示评论列表、作者信息和发布时间，并在用户未登录时提示返回Profile引导完成登录。
+
+\section{本章小结}
+
+本章按照系统功能模块介绍了FreeFlow核心实现。当前内容仍为论文骨架，后续应结合代码细节、接口表、流程图和界面截图进行扩写。

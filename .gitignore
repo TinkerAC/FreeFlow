@@ -89,7 +89,10 @@ jspm_packages/
 out/
 
 workspace.xml
-/.idea/
+/.idea/*
+!/.idea/
+!/.idea/runConfigurations/
+!/.idea/runConfigurations/*.xml
 /pnpm-lock.yaml
 
 

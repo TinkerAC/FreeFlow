@@ -1,0 +1,125 @@
+% 第四章 系统总体设计
+
+\chapter{系统总体设计}
+
+\section{系统总体架构}
+
+FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架构。桌面端负责用户交互、音频播放、本地缓存和钱包交互；后端负责SIWE认证、Pinata上传代理、发行数据管理、资源检索、购买记录和评论；智能合约负责链上发布、访问凭证、购买授权和收益分账；IPFS/Pinata负责保存音频、封面和metadata资源。
+
+后续正式论文应在本节补充系统总体架构图，展示Electron桌面端、Express后端、PostgreSQL、IPFS/Pinata、Sepolia合约和钱包之间的调用关系。
+
+\section{功能模块设计}
+
+系统功能模块可划分为Profile与认证模块、创作者工作台模块、素材上传模块、链上发布模块、资源检索模块、购买与访问验证模块、播放与缓存模块、链上音乐库模块和评论模块。
+
+\begin{table}[htbp]
+  \linespread{1.5}
+  \zihao{5}
+  \songti
+  \centering
+  \caption{系统功能模块设计}\label{tab:module_design}
+  \begin{tabular}{|l|p{10cm}|}
+  \hline
+  模块 & 设计说明 \\ \hline
+  Profile与认证模块 & 使用SIWE完成钱包登录，并在后端创建用户、钱包身份和会话 \\ \hline
+  创作者工作台模块 & 管理发行草稿、作品信息、发布阶段、素材状态和链上发布结果 \\ \hline
+  素材上传模块 & 经后端将音频、封面和metadata上传到Pinata，并保存StorageObject \\ \hline
+  链上发布模块 & 调用PlatformHub发布作品，解析事件并回写tokenId、splitter和交易哈希 \\ \hline
+  资源检索模块 & 检索已发布链上音乐资源，并基于排序算法返回可解释结果 \\ \hline
+  购买访问模块 & 查询销售配置、调用buyAccess、记录购买交易并验证访问凭证 \\ \hline
+  播放缓存模块 & 通过音频代理支持IPFS gateway音频播放、Range请求和本地缓存 \\ \hline
+  评论模块 & 支持用户查看和发布作品评论 \\ \hline
+  \end{tabular}
+\end{table}
+
+\section{业务流程设计}
+
+\subsection{创作者发布流程}
+
+创作者发布流程如下：
+
+\begin{enumerate}
+  \item 用户连接钱包并完成SIWE登录。
+  \item 创作者在工作台创建发行草稿。
+  \item 编辑标题、歌手、专辑、流派、描述、访问模式、价格和分账信息。
+  \item 选择音频和封面文件，系统读取并校验音频metadata。
+  \item 后端代理上传音频和封面到Pinata，并保存CID。
+  \item 桌面端生成metadata JSON，并上传到Pinata。
+  \item 桌面端调用PlatformHub合约发布作品。
+  \item 系统解析链上事件，将tokenId、splitter地址、交易哈希和区块号回写后端。
+\end{enumerate}
+
+\subsection{用户购买播放流程}
+
+用户购买播放流程如下：
+
+\begin{enumerate}
+  \item 用户输入关键词检索链上音乐资源。
+  \item 后端召回已发布资源并进行排序。
+  \item 用户进入链上音乐详情页。
+  \item 桌面端读取链上销售配置和访问状态。
+  \item 若作品公开，用户可直接加入链上音乐库并播放。
+  \item 若作品付费，用户调用buyAccess购买访问权。
+  \item 购买成功后，系统记录购买交易并将作品加入链上音乐库。
+  \item 用户通过音频代理播放或下载作品。
+\end{enumerate}
+
+\section{数据库设计}
+
+后端数据库主要包括用户、钱包身份、SIWE nonce、会话、存储对象、上传记录、创作者发行、购买记录和评论等表。正式论文中应补充数据库ER图。
+
+\begin{table}[htbp]
+  \linespread{1.5}
+  \zihao{5}
+  \songti
+  \centering
+  \caption{后端核心数据表说明}\label{tab:database_tables}
+  \begin{tabular}{|l|p{10cm}|}
+  \hline
+  数据表 & 说明 \\ \hline
+  users & 保存系统用户资料 \\ \hline
+  wallet\_identities & 保存钱包地址、链ID和用户绑定关系 \\ \hline
+  siwe\_nonces & 保存SIWE登录nonce和过期状态 \\ \hline
+  auth\_sessions & 保存登录会话 \\ \hline
+  storage\_objects & 保存IPFS CID、文件大小和MIME类型 \\ \hline
+  storage\_uploads & 保存上传者、Pinata ID和上传时间 \\ \hline
+  creator\_releases & 保存创作者发行项目和链上资源索引 \\ \hline
+  purchases & 保存购买交易投影 \\ \hline
+  comments & 保存作品评论 \\ \hline
+  \end{tabular}
+\end{table}
+
+\section{智能合约设计}
+
+系统合约由MusicAccess1155、PlatformHub和RoyaltySplitter组成。MusicAccess1155负责访问凭证，PlatformHub负责发布、购买和访问判断，RoyaltySplitter负责收益分账。
+
+\begin{table}[htbp]
+  \linespread{1.5}
+  \zihao{5}
+  \songti
+  \centering
+  \caption{智能合约职责说明}\label{tab:contract_design}
+  \begin{tabular}{|l|p{10cm}|}
+  \hline
+  合约 & 职责 \\ \hline
+  MusicAccess1155 & 为每首作品创建ERC-1155 tokenId，购买者持有不可转让访问凭证 \\ \hline
+  PlatformHub & 统一发布作品、保存销售配置、处理购买、判断访问状态和收取平台费 \\ \hline
+  RoyaltySplitter & 按固定份额保存创作者和协作者收益，支持按地址提取 \\ \hline
+  \end{tabular}
+\end{table}
+
+\section{系统安全设计}
+
+系统安全设计主要包括以下方面：
+
+\begin{enumerate}
+  \item 身份认证安全：使用SIWE签名登录，后端校验nonce、地址、链ID、domain、uri和签发时间。
+  \item 链上访问安全：付费作品的访问状态以ERC-1155凭证和合约hasAccess结果为依据。
+  \item 交易安全：购买价格和销售状态由PlatformHub合约校验，避免客户端单独决定访问权。
+  \item 接口安全：后端上传、发行、购买和评论等接口需要会话认证。
+  \item 资源安全：当前IPFS资源仍存在CID公开后可直接访问的问题，后续可引入音频加密和授权网关。
+\end{enumerate}
+
+\section{本章小结}
+
+本章给出了FreeFlow系统的总体架构、功能模块、业务流程、数据库、智能合约和安全设计。下一章将介绍各核心模块的具体实现。

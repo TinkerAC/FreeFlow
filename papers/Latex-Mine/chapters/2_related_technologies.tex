@@ -1,0 +1,43 @@
+% 第二章 相关技术
+
+\chapter{相关技术}
+
+\section{Electron与React桌面端开发}
+
+FreeFlow桌面端采用Electron和React构建。Electron将Chromium渲染能力和Node.js运行环境结合起来，使应用能够同时具备桌面程序的本地能力和Web界面的开发效率\cite{electronDocs}。系统主进程负责窗口管理、本地数据库、音频代理、文件下载和IPC接口，渲染进程负责用户界面、播放控制、创作者工作台和链上音乐详情页。
+
+React用于实现组件化界面。系统将主播放界面、设置界面、Profile引导、Creators Workshop、链上音乐详情页和评论页拆分为多个组件，便于状态管理和功能扩展\cite{reactDocs}。本节后续可补充Electron主进程、渲染进程和IPC通信机制图。
+
+\section{Node.js、Express与Prisma后端开发}
+
+系统后端采用Node.js和Express实现HTTP API服务，采用Prisma作为ORM框架\cite{prismaDocs}，使用PostgreSQL保存用户、钱包身份、上传记录、创作者发行、购买记录和评论等数据。后端按业务模块划分为认证、用户、Pinata上传、发行、链上资源、购买、评论和系统模块。
+
+Prisma模型为系统提供了结构化的数据约束。例如，创作者发行表保存作品基本信息、IPFS资源引用、合约地址、tokenId、发布交易哈希、访问模式和发布状态，是链上音乐资源检索和展示的核心索引表。
+
+\section{SIWE钱包登录机制}
+
+SIWE即Sign-In with Ethereum，是一种基于以太坊钱包签名的登录方式\cite{eip4361}。系统后端首先生成一次性nonce，桌面端使用钱包对包含域名、地址、链ID、nonce和签发时间的消息进行签名，后端恢复签名地址并校验nonce、地址、链ID和消息时间窗口。验证通过后，系统创建用户、钱包身份和会话。
+
+相较于传统账号密码登录，SIWE能够将用户身份与钱包地址绑定，便于后续进行链上购买、访问权验证和创作者身份校验。
+
+\section{IPFS与Pinata内容寻址存储}
+
+IPFS通过内容寻址方式保存文件，每个文件对应唯一CID\cite{benet2014ipfs}。FreeFlow将音频、封面和metadata JSON上传到Pinata，并将CID和gateway地址保存到后端。链上发布时，metadata URI会作为作品token的资源描述写入合约。
+
+本系统中，IPFS主要承担资源存储职责，区块链主要承担访问凭证、交易记录和分账规则职责。二者结合可以避免将大体积音频直接写入链上，同时保留链上可追溯能力。
+
+\section{Solidity智能合约与ERC-1155访问凭证}
+
+系统合约采用Solidity实现。MusicAccess1155合约基于ERC-1155标准\cite{eip1155}，每个tokenId代表一首链上音乐作品，用户购买后获得对应tokenId的访问凭证。该访问凭证被设计为不可转让，以减少二级流转对访问控制的影响。
+
+PlatformHub合约负责统一发布作品、保存销售配置、处理购买和判断访问权。RoyaltySplitter合约负责按固定份额分配购买收益。上述合约共同完成链上音乐的发布、购买授权和收益分账，合约实现可结合OpenZeppelin基础组件减少重复实现并提高安全性\cite{openzeppelinContracts}。
+
+\section{音频代理、Range请求与本地缓存}
+
+桌面端内置音频代理服务器，用于统一处理本地音频、缓存音频和远程音频资源。播放器请求本地代理接口后，代理服务优先查找本地文件和磁盘缓存，未命中时再请求上游音频地址。
+
+音频播放需要支持拖动进度条，因此代理服务需要处理HTTP Range请求。对于非Range请求，系统可以边播放边缓存完整音频；对于Range请求，系统直接转发上游分段响应。这一设计能够提升播放体验，并减少重复请求IPFS gateway带来的延迟。
+
+\section{本章小结}
+
+本章介绍了FreeFlow系统涉及的关键技术。上述技术分别支撑桌面端交互、后端服务、钱包身份认证、去中心化存储、链上访问控制和音频播放能力，为后续系统需求分析和总体设计提供基础。
