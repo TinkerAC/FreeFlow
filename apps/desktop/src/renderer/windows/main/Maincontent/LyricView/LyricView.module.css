@@ -1,10 +1,10 @@
 /* 根布局：左封面(2) + 右歌词(3) */
 .root {
+    position: relative;
     height: 100%;
     width: 100%;
     display: grid;
     grid-template-columns: 2fr 3fr;
-    grid-template-rows: minmax(0, 1fr) 260px;
     background: rgb(var(--md-sys-color-surface));
     color: rgb(var(--md-sys-color-on-surface));
 }
@@ -34,147 +34,51 @@
 
 /* 右侧相关样式已迁移至 LyricScroller.module.css */
 
-.comments {
-    grid-column: 1 / -1;
-    min-height: 0;
-    border-top: 1px solid rgb(var(--md-sys-color-outline-variant));
-    background: rgb(var(--md-sys-color-surface-container-low));
-    display: grid;
-    grid-template-columns: 240px minmax(260px, 360px) minmax(0, 1fr);
-    gap: 14px;
-    padding: 14px 18px;
-}
-
-.commentsHeader {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.commentsHeader h2 {
-    margin: 0;
-    font-size: 18px;
-}
-
-.commentsHeader p {
-    margin: 4px 0 0;
-    color: rgb(var(--md-sys-color-on-surface-variant));
-    font-size: 12px;
-}
-
-.refreshButton,
-.commentComposer button {
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid rgb(var(--md-sys-color-outline-variant));
-    background: rgb(var(--md-sys-color-primary));
-    color: rgb(var(--md-sys-color-on-primary));
-    cursor: pointer;
-}
-
-.refreshButton:disabled,
-.commentComposer button:disabled {
-    opacity: 0.55;
-    cursor: default;
-}
-
-.commentComposer {
-    min-height: 0;
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) 32px;
-    gap: 8px;
-}
-
-.commentComposer textarea {
-    min-height: 0;
-    resize: none;
-    border-radius: 8px;
-    border: 1px solid rgb(var(--md-sys-color-outline-variant));
-    background: rgb(var(--md-sys-color-surface));
-    color: rgb(var(--md-sys-color-on-surface));
-    padding: 10px;
-}
-
-.commentStream {
-    min-height: 0;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 8px;
-}
-
-.commentList {
-    min-height: 0;
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.commentItem {
-    display: grid;
-    grid-template-columns: 36px minmax(0, 1fr);
-    gap: 10px;
-}
-
-.commentAvatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    overflow: hidden;
-    background: rgb(var(--md-sys-color-surface-container-high));
-}
-
-.commentAvatar img,
-.commentAvatar span {
-    width: 100%;
-    height: 100%;
-}
-
-.commentAvatar img {
-    object-fit: cover;
-}
-
-.commentAvatar span {
-    display: grid;
+.commentCue {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    display: inline-grid;
     place-items: center;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.commentBody {
-    min-width: 0;
-}
-
-.commentMeta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
-
-.commentMeta strong {
-    font-size: 13px;
-}
-
-.commentMeta time {
+    gap: 2px;
+    width: 44px;
+    height: 34px;
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.62);
+    border-radius: 8px;
+    padding: 0;
+    background: color-mix(in oklab, rgb(var(--md-sys-color-surface-container-high)) 82%, transparent);
     color: rgb(var(--md-sys-color-on-surface-variant));
-    font-size: 11px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
 }
 
-.commentBody p {
-    margin: 4px 0 0;
-    font-size: 13px;
-    line-height: 1.5;
-    word-break: break-word;
+.commentCue span {
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    opacity: .38;
+    animation: cueDown 1.25s ease-in-out infinite;
 }
 
-.commentError,
-.emptyComments {
-    color: rgb(var(--md-sys-color-on-surface-variant));
-    font-size: 13px;
+.commentCue span:nth-child(2) {
+    animation-delay: .12s;
 }
 
-.commentError {
-    color: rgb(var(--md-sys-color-error));
+.commentCue span:nth-child(3) {
+    animation-delay: .24s;
+}
+
+@keyframes cueDown {
+    0%, 100% {
+        transform: translateY(-4px) rotate(45deg);
+        opacity: .24;
+    }
+    45% {
+        transform: translateY(2px) rotate(45deg);
+        opacity: .82;
+    }
 }

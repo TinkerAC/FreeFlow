@@ -3,6 +3,7 @@ import { useNavigation, ViewType } from '@renderer/core/navigation';
 import PlaylistView from './PlaylistView/PlaylistView';
 import ProfileView from './ProfileView/ProfileView';
 import LyricView from './LyricView/LyricView';
+import CommentView from './CommentView/CommentView';
 import SearchResultView from './SearchResultView/SearchResultView';
 import DebugView from './DebugView/DebugView';
 import TrackDetailView from './TrackDetailView/TrackDetailView';
@@ -53,6 +54,13 @@ export default function MainContentSwitch({
         return <ProfileView />;
       case ViewType.LYRIC:
         return player ? <LyricView player={player} /> : <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>加载中...</div>;
+      case ViewType.COMMENT:
+        return (
+          <CommentView
+            releaseId={(entry.data as { releaseId?: string | null } | undefined)?.releaseId}
+            trackTitle={(entry.data as { trackTitle?: string } | undefined)?.trackTitle}
+          />
+        );
       case ViewType.DEBUG:
         return player ? <DebugView player={player} /> : <div style={{ padding: 16, color: 'rgb(var(--md-sys-color-on-surface-variant))' }}>加载中...</div>;
       case ViewType.SETTINGS:

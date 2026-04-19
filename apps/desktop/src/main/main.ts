@@ -18,6 +18,7 @@ let shortcutManager: ShortCutManager | null = null;
 let mainLaunch: Promise<void> | null = null;
 let mainApplicationLoaded = false;
 let activeProfileId: string | null = null;
+const ENTER_ACTIVE_PROFILE_ARG = '--freeflow-enter-active-profile';
 
 windowManager.onProfileGuideClosed(() => {
   if (mainApplicationLoaded) {
@@ -46,12 +47,21 @@ function activatePrimaryWindow(): void {
   windowManager.activatePrimaryWindow();
 }
 
-function relaunchToProfileGuide(): void {
-  logger.info('Relaunching application for Profile data source switch');
+function relaunchToActiveProfile(profile: ProfileSummary): void {
+  logger.info(`Relaunching application for Profile data source switch: ${profile.id}`);
   setTimeout(() => {
-    app.relaunch();
+    app.relaunch({
+      args: [
+        ...process.argv.slice(1).filter((arg) => arg !== ENTER_ACTIVE_PROFILE_ARG),
+        ENTER_ACTIVE_PROFILE_ARG,
+      ],
+    });
     app.exit(0);
   }, 10);
+}
+
+function shouldEnterActiveProfileAfterRelaunch(): boolean {
+  return process.argv.includes(ENTER_ACTIVE_PROFILE_ARG);
 }
 
 function returnToProfileGuide(): void {
@@ -67,7 +77,7 @@ async function launchMainApplication(profile: ProfileSummary): Promise<void> {
       return;
     }
 
-    relaunchToProfileGuide();
+    relaunchToActiveProfile(profile);
     return;
   }
 
@@ -163,7 +173,7 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
     });
   });
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     ensureRootDataPath();
 
     registerProfileHandlers({
@@ -171,6 +181,12 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
       onEnterProfile: launchMainApplication,
       onExitToGuide: returnToProfileGuide,
     });
+    if (shouldEnterActiveProfileAfterRelaunch()) {
+      const { getActiveProfile } = await import('@main/core/profileStore');
+      await launchMainApplication(getActiveProfile(root_Data_Path));
+      return;
+    }
+
     showProfileGuide();
   }).catch((error: unknown) => {
     logger.error('startup failed', error);

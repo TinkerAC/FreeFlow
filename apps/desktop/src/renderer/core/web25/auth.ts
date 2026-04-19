@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserProvider } from 'ethers';
+import { ensureWalletChain, getWalletChainId, type RequestingProvider, type WalletChainConfig } from '@renderer/core/web3/walletNetwork';
 import {
   buildSiweMessage,
   getWeb25Session,
@@ -23,15 +24,12 @@ type LoginInput = {
   baseUrl: string;
   walletProvider: WalletProviderLike;
   expectedAddress?: string | null;
+  requiredChain?: WalletChainConfig;
 };
 
 type RefreshInput = {
   expectedAddress?: string | null;
   expectedChainId?: number | null;
-};
-
-type RequestingProvider = {
-  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
 };
 
 function sessionMatchesExpected(session: Web25Session | null, input: RefreshInput = {}) {
@@ -52,13 +50,12 @@ export async function refreshWeb25Session(baseUrl: string, input: RefreshInput =
 }
 
 export async function loginWeb25WithSiwe(input: LoginInput) {
-  const provider = new BrowserProvider(input.walletProvider);
   const injectedProvider = input.walletProvider as RequestingProvider;
   const expectedAddress = input.expectedAddress?.toLowerCase();
 
-  const requestedAccounts = await injectedProvider.request({ method: 'eth_requestAccounts' })
+  let requestedAccounts = await injectedProvider.request({ method: 'eth_requestAccounts' })
     .catch((): null => null);
-  const accounts = Array.isArray(requestedAccounts)
+  let accounts = Array.isArray(requestedAccounts)
     ? requestedAccounts.filter((item): item is string => typeof item === 'string')
     : [];
   if (expectedAddress && accounts.length > 0 && !accounts.some((item) => item.toLowerCase() === expectedAddress)) {
@@ -67,6 +64,25 @@ export async function loginWeb25WithSiwe(input: LoginInput) {
     );
   }
 
+  const chainId = input.requiredChain
+    ? await ensureWalletChain(injectedProvider, input.requiredChain)
+    : await getWalletChainId(injectedProvider);
+  if (!chainId) {
+    throw new Error('无法读取当前钱包网络。');
+  }
+
+  requestedAccounts = await injectedProvider.request({ method: 'eth_requestAccounts' })
+    .catch((): null => null);
+  accounts = Array.isArray(requestedAccounts)
+    ? requestedAccounts.filter((item): item is string => typeof item === 'string')
+    : accounts;
+  if (expectedAddress && accounts.length > 0 && !accounts.some((item) => item.toLowerCase() === expectedAddress)) {
+    throw new Error(
+      `当前钱包没有暴露目标账户 ${input.expectedAddress}。当前钱包返回账户: ${accounts.join(', ')}。请在钱包中切换账户后重试。`,
+    );
+  }
+
+  const provider = new BrowserProvider(input.walletProvider);
   const signer = expectedAddress
     ? await provider.getSigner(input.expectedAddress!)
     : await provider.getSigner();
@@ -77,17 +93,19 @@ export async function loginWeb25WithSiwe(input: LoginInput) {
       `当前签名账户 ${signerAddress} 与目标账户 ${input.expectedAddress} 不一致。${connected}请在钱包中切换账户后重试。`,
     );
   }
-  const network = await provider.getNetwork();
-  const chainId = Number(network.chainId);
 
-  const noncePayload = await requestSiweNonce(input.baseUrl, { address: signerAddress, chainId });
+  const siweChainId = input.requiredChain
+    ? await ensureWalletChain(injectedProvider, input.requiredChain)
+    : chainId;
+
+  const noncePayload = await requestSiweNonce(input.baseUrl, { address: signerAddress, chainId: siweChainId });
   const message = buildSiweMessage({
     domain: noncePayload.domain,
     address: signerAddress,
     uri: noncePayload.uri,
     statement: noncePayload.statement,
     version: noncePayload.version,
-    chainId,
+    chainId: siweChainId,
     nonce: noncePayload.nonce,
     issuedAt: new Date().toISOString(),
   });

@@ -26,12 +26,15 @@ import { usePlayerFactory } from '@renderer/hooks/usePlayerFactory';
 import { useIpcBridge } from '@renderer/hooks/useIPCBridge';
 
 import { ensureWeb3Modal } from '@renderer/core/web3/bootstrap';
+import { useProfileIdentityGuard } from '@renderer/core/profile/useProfileIdentityGuard';
 
 ensureWeb3Modal();
 
 const ApplicationContent: React.FC = () => {
   const location = useLocation();
   const isMini = location.pathname === '/mini';
+
+  useProfileIdentityGuard();
 
   
 

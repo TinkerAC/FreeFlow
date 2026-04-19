@@ -18,6 +18,7 @@ export enum ViewType {
   SEARCH_RESULTS = 'searchResults',
   PROFILE = 'profile',
   LYRIC = 'lyric',
+  COMMENT = 'comment',
   DEBUG = 'debug',
   SETTINGS = 'settings',
   TRACK_DETAIL = 'trackDetail',

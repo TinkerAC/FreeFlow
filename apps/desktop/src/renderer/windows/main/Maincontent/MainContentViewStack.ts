@@ -5,6 +5,7 @@ export enum View {
   SEARCH_RESULTS = 'searchResults',
   PROFILE = 'profile',
   LYRIC = 'lyric',
+  COMMENT = 'comment',
   DEBUG = 'debug',
   SETTINGS = 'settings',
   TRACK_DETAIL = 'trackDetail',
