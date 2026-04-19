@@ -1,239 +1,256 @@
-# FreeFlow Search and Recommendation Design
+# FreeFlow 链上音乐资源检索与排序算法设计
 
-This document describes a practical search and recommendation design for FreeFlow. It is written for implementation planning and can be adapted into the thesis chapter about retrieval, ranking and recommendation.
+本文档对应当前 FreeFlow 的链上音乐版本：桌面端通过 `/api/v1/resources/search`
+检索后端索引的已发布 `CreatorRelease`，资源本体由链上标识、IPFS CID、Pinata
+网关地址和发布元数据共同描述。
 
-## Goals
+## 目标
 
-FreeFlow has two search domains:
+链上音乐检索要解决的问题不是“多平台聚合”，而是：
 
-1. Local desktop library: tracks imported or downloaded into SQLite.
-2. Web2.5 indexed resources: published on-chain releases synchronized by the backend.
+1. 用户输入歌曲名、艺术家、专辑、流派时，能找到相关链上音乐资源。
+2. 用户输入 `resourceKey`、合约地址、Token ID、交易哈希或 IPFS CID 时，能直接定位链上资产。
+3. 当关键词有大小写、全角半角、空格或轻微拼写差异时，仍能给出可解释的排序结果。
+4. 排序结果能说明为什么排在前面，方便调试和答辩展示。
 
-The recommendation system should improve discovery without requiring invasive data collection. The first production version can use deterministic ranking plus lightweight behavioral signals, then evolve into embedding-based retrieval.
+当前实现的算法名：
 
-## Data Collection
+```text
+chain_resource_rank_v1
+```
 
-Collect only product-relevant events and keep the schema explicit.
+对应代码：
 
-Recommended desktop events:
+- `apps/backend/src/modules/resources/resource.repository.ts`
+- `apps/backend/src/modules/resources/resource.ranking.ts`
+- `apps/backend/src/modules/resources/resource.service.ts`
 
-| Event | Fields | Purpose |
+## 需要采集的数据
+
+### 已经可直接使用的数据
+
+这些字段已经存在于当前链上发布和后端索引流程中：
+
+| 数据 | 来源 | 用途 |
 | --- | --- | --- |
-| `search_submitted` | query, timestamp, source view | Query analysis and popularity |
-| `search_result_clicked` | query, resource key, rank, timestamp | Click-through ranking signal |
-| `track_play_started` | track id/resource key, source, timestamp | Interest signal |
-| `track_play_completed` | track id/resource key, played seconds, duration | Strong positive signal |
-| `track_skipped` | track id/resource key, played seconds | Negative or weak signal |
-| `track_added_to_library` | resource key, playlist id | Strong positive signal |
-| `track_downloaded` | resource key, cid | Offline intent signal |
-| `comment_created` | resource key, user id | Engagement signal |
+| `title` | 创作者发布元数据 | 标题匹配、相似度计算 |
+| `artistName` | 创作者发布元数据 | 艺术家匹配、用户偏好扩展 |
+| `albumName` | 创作者发布元数据 | 专辑匹配 |
+| `genreLabel` | 创作者发布元数据 | 流派匹配、推荐扩展 |
+| `description` | 创作者发布元数据 | 长文本辅助召回 |
+| `chainId` | 链上发布流程 | 链网络识别 |
+| `musicAssetAddress` | 链上发布流程 | MusicAccess1155 合约定位 |
+| `platformHubAddress` | 链上发布流程 | 平台合约定位 |
+| `tokenId` | 链上铸造结果 | Token 精确定位 |
+| `publishTxHash` | 链上交易结果 | 发布交易定位 |
+| `audioCid` / `coverCid` / `metadataCid` | IPFS/Pinata 上传 | 内容寻址匹配 |
+| `publishedAt` / `updatedAt` | 后端状态流转 | 新鲜度排序 |
+| `comments` 数量 | 评论模块 | 热度信号 |
+| `purchases` 数量 | 购买模块 | 购买热度信号 |
 
-Recommended backend resource fields:
+### 建议继续采集的数据
 
-| Field | Source | Purpose |
+这些数据不是第一版算法必须项，但可以支撑论文中的“可演进推荐/排序系统”：
+
+| 事件 | 字段 | 用途 |
 | --- | --- | --- |
-| title | release metadata | lexical search |
-| artist | release metadata | lexical search and artist affinity |
-| album | release metadata | lexical search |
-| genre | release metadata | category ranking |
-| lyrics | embedded ID3 / metadata JSON | full text and semantic retrieval |
-| chain id, contract, token id | publishing flow | stable resource identity |
-| content CID | Pinata upload | storage identity |
-| creator user id | SIWE session | creator affinity |
-| publish timestamp | release status | freshness ranking |
+| `search_submitted` | query, normalizedQuery, user/session, timestamp | 查询热度、常见意图分析 |
+| `search_result_clicked` | query, resourceKey, rank, score, timestamp | 点击率排序、MRR/nDCG 评估 |
+| `track_play_started` | resourceKey, user/session, timestamp | 播放兴趣信号 |
+| `track_play_completed` | resourceKey, playedSeconds, duration | 强正反馈 |
+| `track_skipped` | resourceKey, playedSeconds | 弱负反馈 |
+| `track_added_to_library` | resourceKey, playlistId | 收藏偏好 |
+| `track_downloaded` | resourceKey, audioCid, gateway | 离线意图和 CID 热度 |
+| `purchase_confirmed` | resourceKey, wallet, chainId, txHash | 付费热度和创作者偏好 |
+| `comment_created` | resourceKey, user, timestamp | 互动热度 |
+| `gateway_request_finished` | cid, gateway, latency, status | IPFS 网关选择优化 |
 
-Privacy baseline:
+隐私原则：
 
-- Store wallet addresses only where needed for ownership and access checks.
-- Prefer aggregated counters for ranking.
-- Keep raw interaction events short-lived if they are not required for audit.
-- Separate local-only desktop behavior from backend behavior unless the user opts in.
+- 钱包地址只用于所有权、购买和会话校验；排序优先使用聚合计数。
+- 原始行为日志可以短期保存，长期保留按天聚合后的统计。
+- 桌面端本地播放行为默认只保存在本地，除非用户明确同步。
 
-## Search Pipeline
+## 检索流程
 
-### Query Normalization
+### 1. 查询归一化
 
-Normalize each query before searching:
+输入 query 会先做统一处理：
 
-- trim whitespace;
-- lowercase ASCII text;
-- normalize full-width and half-width punctuation;
-- remove repeated spaces;
-- generate pinyin tokens for Chinese titles/artists;
-- keep original query for exact matching.
+```text
+normalize(query):
+  1. Unicode NFKC 归一化，兼容全角/半角字符
+  2. 转小写
+  3. 去除首尾空格，合并连续空格
+  4. 按非字母数字字符分词
+  5. 生成 compact query，用于忽略空格和符号的比较
+```
 
-### Candidate Retrieval
+同时识别特殊链上意图：
 
-Use multiple candidate sources and merge them:
+```text
+address     = 0x 开头的 40 位 EVM 地址
+cid         = bafy... / bafk... / Qm... IPFS CID
+tokenId     = 纯数字输入
+resourceKey = chain:<chainId>:<contractAddress>:<tokenId>
+```
 
-1. Exact match: title, artist, album, token id, CID, resource key.
-2. Fuzzy lexical match: SQLite `LIKE` locally and PostgreSQL `contains`/`insensitive` in backend.
-3. Provider search: NetEase/FreeFlow provider results, normalized into `TrackEntity`.
-4. Optional lyrics search: lyrics text index for phrase matches.
-5. Optional vector search: embedding similarity over title, artist, genre, description and lyrics.
+### 2. 候选召回
 
-### Ranking Formula
+后端只检索已发布的链上音乐：
 
-A deterministic ranking score is enough for the first thesis implementation:
+```text
+status = PUBLISHED
+chainId != null
+musicAssetAddress != null
+tokenId != null
+```
+
+候选来源包括：
+
+1. 标题、艺术家、专辑、流派、描述的 `contains` 召回。
+2. Token ID、合约地址、平台合约地址、发布交易哈希召回。
+3. 音频 CID、封面 CID、元数据 CID 召回。
+4. 完整 `resourceKey` 解析后的精确召回。
+5. 当 SQL 召回不足以覆盖拼写差异时，额外取一小批最近发布资源作为模糊匹配候选。
+
+当前候选上限：
+
+```text
+candidateLimit = min(500, max(80, limit * 8))
+recentFallback = min(200, candidateLimit)
+```
+
+### 3. 特征评分
+
+每个候选资源都会计算一组特征分：
 
 ```text
 score =
-  4.0 * exact_title_match +
-  3.0 * exact_artist_match +
-  2.0 * title_prefix_match +
-  1.5 * artist_prefix_match +
-  1.2 * genre_match +
-  1.0 * lyrics_phrase_match +
-  0.8 * normalized_text_similarity +
-  0.6 * freshness_score +
-  0.6 * local_play_affinity +
-  0.4 * global_popularity
+  identity_score +
+  text_match_score +
+  fuzzy_similarity_score +
+  freshness_score +
+  popularity_score
 ```
 
-Where:
+身份类特征：
 
-- `normalized_text_similarity` can use Levenshtein distance for short strings and token overlap for longer strings.
-- `freshness_score` decays by publish date.
-- `local_play_affinity` comes from local play count, completion rate and playlist additions.
-- `global_popularity` comes from backend aggregate plays, comments, purchases or library adds.
+| 特征 | 分数 |
+| --- | ---: |
+| `resourceKey` 精确匹配 | 100 |
+| Token ID 精确匹配 | 80 |
+| 音乐合约地址精确匹配 | 70 |
+| IPFS CID 精确匹配 | 65 |
+| 平台合约地址精确匹配 | 55 |
+| 发布交易哈希匹配 | 45 |
+| `resourceKey` 包含关键词 | 45 |
+| IPFS CID 包含关键词 | 30 |
+| Token ID 前缀匹配 | 25 |
 
-The current `LyricService` already uses Levenshtein sorting for fallback lyric candidate selection. That idea can be reused in search ranking: compare the query with `title + artist`, then use the distance as one ranking feature instead of the only criterion.
+文本类特征：
 
-## Recommendation Pipeline
+| 字段 | 精确 | 前缀 | 包含 | 分词命中 |
+| --- | ---: | ---: | ---: | ---: |
+| 标题 | 45 | 30 | 20 | 14 |
+| 艺术家 | 34 | 24 | 16 | 12 |
+| 专辑 | 24 | 16 | 10 | 8 |
+| 流派 | 20 | 14 | 8 | 6 |
+| 描述 | 10 | 8 | 6 | 4 |
 
-### Content-Based Recommendation
-
-Build item vectors from:
-
-- title tokens;
-- artist tokens;
-- album tokens;
-- genre labels;
-- lyrics keywords;
-- creator id;
-- access model;
-- release age.
-
-For a user/session profile, aggregate vectors from:
-
-- completed plays;
-- repeated plays;
-- playlist additions;
-- downloads;
-- purchases;
-- comments.
-
-Then recommend tracks with high cosine similarity to the user vector, excluding already skipped or recently played tracks.
-
-### Collaborative Signals
-
-When enough backend data exists, add item-item co-occurrence:
-
-- tracks added by the same wallet/profile;
-- tracks played in the same session;
-- tracks downloaded together;
-- tracks commented on by overlapping users.
-
-This can start as a simple co-occurrence table:
+模糊相似度：
 
 ```text
-item_similarity(A, B) =
-  co_play_count(A, B) * 1.0 +
-  co_library_add_count(A, B) * 2.0 +
-  co_purchase_count(A, B) * 3.0
+similarity = 1 - levenshtein(queryCompact, fieldCompact) / maxLength
 ```
 
-Normalize by item popularity to avoid always recommending the most popular tracks.
-
-### Hybrid Ranking
-
-Final recommendation score:
+当相似度超过阈值时加入评分：
 
 ```text
-final_score =
-  0.45 * content_similarity +
-  0.25 * collaborative_similarity +
-  0.15 * freshness_score +
-  0.10 * creator_affinity +
-  0.05 * diversity_bonus
+threshold = query length <= 4 ? 0.78 : 0.68
+fuzzy_similarity_score = 16 * similarity
 ```
 
-Diversity should prevent the list from being dominated by one artist or one genre. A simple Maximal Marginal Relevance pass works:
+新鲜度分：
 
 ```text
-MMR(item) = lambda * relevance(item) - (1 - lambda) * max_similarity_to_selected(item)
+freshness = 0.5 ^ (ageDays / 45)
+freshness_score = 8 * freshness
 ```
 
-Use `lambda = 0.75` for discovery pages and `lambda = 0.9` for direct search result pages.
+热度分：
 
-## Backend Implementation Plan
-
-Recommended tables:
-
-| Table | Purpose |
-| --- | --- |
-| `search_events` | query and click analytics |
-| `resource_play_events` | play, completion and skip signals |
-| `resource_popularity_daily` | daily aggregate counters |
-| `resource_embeddings` | optional vector representation |
-| `resource_recommendation_cache` | precomputed recommendation lists |
-
-Recommended indexes:
-
-- `resources(resourceKey)`;
-- `resources(title)`;
-- `creator_releases(artistName, albumName, genreLabel)`;
-- full-text index over title, artist, album, genre, description and lyrics if lyrics are stored server-side;
-- vector index if using pgvector later.
-
-## Desktop Implementation Plan
-
-Local search should merge:
-
-1. SQLite library results;
-2. backend Web2.5 resources;
-3. provider search results.
-
-The desktop already has `SearchService`, provider managers and FreeFlow resource search. The next step is to expose a structured search result with rank reasons:
-
-```ts
-type RankedSearchResult = {
-  track: TrackEntity;
-  score: number;
-  source: 'local' | 'web25' | 'provider';
-  reasons: string[];
-};
+```text
+weightedPopularity = commentCount + purchaseCount * 3
+popularity = min(1, ln(1 + weightedPopularity) / ln(31))
+popularity_score = 7 * popularity
 ```
 
-This makes the ranking explainable in the thesis and debuggable in the UI.
+购买比评论权重大，因为购买代表更强的链上确认行为。
 
-## Evaluation
+### 4. 过滤与排序
 
-Offline metrics:
+如果 query 非空，只保留至少命中一个查询相关特征的资源，避免纯粹因为“最近发布”而返回无关结果。
 
-- Mean Reciprocal Rank for known target queries;
-- nDCG@10 for hand-labeled search relevance;
-- click-through rate by rank;
-- completion rate for recommended tracks;
-- diversity by artist/genre distribution.
+排序规则：
 
-Online metrics:
+```text
+1. score 降序
+2. publishedAt / updatedAt 降序
+```
 
-- search-to-play conversion;
-- search-to-library-add conversion;
-- recommendation play completion;
-- skip rate;
-- download or purchase conversion for Web2.5 resources.
+返回结果会包含可解释排序信息：
 
-## Thesis Summary
+```json
+{
+  "resourceKey": "chain:11155111:0x...:1",
+  "title": "Track Title",
+  "rank": {
+    "algorithm": "chain_resource_rank_v1",
+    "score": 58.372,
+    "reasons": ["标题精确匹配", "最近发布优先"],
+    "features": {
+      "text.title.exact": 45,
+      "quality.freshness": 7.8,
+      "quality.popularity": 5.572
+    }
+  }
+}
+```
 
-FreeFlow can implement search recommendation as a hybrid retrieval system:
+## 算法复杂度
 
-- lexical search handles precise intent;
-- fuzzy matching handles noisy input and multilingual names;
-- lyrics and metadata expand semantic coverage;
-- behavioral signals personalize ranking;
-- on-chain and IPFS identifiers provide stable resource identity;
-- diversity reranking improves discovery quality.
+设候选数量为 `N`，平均文本长度为 `L`：
 
-This design is incremental: the first version can be implemented with SQLite/PostgreSQL queries and deterministic scoring, while later versions can add embeddings, pgvector and precomputed recommendation caches.
+- SQL 候选召回依赖数据库索引和 `contains` 查询。
+- 评分阶段遍历候选，复杂度约为 `O(N * L^2)`，其中 `L^2` 来自 Levenshtein；当前实现会把相似度比较文本截断到 96 个字符，避免长描述拖慢搜索。
+- 由于候选上限被限制在 500，实际运行成本可控。
+- 排序复杂度为 `O(N log N)`。
+
+后续如果资源量扩大，可以把模糊相似度放到 PostgreSQL full-text search、trigram
+index 或 pgvector 中。
+
+## 评估指标
+
+离线评估：
+
+- `MRR`：目标资源首次出现位置。
+- `nDCG@10`：前 10 个结果的相关性质量。
+- `Precision@10`：前 10 个结果相关比例。
+- `Zero Result Rate`：无结果查询比例。
+
+在线评估：
+
+- 搜索后播放率。
+- 搜索结果点击率。
+- 搜索后购买率。
+- 搜索后评论率。
+- 平均首个有效结果排名。
+
+## 后续扩展
+
+1. 加 `search_events` 和 `search_result_clicked` 表，用点击反馈微调权重。
+2. 为 `CreatorRelease` 增加 PostgreSQL full-text index，提高标题/描述召回。
+3. 对歌词、描述、标题生成 embedding，用 pgvector 做语义检索。
+4. 加创作者偏好分：用户购买或评论过某创作者作品时，提高同创作者资源排序。
+5. 加多样性重排：搜索结果页避免同一创作者或同一流派连续占满列表。

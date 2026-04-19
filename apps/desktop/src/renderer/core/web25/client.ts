@@ -157,6 +157,8 @@ export type IndexedTrackResource = {
   title: string | null;
   artistName: string | null;
   albumName: string | null;
+  genreLabel?: string | null;
+  description?: string | null;
   chainId: number | null;
   contractAddress: string | null;
   tokenId: string | null;
@@ -176,8 +178,15 @@ export type IndexedTrackResource = {
   releaseId: string | null;
   status: CreatorReleaseStatus | null;
   metadataDocument: unknown | null;
+  publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  rank?: {
+    algorithm: string;
+    score: number;
+    reasons: string[];
+    features?: Record<string, number>;
+  } | null;
 };
 
 export type Web25Comment = {
@@ -471,7 +480,15 @@ export async function searchIndexedTrackResources(baseUrl: string, keyword: stri
     limit: String(limit),
   });
 
-  return await requestWeb25<{ items: IndexedTrackResource[] }>(
+  return await requestWeb25<{
+    items: IndexedTrackResource[];
+    ranking?: {
+      algorithm: string;
+      candidateCount: number;
+      matchedCount: number;
+      query: Record<string, unknown>;
+    };
+  }>(
     baseUrl,
     `/api/v1/resources/search?${query.toString()}`,
   );

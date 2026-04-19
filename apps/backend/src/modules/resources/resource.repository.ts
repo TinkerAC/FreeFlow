@@ -21,6 +21,12 @@ const releaseInclude = {
   metadataStorageObject: {
     include: storageObjectInclude,
   },
+  _count: {
+    select: {
+      comments: true,
+      purchases: true,
+    },
+  },
 } satisfies Prisma.CreatorReleaseInclude;
 
 export function buildReleaseResourceKey(input: {
@@ -63,21 +69,38 @@ export class ResourceRepository {
 
     if (normalized) {
       const lowered = normalized.toLowerCase();
+      const resourceKeyParts = parseReleaseResourceKey(lowered);
       where.OR = [
         { title: { contains: normalized, mode: 'insensitive' } },
         { artistName: { contains: normalized, mode: 'insensitive' } },
         { albumName: { contains: normalized, mode: 'insensitive' } },
+        { description: { contains: normalized, mode: 'insensitive' } },
         { genreLabel: { contains: normalized, mode: 'insensitive' } },
         { tokenId: { contains: normalized, mode: 'insensitive' } },
         { musicAssetAddress: { contains: lowered, mode: 'insensitive' } },
+        { platformHubAddress: { contains: lowered, mode: 'insensitive' } },
+        { publishTxHash: { contains: lowered, mode: 'insensitive' } },
+        { audioStorageObject: { is: { cid: { contains: normalized, mode: 'insensitive' } } } },
+        { coverStorageObject: { is: { cid: { contains: normalized, mode: 'insensitive' } } } },
         { metadataStorageObject: { is: { cid: { contains: normalized, mode: 'insensitive' } } } },
       ];
+      if (resourceKeyParts) {
+        where.OR.push({
+          chainId: resourceKeyParts.chainId,
+          musicAssetAddress: {
+            equals: resourceKeyParts.contractAddressLower,
+            mode: 'insensitive',
+          },
+          tokenId: resourceKeyParts.tokenId,
+        });
+      }
     }
 
     return prisma.creatorRelease.findMany({
       where,
       include: releaseInclude,
       orderBy: [
+        { publishedAt: 'desc' },
         { updatedAt: 'desc' },
         { createdAt: 'desc' },
       ],

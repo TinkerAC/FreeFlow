@@ -1,5 +1,6 @@
 import { env } from '../../config/env.js';
 import { buildReleaseResourceKey, type PersistedResourceRecord } from './resource.repository.js';
+import type { ResourceRankPayload } from './resource.ranking.js';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -59,7 +60,7 @@ function mapStorageObject(record: {
   };
 }
 
-export function mapResourceRecord(release: PersistedResourceRecord) {
+export function mapResourceRecord(release: PersistedResourceRecord, rank?: ResourceRankPayload) {
   const metadata = getMetadataRecord(release.metadataDocument ?? null);
   const metadataStorage = mapStorageObject(release.metadataStorageObject ?? null);
   const audioStorage = mapStorageObject(release.audioStorageObject ?? null);
@@ -77,6 +78,8 @@ export function mapResourceRecord(release: PersistedResourceRecord) {
     title: release.title,
     artistName: release.artistName ?? null,
     albumName: release.albumName ?? null,
+    genreLabel: release.genreLabel ?? null,
+    description: release.description ?? null,
     chainId: release.chainId ?? null,
     contractAddress: release.musicAssetAddress ?? null,
     tokenId: release.tokenId ?? null,
@@ -96,7 +99,9 @@ export function mapResourceRecord(release: PersistedResourceRecord) {
     releaseId: release.id,
     status: release.status ?? null,
     metadataDocument: release.metadataDocument ?? null,
+    publishedAt: release.publishedAt?.toISOString() ?? null,
     createdAt: release.createdAt.toISOString(),
     updatedAt: release.updatedAt.toISOString(),
+    rank: rank ?? null,
   };
 }

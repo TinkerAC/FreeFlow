@@ -208,6 +208,26 @@ These endpoints are public and keep the existing `/resources` path for desktop c
 `GET /api/v1/resources/search?q=<keyword>&limit=30`
 
 Searches published releases by title, artist, album, genre, token id, metadata CID, or MusicAccess1155 address.
+Results are ranked by the `chain_resource_rank_v1` algorithm. Each item may include a `rank` object with
+the total score, feature contributions, and human-readable reasons such as title match, Token ID match,
+CID match, freshness, or purchase/comment popularity.
+
+Example rank payload:
+
+```json
+{
+  "rank": {
+    "algorithm": "chain_resource_rank_v1",
+    "score": 58.372,
+    "reasons": ["标题精确匹配", "最近发布优先"],
+    "features": {
+      "text.title.exact": 45,
+      "quality.freshness": 7.8,
+      "quality.popularity": 5.572
+    }
+  }
+}
+```
 
 ### Resolve Published Track
 

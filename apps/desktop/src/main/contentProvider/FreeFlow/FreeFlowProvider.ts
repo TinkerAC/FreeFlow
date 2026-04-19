@@ -16,6 +16,8 @@ type ResourceTrackPayload = {
   title: string | null;
   artistName: string | null;
   albumName: string | null;
+  genreLabel?: string | null;
+  description?: string | null;
   chainId: number | null;
   contractAddress: string | null;
   tokenId: string | null;
@@ -34,6 +36,13 @@ type ResourceTrackPayload = {
   releaseId: string | null;
   status: string | null;
   metadataDocument: unknown | null;
+  publishedAt?: string | null;
+  rank?: {
+    algorithm: string;
+    score: number;
+    reasons: string[];
+    features?: Record<string, number>;
+  } | null;
 };
 
 type ResourceSearchResponse = {
