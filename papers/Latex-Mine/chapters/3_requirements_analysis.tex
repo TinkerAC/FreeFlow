@@ -2,71 +2,76 @@
 
 \chapter{系统需求分析}
 
+
 \section{应用场景分析}
 
 FreeFlow面向链上音乐资源的发行和消费场景。创作者可以在桌面端完成音乐信息编辑、素材上传、metadata生成、链上发布和收益分账配置；听众可以检索链上音乐资源，查看作品详情，购买访问权并进行播放、评论和下载。系统服务端负责连接桌面端、IPFS存储和区块链合约，提供身份认证、资源索引和业务数据管理能力。
 
 系统核心目标不是多平台音乐聚合，而是围绕链上音乐资源构建完整业务闭环。
 
+
 \section{用户角色分析}
 
 \begin{table}[htbp]
-  \linespread{1.5}
-  \zihao{5}
-  \songti
-  \centering
-  \caption{用户角色与需求说明}\label{tab:user_roles}
-  \begin{tabular}{|l|p{10cm}|}
-  \hline
-  角色 & 主要需求 \\ \hline
-  创作者 & 创建发行草稿、编辑音乐信息、上传音频和封面、生成metadata、设置访问模式、设置收益分账、发布作品到链上、查看发布状态 \\ \hline
-  听众 & 搜索链上音乐、查看作品详情、查询访问状态、购买访问权、播放音乐、加入链上音乐库、下载音乐、发表评论 \\ \hline
-  系统服务 & 管理SIWE会话、代理Pinata上传、保存资源索引、记录购买和评论、提供检索与排序接口 \\ \hline
-  \end{tabular}
+    \linespread{1.5}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{用户角色与需求说明}\label{tab:user_roles}
+    \begin{tabular}{|l|p{10cm}|}
+        \hline
+        角色   & 主要需求                                                          \\ \hline
+        创作者  & 创建发行草稿、编辑音乐信息、上传音频和封面、生成metadata、设置访问模式、设置收益分账、发布作品到链上、查看发布状态 \\ \hline
+        听众   & 搜索链上音乐、查看作品详情、查询访问状态、购买访问权、播放音乐、加入链上音乐库、下载音乐、发表评论             \\ \hline
+        系统服务 & 管理SIWE会话、代理Pinata上传、保存资源索引、记录购买和评论、提供检索与排序接口                  \\ \hline
+    \end{tabular}
 \end{table}
+
 
 \section{功能需求分析}
 
 系统功能需求如表\ref{tab:functional_requirements}所示。后续正式写作时，可补充用例图和每个用例的详细描述。
 
 \begin{table}[htbp]
-  \linespread{1.5}
-  \zihao{5}
-  \songti
-  \centering
-  \caption{系统功能需求表}\label{tab:functional_requirements}
-  \begin{tabular}{|l|p{10cm}|}
-  \hline
-  功能模块 & 需求说明 \\ \hline
-  钱包登录与Profile管理 & 支持用户通过钱包签名完成SIWE登录，维护当前Profile与钱包身份的一致性 \\ \hline
-  创作者工作台 & 支持发行草稿创建、编辑、保存、删除和状态展示 \\ \hline
-  素材上传与metadata管理 & 支持音频、封面和metadata上传到Pinata/IPFS，并保存CID和gateway地址 \\ \hline
-  链上发布与分账 & 支持调用智能合约发布作品，设置访问模式、价格和收益分账地址 \\ \hline
-  链上资源检索 & 支持按标题、歌手、专辑、流派、Token ID、合约地址、交易哈希和IPFS CID检索资源 \\ \hline
-  购买与访问验证 & 支持查询作品销售配置、购买访问权、验证ERC-1155访问凭证和记录购买交易 \\ \hline
-  播放与链上音乐库 & 支持播放公开或已购买作品，将作品加入链上音乐库，并进行本地缓存和下载 \\ \hline
-  评论互动 & 支持登录用户查看和发布作品评论 \\ \hline
-  \end{tabular}
+    \linespread{1.5}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{系统功能需求表}\label{tab:functional_requirements}
+    \begin{tabular}{|l|p{10cm}|}
+        \hline
+        功能模块            & 需求说明                                            \\ \hline
+        钱包登录与Profile管理  & 支持用户通过钱包签名完成SIWE登录，维护当前Profile与钱包身份的一致性         \\ \hline
+        创作者工作台          & 支持发行草稿创建、编辑、保存、删除和状态展示                          \\ \hline
+        素材上传与metadata管理 & 支持音频、封面和metadata上传到Pinata/IPFS，并保存CID和gateway地址 \\ \hline
+        链上发布与分账         & 支持调用智能合约发布作品，设置访问模式、价格和收益分账地址                   \\ \hline
+        链上资源检索          & 支持按标题、歌手、专辑、流派、Token ID、合约地址、交易哈希和IPFS CID检索资源  \\ \hline
+        购买与访问验证         & 支持查询作品销售配置、购买访问权、验证ERC-1155访问凭证和记录购买交易          \\ \hline
+        播放与链上音乐库        & 支持播放公开或已购买作品，将作品加入链上音乐库，并进行本地缓存和下载              \\ \hline
+        评论互动            & 支持登录用户查看和发布作品评论                                 \\ \hline
+    \end{tabular}
 \end{table}
+
 
 \section{非功能需求分析}
 
 \begin{table}[htbp]
-  \linespread{1.5}
-  \zihao{5}
-  \songti
-  \centering
-  \caption{系统非功能需求表}\label{tab:non_functional_requirements}
-  \begin{tabular}{|l|p{10cm}|}
-  \hline
-  需求类型 & 说明 \\ \hline
-  安全性 & SIWE登录需要防止nonce重放，后端受保护接口需要进行会话校验，付费作品访问状态以链上凭证为依据 \\ \hline
-  可追溯性 & 作品应通过chainId、合约地址、tokenId、CID和交易哈希进行定位和追踪 \\ \hline
-  可用性 & 创作者发布流程应提供明确阶段状态和错误提示，用户购买和播放流程应尽量减少操作步骤 \\ \hline
-  可维护性 & 桌面端、后端和合约应按模块划分职责，降低后续扩展成本 \\ \hline
-  性能 & 检索排序应限制候选规模，音频播放应支持Range请求和缓存机制 \\ \hline
-  \end{tabular}
+    \linespread{1.5}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{系统非功能需求表}\label{tab:non_functional_requirements}
+    \begin{tabular}{|l|p{10cm}|}
+        \hline
+        需求类型 & 说明                                                 \\ \hline
+        安全性  & SIWE登录需要防止nonce重放，后端受保护接口需要进行会话校验，付费作品访问状态以链上凭证为依据 \\ \hline
+        可追溯性 & 作品应通过chainId、合约地址、tokenId、CID和交易哈希进行定位和追踪          \\ \hline
+        可用性  & 创作者发布流程应提供明确阶段状态和错误提示，用户购买和播放流程应尽量减少操作步骤           \\ \hline
+        可维护性 & 桌面端、后端和合约应按模块划分职责，降低后续扩展成本                         \\ \hline
+        性能   & 检索排序应限制候选规模，音频播放应支持Range请求和缓存机制                    \\ \hline
+    \end{tabular}
 \end{table}
+
 
 \section{可行性分析}
 
@@ -81,6 +86,7 @@ Electron、React、Node.js、Express、Prisma、Solidity、ethers.js和IPFS/Pina
 \subsection{时间可行性}
 
 当前系统已经具备主要功能，后续论文阶段主要工作是完善测试、补充图表和整理文档。因此在毕业论文时间范围内完成系统说明、测试和论文撰写是可行的。
+
 
 \section{本章小结}
 

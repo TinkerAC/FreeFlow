@@ -2,6 +2,7 @@
 
 \chapter{链上音乐资源检索与排序模块设计}
 
+
 \section{检索排序模块需求}
 
 链上音乐资源不仅包含标题、歌手、专辑和流派等传统音乐元数据，还包含chainId、合约地址、Token ID、发布交易哈希、IPFS CID和resourceKey等链上身份字段。因此，系统检索模块需要同时支持普通文本查询和链上身份字段查询。
@@ -9,40 +10,42 @@
 本模块的目标包括：
 
 \begin{enumerate}
-  \item 用户输入歌曲名、艺术家、专辑或流派时，能够找到相关链上音乐资源。
-  \item 用户输入Token ID、合约地址、交易哈希、IPFS CID或resourceKey时，能够定位具体链上资源。
-  \item 用户输入存在大小写、空格、符号或轻微拼写差异时，系统仍能返回合理结果。
-  \item 排序结果需要包含可解释原因，便于调试和答辩展示。
+    \item 用户输入歌曲名、艺术家、专辑或流派时，能够找到相关链上音乐资源。
+    \item 用户输入Token ID、合约地址、交易哈希、IPFS CID或resourceKey时，能够定位具体链上资源。
+    \item 用户输入存在大小写、空格、符号或轻微拼写差异时，系统仍能返回合理结果。
+    \item 排序结果需要包含可解释原因，便于调试和答辩展示。
 \end{enumerate}
+
 
 \section{链上资源索引数据}
 
 系统以已发布的CreatorRelease作为检索对象。只有状态为PUBLISHED且chainId、musicAssetAddress和tokenId均不为空的资源才会进入检索范围。
 
 \begin{table}[htbp]
-  \linespread{1.5}
-  \zihao{5}
-  \songti
-  \centering
-  \caption{链上资源检索字段说明}\label{tab:ranking_fields}
-  \begin{tabular}{|l|p{9.5cm}|}
-  \hline
-  字段 & 用途 \\ \hline
-  title & 标题匹配和模糊相似度计算 \\ \hline
-  artistName & 艺术家匹配 \\ \hline
-  albumName & 专辑匹配 \\ \hline
-  genreLabel & 流派匹配 \\ \hline
-  description & 长文本辅助召回 \\ \hline
-  chainId & 链网络识别 \\ \hline
-  musicAssetAddress & 音乐访问凭证合约定位 \\ \hline
-  platformHubAddress & 平台合约定位 \\ \hline
-  tokenId & 链上作品Token定位 \\ \hline
-  publishTxHash & 发布交易定位 \\ \hline
-  audioCid、coverCid、metadataCid & IPFS内容寻址检索 \\ \hline
-  comments、purchases & 热度评分 \\ \hline
-  publishedAt、updatedAt & 新鲜度评分 \\ \hline
-  \end{tabular}
+    \linespread{1.5}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{链上资源检索字段说明}\label{tab:ranking_fields}
+    \begin{tabular}{|l|p{9.5cm}|}
+        \hline
+        字段                            & 用途           \\ \hline
+        title                         & 标题匹配和模糊相似度计算 \\ \hline
+        artistName                    & 艺术家匹配        \\ \hline
+        albumName                     & 专辑匹配         \\ \hline
+        genreLabel                    & 流派匹配         \\ \hline
+        description                   & 长文本辅助召回      \\ \hline
+        chainId                       & 链网络识别        \\ \hline
+        musicAssetAddress             & 音乐访问凭证合约定位   \\ \hline
+        platformHubAddress            & 平台合约定位       \\ \hline
+        tokenId                       & 链上作品Token定位  \\ \hline
+        publishTxHash                 & 发布交易定位       \\ \hline
+        audioCid、coverCid、metadataCid & IPFS内容寻址检索   \\ \hline
+        comments、purchases            & 热度评分         \\ \hline
+        publishedAt、updatedAt         & 新鲜度评分        \\ \hline
+    \end{tabular}
 \end{table}
+
 
 \section{查询归一化与候选召回}
 
@@ -50,13 +53,14 @@
 
 候选召回分为两部分。第一部分通过数据库contains查询召回标题、艺术家、专辑、流派、描述和链上身份字段命中的资源。第二部分在SQL召回不足以覆盖拼写差异时，额外取一批最近发布资源作为模糊匹配候选。
 
+
 \section{特征评分与排序算法}
 
 当前算法名称为chain\_resource\_rank\_v1。排序总分由身份匹配分、文本匹配分、模糊相似度分、新鲜度分和热度分组成，如式\ref{eq:rank_score}所示。
 
 \begin{equation}
-  Score(d,q)=S_{identity}(d,q)+S_{text}(d,q)+S_{fuzzy}(d,q)+S_{freshness}(d)+S_{popularity}(d)
-  \label{eq:rank_score}
+    Score(d,q)=S_{identity}(d,q)+S_{text}(d,q)+S_{fuzzy}(d,q)+S_{freshness}(d)+S_{popularity}(d)
+    \label{eq:rank_score}
 \end{equation}
 
 其中，$d$表示候选资源，$q$表示用户查询。身份匹配分用于resourceKey、Token ID、合约地址、交易哈希和CID等字段；文本匹配分用于标题、艺术家、专辑、流派和描述；模糊相似度采用Levenshtein距离进行归一化；新鲜度采用时间衰减函数；热度根据评论数和购买数加权计算。
@@ -64,25 +68,26 @@
 新鲜度计算如式\ref{eq:freshness}所示。
 
 \begin{equation}
-  freshness=0.5^{ageDays/45}
-  \label{eq:freshness}
+    freshness=0.5^{ageDays/45}
+    \label{eq:freshness}
 \end{equation}
 
 热度计算如式\ref{eq:popularity}所示。
 
 \begin{equation}
-  popularity=\min(1,\ln(1+comments+3\times purchases)/\ln(31))
-  \label{eq:popularity}
+    popularity=\min(1,\ln(1+comments+3\times purchases)/\ln(31))
+    \label{eq:popularity}
 \end{equation}
 
 购买数权重高于评论数，因为购买行为代表更强的链上确认信号。
 
+
 \section{算法流程}
 
 \begin{breakablealgorithm}
-  \caption{链上音乐资源检索与排序算法}
-  \label{algo:chain_resource_rank}
-  \begin{algorithmic}[1]
+    \caption{链上音乐资源检索与排序算法}
+    \label{algo:chain_resource_rank}
+    \begin{algorithmic}[1]
     \Require 用户查询 $q$，返回数量 $k$
     \Ensure 排序后的链上音乐资源列表
     \State 对 $q$ 进行归一化，得到分词、compact文本和特殊链上字段
@@ -90,28 +95,31 @@
     \State 召回最近发布资源集合 $C_2$ 作为模糊匹配补充
     \State 合并并去重候选集合 $C=C_1\cup C_2$
     \For{每个候选资源 $d \in C$}
-      \State 计算身份匹配分 $S_{identity}$
-      \State 计算文本匹配分 $S_{text}$
-      \State 计算模糊相似度分 $S_{fuzzy}$
-      \State 计算新鲜度分 $S_{freshness}$
-      \State 计算热度分 $S_{popularity}$
-      \State 汇总总分并记录排序原因
+        \State 计算身份匹配分 $S_{identity}$
+        \State 计算文本匹配分 $S_{text}$
+        \State 计算模糊相似度分 $S_{fuzzy}$
+        \State 计算新鲜度分 $S_{freshness}$
+        \State 计算热度分 $S_{popularity}$
+        \State 汇总总分并记录排序原因
     \EndFor
     \State 过滤未命中查询相关特征的资源
     \State 按总分降序排序，分数相同时按发布时间排序
     \State 返回前 $k$ 个结果
-  \end{algorithmic}
+    \end{algorithmic}
 \end{breakablealgorithm}
+
 
 \section{算法复杂度分析}
 
 设候选数量为$N$，平均文本长度为$L$。候选召回主要由数据库完成，评分阶段需要遍历候选集合。文本匹配近似为$O(NL)$，Levenshtein模糊相似度近似为$O(NL^2)$。系统会对参与相似度比较的文本长度进行截断，并限制候选数量，因此实际运行成本可控。最终排序复杂度为$O(N\log N)$。
+
 
 \section{检索效果评估设计}
 
 后续实验可构建小规模检索评估集，准备20至30条链上音乐资源和30至50个查询词。查询类型应覆盖标题、歌手、专辑、流派、Token ID、合约地址、IPFS CID、resourceKey和轻微拼写扰动。
 
 评价指标包括Precision@10、MRR、nDCG@10、Zero Result Rate和平均响应时间。对比方案可设置为数据库contains基线、仅文本评分、文本加链上身份字段、完整chain\_resource\_rank\_v1算法。
+
 
 \section{本章小结}
 

@@ -3,7 +3,7 @@
 % 
 \NeedsTeXFormat{LaTeX2e}[1995/12/01]
 \ProvidesClass{zufe}
-    [2020/02/07 v1.0 ZUFE Thesis Proposal class]
+[2020/02/07 v1.0 ZUFE Thesis Proposal class]
 
 \newif\if@bit@bachelor
 \newif\if@bit@master
@@ -48,7 +48,7 @@
 \RequirePackage[a4paper,left=2.5cm,right=2.5cm,top=3.5cm,bottom=2.5cm]{geometry}
 \RequirePackage{xeCJK}
 \RequirePackage{titletoc}
-  % \RequirePackage{fontspec}
+% \RequirePackage{fontspec}
 \RequirePackage{setspace}
 \RequirePackage{graphicx}
 \RequirePackage{fancyhdr}
@@ -68,15 +68,15 @@
 \RequirePackage{pdfpages}
 
 \RequirePackage[
-  backend=biber,
-  style=gb7714-2015,
-  gbalign=gb7714-2015,
-  gbnamefmt=lowercase,
-  gbpub=false,
-  doi=false,
-  url=false,
-  eprint=false,
-  isbn=false,
+    backend=biber,
+    style=gb7714-2015,
+    gbalign=gb7714-2015,
+    gbnamefmt=lowercase,
+    gbpub=false,
+    doi=false,
+    url=false,
+    eprint=false,
+    isbn=false,
 ]{biblatex}
 
 % 参考文献
@@ -107,21 +107,22 @@
 \renewcommand{\kaishu}{\CJKfamily{mystkaiti}}
 
 \fancypagestyle{ZUFEThesis}{
-  % 页眉高度
-  \setlength{\headheight}{20pt}
-  % 页码高度（不完美，比规定稍微靠下 2mm）
-  \setlength{\footskip}{14pt}
+% 页眉高度
+    \setlength{\headheight}{20pt}
+    % 页码高度（不完美，比规定稍微靠下 2mm）
+    \setlength{\footskip}{14pt}
 
-  \fancyhf{}
-  % 定义页眉、页码
-  \ifnum\reportStyle=0  
-    \fancyhead[C]{\xiaowu\ziju{0.08}\songti{浙江财经大学本科生毕业论文（设计）}}
-  \else
-    \fancyhead[C]{\xiaowu\ziju{0.08}\songti{浙江财经大学本科生专业实践报告（专业实践{\reportStyle}）}}
-  \fi
-  \fancyfoot[C]{\songti\zihao{5} \thepage}
-  % 页眉分割线稍微粗一些
-  \renewcommand{\headrulewidth}{0.4pt}
+    \fancyhf{}
+% 定义页眉、页码
+    \ifnum
+        \reportStyle=0
+        \fancyhead[C]{\xiaowu\ziju{0.08}\songti{浙江财经大学本科生毕业论文（设计）}}
+    \else
+        \fancyhead[C]{\xiaowu\ziju{0.08}\songti{浙江财经大学本科生专业实践报告（专业实践{\reportStyle}）}}
+    \fi
+    \fancyfoot[C]{\songti\zihao{5} \thepage}
+    % 页眉分割线稍微粗一些
+    \renewcommand{\headrulewidth}{0.4pt}
 }
 
 
@@ -136,7 +137,7 @@
     fixskip = true,
     % 防止 chapter 换页
     % break = {}
-  }
+}
 }
 
 \ctexset{section={
@@ -146,7 +147,7 @@
     beforeskip = 20bp plus 1ex minus .2ex,
     afterskip = 18bp plus .2ex,
     fixskip = true,
-  }
+}
 }
 
 \ctexset{subsection={
@@ -156,15 +157,15 @@
     beforeskip = 17bp plus 1ex minus .2ex,
     afterskip = 14bp plus .2ex,
     fixskip = true,
-  }
+}
 }
 
 \addtocontents{toc}{\protect\hypersetup{hidelinks}}
 
 \renewcommand{\contentsname}{
-  \fontsize{16pt}{\baselineskip}
-  \normalfont\heiti{目~~~~录}
-  \vspace{-8pt}
+    \fontsize{16pt}{\baselineskip}
+    \normalfont\heiti{目~~~~录}
+    \vspace{-8pt}
 }
 \titlecontents{chapter}[0pt]{\songti \zihao{-4}}
 {\thecontentslabel\hspace{\ccwd}}{}
@@ -177,13 +178,13 @@
 {\hspace{.5em}\titlerule*{.}\contentspage}
 
 \renewcommand{\frontmatter}{
-  \pagenumbering{Roman}
-  \pagestyle{ZUFEThesis}
+    \pagenumbering{Roman}
+    \pagestyle{ZUFEThesis}
 }
 
 \renewcommand{\mainmatter}{
-  \pagenumbering{arabic}
-  \pagestyle{ZUFEThesis}
+    \pagenumbering{arabic}
+    \pagestyle{ZUFEThesis}
 }
 
 \setlength{\abovecaptionskip}{11pt}
@@ -205,9 +206,9 @@
 \renewcommand{\theequation}{\arabic{chapter}-\arabic{equation}}
 
 \newcommand{\unnumchapter}[1]{
-  \chapter*{\vskip 10bp\textmd{#1} \vskip -6bp}
-  \addcontentsline{toc}{chapter}{#1}
-  \stepcounter{chapter}
+    \chapter*{\vskip 10bp\textmd{#1} \vskip -6bp}
+    \addcontentsline{toc}{chapter}{#1}
+    \stepcounter{chapter}
 }
 
 
@@ -219,23 +220,24 @@
 \makeatletter
 \renewcommand{\ALG@name}{算法}
 \newenvironment{breakablealgorithm}
-  {% \begin{breakablealgorithm}
-   \begin{center}
-     \refstepcounter{algorithm}% New algorithm
-     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
-     \renewcommand{\caption}[2][\relax]{% Make a new \caption
-       {\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
-       \ifx\relax##1\relax % #1 is \relax
-         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
-       \else % #1 is not \relax
-         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
-       \fi
-       \kern2pt\hrule\kern2pt
-     }
-  }{% \end{breakablealgorithm}
-     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
-   \end{center}
-  }
+{% \begin{breakablealgorithm}
+    \begin{center}
+    \refstepcounter{algorithm}% New algorithm
+    \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+    \renewcommand{\caption}[2][\relax]{% Make a new \caption
+            {\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+        \ifx
+            \relax##1\relax % #1 is \relax
+            \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+        \else % #1 is not \relax
+            \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+        \fi
+        \kern2pt\hrule\kern2pt
+    }
+}{% \end{breakablealgorithm}
+    \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+    \end{center}
+}
 \makeatother
 % 伪代码跨页-----------------------------------------------------------------------
 
