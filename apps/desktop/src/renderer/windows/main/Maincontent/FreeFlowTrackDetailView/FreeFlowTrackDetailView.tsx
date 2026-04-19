@@ -20,6 +20,15 @@ interface FreeFlowTrackDetailViewProps {
   player: PlayerController;
 }
 
+type AccessStatus = {
+  requiresPurchase: boolean | null;
+  active: boolean | null;
+  priceEth: string | null;
+  creator: string | null;
+  ownedBalance: string | null;
+  checkedAddress: string | null;
+};
+
 function mapToInfo(payload: Awaited<ReturnType<typeof resolveIndexedTrackResource>>): FreeFlowTrackInfo {
   return {
     resourceKey: payload.resourceKey,
@@ -44,6 +53,17 @@ function mapToInfo(payload: Awaited<ReturnType<typeof resolveIndexedTrackResourc
   };
 }
 
+function createAccessStatus(info: FreeFlowTrackInfo | null): AccessStatus {
+  return {
+    requiresPurchase: info ? info.accessModel === 'purchase' : null,
+    active: null,
+    priceEth: info?.priceEth ?? null,
+    creator: null,
+    ownedBalance: null,
+    checkedAddress: null,
+  };
+}
+
 function formatPrice(priceEth: string | null) {
   if (!priceEth) return '-';
   return `${priceEth} ETH`;
@@ -51,7 +71,14 @@ function formatPrice(priceEth: string | null) {
 
 function formatAddress(value?: string | null) {
   if (!value) return '-';
-  return `${value.slice(0, 8)}...${value.slice(-6)}`;
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
+}
+
+function formatDuration(seconds?: number) {
+  if (!seconds) return '--:--';
+  const minutes = Math.floor(seconds / 60);
+  const rest = Math.floor(seconds % 60);
+  return `${minutes}:${rest.toString().padStart(2, '0')}`;
 }
 
 function sameAddress(left?: string | null, right?: string | null) {
@@ -81,27 +108,41 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
   const [addingToLibrary, setAddingToLibrary] = React.useState(false);
   const [accessError, setAccessError] = React.useState('');
   const [libraryMessage, setLibraryMessage] = React.useState('');
-  const [accessStatus, setAccessStatus] = React.useState<{
-    hasAccess: boolean | null;
-    requiresPurchase: boolean | null;
-    active: boolean | null;
-    priceEth: string | null;
-    payoutReceiver: string | null;
-    creator: string | null;
-    ownedBalance: string | null;
-    checkedAddress: string | null;
-  }>({
-    hasAccess: null,
-    requiresPurchase: info?.accessModel === 'purchase',
-    active: true,
-    priceEth: info?.priceEth ?? null,
-    payoutReceiver: null,
-    creator: null,
-    ownedBalance: null,
-    checkedAddress: null,
-  });
+  const [accessStatus, setAccessStatus] = React.useState<AccessStatus>(() => createAccessStatus(track.freeflow ?? null));
+
   const identityAddress = activeProfile?.walletAddress ?? session?.address ?? address ?? null;
   const signingWalletMismatch = Boolean(identityAddress && address && !sameAddress(identityAddress, address));
+  const requiresPurchase = accessStatus.requiresPurchase ?? (info ? info.accessModel === 'purchase' : null);
+  const isPublicAccess = !!info && requiresPurchase === false;
+  const saleActive = accessStatus.active !== false;
+  const hasPurchasedAccess = hasPositiveBalance(accessStatus.ownedBalance);
+  const isCreatorAddress = sameAddress(identityAddress, accessStatus.creator);
+  const canPlay = !!info && (isPublicAccess || hasPurchasedAccess || isCreatorAddress);
+  const canAddToChainLibrary = !!info && (isPublicAccess || hasPurchasedAccess);
+  const needsGuideForPurchase = !isConnected || !walletProvider || !identityAddress || signingWalletMismatch;
+
+  const accessLabel = !info
+    ? '加载中'
+    : isPublicAccess
+    ? '公开访问'
+    : hasPurchasedAccess
+      ? '已购买'
+      : isCreatorAddress
+        ? '创作者访问'
+        : saleActive
+          ? '需要购买'
+          : '暂未开放';
+  const priceLabel = isPublicAccess ? '公开' : formatPrice(accessStatus.priceEth ?? info?.priceEth ?? null);
+  const purchaseLabel = needsGuideForPurchase
+    ? '返回 Profile 引导'
+    : buying
+      ? '购买中...'
+      : `购买 ${priceLabel}`;
+  const libraryButtonLabel = addingToLibrary
+    ? '添加中...'
+    : canAddToChainLibrary
+      ? '加入链上音乐库'
+      : '购买后加入';
 
   React.useEffect(() => {
     void profileContext.getActiveProfile()
@@ -111,26 +152,20 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
 
   React.useEffect(() => {
     let cancelled = false;
-
     const nextInfo = track.freeflow ?? null;
+
     setInfo(nextInfo);
     setError('');
+    setAccessError('');
     setLibraryMessage('');
-    setAccessStatus({
-      hasAccess: null,
-      requiresPurchase: nextInfo?.accessModel === 'purchase',
-      active: null,
-      priceEth: nextInfo?.priceEth ?? null,
-      payoutReceiver: null,
-      creator: null,
-      ownedBalance: null,
-      checkedAddress: null,
-    });
+    setAccessStatus(createAccessStatus(nextInfo));
 
     const needFetch = !nextInfo || (!nextInfo.audioUrl && !nextInfo.metadataUrl);
-    if (!needFetch) return () => {
-      cancelled = true;
-    };
+    if (!needFetch) {
+      return () => {
+        cancelled = true;
+      };
+    }
 
     setLoading(true);
     void resolveIndexedTrackResource(web25BaseUrl.value, track.platform_unique_id)
@@ -151,6 +186,10 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     };
   }, [track.platform_unique_id, track.freeflow, web25BaseUrl.value]);
 
+  const addCurrentTrackToChainLibrary = React.useCallback(async (targetInfo: FreeFlowTrackInfo) => {
+    await upsertChainLibraryTrack(mergeTrackWithFreeFlowInfo(track, targetInfo));
+  }, [track]);
+
   const refreshAccess = React.useCallback(async () => {
     if (!walletProvider || !info?.tokenId) return;
 
@@ -160,12 +199,10 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
       const provider = new BrowserProvider(walletProvider);
       const hubAddress = info.platformHubAddress || DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress;
       const platformHub = new Contract(hubAddress, PLATFORM_HUB_ABI, provider);
-      const [creator, payoutReceiver, price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(info.tokenId);
+      const [creator, , price, requiresPurchaseOnChain, active] = await platformHub.getTrackSaleConfig(info.tokenId);
 
-      let hasAccess: boolean | null = null;
       let ownedBalance: bigint | null = null;
       if (identityAddress) {
-        hasAccess = await platformHub.hasAccess(identityAddress, info.tokenId);
         const musicAccessAddress = info.contractAddress || DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress;
         const musicAccess = new Contract(musicAccessAddress, MUSIC_ACCESS_1155_ABI, provider);
         ownedBalance = await musicAccess.balanceOf(identityAddress, info.tokenId).catch((): null => null);
@@ -173,11 +210,9 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
 
       const nextPriceEth = formatEther(price);
       setAccessStatus({
-        hasAccess,
-        requiresPurchase,
+        requiresPurchase: requiresPurchaseOnChain,
         active,
         priceEth: nextPriceEth,
-        payoutReceiver: typeof payoutReceiver === 'string' ? payoutReceiver : null,
         creator: typeof creator === 'string' ? creator : null,
         ownedBalance: ownedBalance?.toString() ?? null,
         checkedAddress: identityAddress,
@@ -185,9 +220,6 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
 
       if (nextPriceEth !== info.priceEth) {
         setInfo((prev) => prev ? { ...prev, priceEth: nextPriceEth } : prev);
-      }
-      if (!creator) {
-        setAccessError('未获取到创作者地址，请检查合约配置');
       }
     } catch (err) {
       setAccessError(err instanceof Error ? err.message : String(err ?? ''));
@@ -206,6 +238,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
 
     setBuying(true);
     setAccessError('');
+    setLibraryMessage('');
     try {
       const provider = new BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
@@ -216,21 +249,23 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
 
       const hubAddress = info.platformHubAddress || DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress;
       const platformHub = new Contract(hubAddress, PLATFORM_HUB_ABI, signer);
-      const [creator, , price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(info.tokenId);
+      const [creator, , price, requiresPurchaseOnChain, active] = await platformHub.getTrackSaleConfig(info.tokenId);
 
       if (!active) {
-        throw new Error('该资源当前不开放购买');
+        throw new Error('该作品当前未开放购买。');
       }
-      if (!requiresPurchase) {
+      if (!requiresPurchaseOnChain) {
+        await addCurrentTrackToChainLibrary(info);
+        setLibraryMessage('公开作品已加入链上音乐库。');
         await refreshAccess();
         return;
       }
       if (sameAddress(creator, signerAddress)) {
-        throw new Error('创作者默认拥有播放访问权，但没有 ERC-1155 购买凭证余额，不能购买自己的作品。');
+        throw new Error('创作者默认拥有播放权限，不能购买自己的作品。');
       }
 
       const buyTx = await platformHub.buyAccess(info.tokenId, { value: price });
-      await buyTx.wait();
+      const receipt = await buyTx.wait();
       const purchaseChainId = info.chainId ?? DEFAULT_SEPOLIA_CONTRACTS.chainId;
       if (info.releaseId) {
         await upsertWeb25Purchase(web25BaseUrl.value, {
@@ -244,44 +279,27 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
         }).catch((): undefined => undefined);
       }
 
+      await addCurrentTrackToChainLibrary(info);
+      setLibraryMessage(`购买成功，已加入链上音乐库${receipt?.blockNumber ? `。区块 ${receipt.blockNumber}` : '。'}`);
       await refreshAccess();
     } catch (err) {
       setAccessError(err instanceof Error ? err.message : String(err ?? ''));
     } finally {
       setBuying(false);
     }
-  }, [identityAddress, info, refreshAccess, walletProvider, web25BaseUrl.value]);
-
-  const requiresPurchase = accessStatus.requiresPurchase ?? (info?.accessModel === 'purchase');
-  const hasAccess = accessStatus.hasAccess;
-  const hasPurchasedAccess = hasPositiveBalance(accessStatus.ownedBalance);
-  const isCreatorAddress = sameAddress(identityAddress, accessStatus.creator);
-  const canPlay = !requiresPurchase || hasPurchasedAccess || isCreatorAddress || !!hasAccess;
-  const canAddToChainLibrary = !!info && hasPurchasedAccess;
-  const needsGuideForPurchase = !isConnected || !walletProvider || !identityAddress || signingWalletMismatch;
-  const accessBadgeText = hasPurchasedAccess
-    ? '已购买凭证'
-    : isCreatorAddress
-      ? '创作者可访问'
-      : !requiresPurchase
-        ? '公开访问'
-        : hasAccess
-          ? '可访问'
-          : '未购买';
-  const purchaseButtonText = needsGuideForPurchase
-    ? '返回 Profile 引导'
-    : hasPurchasedAccess
-      ? '已持有访问凭证'
-      : isCreatorAddress
-        ? '创作者无需购买'
-        : buying
-          ? '购买中...'
-          : `购买 ${formatPrice(accessStatus.priceEth ?? info?.priceEth ?? null)}`;
+  }, [
+    addCurrentTrackToChainLibrary,
+    identityAddress,
+    info,
+    refreshAccess,
+    walletProvider,
+    web25BaseUrl.value,
+  ]);
 
   const handleAddToChainLibrary = React.useCallback(async () => {
     if (!info) return;
-    if (!hasPurchasedAccess) {
-      setAccessError('链上音乐库只收录当前 Profile 持有 ERC-1155 访问凭证的曲目，请先购买。');
+    if (!canAddToChainLibrary) {
+      setAccessError('付费作品需要先购买访问凭证。');
       return;
     }
 
@@ -289,47 +307,71 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     setAccessError('');
     setLibraryMessage('');
     try {
-      await upsertChainLibraryTrack(mergeTrackWithFreeFlowInfo(track, info));
-      setLibraryMessage('已添加到链上音乐库');
+      await addCurrentTrackToChainLibrary(info);
+      setLibraryMessage(isPublicAccess ? '公开作品已加入链上音乐库。' : '已加入链上音乐库。');
     } catch (err) {
       setAccessError(err instanceof Error ? err.message : String(err ?? '链上音乐库写入失败'));
     } finally {
       setAddingToLibrary(false);
     }
-  }, [hasPurchasedAccess, info, track]);
+  }, [addCurrentTrackToChainLibrary, canAddToChainLibrary, info, isPublicAccess]);
 
   return (
-    <ViewShell padded hideScrollbar>
-      <div className={styles.container}>
-        <section className={styles.header}>
-          <img
-            src={info?.coverUrl || track.cover_src || DefaultCover}
-            alt={track.title || 'cover'}
-            className={styles.cover}
-            referrerPolicy="no-referrer"
-            onError={(event) => {
-              (event.target as HTMLImageElement).src = DefaultCover;
-            }}
-          />
-          <div className={styles.headerBody}>
-            <h1 className={styles.title}>{track.title || 'Untitled Track'}</h1>
-            <div className={styles.subtitle}>{track.artist || 'Unknown Artist'}</div>
-            <div className={styles.platformRow}>
+    <ViewShell hideScrollbar className={styles.shell} contentClassName={styles.shellContent}>
+      <main className={styles.page}>
+        <section className={styles.hero}>
+          <div className={styles.coverFrame}>
+            <img
+              src={info?.coverUrl || track.cover_src || DefaultCover}
+              alt={track.title || 'cover'}
+              className={styles.cover}
+              referrerPolicy="no-referrer"
+              onError={(event) => {
+                (event.target as HTMLImageElement).src = DefaultCover;
+              }}
+            />
+          </div>
+
+          <div className={styles.heroBody}>
+            <div className={styles.kicker}>
               <PlatformIcon platform={track.platform} size={18} />
               <span>FreeFlow</span>
+              <span className={styles.dot} />
+              <span>{formatDuration(track.duration || info?.previewSeconds || undefined)}</span>
             </div>
-            <div className={styles.actionRow}>
+
+            <h1 className={styles.title}>{track.title || 'Untitled Track'}</h1>
+            <div className={styles.artist}>{track.artist || 'Unknown Artist'}</div>
+            {track.album && <div className={styles.album}>{track.album}</div>}
+
+            <div className={styles.statusRow}>
+              <span className={styles.accessPill}>{accessLabel}</span>
+              <span className={styles.pricePill}>{priceLabel}</span>
+              {accessStatus.creator && (
+                <span className={styles.mutedText}>创作者 {formatAddress(accessStatus.creator)}</span>
+              )}
+            </div>
+
+            {signingWalletMismatch && (
+              <div className={styles.warning}>
+                当前 Profile 为 {formatAddress(identityAddress)}，签名钱包为 {formatAddress(address)}。
+              </div>
+            )}
+
+            <div className={styles.actions}>
               <button
+                type="button"
                 className={styles.primaryButton}
                 onClick={() => player.addTrackToNextAndPlay(track)}
                 disabled={!canPlay}
-                title={canPlay ? '播放' : '该资源需要先购买访问权'}
               >
-                {canPlay ? '播放' : '需要购买后播放'}
+                {canPlay ? '播放' : '购买后播放'}
               </button>
-              {requiresPurchase && (
+
+              {requiresPurchase && !hasPurchasedAccess && !isCreatorAddress && (
                 <button
-                  className={styles.primaryButton}
+                  type="button"
+                  className={styles.secondaryButton}
                   onClick={() => {
                     if (needsGuideForPurchase) {
                       void profileContext.exitToGuide();
@@ -337,107 +379,77 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
                     }
                     void handleBuyAccess();
                   }}
-                  disabled={buying || refreshingAccess || hasPurchasedAccess || isCreatorAddress}
+                  disabled={buying || refreshingAccess || !saleActive}
                 >
-                  {purchaseButtonText}
+                  {saleActive ? purchaseLabel : '暂未开放购买'}
                 </button>
               )}
+
               <button
-                className={styles.ghostButton}
+                type="button"
+                className={styles.secondaryButton}
                 onClick={() => void handleAddToChainLibrary()}
                 disabled={!canAddToChainLibrary || addingToLibrary}
-                title={canAddToChainLibrary ? '添加到链上音乐库' : '需要当前 Profile 持有 ERC-1155 访问凭证'}
               >
-                {addingToLibrary ? '添加中...' : (hasPurchasedAccess ? '添加到链上音乐库' : '未持有凭证')}
+                {libraryButtonLabel}
               </button>
+
               <button
-                className={styles.ghostButton}
+                type="button"
+                className={styles.textButton}
                 onClick={() => void refreshAccess()}
                 disabled={!walletProvider || !info?.tokenId || refreshingAccess}
               >
-                {refreshingAccess ? '刷新中...' : '刷新访问状态'}
+                {refreshingAccess ? '刷新中' : '刷新状态'}
               </button>
+            </div>
+          </div>
+        </section>
+
+        {(libraryMessage || accessError || error || loading) && (
+          <section className={styles.feedback}>
+            {loading && <span>正在加载链上资源...</span>}
+            {libraryMessage && <span className={styles.notice}>{libraryMessage}</span>}
+            {accessError && <span className={styles.error}>链上操作失败：{accessError}</span>}
+            {!loading && error && <span className={styles.error}>详情加载失败：{error}</span>}
+          </section>
+        )}
+
+        <section className={styles.summary}>
+          <div className={styles.summaryItem}>
+            <span>访问状态</span>
+            <strong>{accessLabel}</strong>
+          </div>
+          <div className={styles.summaryItem}>
+            <span>价格</span>
+            <strong>{priceLabel}</strong>
+          </div>
+          <div className={styles.summaryItem}>
+            <span>当前 Profile</span>
+            <strong>{formatAddress(accessStatus.checkedAddress ?? identityAddress)}</strong>
+          </div>
+        </section>
+
+        {(info?.metadataUrl || (info?.explorerUrl && info?.publishTxHash)) && (
+          <details className={styles.chainDetails}>
+            <summary>链上记录</summary>
+            <div className={styles.linkRow}>
               {info?.metadataUrl && (
-                <a className={styles.ghostButton} href={info.metadataUrl} target="_blank" rel="noreferrer">Metadata</a>
+                <a href={info.metadataUrl} target="_blank" rel="noreferrer">Metadata</a>
               )}
               {info?.explorerUrl && info?.publishTxHash && (
                 <a
-                  className={styles.ghostButton}
                   href={`${info.explorerUrl.replace(/\/$/, '')}/tx/${info.publishTxHash}`}
                   target="_blank"
                   rel="noreferrer"
-                >交易</a>
+                >
+                  发行交易
+                </a>
               )}
             </div>
-            {requiresPurchase && (
-              <div className={styles.accessRow}>
-                <span className={styles.accessBadge}>
-                  {accessBadgeText}
-                </span>
-                {accessStatus.checkedAddress && (
-                  <span className={styles.accessMeta}>当前身份: {formatAddress(accessStatus.checkedAddress)}</span>
-                )}
-                {signingWalletMismatch && address && (
-                  <span className={styles.accessMeta}>签名钱包: {formatAddress(address)}</span>
-                )}
-                {accessStatus.creator && (
-                  <span className={styles.accessMeta}>Creator: {accessStatus.creator.slice(0, 8)}...{accessStatus.creator.slice(-6)}</span>
-                )}
-                {accessStatus.ownedBalance !== null && (
-                  <span className={styles.accessMeta}>Balance: {accessStatus.ownedBalance}</span>
-                )}
-                {accessStatus.payoutReceiver && (
-                  <span className={styles.accessMeta}>Splitter: {accessStatus.payoutReceiver.slice(0, 8)}...{accessStatus.payoutReceiver.slice(-6)}</span>
-                )}
-              </div>
-            )}
-            {libraryMessage && <div className={styles.notice}>{libraryMessage}</div>}
-            {accessError && <div className={styles.error}>链上状态同步失败: {accessError}</div>}
-          </div>
-        </section>
-
-        <section className={styles.grid}>
-          <div className={styles.item}>
-            <div className={styles.label}>价格</div>
-            <div className={styles.value}>{formatPrice(info?.priceEth ?? null)}</div>
-          </div>
-          <div className={styles.item}>
-            <div className={styles.label}>访问模式</div>
-            <div className={styles.value}>{info?.accessModel || '-'}</div>
-          </div>
-          <div className={styles.item}>
-            <div className={styles.label}>预览秒数</div>
-            <div className={styles.value}>{info?.previewSeconds ?? '-'}</div>
-          </div>
-          <div className={styles.item}>
-            <div className={styles.label}>访问凭证余额</div>
-            <div className={styles.value}>{accessStatus.ownedBalance ?? '-'}</div>
-          </div>
-          <div className={styles.item}>
-            <div className={styles.label}>Token ID</div>
-            <div className={styles.value}>{info?.tokenId ?? '-'}</div>
-          </div>
-          <div className={styles.item}>
-            <div className={styles.label}>Chain ID</div>
-            <div className={styles.value}>{info?.chainId ?? '-'}</div>
-          </div>
-          <div className={`${styles.item} ${styles.full}`}>
-            <div className={styles.label}>资源键</div>
-            <div className={styles.valueBreak}>{info?.resourceKey || track.platform_unique_id}</div>
-          </div>
-          <div className={`${styles.item} ${styles.full}`}>
-            <div className={styles.label}>合约地址</div>
-            <div className={styles.valueBreak}>{info?.contractAddress ?? '-'}</div>
-          </div>
-          <div className={`${styles.item} ${styles.full}`}>
-            <div className={styles.label}>Metadata CID</div>
-            <div className={styles.valueBreak}>{info?.metadataCid ?? '-'}</div>
-          </div>
-        </section>
-
-        {loading && <div className={styles.loading}>正在刷新链上资源详情...</div>}
-        {!loading && error && <div className={styles.error}>详情加载失败: {error}</div>}
-      </div>
+          </details>
+        )}
+      </main>
     </ViewShell>
   );
 }
