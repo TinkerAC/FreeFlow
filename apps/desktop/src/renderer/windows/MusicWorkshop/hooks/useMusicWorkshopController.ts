@@ -50,6 +50,8 @@ export function useMusicWorkshopController() {
     web25Session,
     pinataConfig,
   } = store;
+  const identityAddress = web25Session?.address ?? address;
+  const identityConnected = Boolean(web25Session || isConnected);
 
   const setReleaseFilter = React.useCallback((value: typeof releaseFilter) => {
     dispatch(workshopActions.setReleaseFilter(value));
@@ -132,6 +134,8 @@ export function useMusicWorkshopController() {
         musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
         audioMimeType: audioFile?.type,
         coverMimeType: coverFile?.type,
+        lyricsText: audioMetadataValidation?.metadata.lyrics ?? null,
+        durationSec: audioMetadataValidation?.metadata.durationSec ?? null,
       })
       : null,
     [
@@ -141,6 +145,8 @@ export function useMusicWorkshopController() {
       effectiveWeb3Settings.musicAssetAddress,
       effectiveWeb3Settings.platformHubAddress,
       pinataConfig,
+      audioMetadataValidation?.metadata.lyrics,
+      audioMetadataValidation?.metadata.durationSec,
       selectedRelease,
     ],
   );
@@ -210,8 +216,8 @@ export function useMusicWorkshopController() {
   const handleCreateRelease = React.useCallback(async () => {
     if (!web25Session) return;
     skipAutosaveRef.current = true;
-    await dispatch(createReleaseThunk({ baseUrl: web25BackendBaseUrl, address })).unwrap();
-  }, [address, dispatch, web25BackendBaseUrl, web25Session]);
+    await dispatch(createReleaseThunk({ baseUrl: web25BackendBaseUrl, address: identityAddress })).unwrap();
+  }, [dispatch, identityAddress, web25BackendBaseUrl, web25Session]);
 
   const handleSiweLogin = React.useCallback(async () => {
     setAuthStatusText('请在 Profile 引导窗口完成 SIWE 登录');
@@ -359,14 +365,14 @@ export function useMusicWorkshopController() {
       baseUrl: web25BackendBaseUrl,
       release: selectedRelease,
       walletProvider,
-      fallbackAddress: address,
+      fallbackAddress: identityAddress,
       effectiveWeb3Settings,
     })).unwrap();
     if (result.accessCheck) {
       setAccessCheck(result.accessCheck);
       setActivePanel('access');
     }
-  }, [address, dispatch, effectiveWeb3Settings, selectedRelease, setActivePanel, walletProvider, web25BackendBaseUrl]);
+  }, [dispatch, effectiveWeb3Settings, identityAddress, selectedRelease, setActivePanel, walletProvider, web25BackendBaseUrl]);
 
   const handleRefreshAccess = React.useCallback(async () => {
     if (!walletProvider || !selectedRelease?.tokenId || !effectiveWeb3Settings.platformHubAddress) return;
@@ -375,10 +381,10 @@ export function useMusicWorkshopController() {
       tokenId: selectedRelease.tokenId,
       platformHubAddress: effectiveWeb3Settings.platformHubAddress,
       musicAssetAddress: effectiveWeb3Settings.musicAssetAddress,
-      fallbackAddress: address,
+      fallbackAddress: identityAddress,
     })).unwrap();
     setAccessCheck(next);
-  }, [address, dispatch, effectiveWeb3Settings.platformHubAddress, selectedRelease?.tokenId, walletProvider]);
+  }, [dispatch, effectiveWeb3Settings.musicAssetAddress, effectiveWeb3Settings.platformHubAddress, identityAddress, selectedRelease?.tokenId, walletProvider]);
 
   const handleBuyAccess = React.useCallback(async () => {
     if (!walletProvider || !selectedRelease?.tokenId || !effectiveWeb3Settings.platformHubAddress) return;
@@ -389,15 +395,16 @@ export function useMusicWorkshopController() {
       tokenId: selectedRelease.tokenId,
       walletProvider,
       platformHubAddress: effectiveWeb3Settings.platformHubAddress,
+      expectedAddress: identityAddress,
     })).unwrap();
     await handleRefreshAccess();
-  }, [dispatch, effectiveWeb3Settings.platformHubAddress, handleRefreshAccess, selectedRelease?.id, selectedRelease?.tokenId, walletProvider, web25BackendBaseUrl]);
+  }, [dispatch, effectiveWeb3Settings.platformHubAddress, handleRefreshAccess, identityAddress, selectedRelease?.id, selectedRelease?.tokenId, walletProvider, web25BackendBaseUrl]);
 
   const activeSplits = React.useMemo(
     () => selectedRelease
-      ? (selectedRelease.revenueSplits.length ? selectedRelease.revenueSplits : defaultSplits(address))
+      ? (selectedRelease.revenueSplits.length ? selectedRelease.revenueSplits : defaultSplits(identityAddress))
       : [],
-    [address, selectedRelease],
+    [identityAddress, selectedRelease],
   );
 
   const needsAudioReattach = !!selectedRelease?.audioSourceName && !audioFile && !selectedRelease.audioStorageObject;
@@ -440,8 +447,10 @@ export function useMusicWorkshopController() {
   }, [selectedRelease?.tokenId]);
 
   return {
-    address,
-    isConnected,
+    address: identityAddress,
+    walletAddress: address,
+    isConnected: identityConnected,
+    walletConnected: isConnected,
     settings,
     setByPath,
     dashboard,

@@ -5,6 +5,7 @@ import {
   type ReleaseAccessModel,
 } from '@freeflow/web25-shared';
 import type { CreatorReleaseDashboard, CreatorReleaseRecord, CreatorReleaseSplit, PinataConfigPayload } from '@renderer/core/web25/client';
+import { buildFreeFlowLyricsMetadata } from '@src/shared/metadata/freeflowLyrics';
 
 export type AccessModel = ReleaseAccessModel;
 export type ReleasePanel = 'editor' | 'storage' | 'publish' | 'access';
@@ -265,6 +266,8 @@ export function buildMetadataDocument(
     musicAssetAddress: string;
     audioMimeType?: string;
     coverMimeType?: string;
+    lyricsText?: string | null;
+    durationSec?: number | null;
   },
 ) {
   return {
@@ -301,6 +304,9 @@ export function buildMetadataDocument(
         unlockPriceEth: release.accessModel === 'purchase' ? release.priceEth : '0',
         platformHubAddress: input.platformHubAddress || '0xYOUR_PLATFORM_HUB',
       },
+      lyrics: buildFreeFlowLyricsMetadata(input.lyricsText || '', {
+        durationSec: input.durationSec ?? release.previewSeconds,
+      }),
       provenance: {
         storageProvider: 'Pinata',
         pinataGroupId: input.pinataConfig?.groupIdConfigured ? 'configured-on-server' : '',

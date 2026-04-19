@@ -25,12 +25,28 @@ type LoginInput = {
   expectedAddress?: string | null;
 };
 
+type RefreshInput = {
+  expectedAddress?: string | null;
+  expectedChainId?: number | null;
+};
+
 type RequestingProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
 };
 
-export async function refreshWeb25Session(baseUrl: string) {
+function sessionMatchesExpected(session: Web25Session | null, input: RefreshInput = {}) {
+  if (!session) return true;
+  if (input.expectedAddress && session.address.toLowerCase() !== input.expectedAddress.toLowerCase()) return false;
+  if (input.expectedChainId && session.chainId !== input.expectedChainId) return false;
+  return true;
+}
+
+export async function refreshWeb25Session(baseUrl: string, input: RefreshInput = {}) {
   const payload = await getWeb25Session(baseUrl);
+  if (!sessionMatchesExpected(payload.session, input)) {
+    writeWeb25SessionSnapshot(null, null);
+    return null;
+  }
   writeWeb25SessionSnapshot(payload.session);
   return payload.session;
 }

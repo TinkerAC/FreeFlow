@@ -3,8 +3,8 @@ export const DEFAULT_SEPOLIA_CONTRACTS = {
   chainName: 'Sepolia',
   rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
   explorerUrl: 'https://sepolia.etherscan.io',
-  musicAssetAddress: '0x91B67981Ea0c735E91a008045b718B961658c3Ce',
-  platformHubAddress: '0x50F5476B007cC2500F975F63B192cFd457058A8A',
+  musicAssetAddress: '0xD4d0b05C453836bC9573D704D956Bab3B59A4447',
+  platformHubAddress: '0xd31C97a382B14d947Cfe9621712A28eF9ba405A2',
   platformFeeBps: 500,
 } as const;
 

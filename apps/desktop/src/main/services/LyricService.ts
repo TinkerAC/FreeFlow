@@ -52,6 +52,11 @@ export class LyricService {
       // 忽略错误, 继续执行兜底逻辑
     }
 
+    if (platform === Platform.FREEFLOW) {
+      this.logger.info('FreeFlow 歌词仅从 metadata JSON 解析，不启用外部平台兜底');
+      return new Lyric();
+    }
+
     // 2) 兜底：跨平台搜索
     this.logger.info(`首选平台未找到有效歌词, 启动跨平台兜底搜索...`);
     return this.getLyricFromFallbackSearch(track_model);

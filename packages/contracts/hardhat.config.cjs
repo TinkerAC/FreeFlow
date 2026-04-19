@@ -57,7 +57,8 @@ function createNetwork(url) {
 
 loadEnvFromRepoRoot();
 
-const PRIVATE_KEY = process.env.POLYGON_PRIVATE_KEY ||
+const PRIVATE_KEY = process.env.TEST_CREATOR_PRIVATE_KEY ||
+  process.env.POLYGON_PRIVATE_KEY ||
   '0000000000000000000000000000000000000000000000000000000000000000';
 const DEFAULT_SEPOLIA_RPC_URL = 'https://ethereum-sepolia-rpc.publicnode.com';
 

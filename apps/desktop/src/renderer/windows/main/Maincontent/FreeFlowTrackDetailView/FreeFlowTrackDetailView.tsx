@@ -5,11 +5,13 @@ import { PlatformIcon } from '@components/PlatformIcon';
 import { useSetting } from '@renderer/core/config/SettingsContext';
 import { mergeTrackWithFreeFlowInfo, upsertChainLibraryTrack } from '@renderer/core/freeflow/chainLibrary';
 import { resolveIndexedTrackResource, upsertWeb25Purchase } from '@renderer/core/web25/client';
+import { useWeb25SessionState } from '@renderer/core/web25/auth';
 import PlayerController from '@renderer/core/controller/PlayerController';
 import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { profileContext } from '@renderer/core/electronContextApi';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import { FreeFlowTrackInfo, TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import type { ProfileSummary } from '@src/shared/profile/profile';
 import { DEFAULT_SEPOLIA_CONTRACTS, MUSIC_ACCESS_1155_ABI, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import styles from './FreeFlowTrackDetailView.module.css';
 
@@ -47,11 +49,31 @@ function formatPrice(priceEth: string | null) {
   return `${priceEth} ETH`;
 }
 
+function formatAddress(value?: string | null) {
+  if (!value) return '-';
+  return `${value.slice(0, 8)}...${value.slice(-6)}`;
+}
+
+function sameAddress(left?: string | null, right?: string | null) {
+  return !!left && !!right && left.toLowerCase() === right.toLowerCase();
+}
+
+function hasPositiveBalance(value?: string | null) {
+  if (!value) return false;
+  try {
+    return BigInt(value) > BigInt(0);
+  } catch {
+    return Number(value) > 0;
+  }
+}
+
 export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrackDetailViewProps) {
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
+  const { session } = useWeb25SessionState(web25BaseUrl.value);
   const [info, setInfo] = React.useState<FreeFlowTrackInfo | null>(track.freeflow ?? null);
+  const [activeProfile, setActiveProfile] = React.useState<ProfileSummary | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
   const [refreshingAccess, setRefreshingAccess] = React.useState(false);
@@ -67,6 +89,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     payoutReceiver: string | null;
     creator: string | null;
     ownedBalance: string | null;
+    checkedAddress: string | null;
   }>({
     hasAccess: null,
     requiresPurchase: info?.accessModel === 'purchase',
@@ -75,7 +98,16 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     payoutReceiver: null,
     creator: null,
     ownedBalance: null,
+    checkedAddress: null,
   });
+  const identityAddress = activeProfile?.walletAddress ?? session?.address ?? address ?? null;
+  const signingWalletMismatch = Boolean(identityAddress && address && !sameAddress(identityAddress, address));
+
+  React.useEffect(() => {
+    void profileContext.getActiveProfile()
+      .then(setActiveProfile)
+      .catch(() => setActiveProfile(null));
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -84,6 +116,16 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     setInfo(nextInfo);
     setError('');
     setLibraryMessage('');
+    setAccessStatus({
+      hasAccess: null,
+      requiresPurchase: nextInfo?.accessModel === 'purchase',
+      active: null,
+      priceEth: nextInfo?.priceEth ?? null,
+      payoutReceiver: null,
+      creator: null,
+      ownedBalance: null,
+      checkedAddress: null,
+    });
 
     const needFetch = !nextInfo || (!nextInfo.audioUrl && !nextInfo.metadataUrl);
     if (!needFetch) return () => {
@@ -122,12 +164,11 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
 
       let hasAccess: boolean | null = null;
       let ownedBalance: bigint | null = null;
-      if (address) {
-        hasAccess = await platformHub.hasAccess(address, info.tokenId);
-        if (info.contractAddress) {
-          const musicAccess = new Contract(info.contractAddress, MUSIC_ACCESS_1155_ABI, provider);
-          ownedBalance = await musicAccess.balanceOf(address, info.tokenId).catch((): null => null);
-        }
+      if (identityAddress) {
+        hasAccess = await platformHub.hasAccess(identityAddress, info.tokenId);
+        const musicAccessAddress = info.contractAddress || DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress;
+        const musicAccess = new Contract(musicAccessAddress, MUSIC_ACCESS_1155_ABI, provider);
+        ownedBalance = await musicAccess.balanceOf(identityAddress, info.tokenId).catch((): null => null);
       }
 
       const nextPriceEth = formatEther(price);
@@ -139,6 +180,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
         payoutReceiver: typeof payoutReceiver === 'string' ? payoutReceiver : null,
         creator: typeof creator === 'string' ? creator : null,
         ownedBalance: ownedBalance?.toString() ?? null,
+        checkedAddress: identityAddress,
       });
 
       if (nextPriceEth !== info.priceEth) {
@@ -152,7 +194,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     } finally {
       setRefreshingAccess(false);
     }
-  }, [address, info, walletProvider]);
+  }, [identityAddress, info, walletProvider]);
 
   React.useEffect(() => {
     if (!walletProvider || !info?.tokenId) return;
@@ -160,16 +202,21 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
   }, [info?.platformHubAddress, info?.tokenId, refreshAccess, walletProvider]);
 
   const handleBuyAccess = React.useCallback(async () => {
-    if (!walletProvider || !address || !info?.tokenId) return;
+    if (!walletProvider || !identityAddress || !info?.tokenId) return;
 
     setBuying(true);
     setAccessError('');
     try {
       const provider = new BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
+      const signerAddress = await signer.getAddress();
+      if (!sameAddress(signerAddress, identityAddress)) {
+        throw new Error(`当前签名钱包 ${signerAddress} 与当前 Profile ${identityAddress} 不一致，请返回引导切换钱包后重试。`);
+      }
+
       const hubAddress = info.platformHubAddress || DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress;
       const platformHub = new Contract(hubAddress, PLATFORM_HUB_ABI, signer);
-      const [, , price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(info.tokenId);
+      const [creator, , price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(info.tokenId);
 
       if (!active) {
         throw new Error('该资源当前不开放购买');
@@ -178,6 +225,9 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
         await refreshAccess();
         return;
       }
+      if (sameAddress(creator, signerAddress)) {
+        throw new Error('创作者默认拥有播放访问权，但没有 ERC-1155 购买凭证余额，不能购买自己的作品。');
+      }
 
       const buyTx = await platformHub.buyAccess(info.tokenId, { value: price });
       await buyTx.wait();
@@ -185,7 +235,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
       if (info.releaseId) {
         await upsertWeb25Purchase(web25BaseUrl.value, {
           releaseId: info.releaseId,
-          walletAddress: address,
+          walletAddress: signerAddress,
           chainId: purchaseChainId,
           txHash: buyTx.hash,
           amountWei: price.toString(),
@@ -200,17 +250,38 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     } finally {
       setBuying(false);
     }
-  }, [address, info, refreshAccess, walletProvider, web25BaseUrl.value]);
+  }, [identityAddress, info, refreshAccess, walletProvider, web25BaseUrl.value]);
 
   const requiresPurchase = accessStatus.requiresPurchase ?? (info?.accessModel === 'purchase');
   const hasAccess = accessStatus.hasAccess;
-  const canPlay = !requiresPurchase || !!hasAccess;
-  const canAddToChainLibrary = !!info && canPlay;
+  const hasPurchasedAccess = hasPositiveBalance(accessStatus.ownedBalance);
+  const isCreatorAddress = sameAddress(identityAddress, accessStatus.creator);
+  const canPlay = !requiresPurchase || hasPurchasedAccess || isCreatorAddress || !!hasAccess;
+  const canAddToChainLibrary = !!info && hasPurchasedAccess;
+  const needsGuideForPurchase = !isConnected || !walletProvider || !identityAddress || signingWalletMismatch;
+  const accessBadgeText = hasPurchasedAccess
+    ? '已购买凭证'
+    : isCreatorAddress
+      ? '创作者可访问'
+      : !requiresPurchase
+        ? '公开访问'
+        : hasAccess
+          ? '可访问'
+          : '未购买';
+  const purchaseButtonText = needsGuideForPurchase
+    ? '返回 Profile 引导'
+    : hasPurchasedAccess
+      ? '已持有访问凭证'
+      : isCreatorAddress
+        ? '创作者无需购买'
+        : buying
+          ? '购买中...'
+          : `购买 ${formatPrice(accessStatus.priceEth ?? info?.priceEth ?? null)}`;
 
   const handleAddToChainLibrary = React.useCallback(async () => {
     if (!info) return;
-    if (!canPlay) {
-      setAccessError('该资源需要先获得访问权后才能加入链上音乐库');
+    if (!hasPurchasedAccess) {
+      setAccessError('链上音乐库只收录当前 Profile 持有 ERC-1155 访问凭证的曲目，请先购买。');
       return;
     }
 
@@ -225,7 +296,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     } finally {
       setAddingToLibrary(false);
     }
-  }, [canPlay, info, track]);
+  }, [hasPurchasedAccess, info, track]);
 
   return (
     <ViewShell padded hideScrollbar>
@@ -260,26 +331,24 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
                 <button
                   className={styles.primaryButton}
                   onClick={() => {
-                    if (!isConnected || !walletProvider || !address) {
+                    if (needsGuideForPurchase) {
                       void profileContext.exitToGuide();
                       return;
                     }
                     void handleBuyAccess();
                   }}
-                  disabled={buying || refreshingAccess || (!!hasAccess)}
+                  disabled={buying || refreshingAccess || hasPurchasedAccess || isCreatorAddress}
                 >
-                  {!isConnected || !walletProvider || !address
-                    ? '返回 Profile 引导'
-                    : (hasAccess ? '已拥有访问权' : (buying ? '购买中...' : `购买 ${formatPrice(accessStatus.priceEth ?? info?.priceEth ?? null)}`))}
+                  {purchaseButtonText}
                 </button>
               )}
               <button
                 className={styles.ghostButton}
                 onClick={() => void handleAddToChainLibrary()}
                 disabled={!canAddToChainLibrary || addingToLibrary}
-                title={canAddToChainLibrary ? '添加到链上音乐库' : '需要先获得访问权'}
+                title={canAddToChainLibrary ? '添加到链上音乐库' : '需要当前 Profile 持有 ERC-1155 访问凭证'}
               >
-                {addingToLibrary ? '添加中...' : '添加到链上音乐库'}
+                {addingToLibrary ? '添加中...' : (hasPurchasedAccess ? '添加到链上音乐库' : '未持有凭证')}
               </button>
               <button
                 className={styles.ghostButton}
@@ -303,8 +372,14 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
             {requiresPurchase && (
               <div className={styles.accessRow}>
                 <span className={styles.accessBadge}>
-                  {hasAccess ? '已授权' : '未授权'}
+                  {accessBadgeText}
                 </span>
+                {accessStatus.checkedAddress && (
+                  <span className={styles.accessMeta}>当前身份: {formatAddress(accessStatus.checkedAddress)}</span>
+                )}
+                {signingWalletMismatch && address && (
+                  <span className={styles.accessMeta}>签名钱包: {formatAddress(address)}</span>
+                )}
                 {accessStatus.creator && (
                   <span className={styles.accessMeta}>Creator: {accessStatus.creator.slice(0, 8)}...{accessStatus.creator.slice(-6)}</span>
                 )}

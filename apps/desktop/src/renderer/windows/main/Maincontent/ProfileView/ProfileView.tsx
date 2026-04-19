@@ -11,6 +11,7 @@ import {
 } from '@renderer/core/web25/client';
 import { getChainLibraryTracks, subscribeChainLibraryUpdated } from '@renderer/core/freeflow/chainLibrary';
 import type { TrackEntity } from '@src/shared/domainModel/TrackEntity';
+import type { ProfileSummary } from '@src/shared/profile/profile';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import styles from './ProfileView.module.css';
 
@@ -29,12 +30,21 @@ export default function ProfileView() {
   const [profileBusy, setProfileBusy] = React.useState(false);
   const [statusText, setStatusText] = React.useState('');
   const [userProfile, setUserProfile] = React.useState<Web25UserProfile | null>(null);
+  const [activeProfile, setActiveProfile] = React.useState<ProfileSummary | null>(null);
   const [draftDisplayName, setDraftDisplayName] = React.useState('');
   const [chainTracks, setChainTracks] = React.useState<TrackEntity[]>([]);
+  const identityAddress = session?.address ?? userProfile?.walletAddress ?? activeProfile?.walletAddress ?? address;
+  const identityChainId = session?.chainId ?? activeProfile?.chainId ?? chainId;
+  const web3AddressMismatch = Boolean(
+    session?.address && address && session.address.toLowerCase() !== address.toLowerCase(),
+  );
 
   React.useEffect(() => {
     void refresh().catch(() => {
     });
+    void profileContext.getActiveProfile()
+      .then(setActiveProfile)
+      .catch(() => setActiveProfile(null));
   }, [refresh]);
 
   const syncProfileMetadataToLocalIndex = React.useCallback(async (profile: Web25UserProfile | null) => {
@@ -181,7 +191,7 @@ export default function ProfileView() {
                 <img className={styles.avatarPreview} src={userProfile.avatarUrl} alt={userProfile.displayName || 'avatar'} />
               ) : (
                 <div className={styles.avatarFallback}>
-                  {(userProfile?.displayName?.slice(0, 2) || address?.slice(2, 4) || 'FF').toUpperCase()}
+                  {(userProfile?.displayName?.slice(0, 2) || identityAddress?.slice(2, 4) || 'FF').toUpperCase()}
                 </div>
               )}
               <div className={styles.actions}>
@@ -262,15 +272,21 @@ export default function ProfileView() {
           <div className={styles.grid}>
             <div className={styles.item}>
               <span className={styles.label}>连接状态</span>
-              <span className={styles.value}>{isConnected ? '已连接' : '未连接'}</span>
+              <span className={styles.value}>{session ? 'Profile 已登录' : (isConnected ? '已连接' : '未连接')}</span>
             </div>
             <div className={styles.item}>
-              <span className={styles.label}>地址</span>
-              <span className={styles.value}>{formatAddress(address)}</span>
+              <span className={styles.label}>当前地址</span>
+              <span className={styles.value}>{formatAddress(identityAddress)}</span>
             </div>
             <div className={styles.item}>
               <span className={styles.label}>链 ID</span>
-              <span className={styles.value}>{chainId ?? '-'}</span>
+              <span className={styles.value}>{identityChainId ?? '-'}</span>
+            </div>
+            <div className={styles.item}>
+              <span className={styles.label}>签名钱包</span>
+              <span className={styles.value}>
+                {web3AddressMismatch ? `待同步 ${formatAddress(address)}` : formatAddress(address)}
+              </span>
             </div>
           </div>
           <div className={styles.actions}>

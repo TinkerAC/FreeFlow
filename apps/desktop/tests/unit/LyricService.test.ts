@@ -14,6 +14,7 @@ describe('LyricService', () => {
   let mockNetEaseMusic: any;
   let mockQQMusic: any;
   let mockYouTubeMusic: any;
+  let mockFreeFlow: any;
   let mockProviderManager: any;
 
   // 创建有效的测试歌词
@@ -49,6 +50,13 @@ describe('LyricService', () => {
       getLyrics: vi.fn(),
       searchTrack: vi.fn(),
       platformName: Platform.YOUTUBE_MUSIC,
+    } as any;
+
+    mockFreeFlow = {
+      getLyrics: vi.fn(),
+      searchTrack: vi.fn(),
+      platformName: Platform.FREEFLOW,
+      isCensored: false,
     } as any;
 
     // Mock ProviderManager
@@ -108,6 +116,26 @@ describe('LyricService', () => {
 
       expect(mockProviderManager.tryResolve).toHaveBeenCalledWith(Platform.NET_EASE_CLOUD_MUSIC);
       expect(mockNetEaseMusic.getLyrics).toHaveBeenCalledWith('12345678');
+      expect(result!.isValid()).toBeTruthy();
+    });
+
+    test('应该从 FreeFlowProvider 的 metadata JSON 成功获取歌词', async () => {
+      const track: TrackEntity = {
+        platform: Platform.FREEFLOW,
+        platform_unique_id: 'chain:11155111:0xasset:1',
+        title: '链上歌曲',
+        artist: 'FreeFlow Artist',
+      } as TrackEntity;
+
+      const validLyric = createValidLyric();
+      mockProviderManager.tryResolve.mockReturnValue(mockFreeFlow);
+      mockFreeFlow.getLyrics.mockResolvedValue(validLyric);
+
+      const result = await lyricService.getLyrics(track);
+
+      expect(mockProviderManager.tryResolve).toHaveBeenCalledWith(Platform.FREEFLOW);
+      expect(mockFreeFlow.getLyrics).toHaveBeenCalledWith('chain:11155111:0xasset:1');
+      expect(mockProviderManager.getEnabledProviders).not.toHaveBeenCalled();
       expect(result!.isValid()).toBeTruthy();
     });
   });
@@ -278,7 +306,8 @@ describe('LyricService', () => {
 
       const result = await lyricService.getLyrics(track);
 
-      expect(result).toBeUndefined();
+      expect(result).toBeInstanceOf(Lyric);
+      expect(result.isValid()).toBeFalsy();
     });
   });
 
@@ -309,7 +338,8 @@ describe('LyricService', () => {
 
       const result = await lyricService.getLyrics(track);
 
-      expect(result).toBeUndefined();
+      expect(result).toBeInstanceOf(Lyric);
+      expect(result.isValid()).toBeFalsy();
     });
   });
 });

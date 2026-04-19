@@ -236,6 +236,31 @@ Important fields:
 }
 ```
 
+### Metadata Lyrics Format
+
+FreeFlow metadata stores lyrics under `properties.lyrics` as LRC 1.0 text:
+
+```json
+{
+  "properties": {
+    "lyrics": {
+      "standard": "LRC",
+      "version": "1.0",
+      "language": "und",
+      "synchronized": true,
+      "text": "[00:00.00]First line\n[00:05.20]Second line"
+    }
+  }
+}
+```
+
+Rules:
+
+- `standard` must be `LRC`.
+- `text` uses standard LRC timestamps in `[mm:ss.xx]` form.
+- `language` uses BCP-47 when known, otherwise `und`.
+- `synchronized=false` means the original source was plain unsynchronized text; the uploader generated valid LRC timestamps so the desktop lyric parser can still consume one format.
+
 ## Purchases
 
 Purchase endpoints require authentication. The table is a projection/history only; ownership must still be checked on chain with `MusicAccess1155.balanceOf(user, tokenId)` or `PlatformHub.hasAccess(user, tokenId)`.
@@ -303,5 +328,11 @@ Returns process and database health information.
 `pnpm --filter freeflow-web25-backend run publish:test-music -- <music-dir>`
 
 The script reads `TEST_CREATOR_PRIVATE_KEY`, performs SIWE login, uploads MP3 assets through the storage API, creates release records, uploads metadata JSON, and prepares each release.
+
+By default, it randomly selects 5 local MP3 files as `open` releases. All remaining tracks are `purchase` releases priced at `0.0005` Sepolia ETH. The paid price can be overridden with `TEST_TRACK_PRICE_ETH` or `--price-eth`, but the script refuses values that are zero or greater than `0.001`.
+
+```bash
+pnpm --filter freeflow-web25-backend run publish:test-music -- D:\Workplace\NodeProject\FreeFlow\TestMusicResouerces --price-eth 0.0005 --public-count 5
+```
 
 Use `--execute` to send Sepolia transactions through `PlatformHub.publishTrack` and patch the release to `PUBLISHED`.

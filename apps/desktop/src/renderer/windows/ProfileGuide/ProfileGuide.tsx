@@ -171,9 +171,12 @@ export default function ProfileGuide() {
     return items;
   }, []);
 
-  const refreshSiweState = useCallback(async (baseUrl: string) => {
+  const refreshSiweState = useCallback(async (baseUrl: string, expectedAddress?: string | null) => {
     try {
-      const session = await refreshWeb25Session(baseUrl);
+      const session = await refreshWeb25Session(baseUrl, {
+        expectedAddress,
+        expectedChainId: REQUIRED_CHAIN_ID,
+      });
       setSiweSession(session);
       return session;
     } catch {
@@ -214,7 +217,7 @@ export default function ProfileGuide() {
           setMode('create');
         }
 
-        const restoredSession = await refreshSiweState(resolvedBaseUrl);
+        const restoredSession = await refreshSiweState(resolvedBaseUrl, initialWalletProfile?.walletAddress);
         const skipAutoEnter = consumeSkipAutoEnterFlag();
         const canRestoreProfile = !!initialWalletProfile?.walletAddress
           && !!restoredSession
@@ -262,8 +265,11 @@ export default function ProfileGuide() {
 
     if (!nextProfileId) return;
     setRuntimeProfileId(nextProfileId);
-    void refreshSiweState(web25BaseUrl);
-  }, [createProfileId, loaded, mode, refreshSiweState, selectedProfile?.id, web25BaseUrl]);
+    const expectedAddress = mode === 'create'
+      ? address
+      : selectedProfile?.walletAddress ?? null;
+    void refreshSiweState(web25BaseUrl, expectedAddress);
+  }, [address, createProfileId, loaded, mode, refreshSiweState, selectedProfile?.id, selectedProfile?.walletAddress, web25BaseUrl]);
 
   async function connectWallet() {
     setError(null);

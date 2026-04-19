@@ -39,6 +39,14 @@ function normalizeSplits(release: CreatorReleaseRecord, fallbackAddress: string)
   return normalized.length ? normalized : defaultSplits(fallbackAddress);
 }
 
+function assertSignerMatchesExpected(signerAddress: string, expectedAddress?: string | null) {
+  if (!expectedAddress) return;
+  if (signerAddress.toLowerCase() === expectedAddress.toLowerCase()) return;
+  throw new Error(
+    `当前签名钱包 ${signerAddress} 与当前 Profile/SIWE 地址 ${expectedAddress} 不一致，请返回引导切换钱包后重试。`,
+  );
+}
+
 export const refreshWeb25StateThunk = createAsyncThunk<
   { session: Web25Session | null; pinataConfig: Awaited<ReturnType<typeof getPinataConfig>> | null },
   { baseUrl: string }
@@ -273,7 +281,9 @@ export const publishReleaseThunk = createAsyncThunk<
 
       const provider = new BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
-      const artistAddress = fallbackAddress || await signer.getAddress();
+      const signerAddress = await signer.getAddress();
+      assertSignerMatchesExpected(signerAddress, fallbackAddress);
+      const artistAddress = signerAddress;
       const splits = normalizeSplits(release, artistAddress);
       const requiresPurchase = release.accessModel === 'purchase';
       const priceWei = requiresPurchase ? parseEther(release.priceEth.trim() || '0') : BigInt(0);
@@ -440,13 +450,15 @@ export const buyAccessThunk = createAsyncThunk<
     tokenId: string;
     walletProvider: WalletProviderLike;
     platformHubAddress: string;
+    expectedAddress?: string | null;
   }
 >(
   'musicWorkshop/buyAccess',
-  async ({ baseUrl, releaseId, tokenId, walletProvider, platformHubAddress }) => {
+  async ({ baseUrl, releaseId, tokenId, walletProvider, platformHubAddress, expectedAddress }) => {
     const provider = new BrowserProvider(walletProvider);
     const signer = await provider.getSigner();
     const buyerAddress = await signer.getAddress();
+    assertSignerMatchesExpected(buyerAddress, expectedAddress);
     const platformHub = new Contract(platformHubAddress, PLATFORM_HUB_ABI, signer);
     const [, , price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(tokenId);
     if (!requiresPurchase) {

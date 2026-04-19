@@ -6,7 +6,10 @@ import { ConfigService } from '@main/core/configService';
 import { DISymbol } from '@main/di/symbol';
 import { FreeFlowTrackInfo, FreeFlowTrackModel, TrackEntity } from '@src/shared/domainModel/TrackEntity';
 import { Lyric } from '@src/shared/domainModel/lyricLine';
+import { parseFreeFlowLyricsMetadata } from '@src/shared/metadata/freeflowLyrics';
 import { Logger } from 'winston';
+
+type JsonRecord = Record<string, unknown>;
 
 type ResourceTrackPayload = {
   resourceKey: string;
@@ -50,6 +53,7 @@ export default class FreeFlowProvider extends AbstractContentProvider {
   public readonly platformName: Platform = Platform.FREEFLOW;
   public readonly serverNodes: string[] = [];
   protected readonly detailCache = new Map<string, ResourceTrackPayload>();
+  private readonly metadataCache = new Map<string, JsonRecord | null>();
 
   constructor(
     @inject(DISymbol.ConfigService) private readonly configService: ConfigService,
@@ -61,6 +65,15 @@ export default class FreeFlowProvider extends AbstractContentProvider {
   private resolveBaseUrl() {
     const raw = String(this.configService.get('services.web25Backend.baseUrl') ?? 'http://localhost:8787');
     return raw.trim().replace(/\/$/, '');
+  }
+
+  private asRecord(value: unknown): JsonRecord | null {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value as JsonRecord : null;
+  }
+
+  private pickLyricsMetadata(metadata: JsonRecord | null): unknown {
+    const properties = this.asRecord(metadata?.properties);
+    return properties?.lyrics ?? metadata?.lyrics ?? null;
   }
 
   private toTrackInfo(item: ResourceTrackPayload): FreeFlowTrackInfo {
@@ -137,13 +150,40 @@ export default class FreeFlowProvider extends AbstractContentProvider {
     }
   }
 
+  private async resolveMetadata(payload: ResourceTrackPayload): Promise<JsonRecord | null> {
+    const embedded = this.asRecord(payload.metadataDocument);
+    if (embedded) return embedded;
+    if (!payload.metadataUrl) return null;
+
+    const cached = this.metadataCache.get(payload.metadataUrl);
+    if (cached !== undefined) return cached;
+
+    try {
+      const response = await axios.get<unknown>(payload.metadataUrl, { timeout: 10_000 });
+      const metadata = this.asRecord(response.data);
+      this.metadataCache.set(payload.metadataUrl, metadata);
+      return metadata;
+    } catch (error) {
+      this.logger.warn(
+        `[freeflow.provider] metadata fetch failed (${payload.metadataUrl}): ${error instanceof Error ? error.message : String(error)}`,
+      );
+      this.metadataCache.set(payload.metadataUrl, null);
+      return null;
+    }
+  }
+
   async getTrackLink(uniqueId: string): Promise<string | undefined> {
     const payload = await this.resolveResourceByKey(uniqueId);
     return payload?.audioUrl ?? undefined;
   }
 
-  async getLyrics(_uniqueId: string): Promise<Lyric> {
-    return new Lyric();
+  async getLyrics(uniqueId: string): Promise<Lyric> {
+    const payload = await this.resolveResourceByKey(uniqueId);
+    if (!payload) return new Lyric();
+
+    const metadata = await this.resolveMetadata(payload);
+    const lines = parseFreeFlowLyricsMetadata(this.pickLyricsMetadata(metadata));
+    return new Lyric(lines, [], []);
   }
 
   isFree(song: any): boolean {

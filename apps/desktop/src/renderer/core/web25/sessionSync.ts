@@ -1,13 +1,21 @@
 import type { Web25Session } from './client';
-import { getRuntimeProfileId } from '@renderer/core/profile/runtimeProfile';
+import { getRuntimeProfileId, subscribeRuntimeProfileId } from '@renderer/core/profile/runtimeProfile';
 
 const WEB25_SESSION_STORAGE_KEY_PREFIX = 'freeflow.web25.session';
 const WEB25_SESSION_TOKEN_STORAGE_KEY_PREFIX = 'freeflow.web25.session-token';
 const WEB25_SESSION_CHANNEL_PREFIX = 'freeflow.web25.session.channel';
 const WEB25_SESSION_EVENT_PREFIX = 'freeflow:web25-session-updated';
+const WEB25_SESSION_GLOBAL_CHANNEL = 'freeflow.web25.session.channel.global';
+const WEB25_SESSION_GLOBAL_EVENT = 'freeflow:web25-session-updated';
 
 let cachedChannel: BroadcastChannel | null = null;
 let cachedChannelName = '';
+let cachedGlobalChannel: BroadcastChannel | null = null;
+
+type Web25SessionEventPayload = {
+  profileId: string;
+  session: Web25Session | null;
+};
 
 function getSessionStorageKey() {
   return `${WEB25_SESSION_STORAGE_KEY_PREFIX}.${getRuntimeProfileId()}`;
@@ -74,22 +82,53 @@ export function readWeb25SessionSnapshot(): Web25Session | null {
   }
 }
 
+function getGlobalChannel() {
+  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') {
+    return null;
+  }
+  if (!cachedGlobalChannel) {
+    cachedGlobalChannel = new BroadcastChannel(WEB25_SESSION_GLOBAL_CHANNEL);
+  }
+  return cachedGlobalChannel;
+}
+
 export function readWeb25SessionTokenSnapshot(): string | null {
   if (typeof window === 'undefined') return null;
   const token = window.localStorage.getItem(getSessionTokenStorageKey());
   return token?.trim() || null;
 }
 
+function buildSessionEventPayload(session: Web25Session | null): Web25SessionEventPayload {
+  return {
+    profileId: getRuntimeProfileId(),
+    session,
+  };
+}
+
+function readSessionFromEventPayload(payload: unknown): Web25Session | null | undefined {
+  if (payload && typeof payload === 'object' && 'profileId' in payload && 'session' in payload) {
+    const typed = payload as Partial<Web25SessionEventPayload>;
+    if (String(typed.profileId || '') !== getRuntimeProfileId()) return undefined;
+    return normalizeSession(typed.session);
+  }
+
+  return normalizeSession(payload);
+}
+
 function emitWeb25Session(session: Web25Session | null) {
   if (typeof window === 'undefined') return;
+  const payload = buildSessionEventPayload(session);
 
-  window.dispatchEvent(new CustomEvent<Web25Session | null>(getSessionEventName(), {
-    detail: session,
+  window.dispatchEvent(new CustomEvent<Web25SessionEventPayload>(getSessionEventName(), {
+    detail: payload,
+  }));
+  window.dispatchEvent(new CustomEvent<Web25SessionEventPayload>(WEB25_SESSION_GLOBAL_EVENT, {
+    detail: payload,
   }));
 
   const channel = getChannel();
-  if (!channel) return;
-  channel.postMessage(session);
+  channel?.postMessage(payload);
+  getGlobalChannel()?.postMessage(payload);
 }
 
 export function writeWeb25SessionSnapshot(session: Web25Session | null, sessionToken?: string | null) {
@@ -146,8 +185,8 @@ export function subscribeWeb25SessionSnapshot(listener: (session: Web25Session |
   }
 
   const onCustomEvent = (event: Event) => {
-    const payload = (event as CustomEvent<Web25Session | null>).detail;
-    listener(normalizeSession(payload));
+    const session = readSessionFromEventPayload((event as CustomEvent<Web25SessionEventPayload | Web25Session | null>).detail);
+    if (session !== undefined) listener(session);
   };
 
   const onStorage = (event: StorageEvent) => {
@@ -164,17 +203,27 @@ export function subscribeWeb25SessionSnapshot(listener: (session: Web25Session |
   };
 
   const channel = getChannel();
+  const globalChannel = getGlobalChannel();
   const onChannelMessage = (event: MessageEvent) => {
-    listener(normalizeSession(event.data));
+    const session = readSessionFromEventPayload(event.data);
+    if (session !== undefined) listener(session);
   };
+  const unsubscribeRuntimeProfile = subscribeRuntimeProfileId(() => {
+    listener(readWeb25SessionSnapshot());
+  });
 
   window.addEventListener(getSessionEventName(), onCustomEvent as EventListener);
+  window.addEventListener(WEB25_SESSION_GLOBAL_EVENT, onCustomEvent as EventListener);
   window.addEventListener('storage', onStorage);
   channel?.addEventListener('message', onChannelMessage);
+  globalChannel?.addEventListener('message', onChannelMessage);
 
   return () => {
     window.removeEventListener(getSessionEventName(), onCustomEvent as EventListener);
+    window.removeEventListener(WEB25_SESSION_GLOBAL_EVENT, onCustomEvent as EventListener);
     window.removeEventListener('storage', onStorage);
     channel?.removeEventListener('message', onChannelMessage);
+    globalChannel?.removeEventListener('message', onChannelMessage);
+    unsubscribeRuntimeProfile();
   };
 }

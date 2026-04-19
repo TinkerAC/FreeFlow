@@ -225,7 +225,6 @@ export function setWeb25SessionToken(token: string | null) {
 }
 
 function resolveSessionToken() {
-  if (sessionToken) return sessionToken;
   sessionToken = readWeb25SessionTokenSnapshot();
   return sessionToken;
 }

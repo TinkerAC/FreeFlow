@@ -10,6 +10,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
 const defaultMusicDir = path.join(repoRoot, 'TestMusicResouerces');
 const defaultDeploymentFile = path.join(repoRoot, 'packages/contracts/deployments/sepolia-suite.json');
+const defaultPublicTrackCount = 5;
+const defaultPaidPriceEth = '0.0005';
+const maxPaidPriceEth = '0.001';
+const maxPaidPriceWei = 1_000_000_000_000_000n;
+const ethDecimalPattern = /^(?:0|[1-9]\d*)(?:\.\d{1,18})?$/;
+const lrcTimestampPattern = /\[(\d{1,3}):(\d{1,2})(?:[.:](\d{1,3}))?\]/;
 
 const PLATFORM_HUB_ABI = [
   'event TrackPublished(uint256 indexed tokenId, address indexed creator, address indexed payoutReceiver, bool requiresPurchase, bool active, uint256 price)',
@@ -75,6 +81,105 @@ function readLyrics(value) {
       .trim();
   }
   return toLine(value).trim();
+}
+
+function readOption(argv, name, fallback) {
+  const prefix = `${name}=`;
+  const inline = argv.find((arg) => arg.startsWith(prefix));
+  if (inline) return inline.slice(prefix.length);
+
+  const index = argv.indexOf(name);
+  if (index >= 0 && argv[index + 1] && !argv[index + 1].startsWith('--')) {
+    return argv[index + 1];
+  }
+  return fallback;
+}
+
+function readPositionals(argv) {
+  const optionsWithValue = new Set(['--price-eth', '--public-count']);
+  const positionals = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg.includes('=')) continue;
+    if (optionsWithValue.has(arg)) {
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--')) continue;
+    positionals.push(arg);
+  }
+  return positionals;
+}
+
+function parseEthToWei(value) {
+  const normalized = String(value ?? '').trim();
+  if (!ethDecimalPattern.test(normalized)) return null;
+
+  const [wholePart, decimalPart = ''] = normalized.split('.');
+  const wholeWei = BigInt(wholePart) * 10n ** 18n;
+  const fractionWei = BigInt((decimalPart + '0'.repeat(18)).slice(0, 18));
+  return wholeWei + fractionWei;
+}
+
+function assertPaidPrice(priceEth) {
+  const priceWei = parseEthToWei(priceEth);
+  if (priceWei === null || priceWei <= 0n || priceWei > maxPaidPriceWei) {
+    throw new Error(`Paid test tracks require 0 < price <= ${maxPaidPriceEth} Sepolia ETH`);
+  }
+}
+
+function shuffle(values) {
+  const next = [...values];
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+  }
+  return next;
+}
+
+function formatLrcTimestamp(timeMs) {
+  const safeMs = Math.max(0, Math.round(timeMs));
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const centiseconds = Math.floor((safeMs % 1000) / 10);
+  return `[${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(centiseconds).padStart(2, '0')}]`;
+}
+
+function buildLyricsMetadata(lyricsText, durationSec) {
+  const normalized = String(lyricsText ?? '').trim();
+  if (!normalized) return null;
+
+  if (lrcTimestampPattern.test(normalized)) {
+    return {
+      standard: 'LRC',
+      version: '1.0',
+      language: 'und',
+      synchronized: true,
+      text: normalized,
+    };
+  }
+
+  const lines = normalized
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!lines.length) return null;
+
+  const durationMs = typeof durationSec === 'number' && Number.isFinite(durationSec) && durationSec > 0
+    ? Math.round(durationSec * 1000)
+    : null;
+  const intervalMs = durationMs && lines.length > 1
+    ? Math.max(1000, Math.floor(durationMs / lines.length))
+    : 5000;
+
+  return {
+    standard: 'LRC',
+    version: '1.0',
+    language: 'und',
+    synchronized: false,
+    text: lines.map((line, index) => `${formatLrcTimestamp(index * intervalMs)}${line}`).join('\n'),
+  };
 }
 
 function mimeFor(filePath) {
@@ -149,6 +254,11 @@ async function uploadBuffer(baseUrl, token, input) {
   });
 }
 
+async function listCreatorReleases(baseUrl, token) {
+  const payload = await apiRequest(baseUrl, token, '/api/v1/releases');
+  return payload.releases ?? [];
+}
+
 function buildMetadataDocument(input) {
   return {
     name: input.title,
@@ -175,6 +285,10 @@ function buildMetadataDocument(input) {
             mimeType: input.coverMimeType,
           }
           : null,
+      },
+      commerce: {
+        unlockPriceEth: input.accessModel === 'purchase' ? input.priceEth : '0',
+        platformHubAddress: input.platformHubAddress,
       },
       lyrics: input.lyrics,
       provenance: {
@@ -226,13 +340,93 @@ async function publishOnChain(input) {
   };
 }
 
+async function publishExistingReleases(input) {
+  const releases = await listCreatorReleases(input.baseUrl, input.token);
+  const targets = releases.filter((release) => (
+    release.metadataStorageObject?.cid &&
+    !release.tokenId
+  ));
+
+  console.log(`Found ${targets.length} existing metadata releases pending on-chain publish.`);
+
+  for (const release of targets) {
+    const accessModel = release.accessModel === 'purchase' ? 'purchase' : 'open';
+    const priceEth = accessModel === 'purchase' ? release.priceEth : '0';
+    if (accessModel === 'purchase') assertPaidPrice(priceEth);
+
+    const metadataUri = `ipfs://${release.metadataStorageObject.cid}`;
+    console.log(`[CHAIN] ${release.artistName || 'Unknown'} - ${release.title} (${accessModel}${accessModel === 'purchase' ? ` ${priceEth} ETH` : ''})`);
+
+    await apiRequest(input.baseUrl, input.token, `/api/v1/releases/${release.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        status: 'PUBLISHING',
+        currentStage: 'publish',
+        statusMessage: 'Publishing existing metadata on chain',
+        latestError: null,
+      }),
+    });
+
+    try {
+      const chainResult = await publishOnChain({
+        wallet: input.wallet,
+        rpcUrl: input.rpcUrl,
+        platformHubAddress: input.platformHubAddress,
+        metadataUri,
+        accessModel,
+        priceEth,
+      });
+
+      await apiRequest(input.baseUrl, input.token, `/api/v1/releases/${release.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'PUBLISHED',
+          currentStage: 'access',
+          publishTxHash: chainResult.txHash,
+          publishBlockNumber: chainResult.blockNumber,
+          tokenId: chainResult.tokenId,
+          splitterAddress: chainResult.splitterAddress,
+          musicAssetAddress: input.musicAccessAddress,
+          platformHubAddress: input.platformHubAddress,
+          statusMessage: `Published token #${chainResult.tokenId}`,
+          activityEntry: {
+            message: `Published token #${chainResult.tokenId}`,
+            level: 'success',
+          },
+        }),
+      });
+
+      console.log(`[PUBLISHED] ${release.title} token=${chainResult.tokenId} tx=${chainResult.txHash}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await apiRequest(input.baseUrl, input.token, `/api/v1/releases/${release.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'FAILED',
+          currentStage: 'publish',
+          latestError: message,
+          statusMessage: 'Existing metadata on-chain publish failed',
+        }),
+      }).catch(() => undefined);
+      throw error;
+    }
+  }
+}
+
 async function main() {
   await loadEnvFile(path.join(repoRoot, '.env'));
   await loadEnvFile(path.join(repoRoot, 'apps/backend/.env'));
 
   const argv = process.argv.slice(2).filter((arg) => arg !== '--');
   const execute = argv.includes('--execute');
-  const musicDir = path.resolve(argv.find((arg) => !arg.startsWith('--')) || defaultMusicDir);
+  const publishExisting = argv.includes('--publish-existing');
+  const publicTrackCountRaw = Number(readOption(argv, '--public-count', String(defaultPublicTrackCount)));
+  const publicTrackCount = Number.isInteger(publicTrackCountRaw) && publicTrackCountRaw >= 0
+    ? publicTrackCountRaw
+    : defaultPublicTrackCount;
+  const paidPriceEth = readOption(argv, '--price-eth', process.env.TEST_TRACK_PRICE_ETH || defaultPaidPriceEth);
+  assertPaidPrice(paidPriceEth);
+  const musicDir = path.resolve(readPositionals(argv)[0] || defaultMusicDir);
   const baseUrl = process.env.WEB25_BACKEND_URL || 'http://localhost:8787';
   const rpcUrl = process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com';
   const creatorPrivateKey = process.env.TEST_CREATOR_PRIVATE_KEY;
@@ -244,10 +438,24 @@ async function main() {
   const wallet = new Wallet(creatorPrivateKey.startsWith('0x') ? creatorPrivateKey : `0x${creatorPrivateKey}`);
   const files = await collectAudioFiles(musicDir);
   if (!files.length) throw new Error(`No MP3 files found: ${musicDir}`);
+  const publicFiles = new Set(shuffle(files).slice(0, Math.min(publicTrackCount, files.length)));
 
   console.log(`Logging in as TestCreator ${wallet.address} against ${baseUrl}`);
+  console.log(`Random public tracks: ${publicFiles.size}; paid price: ${paidPriceEth} Sepolia ETH`);
   const auth = await loginAsCreator(baseUrl, wallet, chainId);
   const token = auth.sessionToken;
+
+  if (publishExisting) {
+    await publishExistingReleases({
+      baseUrl,
+      token,
+      wallet,
+      rpcUrl,
+      platformHubAddress: deployment.contracts.platformHub,
+      musicAccessAddress,
+    });
+    return;
+  }
 
   for (const filePath of files) {
     const metadata = await parseFile(filePath);
@@ -259,12 +467,14 @@ async function main() {
       ? metadata.common.genre.join(', ')
       : 'Pop';
     const lyrics = readLyrics(metadata.common.lyrics);
+    const accessModel = publicFiles.has(filePath) ? 'open' : 'purchase';
+    const priceEth = accessModel === 'purchase' ? paidPriceEth : '0';
     if (!title || !artist || !genre || !lyrics) {
       console.log(`[SKIP] ${path.basename(filePath)} missing required metadata`);
       continue;
     }
 
-    console.log(`[UPLOAD] ${artist} - ${title}`);
+    console.log(`[UPLOAD] ${artist} - ${title} (${accessModel}${accessModel === 'purchase' ? ` ${priceEth} ETH` : ''})`);
     const audioBuffer = await fs.readFile(filePath);
     const audioUpload = await uploadBuffer(baseUrl, token, {
       buffer: audioBuffer,
@@ -292,7 +502,7 @@ async function main() {
       body: JSON.stringify({
         title,
         artistName: artist,
-        accessModel: 'open',
+        accessModel,
       }),
     });
 
@@ -301,9 +511,10 @@ async function main() {
       artist,
       album,
       genre,
-      lyrics,
+      lyrics: buildLyricsMetadata(lyrics, metadata.format.duration),
       description: `Published from TestMusicResouerces: ${path.basename(filePath)}`,
-      accessModel: 'open',
+      accessModel,
+      priceEth,
       audioCid: audioUpload.cid,
       audioGatewayUrl: audioUpload.gatewayUrl,
       audioMimeType: audioUpload.mimeType,
@@ -312,6 +523,7 @@ async function main() {
       coverMimeType: coverUpload?.mimeType ?? null,
       chainName: deployment.network,
       musicAssetAddress: musicAccessAddress,
+      platformHubAddress: deployment.contracts.platformHub,
     });
 
     const metadataBuffer = Buffer.from(JSON.stringify(metadataDocument, null, 2), 'utf8');
@@ -332,7 +544,8 @@ async function main() {
         genreLabel: genre,
         status: 'METADATA_UPLOADED',
         currentStage: execute ? 'publish' : 'storage',
-        accessModel: 'open',
+        accessModel,
+        priceEth,
         audioSourceName: path.basename(filePath),
         audioStorageObjectId: audioUpload.storageObjectId,
         coverStorageObjectId: coverUpload?.storageObjectId ?? null,
@@ -358,8 +571,8 @@ async function main() {
       rpcUrl,
       platformHubAddress: deployment.contracts.platformHub,
       metadataUri: `ipfs://${metadataUpload.cid}`,
-      accessModel: 'open',
-      priceEth: '0',
+      accessModel,
+      priceEth,
     });
 
     await apiRequest(baseUrl, token, `/api/v1/releases/${release.id}`, {
