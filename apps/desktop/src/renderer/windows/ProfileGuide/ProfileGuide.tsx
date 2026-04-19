@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { useWeb3Modal } from '@web3modal/ethers/react';
 import { configContext, profileContext, windowControlContext } from '@renderer/core/electronContextApi';
 import { getRuntimeProfileId, setRuntimeProfileId } from '@renderer/core/profile/runtimeProfile';
 import {
@@ -7,6 +7,7 @@ import {
   getWalletAddress,
   sameAddress,
 } from '@renderer/core/profile/profileIdentity';
+import { useWalletRuntimeState } from '@renderer/core/web3/useWalletRuntimeState';
 import { ensureWalletChain, type RequestingProvider, type WalletChainConfig } from '@renderer/core/web3/walletNetwork';
 import { loginWeb25WithSiwe, refreshWeb25Session } from '@renderer/core/web25/auth';
 import { getCurrentWeb25UserProfile, type Web25Session } from '@renderer/core/web25/client';
@@ -96,8 +97,7 @@ function WindowChrome() {
 
 export default function ProfileGuide() {
   const { open } = useWeb3Modal();
-  const { address, chainId, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address, chainId, isConnected, walletProvider } = useWalletRuntimeState();
   const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState('');
   const [mode, setMode] = useState<GuideMode>('select');

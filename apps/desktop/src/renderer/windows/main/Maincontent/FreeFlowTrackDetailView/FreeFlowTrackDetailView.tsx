@@ -1,13 +1,14 @@
 import React from 'react';
-import { BrowserProvider, Contract, formatEther } from 'ethers';
+import { BrowserProvider, Contract, JsonRpcProvider, formatEther, isAddress } from 'ethers';
 import { DefaultCover } from '@components/static';
 import { PlatformIcon } from '@components/PlatformIcon';
 import { useSetting } from '@renderer/core/config/SettingsContext';
 import { mergeTrackWithFreeFlowInfo, upsertChainLibraryTrack } from '@renderer/core/freeflow/chainLibrary';
 import { resolveIndexedTrackResource, upsertWeb25Purchase } from '@renderer/core/web25/client';
 import { useWeb25SessionState } from '@renderer/core/web25/auth';
+import { getProfileSigner } from '@renderer/core/web3/profileSigner';
+import { useWalletRuntimeState } from '@renderer/core/web3/useWalletRuntimeState';
 import PlayerController from '@renderer/core/controller/PlayerController';
-import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { profileContext } from '@renderer/core/electronContextApi';
 import ViewShell from '@renderer/windows/main/Maincontent/ViewShell/ViewShell';
 import { FreeFlowTrackInfo, TrackEntity } from '@src/shared/domainModel/TrackEntity';
@@ -27,6 +28,17 @@ type AccessStatus = {
   creator: string | null;
   ownedBalance: string | null;
   checkedAddress: string | null;
+  hubAddress: string | null;
+  musicAssetAddress: string | null;
+};
+
+type TrackSaleSnapshot = {
+  hubAddress: string;
+  creator: string;
+  price: bigint;
+  requiresPurchase: boolean;
+  active: boolean;
+  musicAssetAddress: string | null;
 };
 
 function mapToInfo(payload: Awaited<ReturnType<typeof resolveIndexedTrackResource>>): FreeFlowTrackInfo {
@@ -61,6 +73,8 @@ function createAccessStatus(info: FreeFlowTrackInfo | null): AccessStatus {
     creator: null,
     ownedBalance: null,
     checkedAddress: null,
+    hubAddress: info?.platformHubAddress ?? null,
+    musicAssetAddress: info?.contractAddress ?? null,
   };
 }
 
@@ -94,9 +108,102 @@ function hasPositiveBalance(value?: string | null) {
   }
 }
 
+function normalizeAddress(value?: string | null): string | null {
+  const next = String(value || '').trim();
+  if (!next || !isAddress(next)) return null;
+  return next;
+}
+
+function buildAddressCandidates(...values: Array<string | null | undefined>): string[] {
+  const results: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    const address = normalizeAddress(value);
+    if (!address) continue;
+    const key = address.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push(address);
+  }
+  return results;
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error ?? 'unknown error');
+}
+
+async function resolveTrackSaleSnapshot(
+  provider: BrowserProvider | JsonRpcProvider,
+  tokenId: string,
+  hubCandidates: string[],
+): Promise<TrackSaleSnapshot> {
+  const failures: string[] = [];
+
+  for (const hubAddress of hubCandidates) {
+    try {
+      const code = await provider.getCode(hubAddress);
+      if (!code || code === '0x') {
+        failures.push(`${hubAddress}: no-contract-code`);
+        continue;
+      }
+
+      const platformHub = new Contract(hubAddress, PLATFORM_HUB_ABI, provider);
+      const [creator, , price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(tokenId);
+      let musicAssetAddress: string | null = null;
+      try {
+        musicAssetAddress = normalizeAddress(await platformHub.musicAsset());
+      } catch {
+        // ignore; fallback candidates below will handle legacy data
+      }
+
+      return {
+        hubAddress,
+        creator: typeof creator === 'string' ? creator : '',
+        price: BigInt(price),
+        requiresPurchase: Boolean(requiresPurchase),
+        active: Boolean(active),
+        musicAssetAddress,
+      };
+    } catch (error) {
+      failures.push(`${hubAddress}: ${errorMessage(error)}`);
+    }
+  }
+
+  throw new Error(`无法读取 getTrackSaleConfig。候选地址: ${failures.join(' | ')}`);
+}
+
+async function resolveOwnedBalance(
+  provider: BrowserProvider | JsonRpcProvider,
+  account: string,
+  tokenId: string,
+  musicAssetCandidates: string[],
+): Promise<{ musicAssetAddress: string | null; ownedBalance: bigint | null }> {
+  const failures: string[] = [];
+
+  for (const musicAssetAddress of musicAssetCandidates) {
+    try {
+      const code = await provider.getCode(musicAssetAddress);
+      if (!code || code === '0x') {
+        failures.push(`${musicAssetAddress}: no-contract-code`);
+        continue;
+      }
+      const musicAccess = new Contract(musicAssetAddress, MUSIC_ACCESS_1155_ABI, provider);
+      const ownedBalance = await musicAccess.balanceOf(account, tokenId);
+      return { musicAssetAddress, ownedBalance: BigInt(ownedBalance) };
+    } catch (error) {
+      failures.push(`${musicAssetAddress}: ${errorMessage(error)}`);
+    }
+  }
+
+  if (failures.length) {
+    console.warn(`[FreeFlow] resolveOwnedBalance failed: ${failures.join(' | ')}`);
+  }
+  return { musicAssetAddress: null, ownedBalance: null };
+}
+
 export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrackDetailViewProps) {
-  const { address, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address, isConnected, walletProvider } = useWalletRuntimeState();
   const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
   const { session } = useWeb25SessionState(web25BaseUrl.value);
   const [info, setInfo] = React.useState<FreeFlowTrackInfo | null>(track.freeflow ?? null);
@@ -110,8 +217,11 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
   const [libraryMessage, setLibraryMessage] = React.useState('');
   const [accessStatus, setAccessStatus] = React.useState<AccessStatus>(() => createAccessStatus(track.freeflow ?? null));
 
+  const infoTokenId = info?.tokenId ? String(info.tokenId) : null;
+  const infoHubAddress = info?.platformHubAddress ?? null;
+  const infoMusicAssetAddress = info?.contractAddress ?? null;
+
   const identityAddress = activeProfile?.walletAddress ?? session?.address ?? address ?? null;
-  const signingWalletMismatch = Boolean(identityAddress && address && !sameAddress(identityAddress, address));
   const requiresPurchase = accessStatus.requiresPurchase ?? (info ? info.accessModel === 'purchase' : null);
   const isPublicAccess = !!info && requiresPurchase === false;
   const saleActive = accessStatus.active !== false;
@@ -119,7 +229,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
   const isCreatorAddress = sameAddress(identityAddress, accessStatus.creator);
   const canPlay = !!info && (isPublicAccess || hasPurchasedAccess || isCreatorAddress);
   const canAddToChainLibrary = !!info && (isPublicAccess || hasPurchasedAccess);
-  const needsGuideForPurchase = !isConnected || !walletProvider || !identityAddress || signingWalletMismatch;
+  const needsGuideForPurchase = !isConnected || !walletProvider || !identityAddress;
 
   const accessLabel = !info
     ? '加载中'
@@ -191,47 +301,77 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
   }, [track]);
 
   const refreshAccess = React.useCallback(async () => {
-    if (!walletProvider || !info?.tokenId) return;
+    if (!infoTokenId) return;
 
     setRefreshingAccess(true);
     setAccessError('');
     try {
-      const provider = new BrowserProvider(walletProvider);
-      const hubAddress = info.platformHubAddress || DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress;
-      const platformHub = new Contract(hubAddress, PLATFORM_HUB_ABI, provider);
-      const [creator, , price, requiresPurchaseOnChain, active] = await platformHub.getTrackSaleConfig(info.tokenId);
+      const readProvider = new JsonRpcProvider(
+        DEFAULT_SEPOLIA_CONTRACTS.rpcUrl,
+        DEFAULT_SEPOLIA_CONTRACTS.chainId,
+      );
+      const tokenId = infoTokenId;
+      const hubCandidates = buildAddressCandidates(
+        infoHubAddress,
+        DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress,
+      );
+      const sale = await resolveTrackSaleSnapshot(readProvider, tokenId, hubCandidates);
+      const musicAssetCandidates = buildAddressCandidates(
+        infoMusicAssetAddress,
+        sale.musicAssetAddress,
+        DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress,
+      );
 
       let ownedBalance: bigint | null = null;
+      let resolvedMusicAssetAddress: string | null = sale.musicAssetAddress;
       if (identityAddress) {
-        const musicAccessAddress = info.contractAddress || DEFAULT_SEPOLIA_CONTRACTS.musicAssetAddress;
-        const musicAccess = new Contract(musicAccessAddress, MUSIC_ACCESS_1155_ABI, provider);
-        ownedBalance = await musicAccess.balanceOf(identityAddress, info.tokenId).catch((): null => null);
+        const balanceResult = await resolveOwnedBalance(readProvider, identityAddress, tokenId, musicAssetCandidates);
+        ownedBalance = balanceResult.ownedBalance;
+        if (balanceResult.musicAssetAddress) {
+          resolvedMusicAssetAddress = balanceResult.musicAssetAddress;
+        }
       }
 
-      const nextPriceEth = formatEther(price);
+      const nextPriceEth = formatEther(sale.price);
       setAccessStatus({
-        requiresPurchase: requiresPurchaseOnChain,
-        active,
+        requiresPurchase: sale.requiresPurchase,
+        active: sale.active,
         priceEth: nextPriceEth,
-        creator: typeof creator === 'string' ? creator : null,
+        creator: sale.creator || null,
         ownedBalance: ownedBalance?.toString() ?? null,
         checkedAddress: identityAddress,
+        hubAddress: sale.hubAddress,
+        musicAssetAddress: resolvedMusicAssetAddress,
       });
 
-      if (nextPriceEth !== info.priceEth) {
-        setInfo((prev) => prev ? { ...prev, priceEth: nextPriceEth } : prev);
-      }
+      setInfo((prev) => {
+        if (!prev) return prev;
+        const nextContractAddress = resolvedMusicAssetAddress ?? prev.contractAddress;
+        if (
+          prev.priceEth === nextPriceEth
+          && prev.platformHubAddress === sale.hubAddress
+          && prev.contractAddress === nextContractAddress
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          priceEth: nextPriceEth,
+          platformHubAddress: sale.hubAddress,
+          contractAddress: nextContractAddress,
+        };
+      });
     } catch (err) {
       setAccessError(err instanceof Error ? err.message : String(err ?? ''));
     } finally {
       setRefreshingAccess(false);
     }
-  }, [identityAddress, info, walletProvider]);
+  }, [identityAddress, infoHubAddress, infoMusicAssetAddress, infoTokenId]);
 
   React.useEffect(() => {
-    if (!walletProvider || !info?.tokenId) return;
+    if (!infoTokenId) return;
     void refreshAccess();
-  }, [info?.platformHubAddress, info?.tokenId, refreshAccess, walletProvider]);
+  }, [infoTokenId, infoHubAddress, identityAddress, refreshAccess]);
 
   const handleBuyAccess = React.useCallback(async () => {
     if (!walletProvider || !identityAddress || !info?.tokenId) return;
@@ -240,40 +380,41 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     setAccessError('');
     setLibraryMessage('');
     try {
-      const provider = new BrowserProvider(walletProvider);
-      const signer = await provider.getSigner();
-      const signerAddress = await signer.getAddress();
-      if (!sameAddress(signerAddress, identityAddress)) {
-        throw new Error(`当前签名钱包 ${signerAddress} 与当前 Profile ${identityAddress} 不一致，请返回引导切换钱包后重试。`);
+      const tokenId = infoTokenId;
+      if (!tokenId) {
+        throw new Error('缺少 tokenId，无法购买。');
       }
+      const { provider, signer, signerAddress } = await getProfileSigner(walletProvider, identityAddress);
+      const hubCandidates = buildAddressCandidates(
+        infoHubAddress,
+        DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress,
+      );
+      const sale = await resolveTrackSaleSnapshot(provider, tokenId, hubCandidates);
+      const platformHub = new Contract(sale.hubAddress, PLATFORM_HUB_ABI, signer);
 
-      const hubAddress = info.platformHubAddress || DEFAULT_SEPOLIA_CONTRACTS.platformHubAddress;
-      const platformHub = new Contract(hubAddress, PLATFORM_HUB_ABI, signer);
-      const [creator, , price, requiresPurchaseOnChain, active] = await platformHub.getTrackSaleConfig(info.tokenId);
-
-      if (!active) {
+      if (!sale.active) {
         throw new Error('该作品当前未开放购买。');
       }
-      if (!requiresPurchaseOnChain) {
+      if (!sale.requiresPurchase) {
         await addCurrentTrackToChainLibrary(info);
         setLibraryMessage('公开作品已加入链上音乐库。');
         await refreshAccess();
         return;
       }
-      if (sameAddress(creator, signerAddress)) {
+      if (sameAddress(sale.creator, signerAddress)) {
         throw new Error('创作者默认拥有播放权限，不能购买自己的作品。');
       }
 
-      const buyTx = await platformHub.buyAccess(info.tokenId, { value: price });
+      const buyTx = await platformHub.buyAccess(tokenId, { value: sale.price });
       const receipt = await buyTx.wait();
-      const purchaseChainId = info.chainId ?? DEFAULT_SEPOLIA_CONTRACTS.chainId;
+      const purchaseChainId = Number((await provider.getNetwork()).chainId || DEFAULT_SEPOLIA_CONTRACTS.chainId);
       if (info.releaseId) {
         await upsertWeb25Purchase(web25BaseUrl.value, {
           releaseId: info.releaseId,
           walletAddress: signerAddress,
           chainId: purchaseChainId,
           txHash: buyTx.hash,
-          amountWei: price.toString(),
+          amountWei: sale.price.toString(),
           status: 'confirmed',
           purchasedAt: new Date().toISOString(),
         }).catch((): undefined => undefined);
@@ -291,6 +432,8 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
     addCurrentTrackToChainLibrary,
     identityAddress,
     info,
+    infoHubAddress,
+    infoTokenId,
     refreshAccess,
     walletProvider,
     web25BaseUrl.value,
@@ -352,9 +495,9 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
               )}
             </div>
 
-            {signingWalletMismatch && (
+            {identityAddress && address && !sameAddress(identityAddress, address) && (
               <div className={styles.warning}>
-                当前 Profile 为 {formatAddress(identityAddress)}，签名钱包为 {formatAddress(address)}。
+                当前 Profile 为 {formatAddress(identityAddress)}，Web3Modal 当前显示地址为 {formatAddress(address)}。
               </div>
             )}
 

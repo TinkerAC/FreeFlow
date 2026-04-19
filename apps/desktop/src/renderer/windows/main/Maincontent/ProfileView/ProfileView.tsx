@@ -1,6 +1,6 @@
 import React from 'react';
-import { useWeb3ModalAccount } from '@web3modal/ethers/react';
 import { useSetting } from '@renderer/core/config/SettingsContext';
+import { useWalletRuntimeState } from '@renderer/core/web3/useWalletRuntimeState';
 import { profileContext } from '@renderer/core/electronContextApi';
 import { logoutWeb25Session, useWeb25SessionState } from '@renderer/core/web25/auth';
 import {
@@ -21,7 +21,7 @@ function formatAddress(value?: string) {
 }
 
 export default function ProfileView() {
-  const { address, chainId, isConnected } = useWeb3ModalAccount();
+  const { address, chainId, isConnected } = useWalletRuntimeState();
   const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
   const { session, refresh, refreshing } = useWeb25SessionState(web25BaseUrl.value);
 

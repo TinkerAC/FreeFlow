@@ -1,10 +1,10 @@
-import { useWeb3ModalAccount } from '@web3modal/ethers/react'
 import React from 'react';
+import { useWalletRuntimeState } from '@renderer/core/web3/useWalletRuntimeState';
 import { profileContext } from '@renderer/core/electronContextApi';
 import styles from './TopBar.module.css';
 
 export default function Web3Button() {
-  const { address, isConnected } = useWeb3ModalAccount()
+  const { address, isConnected } = useWalletRuntimeState()
 
   return (
     <button

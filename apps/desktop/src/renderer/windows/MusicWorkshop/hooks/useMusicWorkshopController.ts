@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { useWalletRuntimeState } from '@renderer/core/web3/useWalletRuntimeState';
 import { profileContext } from '@renderer/core/electronContextApi';
 import { useSettingsContext } from '@renderer/core/config/SettingsContext';
 import { type CreatorReleaseRecord } from '@renderer/core/web25/client';
@@ -31,8 +31,7 @@ import {
 } from './workshopThunks';
 
 export function useMusicWorkshopController() {
-  const { address, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address, isConnected, walletProvider } = useWalletRuntimeState();
   const { settings, setByPath } = useSettingsContext();
   const dispatch = useMusicWorkshopDispatch();
 

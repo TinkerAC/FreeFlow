@@ -16,6 +16,7 @@ import {
   logoutWeb25Session,
   refreshWeb25Session,
 } from '@renderer/core/web25/auth';
+import { getProfileSigner } from '@renderer/core/web3/profileSigner';
 import { MUSIC_ACCESS_1155_ABI, PLATFORM_HUB_ABI } from '@src/shared/web3/freeflowContracts';
 import { type AccessCheckState, defaultSplits, EMPTY_DASHBOARD, metadataUriForRelease, slugify } from '../workshopHelpers';
 import type { MusicWorkshopRootState } from './workshopStore';
@@ -279,9 +280,7 @@ export const publishReleaseThunk = createAsyncThunk<
         throw new Error('Metadata URI not ready');
       }
 
-      const provider = new BrowserProvider(walletProvider);
-      const signer = await provider.getSigner();
-      const signerAddress = await signer.getAddress();
+      const { signer, signerAddress } = await getProfileSigner(walletProvider, fallbackAddress);
       assertSignerMatchesExpected(signerAddress, fallbackAddress);
       const artistAddress = signerAddress;
       const splits = normalizeSplits(release, artistAddress);
@@ -416,9 +415,8 @@ export const refreshAccessThunk = createAsyncThunk<
 >(
   'musicWorkshop/refreshAccess',
   async ({ walletProvider, tokenId, platformHubAddress, musicAssetAddress, fallbackAddress }) => {
-    const provider = new BrowserProvider(walletProvider);
-    const signer = await provider.getSigner();
-    const currentAddress = fallbackAddress || await signer.getAddress();
+    const { signer, signerAddress } = await getProfileSigner(walletProvider, fallbackAddress);
+    const currentAddress = fallbackAddress || signerAddress;
     const platformHub = new Contract(platformHubAddress, PLATFORM_HUB_ABI, signer);
     const musicAccess = new Contract(musicAssetAddress, MUSIC_ACCESS_1155_ABI, signer);
     const [creator, payoutReceiver, price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(tokenId);
@@ -455,9 +453,7 @@ export const buyAccessThunk = createAsyncThunk<
 >(
   'musicWorkshop/buyAccess',
   async ({ baseUrl, releaseId, tokenId, walletProvider, platformHubAddress, expectedAddress }) => {
-    const provider = new BrowserProvider(walletProvider);
-    const signer = await provider.getSigner();
-    const buyerAddress = await signer.getAddress();
+    const { provider, signer, signerAddress: buyerAddress } = await getProfileSigner(walletProvider, expectedAddress);
     assertSignerMatchesExpected(buyerAddress, expectedAddress);
     const platformHub = new Contract(platformHubAddress, PLATFORM_HUB_ABI, signer);
     const [, , price, requiresPurchase, active] = await platformHub.getTrackSaleConfig(tokenId);

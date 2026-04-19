@@ -15,6 +15,7 @@ export const PLATFORM_HUB_ABI = [
   'function buyAccess(uint256 tokenId) payable',
   'function hasAccess(address account, uint256 tokenId) view returns (bool)',
   'function getTrackSaleConfig(uint256 tokenId) view returns (address creator, address payoutReceiver, uint256 price, bool requiresPurchase, bool active)',
+  'function musicAsset() view returns (address)',
   'function paymentPreview(uint256 tokenId) view returns (uint256 price, uint256 platformFee, uint256 creatorProceeds)',
   'function platformFeeBps() view returns (uint96)',
 ] as const;
