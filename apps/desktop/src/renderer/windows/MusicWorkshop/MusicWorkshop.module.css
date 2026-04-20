@@ -470,7 +470,8 @@
 }
 
 .dashboardGrid,
-.panelGrid {
+.panelGrid,
+.royaltyGrid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
@@ -776,6 +777,88 @@
     text-decoration: underline;
 }
 
+.royaltyWorkspace {
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+}
+
+.royaltyHero {
+    min-width: 0;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.26);
+    background: rgb(var(--md-sys-color-surface-container-low));
+}
+
+.royaltyHeroText {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.royaltyBars,
+.claimHistory {
+    margin-top: 12px;
+    display: grid;
+    gap: 10px;
+}
+
+.royaltyBarRow {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) minmax(140px, 1.4fr) minmax(92px, auto);
+    gap: 10px;
+    align-items: center;
+}
+
+.royaltyBarLabel,
+.royaltyBarValue {
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.royaltyBarValue {
+    justify-self: end;
+    color: rgb(var(--md-sys-color-on-surface-variant));
+}
+
+.royaltyBarTrack {
+    height: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgb(var(--md-sys-color-surface-container-highest));
+    border: 1px solid rgba(var(--md-sys-color-outline-variant), 0.22);
+}
+
+.royaltyBarFill {
+    height: 100%;
+    border-radius: 8px;
+    background: rgb(var(--md-sys-color-primary));
+}
+
+.claimHistoryRow {
+    min-width: 0;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(var(--md-sys-color-outline-variant), 0.18);
+}
+
+.claimHistoryRow:last-child {
+    border-bottom: 0;
+}
+
 .noticeInfo,
 .noticeWarning,
 .noticeDanger {
@@ -903,7 +986,8 @@
     }
 
     .dashboardGrid,
-    .panelGrid {
+    .panelGrid,
+    .royaltyGrid {
         grid-template-columns: 1fr;
     }
 
@@ -968,7 +1052,17 @@
     .metricGridWide,
     .infoGrid,
     .pipelineGrid,
-    .splitRow {
+    .splitRow,
+    .royaltyBarRow {
         grid-template-columns: 1fr;
+    }
+
+    .royaltyHero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .royaltyBarValue {
+        justify-self: start;
     }
 }

@@ -29,3 +29,16 @@ export const MUSIC_ACCESS_1155_ABI = [
 export const ROYALTY_SPLITTER_FACTORY_ABI = [
   'function createSplitter(address[] payees, uint256[] shares) returns (address)',
 ] as const;
+
+export const ROYALTY_SPLITTER_ABI = [
+  'function totalShares() view returns (uint256)',
+  'function totalReleased() view returns (uint256)',
+  'function shares(address account) view returns (uint256)',
+  'function released(address account) view returns (uint256)',
+  'function releasable(address account) view returns (uint256)',
+  'function payee(uint256 index) view returns (address)',
+  'function payeeCount() view returns (uint256)',
+  'function release(address payable account)',
+  'event PaymentReleased(address indexed to, uint256 amount)',
+  'event PaymentReceived(address indexed from, uint256 amount)',
+] as const;

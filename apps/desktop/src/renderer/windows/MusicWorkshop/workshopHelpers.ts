@@ -10,7 +10,7 @@ import { buildFreeFlowLyricsMetadata } from '@src/shared/metadata/freeflowLyrics
 export type AccessModel = ReleaseAccessModel;
 export type ReleasePanel = 'editor' | 'storage' | 'publish' | 'access';
 export type PublishSection = ReleasePanel | 'activity';
-export type WorkshopSection = 'metadata' | 'publish';
+export type WorkshopSection = 'metadata' | 'publish' | 'royalties';
 export type BusyState =
   | 'idle'
   | 'loading-dashboard'
@@ -83,6 +83,7 @@ export const WORKSHOP_NAV_ITEMS: Array<{
   description: string;
 }> = [
   { value: 'publish', label: '发布作品', description: '管理草稿、上传素材并链上发布' },
+  { value: 'royalties', label: '收益中心', description: '查看分账收益、领取与分析' },
   { value: 'metadata', label: '元数据编辑', description: '编辑音频标签、歌词与封面' },
 ];
 

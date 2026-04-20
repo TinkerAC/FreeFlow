@@ -227,6 +227,27 @@ export type Web25PurchaseRecord = {
   updatedAt: string;
 };
 
+export type Web25RoyaltyClaimRecord = {
+  id: string;
+  releaseId: string;
+  claimerUserId: string;
+  accountAddress: string;
+  splitterAddress: string;
+  chainId: number;
+  txHash: string;
+  amountWei: string;
+  claimedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Web25RoyaltyWorkspace = {
+  accountAddress: string;
+  chainId: number | null;
+  releases: CreatorReleaseRecord[];
+  claims: Web25RoyaltyClaimRecord[];
+};
+
 let sessionToken: string | null = null;
 
 export function setWeb25SessionToken(token: string | null) {
@@ -557,6 +578,39 @@ export async function upsertWeb25Purchase(
   return await requestWeb25<Web25PurchaseRecord>(
     baseUrl,
     '/api/v1/purchases',
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function listWeb25RoyaltyWorkspace(baseUrl: string, input: { chainId?: number | null } = {}) {
+  const query = new URLSearchParams();
+  if (input.chainId) query.set('chainId', String(input.chainId));
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+
+  return await requestWeb25<Web25RoyaltyWorkspace>(
+    baseUrl,
+    `/api/v1/royalties${suffix}`,
+  );
+}
+
+export async function recordWeb25RoyaltyClaim(
+  baseUrl: string,
+  input: {
+    releaseId: string;
+    accountAddress: string;
+    splitterAddress: string;
+    chainId: number;
+    txHash: string;
+    amountWei: string;
+    claimedAt?: string | null;
+  },
+) {
+  return await requestWeb25<Web25RoyaltyClaimRecord>(
+    baseUrl,
+    '/api/v1/royalties/claims',
     {
       method: 'POST',
       body: JSON.stringify(input),
