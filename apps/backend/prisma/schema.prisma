@@ -49,6 +49,7 @@ model User {
   storageUploads          StorageUpload[]
   creatorReleases         CreatorRelease[]
   purchases               Purchase[]       @relation("PurchaseBuyer")
+  royaltyClaims           RoyaltyClaim[]    @relation("RoyaltyClaimClaimer")
   comments                Comment[]
 
   @@map("users")
@@ -185,6 +186,7 @@ model CreatorRelease {
   coverStorageObject      StorageObject?       @relation("CreatorReleaseCoverObject", fields: [coverStorageObjectId], references: [id], onDelete: Restrict)
   metadataStorageObject   StorageObject?       @relation("CreatorReleaseMetadataObject", fields: [metadataStorageObjectId], references: [id], onDelete: Restrict)
   purchases               Purchase[]
+  royaltyClaims           RoyaltyClaim[]
   comments                Comment[]
 
   @@unique([chainId, musicAssetAddress, tokenId])
@@ -219,6 +221,32 @@ model Purchase {
   @@index([releaseId, status, createdAt])
   @@index([buyerUserId, createdAt])
   @@map("purchases")
+}
+
+model RoyaltyClaim {
+  id                   String         @id @default(cuid())
+  releaseId            String
+  claimerUserId        String
+  accountAddress       String         @db.VarChar(42)
+  accountAddressLower  String         @db.VarChar(42)
+  splitterAddress      String         @db.VarChar(42)
+  splitterAddressLower String         @db.VarChar(42)
+  chainId              Int
+  txHash               String         @db.VarChar(100)
+  txHashLower          String         @db.VarChar(100)
+  amountWei            String         @db.VarChar(128)
+  claimedAt            DateTime
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  release              CreatorRelease @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  claimer              User           @relation("RoyaltyClaimClaimer", fields: [claimerUserId], references: [id], onDelete: Cascade)
+
+  @@unique([chainId, txHashLower])
+  @@index([releaseId, claimedAt])
+  @@index([claimerUserId, createdAt])
+  @@index([accountAddressLower, chainId, claimedAt])
+  @@index([splitterAddressLower, chainId])
+  @@map("royalty_claims")
 }
 
 model Comment {

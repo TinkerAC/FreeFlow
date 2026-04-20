@@ -15,4 +15,7 @@ COMMENT ON TABLE "comments" IS '直接挂载到 CreatorRelease 的单层评论�
 
 COMMENT ON COLUMN "creator_releases"."musicAssetAddress" IS 'MusicAccess1155 合约地址。';
 COMMENT ON COLUMN "creator_releases"."revenueSplits" IS '创作者侧收益分账配置。';
+COMMENT ON TABLE "royalty_claims" IS '分账合约收益领取记录，由客户端链上交易确认后回写。';
+COMMENT ON COLUMN "royalty_claims"."splitterAddress" IS 'RoyaltySplitter 分账合约地址。';
+COMMENT ON COLUMN "royalty_claims"."amountWei" IS '本次领取的原生代币数量，单位 wei。';
 COMMENT ON COLUMN "comments"."releaseId" IS '被评论的发行 ID。';

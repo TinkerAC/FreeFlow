@@ -40,6 +40,22 @@ export class ReleaseRepository {
     });
   }
 
+  async listPublishedRoyaltyCandidates() {
+    return prisma.creatorRelease.findMany({
+      where: {
+        status: 'PUBLISHED',
+        splitterAddress: {
+          not: null,
+        },
+      },
+      orderBy: [
+        { publishedAt: 'desc' },
+        { updatedAt: 'desc' },
+      ],
+      include: releaseInclude,
+    });
+  }
+
   async findByIdForCreator(creatorUserId: string, releaseId: string) {
     return prisma.creatorRelease.findFirst({
       where: {
