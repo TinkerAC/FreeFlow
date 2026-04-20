@@ -7,7 +7,14 @@
 
 FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架构。桌面端负责用户交互、音频播放、本地缓存和钱包交互；后端负责SIWE认证、Pinata上传代理、发行数据管理、资源检索、购买记录和评论；智能合约负责链上发布、访问凭证、购买授权和收益分账；IPFS/Pinata负责保存音频、封面和metadata资源。
 
-后续正式论文应在本节补充系统总体架构图，展示Electron桌面端、Express后端、PostgreSQL、IPFS/Pinata、Sepolia合约和钱包之间的调用关系。
+系统总体架构如图\ref{fig:system_architecture}所示。Electron桌面端通过Web2.5 API访问后端业务服务，通过ethers.js与Sepolia测试网合约交互，并通过本地音频代理播放IPFS gateway音频资源。后端通过Prisma维护PostgreSQL中的用户、发行、存储、购买和评论数据，同时代理Pinata上传，形成链上状态和链下索引协同的系统结构。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/system_architecture.png}
+    \caption{FreeFlow系统总体架构图}
+    \label{fig:system_architecture}
+\end{figure}
 
 
 \section{功能模块设计}
@@ -39,7 +46,16 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
 
 \subsection{创作者发布流程}
 
-创作者发布流程如下：
+创作者发布流程如图\ref{fig:release_workflow}所示。该流程以Creators Workshop为入口，依次完成发行草稿维护、素材上传、metadata生成、合约发布和链上索引回写。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/release_workflow.png}
+    \caption{创作者链上音乐发布流程图}
+    \label{fig:release_workflow}
+\end{figure}
+
+创作者发布流程的主要步骤如下：
 
 \begin{enumerate}
     \item 用户连接钱包并完成SIWE登录。
@@ -54,7 +70,16 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
 
 \subsection{用户购买播放流程}
 
-用户购买播放流程如下：
+用户购买播放流程如图\ref{fig:purchase_playback_sequence}所示。系统先通过后端检索和解析链上资源，再以合约访问状态决定是否需要购买，最后将拥有访问权的作品加入链上音乐库并交由音频代理播放。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/purchase_playback_sequence.png}
+    \caption{用户购买与播放流程图}
+    \label{fig:purchase_playback_sequence}
+\end{figure}
+
+用户购买播放流程的主要步骤如下：
 
 \begin{enumerate}
     \item 用户输入关键词检索链上音乐资源。

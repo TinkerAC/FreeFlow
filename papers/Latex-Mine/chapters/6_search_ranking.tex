@@ -84,6 +84,15 @@
 
 \section{算法流程}
 
+链上音乐资源检索排序流程如图\ref{fig:search_ranking_pipeline}所示。系统首先对用户查询进行归一化并识别链上身份字段，然后结合数据库召回和最近资源补充生成候选集合，最后使用身份匹配、文本匹配、模糊相似度、新鲜度和热度等特征计算总分，并返回包含排序原因的结果。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/search_ranking_pipeline.png}
+    \caption{链上音乐资源检索排序流程图}
+    \label{fig:search_ranking_pipeline}
+\end{figure}
+
 \begin{breakablealgorithm}
     \caption{链上音乐资源检索与排序算法}
     \label{algo:chain_resource_rank}
