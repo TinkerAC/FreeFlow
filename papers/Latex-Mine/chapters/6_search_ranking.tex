@@ -58,6 +58,15 @@
 
 当前算法名称为chain\_resource\_rank\_v1。排序总分由身份匹配分、文本匹配分、模糊相似度分、新鲜度分和热度分组成，如式\ref{eq:rank_score}所示。
 
+评分结构如图\ref{fig:ranking_score_model}所示。系统先将候选资源拆分为链上身份字段、文本字段和行为统计字段，再分别计算身份匹配、文本匹配、模糊相似度、新鲜度和热度特征，最后合成为总分并输出排序原因与特征明细。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/out/ranking_score_model.png}
+    \caption{链上资源排序评分结构图}
+    \label{fig:ranking_score_model}
+\end{figure}
+
 \begin{equation}
     Score(d,q)=S_{identity}(d,q)+S_{text}(d,q)+S_{fuzzy}(d,q)+S_{freshness}(d)+S_{popularity}(d)
     \label{eq:rank_score}

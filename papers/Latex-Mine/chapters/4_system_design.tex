@@ -95,33 +95,87 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
 
 \section{数据库设计}
 
-后端数据库主要包括用户、钱包身份、SIWE nonce、会话、存储对象、上传记录、创作者发行、购买记录和评论等表。正式论文中应补充数据库ER图。
+FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。客户端数据库位于当前Profile目录下的\texttt{database.sqlite}文件中，主要保存本地音乐库、歌单关系、链上音乐库投影、下载状态和应用启动会话；服务器数据库由Prisma管理，主要保存用户身份、SIWE认证会话、IPFS存储对象、创作者发行项目、购买交易投影和评论数据。两类数据库的职责边界不同：SQLite面向桌面端本地播放体验和离线管理，PostgreSQL面向Web2.5业务协同和链上资源索引。
+
+\subsection{客户端SQLite数据库设计}
+
+客户端SQLite数据库采用Sequelize模型定义。其核心ER关系如图\ref{fig:client_sqlite_er}所示。\texttt{track}表保存本地音乐、外部平台音乐和FreeFlow链上音乐在桌面端的统一歌曲记录，其中\texttt{platform}和\texttt{platform\_unique\_id}构成唯一索引。对于FreeFlow资源，系统将链上资源键、chainId、合约地址、tokenId、metadata CID、音频CID和发布交易哈希等信息序列化保存到\texttt{freeflow\_metadata\_json}字段中，从而使链上音乐可以复用本地播放队列、歌单、下载和缓存逻辑。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/out/client_sqlite_er.png}
+    \caption{客户端SQLite数据库ER图}
+    \label{fig:client_sqlite_er}
+\end{figure}
 
 \begin{table}[htbp]
     \linespread{1.5}
     \zihao{5}
     \songti
     \centering
-    \caption{后端核心数据表说明}\label{tab:database_tables}
+    \caption{客户端SQLite核心数据表说明}\label{tab:client_sqlite_tables}
     \begin{tabular}{|l|p{10cm}|}
         \hline
-        数据表                & 说明                     \\ \hline
-        users              & 保存系统用户资料               \\ \hline
-        wallet\_identities & 保存钱包地址、链ID和用户绑定关系      \\ \hline
-        siwe\_nonces       & 保存SIWE登录nonce和过期状态     \\ \hline
-        auth\_sessions     & 保存登录会话                 \\ \hline
-        storage\_objects   & 保存IPFS CID、文件大小和MIME类型 \\ \hline
-        storage\_uploads   & 保存上传者、Pinata ID和上传时间   \\ \hline
-        creator\_releases  & 保存创作者发行项目和链上资源索引       \\ \hline
-        purchases          & 保存购买交易投影               \\ \hline
-        comments           & 保存作品评论                 \\ \hline
+        数据表                  & 设计说明                                                                 \\ \hline
+        track                 & 保存统一歌曲记录，包括平台标识、平台内唯一ID、标题、歌手、专辑、封面、播放次数、本地文件路径、下载状态和FreeFlow链上扩展信息 \\ \hline
+        playlists             & 保存用户歌单信息，包括标题、描述、封面、创建者、来源平台、播放次数和排序位置                                  \\ \hline
+        playlist\_detail      & 保存歌单与歌曲的多对多关系，以playlist\_id和track\_id作为联合主键，并记录歌曲在歌单中的排序位置                 \\ \hline
+        sessions              & 保存应用启动会话，包括启动时间、操作系统和应用版本，用于记录桌面端运行情况                                  \\ \hline
+        hifini\_thread\_cache & 保存Hifini历史内容提供者的帖子解析缓存，避免重复解析相同data\_href                                      \\ \hline
     \end{tabular}
 \end{table}
+
+\texttt{playlist\_detail}通过外键关联\texttt{playlists.playlist\_id}和\texttt{track.id}，删除歌单或歌曲时关联记录随之级联删除。音频下载模块会更新\texttt{track.relative\_local\_path}、\texttt{download\_status}、\texttt{download\_source\_cid}、\texttt{download\_source\_gateway}、\texttt{download\_error}和\texttt{downloaded\_at}等字段；链上音乐库则通过筛选\texttt{platform}为\texttt{FreeFlow}的\texttt{track}记录形成专门视图，而不是另建一套重复的链上歌曲表。
+
+\subsection{服务器PostgreSQL数据库设计}
+
+服务器PostgreSQL数据库的核心ER关系如图\ref{fig:server_postgresql_er}所示。后端以\texttt{creator\_releases}作为链上音乐资源索引中心，围绕它关联创作者用户、IPFS存储对象、购买记录和评论记录。链上状态以智能合约为权威来源，后端数据库保存的是便于检索、展示和业务联动的链下投影。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/out/server_postgresql_er.png}
+    \caption{服务器PostgreSQL数据库ER图}
+    \label{fig:server_postgresql_er}
+\end{figure}
+
+\begin{table}[htbp]
+    \linespread{1.5}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{服务器PostgreSQL核心数据表说明}\label{tab:server_postgresql_tables}
+    \begin{tabular}{|l|p{10cm}|}
+        \hline
+        数据表                & 设计说明                                                                 \\ \hline
+        users              & 保存系统用户资料，包含展示名、头像和主钱包身份引用                                           \\ \hline
+        wallet\_identities & 保存钱包地址、链ID、验证时间和用户绑定关系，并通过addressLower与chainId保证同一链上地址唯一             \\ \hline
+        siwe\_nonces       & 保存SIWE登录nonce哈希、请求地址、请求链ID、过期时间和消费时间，用于防止签名重放                         \\ \hline
+        auth\_sessions     & 保存登录会话token哈希、钱包身份、domain、uri、签发时间、验证时间、过期时间和吊销时间                    \\ \hline
+        storage\_objects   & 保存IPFS/Pinata对象的CID、文件大小和MIME类型，是音频、封面和metadata对象的统一记录                 \\ \hline
+        storage\_uploads   & 保存上传行为，关联上传者、存储对象、Pinata ID、原始文件名、存储网络和上传时间                         \\ \hline
+        creator\_releases  & 保存创作者发行项目和链上资源索引，包括作品元数据、发布阶段、访问模式、CID引用、合约地址、tokenId和交易哈希       \\ \hline
+        purchases          & 保存购买交易投影，关联发行资源和购买用户，并用交易哈希、钱包地址、链ID等字段避免重复记录                    \\ \hline
+        comments           & 保存作品评论，关联发行资源和评论用户，并记录评论正文和时间信息                                      \\ \hline
+    \end{tabular}
+\end{table}
+
+\texttt{creator\_releases}表包含发行流程状态字段\texttt{status}和\texttt{currentStage}，用于支撑创作者工作台的阶段展示；包含\texttt{audioStorageObjectId}、\texttt{coverStorageObjectId}和\texttt{metadataStorageObjectId}，用于关联三类IPFS资源；包含\texttt{chainId}、\texttt{musicAssetAddress}、\texttt{platformHubAddress}、\texttt{splitterAddress}、\texttt{publishTxHash}、\texttt{publishBlockNumber}和\texttt{tokenId}，用于把链下发行记录定位到具体链上作品。系统对\texttt{chainId + musicAssetAddress + tokenId}设置唯一约束，确保同一链上访问凭证不会被重复索引。
+
+购买记录表\texttt{purchases}同时设置\texttt{chainId + txHashLower}和\texttt{releaseId + walletAddressLower + chainId}两组唯一约束。前者避免同一链上交易被重复写入，后者避免同一用户在同一链上对同一作品产生重复确认记录。评论表\texttt{comments}则以\texttt{releaseId}和\texttt{userId}分别建立索引，满足按作品拉取评论列表和按用户追踪评论行为的需求。
 
 
 \section{智能合约设计}
 
 系统合约由MusicAccess1155、PlatformHub和RoyaltySplitter组成。MusicAccess1155负责访问凭证，PlatformHub负责发布、购买和访问判断，RoyaltySplitter负责收益分账。
+
+智能合约结构如图\ref{fig:contract_architecture}所示。创作者通过PlatformHub发布作品，PlatformHub在发布过程中调用RoyaltySplitterFactory为作品创建收益分账合约，并调用MusicAccess1155创建新的tokenId。听众购买付费作品时，PlatformHub校验销售配置和支付金额，随后调用MusicAccess1155铸造访问凭证，并将创作者收益转入对应的RoyaltySplitter。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/out/contract_architecture.png}
+    \caption{智能合约结构图}
+    \label{fig:contract_architecture}
+\end{figure}
 
 \begin{table}[htbp]
     \linespread{1.5}
