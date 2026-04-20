@@ -44,7 +44,7 @@ function assertSignerMatchesExpected(signerAddress: string, expectedAddress?: st
   if (!expectedAddress) return;
   if (signerAddress.toLowerCase() === expectedAddress.toLowerCase()) return;
   throw new Error(
-    `当前签名钱包 ${signerAddress} 与当前 Profile/SIWE 地址 ${expectedAddress} 不一致，请返回引导切换钱包后重试。`,
+    `当前签名钱包 ${signerAddress} 与当前 Profile/SIWE 地址 ${expectedAddress} 不一致，请重启应用并在 Guide 切换钱包后重试。`,
   );
 }
 

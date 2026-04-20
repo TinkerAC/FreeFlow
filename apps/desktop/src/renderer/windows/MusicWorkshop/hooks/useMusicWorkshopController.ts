@@ -219,8 +219,8 @@ export function useMusicWorkshopController() {
   }, [dispatch, identityAddress, web25BackendBaseUrl, web25Session]);
 
   const handleSiweLogin = React.useCallback(async () => {
-    setAuthStatusText('请在 Profile 引导窗口完成 SIWE 登录');
-    await profileContext.exitToGuide();
+    setAuthStatusText('应用将重启到 Guide，请完成 SIWE 登录');
+    await profileContext.restartToGuide();
   }, []);
 
   const handleSiweLogout = React.useCallback(async () => {
@@ -228,7 +228,7 @@ export function useMusicWorkshopController() {
     setAuthStatusText('');
     try {
       await dispatch(siweLogoutThunk({ baseUrl: web25BackendBaseUrl })).unwrap();
-      await profileContext.exitToGuide();
+      await profileContext.restartToGuide();
     } catch (error) {
       const raw = error instanceof Error ? error.message : String(error ?? '');
       const message = raw.includes('Failed to fetch')
@@ -238,8 +238,8 @@ export function useMusicWorkshopController() {
     }
   }, [dispatch, web25BackendBaseUrl]);
 
-  const handleExitToGuide = React.useCallback(async () => {
-    await profileContext.exitToGuide();
+  const handleRestartToGuide = React.useCallback(async () => {
+    await profileContext.restartToGuide();
   }, []);
 
   const handleSelectRelease = React.useCallback((release: CreatorReleaseRecord) => {
@@ -481,7 +481,7 @@ export function useMusicWorkshopController() {
     handleCreateRelease,
     handleSiweLogin,
     handleSiweLogout,
-    handleExitToGuide,
+    handleRestartToGuide,
     handleSelectRelease,
     handleDeleteRelease,
     refreshDashboard,

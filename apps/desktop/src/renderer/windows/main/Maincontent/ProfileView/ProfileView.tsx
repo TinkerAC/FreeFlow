@@ -20,6 +20,19 @@ function formatAddress(value?: string) {
   return `${value.slice(0, 8)}...${value.slice(-6)}`;
 }
 
+function formatDateTime(value?: string) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default function ProfileView() {
   const { address, chainId, isConnected } = useWalletRuntimeState();
   const web25BaseUrl = useSetting<string>('services.web25Backend.baseUrl', 'http://localhost:8787');
@@ -33,11 +46,16 @@ export default function ProfileView() {
   const [activeProfile, setActiveProfile] = React.useState<ProfileSummary | null>(null);
   const [draftDisplayName, setDraftDisplayName] = React.useState('');
   const [chainTracks, setChainTracks] = React.useState<TrackEntity[]>([]);
+  const [libraryBusy, setLibraryBusy] = React.useState(false);
+
   const identityAddress = session?.address ?? userProfile?.walletAddress ?? activeProfile?.walletAddress ?? address;
   const identityChainId = session?.chainId ?? activeProfile?.chainId ?? chainId;
   const web3AddressMismatch = Boolean(
     session?.address && address && session.address.toLowerCase() !== address.toLowerCase(),
   );
+  const downloadedTrackCount = chainTracks.filter((track) => track.downloaded).length;
+  const isSignedIn = Boolean(session);
+  const displayName = (userProfile?.displayName || activeProfile?.web25DisplayName || '').trim();
 
   React.useEffect(() => {
     void refresh().catch(() => {
@@ -90,7 +108,7 @@ export default function ProfileView() {
       setUserProfile(null);
       setDraftDisplayName('');
       await refresh();
-      await profileContext.exitToGuide();
+      await profileContext.restartToGuide();
     } catch (error) {
       setStatusText(`退出失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
     } finally {
@@ -98,11 +116,18 @@ export default function ProfileView() {
     }
   }, [refresh, web25BaseUrl.value]);
 
+  const restartToGuide = React.useCallback(() => {
+    void profileContext.restartToGuide();
+  }, []);
+
+  const ensureSession = React.useCallback(() => {
+    if (session) return true;
+    setStatusText('请先重启应用并在 Guide 完成 SIWE 登录');
+    return false;
+  }, [session]);
+
   const handleSaveUserProfile = React.useCallback(async () => {
-    if (!session) {
-      setStatusText('请先返回引导完成 SIWE 登录');
-      return;
-    }
+    if (!ensureSession()) return;
     setProfileBusy(true);
     setStatusText('');
     try {
@@ -118,13 +143,10 @@ export default function ProfileView() {
     } finally {
       setProfileBusy(false);
     }
-  }, [draftDisplayName, session, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
+  }, [draftDisplayName, ensureSession, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
 
   const handleClearAvatar = React.useCallback(async () => {
-    if (!session) {
-      setStatusText('请先返回引导完成 SIWE 登录');
-      return;
-    }
+    if (!ensureSession()) return;
     setProfileBusy(true);
     setStatusText('');
     try {
@@ -139,16 +161,13 @@ export default function ProfileView() {
     } finally {
       setProfileBusy(false);
     }
-  }, [session, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
+  }, [ensureSession, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
 
   const handleAvatarFileChange = React.useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    if (!session) {
-      setStatusText('请先返回引导完成 SIWE 登录');
-      return;
-    }
+    if (!ensureSession()) return;
     setProfileBusy(true);
     setStatusText('');
     try {
@@ -161,10 +180,15 @@ export default function ProfileView() {
     } finally {
       setProfileBusy(false);
     }
-  }, [session, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
+  }, [ensureSession, syncProfileMetadataToLocalIndex, web25BaseUrl.value]);
 
   const refreshChainLibraryStats = React.useCallback(async () => {
-    setChainTracks(await getChainLibraryTracks());
+    setLibraryBusy(true);
+    try {
+      setChainTracks(await getChainLibraryTracks());
+    } finally {
+      setLibraryBusy(false);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -175,53 +199,68 @@ export default function ProfileView() {
     });
   }, [refreshChainLibraryStats]);
 
+  const identityRows = [
+    { label: 'Profile 状态', value: activeProfile ? `已启用 (${activeProfile.id})` : '未加载' },
+    { label: '连接状态', value: isSignedIn ? 'Web2.5 已登录' : (isConnected ? '钱包已连接' : '未连接') },
+    { label: '身份地址', value: formatAddress(identityAddress) },
+    { label: '链 ID', value: identityChainId ?? '-' },
+    { label: '签名钱包', value: web3AddressMismatch ? `待同步 ${formatAddress(address)}` : formatAddress(address) },
+  ];
+
+  const sessionRows = [
+    { label: 'Session ID', value: session?.sessionId ?? '-' },
+    { label: '签发时间', value: formatDateTime(session?.issuedAt) },
+    { label: '验证时间', value: formatDateTime(session?.verifiedAt) },
+    { label: '用户 ID', value: userProfile?.userId ?? '-' },
+    { label: '绑定地址', value: formatAddress(userProfile?.walletAddress ?? undefined) },
+    { label: '资料更新时间', value: formatDateTime(userProfile?.updatedAt) },
+  ];
+
   return (
     <ViewShell hideScrollbar>
       <div className={styles.root}>
-        <section className={styles.block}>
-          <h1 className={styles.title}>账户中心</h1>
-          <p className={styles.sub}>管理 Web2.5 身份资料与链上资源同步。</p>
+        <section className={styles.hero}>
+          <div className={styles.heroIdentity}>
+            {userProfile?.avatarUrl ? (
+              <img className={styles.avatarPreview} src={userProfile.avatarUrl} alt={displayName || 'avatar'} />
+            ) : (
+              <div className={styles.avatarFallback}>
+                {(displayName.slice(0, 2) || identityAddress?.slice(2, 4) || 'FF').toUpperCase()}
+              </div>
+            )}
+            <div className={styles.heroText}>
+              <h1 className={styles.title}>{displayName || '未命名用户'}</h1>
+              <p className={styles.sub}>{formatAddress(identityAddress)} · Chain {identityChainId ?? '-'}</p>
+            </div>
+          </div>
+          <div className={styles.heroActions}>
+            <button className={styles.primaryButton} onClick={restartToGuide}>
+              重启并前往 Guide
+            </button>
+            <button
+              className={styles.ghostButton}
+              onClick={() => void handleSiweLogout()}
+              disabled={authBusy || !session}
+            >
+              {authBusy ? '退出中...' : '退出并重启'}
+            </button>
+            <button
+              className={styles.ghostButton}
+              onClick={() => void refresh()}
+              disabled={refreshing}
+            >
+              {refreshing ? '刷新中...' : '刷新会话'}
+            </button>
+          </div>
         </section>
 
-        <section className={styles.block}>
-          <div className={styles.blockTitle}>Web2.5 身份资料</div>
-          <div className={styles.profileCard}>
-            <div className={styles.avatarPane}>
-              {userProfile?.avatarUrl ? (
-                <img className={styles.avatarPreview} src={userProfile.avatarUrl} alt={userProfile.displayName || 'avatar'} />
-              ) : (
-                <div className={styles.avatarFallback}>
-                  {(userProfile?.displayName?.slice(0, 2) || identityAddress?.slice(2, 4) || 'FF').toUpperCase()}
-                </div>
-              )}
-              <div className={styles.actions}>
-                <button
-                  className={styles.primaryButton}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={profileBusy || !session}
-                >
-                  {profileBusy ? '处理中...' : '上传头像'}
-                </button>
-                <button
-                  className={styles.ghostButton}
-                  onClick={() => void handleClearAvatar()}
-                  disabled={profileBusy || !session || !userProfile?.avatarUrl}
-                >
-                  移除头像
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className={styles.hiddenInput}
-                  onChange={(event) => {
-                    void handleAvatarFileChange(event);
-                  }}
-                />
-              </div>
+        <div className={styles.mainGrid}>
+          <section className={styles.panel}>
+            <div className={styles.panelHead}>
+              <h2 className={styles.panelTitle}>资料设置</h2>
+              <p className={styles.panelSub}>同步 Web2.5 用户资料并写回本地 Profile 元数据。</p>
             </div>
-
-            <div className={styles.profileForm}>
+            <div className={styles.formGrid}>
               <label className={styles.field}>
                 <span className={styles.label}>显示名称</span>
                 <input
@@ -232,6 +271,7 @@ export default function ProfileView() {
                   disabled={!session || profileBusy}
                 />
               </label>
+
               <div className={styles.actions}>
                 <button
                   className={styles.primaryButton}
@@ -242,141 +282,92 @@ export default function ProfileView() {
                 </button>
                 <button
                   className={styles.ghostButton}
-                  onClick={() => {
-                    void profileContext.exitToGuide();
-                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={profileBusy || !session}
                 >
-                  返回引导
+                  上传头像
+                </button>
+                <button
+                  className={styles.ghostButton}
+                  onClick={() => void handleClearAvatar()}
+                  disabled={profileBusy || !session || !userProfile?.avatarUrl}
+                >
+                  移除头像
                 </button>
               </div>
-              <div className={styles.grid}>
-                <div className={styles.item}>
-                  <span className={styles.label}>用户 ID</span>
-                  <span className={styles.value}>{userProfile?.userId ?? '-'}</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className={styles.hiddenInput}
+                onChange={(event) => {
+                  void handleAvatarFileChange(event);
+                }}
+              />
+            </div>
+          </section>
+
+          <section className={styles.panel}>
+            <div className={styles.panelHead}>
+              <h2 className={styles.panelTitle}>身份与会话</h2>
+              <p className={styles.panelSub}>统一展示 Wallet、Profile 和 SIWE 会话状态。</p>
+            </div>
+
+            <div className={styles.infoGrid}>
+              {identityRows.map((row) => (
+                <div key={row.label} className={styles.infoItem}>
+                  <span className={styles.label}>{row.label}</span>
+                  <span className={styles.value}>{row.value}</span>
                 </div>
-                <div className={styles.item}>
-                  <span className={styles.label}>绑定地址</span>
-                  <span className={styles.value}>{formatAddress(userProfile?.walletAddress ?? undefined)}</span>
+              ))}
+              {sessionRows.map((row) => (
+                <div key={row.label} className={styles.infoItem}>
+                  <span className={styles.label}>{row.label}</span>
+                  <span className={styles.value}>{row.value}</span>
                 </div>
-                <div className={styles.item}>
-                  <span className={styles.label}>资料更新时间</span>
-                  <span className={styles.value}>{userProfile?.updatedAt ?? '-'}</span>
-                </div>
-              </div>
+              ))}
             </div>
-          </div>
-        </section>
 
-        <section className={styles.block}>
-          <div className={styles.blockTitle}>钱包</div>
-          <div className={styles.grid}>
-            <div className={styles.item}>
-              <span className={styles.label}>连接状态</span>
-              <span className={styles.value}>{session ? 'Profile 已登录' : (isConnected ? '已连接' : '未连接')}</span>
-            </div>
-            <div className={styles.item}>
-              <span className={styles.label}>当前地址</span>
-              <span className={styles.value}>{formatAddress(identityAddress)}</span>
-            </div>
-            <div className={styles.item}>
-              <span className={styles.label}>链 ID</span>
-              <span className={styles.value}>{identityChainId ?? '-'}</span>
-            </div>
-            <div className={styles.item}>
-              <span className={styles.label}>签名钱包</span>
-              <span className={styles.value}>
-                {web3AddressMismatch ? `待同步 ${formatAddress(address)}` : formatAddress(address)}
-              </span>
-            </div>
-          </div>
-          <div className={styles.actions}>
-            <button
-              className={styles.primaryButton}
-              onClick={() => {
-                void profileContext.exitToGuide();
-              }}
-            >
-              {isConnected ? '切换 Profile' : '返回 Profile 引导'}
-            </button>
-          </div>
-        </section>
+            <label className={styles.field}>
+              <span className={styles.label}>Web2.5 Backend URL</span>
+              <input
+                className={styles.input}
+                value={web25BaseUrl.value}
+                onChange={(event) => web25BaseUrl.setValue(event.target.value)}
+              />
+            </label>
+          </section>
+        </div>
 
-        <section className={styles.block}>
-          <div className={styles.blockTitle}>SIWE / Web2.5</div>
-          <label className={styles.field}>
-            <span className={styles.label}>Backend URL</span>
-            <input
-              className={styles.input}
-              value={web25BaseUrl.value}
-              onChange={(event) => web25BaseUrl.setValue(event.target.value)}
-            />
-          </label>
-
-          <div className={styles.grid}>
-            <div className={styles.item}>
-              <span className={styles.label}>会话状态</span>
-              <span className={styles.value}>{session ? '已登录' : '未登录'}</span>
-            </div>
-            <div className={styles.item}>
-              <span className={styles.label}>会话地址</span>
-              <span className={styles.value}>{formatAddress(session?.address)}</span>
-            </div>
-            <div className={styles.item}>
-              <span className={styles.label}>会话链 ID</span>
-              <span className={styles.value}>{session?.chainId ?? '-'}</span>
-            </div>
-            <div className={styles.item}>
-              <span className={styles.label}>Session ID</span>
-              <span className={styles.value}>{session?.sessionId ?? '-'}</span>
-            </div>
-            <div className={styles.item}>
-              <span className={styles.label}>签发时间</span>
-              <span className={styles.value}>{session?.issuedAt ?? '-'}</span>
-            </div>
-            <div className={styles.item}>
-              <span className={styles.label}>验证时间</span>
-              <span className={styles.value}>{session?.verifiedAt ?? '-'}</span>
-            </div>
+        <section className={styles.panel}>
+          <div className={styles.panelHead}>
+            <h2 className={styles.panelTitle}>链上音乐库</h2>
+            <p className={styles.panelSub}>当前 Profile 管理的链上资源与下载完成度。</p>
           </div>
-
-          <div className={styles.actions}>
-            <button
-              className={styles.primaryButton}
-              onClick={() => void profileContext.exitToGuide()}
-              disabled={authBusy}
-            >
-              前往引导登录
-            </button>
-            <button
-              className={styles.ghostButton}
-              onClick={() => void handleSiweLogout()}
-              disabled={authBusy || !session}
-            >
-              退出并返回引导
-            </button>
-            <button
-              className={styles.ghostButton}
-              onClick={() => void refresh()}
-              disabled={refreshing}
-            >
-              {refreshing ? '刷新中...' : '刷新状态'}
-            </button>
-          </div>
-        </section>
-
-        <section className={styles.block}>
-          <div className={styles.blockTitle}>链上音乐库</div>
-          <p className={styles.sub}>当前 Profile 管理的链上音乐资源与本地下载状态。</p>
           <div className={styles.actions}>
             <button
               className={styles.primaryButton}
               onClick={() => void refreshChainLibraryStats()}
+              disabled={libraryBusy}
             >
-              刷新状态
+              {libraryBusy ? '刷新中...' : '刷新状态'}
             </button>
           </div>
-          <div className={styles.stats}>
-            已入库 {chainTracks.length} / 已下载 {chainTracks.filter((track) => track.downloaded).length}
+          <div className={styles.libraryStats}>
+            <div className={styles.statItem}>
+              <span className={styles.statLabel}>已入库</span>
+              <span className={styles.statValue}>{chainTracks.length}</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statLabel}>已下载</span>
+              <span className={styles.statValue}>{downloadedTrackCount}</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statLabel}>完成率</span>
+              <span className={styles.statValue}>
+                {chainTracks.length === 0 ? '0%' : `${Math.round((downloadedTrackCount / chainTracks.length) * 100)}%`}
+              </span>
+            </div>
           </div>
         </section>
 

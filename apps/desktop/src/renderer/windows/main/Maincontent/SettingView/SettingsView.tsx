@@ -24,9 +24,6 @@ export default function SettingsView() {
     { label: '播放', value: 'playback' as const },
     { label: '应用', value: 'app' as const },
     { label: '用户', value: 'user' as const },
-    { label: '服务', value: 'services' as const },
-    { label: '音乐库', value: 'library' as const },
-    { label: '网络', value: 'network' as const },
   ], []);
 
   React.useEffect(() => {
@@ -138,9 +135,9 @@ export default function SettingsView() {
         {activeTab === 'playback' && <PlaybackSettingsTab />}
         {activeTab === 'app' && <ApplicationSettingsTab />}
         {activeTab === 'user' && <UserSettingsTab />}
-        {activeTab === 'services' && <ServicesSettingsTab />}
-        {activeTab === 'library' && <LibrarySettingsTab />}
-        {activeTab === 'network' && <NetworkSettingsTab />}
+        {/*{activeTab === 'services' && <ServicesSettingsTab />}*/}
+        {/*{activeTab === 'library' && <LibrarySettingsTab />}*/}
+        {/*{activeTab === 'network' && <NetworkSettingsTab />}*/}
       </div>
     </ViewShell>
   );

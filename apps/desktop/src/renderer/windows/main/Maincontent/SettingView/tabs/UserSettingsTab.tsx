@@ -22,12 +22,12 @@ export default function UserSettingsTab() {
     });
   }, [loadProfile]);
 
-  const handleExitToGuide = React.useCallback(async () => {
+  const handleRestartToGuide = React.useCallback(async () => {
     setStatusText('');
     try {
-      await profileContext.exitToGuide();
+      await profileContext.restartToGuide();
     } catch (error) {
-      setStatusText(`退出到引导失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
+      setStatusText(`重启失败: ${error instanceof Error ? error.message : String(error ?? '')}`);
     }
   }, []);
 
@@ -80,7 +80,7 @@ export default function UserSettingsTab() {
       <SettingsGroup title="Profile" desc="每个 Profile 使用独立数据库与本地设置">
         <SettingRow
           label="当前 Profile"
-          sub="切换钱包或 Profile 需要退出到引导界面"
+          sub="切换钱包或 Profile 会重启应用并进入 Guide"
           control={(
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span
@@ -93,7 +93,7 @@ export default function UserSettingsTab() {
               </span>
               <button
                 type="button"
-                onClick={() => void handleExitToGuide()}
+                onClick={() => void handleRestartToGuide()}
                 style={{
                   height: 30,
                   borderRadius: 8,
@@ -104,7 +104,7 @@ export default function UserSettingsTab() {
                   cursor: 'pointer',
                 }}
               >
-                返回引导
+                重启并选择 Profile
               </button>
             </div>
           )}

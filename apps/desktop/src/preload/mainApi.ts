@@ -168,10 +168,7 @@ const mainApi: MainApi = {
     listProfiles: () => ipcRenderer.invoke(Channels.Profile.List),
     getActiveProfile: () => ipcRenderer.invoke(Channels.Profile.GetActive),
     enterWalletProfile: (payload) => ipcRenderer.invoke(Channels.Profile.EnterWalletProfile, payload),
-    exitToGuide: () => {
-      window.localStorage.setItem('freeflow.profile-guide.skip-auto-enter-once', '1');
-      return ipcRenderer.invoke(Channels.Profile.ExitToGuide);
-    },
+    restartToGuide: () => ipcRenderer.invoke(Channels.Profile.RestartToGuide),
     updateProfileMetadata: (payload) => ipcRenderer.invoke(Channels.Profile.UpdateMetadata, payload),
   },
 

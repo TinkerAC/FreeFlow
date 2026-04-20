@@ -143,7 +143,7 @@ export default function MusicLibrary({ musicLibraryController }: MusicLibraryPro
             <button
               className={clsx(styles.iconBtn, styles.addBtn)}
               title="新建歌单"
-              onClick={() => playlistContext.createPlaylist().then(musicLibraryController.refreshPlaylists)}
+              onClick={() => playlistContext.createPlaylist().then(() => musicLibraryController.refreshPlaylists())}
             >
               <i className="fas fa-plus" />
             </button>

@@ -9,21 +9,20 @@ import { registerProfileHandlers } from '@main/core/ipc/handlers/bootstrap/profi
 import type { ProfileSummary } from '@src/shared/profile/profile';
 import chalk from 'chalk';
 import rootLogger, { IS_DEVELOPMENT } from '@src/utils/logger';
-import { ensureRootDataPath, root_Data_Path } from '@main/core/PathConfig';
+import { configureActiveProfileDataPath, ensureRootDataPath, root_Data_Path } from '@main/core/PathConfig';
 import { registerBootstrapWindowControls } from '@main/core/ipc/handlers/bootstrap/guideWindowControlHandlers';
 
 const logger = rootLogger.child({ context: 'Main' });
 
 let shortcutManager: ShortCutManager | null = null;
-let mainLaunch: Promise<void> | null = null;
-let mainApplicationLoaded = false;
-let activeProfileId: string | null = null;
-const ENTER_ACTIVE_PROFILE_ARG = '--freeflow-enter-active-profile';
+let launchMainPromise: Promise<void> | null = null;
+let runtimeReady = false;
+let runtimeProfileId: string | null = null;
+let guideRelaunching = false;
 
 windowManager.onProfileGuideClosed(() => {
-  if (mainApplicationLoaded) {
-    windowManager.activate(WindowKey.MAIN);
-  }
+  if (!runtimeReady) return;
+  windowManager.activate(WindowKey.MAIN);
 });
 
 process.on('uncaughtException', (e) => logger.error('UncaughtException:', e));
@@ -40,55 +39,62 @@ function closeProfileGuide(): void {
 }
 
 function activatePrimaryWindow(): void {
-  if (!mainApplicationLoaded) {
+  if (!runtimeReady) {
     showProfileGuide();
     return;
   }
   windowManager.activatePrimaryWindow();
 }
 
-function relaunchToActiveProfile(profile: ProfileSummary): void {
-  logger.info(`Relaunching application for Profile data source switch: ${profile.id}`);
+function relaunchToGuide(): void {
+  if (guideRelaunching) return;
+  guideRelaunching = true;
+  logger.info('Relaunching application to enter Profile guide mode');
+  const relaunchArgs = process.argv.slice(1);
+  if (process.defaultApp) {
+    const appPath = app.getAppPath();
+    if (relaunchArgs[0] !== appPath) {
+      relaunchArgs.unshift(appPath);
+    }
+  }
   setTimeout(() => {
     app.relaunch({
-      args: [
-        ...process.argv.slice(1).filter((arg) => arg !== ENTER_ACTIVE_PROFILE_ARG),
-        ENTER_ACTIVE_PROFILE_ARG,
-      ],
+      args: relaunchArgs,
     });
     app.exit(0);
   }, 10);
 }
 
-function shouldEnterActiveProfileAfterRelaunch(): boolean {
-  return process.argv.includes(ENTER_ACTIVE_PROFILE_ARG);
-}
-
-function returnToProfileGuide(): void {
-  logger.info('Returning to Profile guide');
-  windowManager.enterProfileGuideMode();
-}
-
-async function launchMainApplication(profile: ProfileSummary): Promise<void> {
-  if (mainApplicationLoaded) {
-    if (profile.id === activeProfileId) {
+async function enterProfile(profile: ProfileSummary): Promise<void> {
+  if (runtimeReady) {
+    if (profile.id === runtimeProfileId) {
       closeProfileGuide();
       windowManager.activate(WindowKey.MAIN);
       return;
     }
+    relaunchToGuide();
+    return;
+  }
+  await launchMainApplication(profile);
+}
 
-    relaunchToActiveProfile(profile);
+async function launchMainApplication(profile: ProfileSummary): Promise<void> {
+  if (runtimeReady) {
+    closeProfileGuide();
+    windowManager.activate(WindowKey.MAIN);
     return;
   }
 
-  if (mainLaunch) {
-    await mainLaunch;
+  if (launchMainPromise) {
+    await launchMainPromise;
     return;
   }
 
-  mainLaunch = (async () => {
+  launchMainPromise = (async () => {
     logger.info(`Loading profile ${profile.id}`);
-    activeProfileId = profile.id;
+    runtimeProfileId = profile.id;
+    const dataPath = configureActiveProfileDataPath(profile.id);
+    logger.info(`Active profile database path: ${dataPath.dbPath}`);
 
     const [
       diModule,
@@ -128,7 +134,7 @@ async function launchMainApplication(profile: ProfileSummary): Promise<void> {
 
     trayManager.createTray();
     shortcutManager.register();
-    mainApplicationLoaded = true;
+    runtimeReady = true;
 
     const startAt = new Date();
     Session.create({
@@ -145,13 +151,16 @@ async function launchMainApplication(profile: ProfileSummary): Promise<void> {
       logger.error('记录启动信息失败', error);
     });
   })().catch((error: unknown) => {
-    mainLaunch = null;
+    runtimeReady = false;
+    runtimeProfileId = null;
     logger.error('startup failed', error);
     showProfileGuide();
     throw error;
+  }).finally(() => {
+    launchMainPromise = null;
   });
 
-  await mainLaunch;
+  await launchMainPromise;
 }
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -173,20 +182,14 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
     });
   });
 
-  app.whenReady().then(async () => {
+  app.whenReady().then(() => {
     ensureRootDataPath();
 
     registerProfileHandlers({
       rootDataPath: root_Data_Path,
-      onEnterProfile: launchMainApplication,
-      onExitToGuide: returnToProfileGuide,
+      onEnterProfile: enterProfile,
+      onRestartToGuide: relaunchToGuide,
     });
-    if (shouldEnterActiveProfileAfterRelaunch()) {
-      const { getActiveProfile } = await import('@main/core/profileStore');
-      await launchMainApplication(getActiveProfile(root_Data_Path));
-      return;
-    }
-
     showProfileGuide();
   }).catch((error: unknown) => {
     logger.error('startup failed', error);
@@ -198,8 +201,8 @@ if (!gotTheLock && !IS_DEVELOPMENT) {
   });
 
   app.on('window-all-closed', () => {
-    logger.info(`window-all-closed mainLoaded=${mainApplicationLoaded} platform=${process.platform}`);
-    if (!mainApplicationLoaded || process.platform !== 'darwin') app.quit();
+    logger.info(`window-all-closed runtimeReady=${runtimeReady} platform=${process.platform}`);
+    if (!runtimeReady || process.platform !== 'darwin') app.quit();
   });
 
   app.on('before-quit', () => {

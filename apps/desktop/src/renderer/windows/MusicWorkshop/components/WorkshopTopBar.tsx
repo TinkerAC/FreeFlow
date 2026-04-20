@@ -50,8 +50,8 @@ export default function WorkshopTopBar({
   const activeItem = WORKSHOP_NAV_ITEMS.find((item) => item.value === activeSection);
   const sessionAddress = controller.web25Session?.address;
   const walletLabel = controller.isConnected && controller.address
-    ? `切换 Profile (${controller.address.slice(0, 6)}...)`
-    : '进入 Profile 引导';
+    ? `重启并切换 Profile (${controller.address.slice(0, 6)}...)`
+    : '重启并选择 Profile';
 
   return (
     <header className={styles.topBar}>
@@ -92,12 +92,12 @@ export default function WorkshopTopBar({
           }}
           disabled={controller.authBusy}
         >
-          {controller.authBusy ? '处理中...' : (controller.web25Session ? '退出并返回引导' : '前往引导登录')}
+          {controller.authBusy ? '处理中...' : (controller.web25Session ? '退出并重启到 Guide' : '重启并前往 Guide 登录')}
         </button>
         <button
           className={styles.walletButton}
           onClick={() => {
-            void controller.handleExitToGuide();
+            void controller.handleRestartToGuide();
           }}
         >
           {walletLabel}

@@ -55,6 +55,6 @@ export function useProfileIdentityGuard(): void {
     lastGuardKeyRef.current = guardKey;
 
     console.warn(`[FreeFlow] Profile identity mismatch: ${reason}`);
-    void profileContext.exitToGuide();
+    void profileContext.restartToGuide();
   }, [activeProfile, session]);
 }

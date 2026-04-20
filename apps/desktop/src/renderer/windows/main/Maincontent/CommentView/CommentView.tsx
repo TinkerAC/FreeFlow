@@ -161,8 +161,8 @@ export default function CommentView({ releaseId, trackTitle }: CommentViewProps)
             />
             <div className={styles.composerActions}>
               {!session ? (
-                <button type="button" className={styles.secondaryButton} onClick={() => void profileContext.exitToGuide()}>
-                  去登录
+                <button type="button" className={styles.secondaryButton} onClick={() => void profileContext.restartToGuide()}>
+                  重启并登录
                 </button>
               ) : null}
               <button

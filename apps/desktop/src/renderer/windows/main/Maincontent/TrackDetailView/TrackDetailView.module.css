@@ -22,6 +22,8 @@
 /* 头部区域 */
 .header {
     display: flex;
+    flex-direction: row;
+    align-items: center;
     gap: 32px;
     padding: 32px;
     border-radius: 20px;
@@ -37,8 +39,8 @@
 .coverWrapper {
     position: relative;
     flex-shrink: 0;
-    width: 200px;
-    height: 200px;
+    width: clamp(120px, 22vw, 200px);
+    aspect-ratio: 1 / 1;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -364,27 +366,21 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
     .header {
-        flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         padding: 24px;
+        gap: 20px;
     }
 
     .coverWrapper {
-        width: 160px;
-        height: 160px;
-    }
-
-    .basicInfo {
-        align-items: center;
-        text-align: center;
+        width: clamp(112px, 24vw, 160px);
     }
 
     .title {
-        font-size: 24px;
+        font-size: clamp(20px, 3vw, 24px);
     }
 
     .artist {
-        font-size: 18px;
+        font-size: clamp(16px, 2.2vw, 18px);
     }
 
     .actions {

@@ -8,9 +8,9 @@ export default function Web3Button() {
 
   return (
     <button
-      onClick={() => profileContext.exitToGuide()}
+      onClick={() => profileContext.restartToGuide()}
       className={styles.iconBtn}
-      title={isConnected ? `切换 Profile: ${address?.slice(0, 6)}...` : '返回 Profile 引导'}
+      title={isConnected ? `重启并切换 Profile: ${address?.slice(0, 6)}...` : '重启并选择 Profile'}
     >
       <i
         className="fa-solid fa-wallet"

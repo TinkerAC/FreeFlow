@@ -244,7 +244,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
           : '暂未开放';
   const priceLabel = isPublicAccess ? '公开' : formatPrice(accessStatus.priceEth ?? info?.priceEth ?? null);
   const purchaseLabel = needsGuideForPurchase
-    ? '返回 Profile 引导'
+    ? '重启并选择 Profile'
     : buying
       ? '购买中...'
       : `购买 ${priceLabel}`;
@@ -495,12 +495,6 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
               )}
             </div>
 
-            {identityAddress && address && !sameAddress(identityAddress, address) && (
-              <div className={styles.warning}>
-                当前 Profile 为 {formatAddress(identityAddress)}，Web3Modal 当前显示地址为 {formatAddress(address)}。
-              </div>
-            )}
-
             <div className={styles.actions}>
               <button
                 type="button"
@@ -517,7 +511,7 @@ export default function FreeFlowTrackDetailView({ track, player }: FreeFlowTrack
                   className={styles.secondaryButton}
                   onClick={() => {
                     if (needsGuideForPurchase) {
-                      void profileContext.exitToGuide();
+                      void profileContext.restartToGuide();
                       return;
                     }
                     void handleBuyAccess();

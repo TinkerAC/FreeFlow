@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWeb3Modal } from '@web3modal/ethers/react';
-import { configContext, profileContext, windowControlContext } from '@renderer/core/electronContextApi';
+import { profileContext, windowControlContext } from '@renderer/core/electronContextApi';
 import { getRuntimeProfileId, setRuntimeProfileId } from '@renderer/core/profile/runtimeProfile';
 import {
   formatShortAddress,
@@ -55,16 +55,7 @@ function resolveProfileId(targetAddress?: string, explicitProfileId?: string): s
 }
 
 async function loadGuideWeb25BaseUrl(): Promise<string> {
-  try {
-    const configured = await configContext.get('services.web25Backend.baseUrl');
-    return typeof configured === 'string' && configured.trim()
-      ? configured.trim()
-      : DEFAULT_WEB25_BASE_URL;
-  } catch {
-    // Runtime config IPC is registered only after a Profile enters the main app.
-    // The guide must stay usable before that point.
-    return DEFAULT_WEB25_BASE_URL;
-  }
+  return DEFAULT_WEB25_BASE_URL;
 }
 
 function WindowChrome() {

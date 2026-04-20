@@ -196,7 +196,7 @@ export interface ProfileApi {
 
   enterWalletProfile(payload: WalletProfileInput): Promise<ProfileSummary>;
 
-  exitToGuide(): Promise<void>;
+  restartToGuide(): Promise<void>;
 
   updateProfileMetadata(payload: {
     profileId: string;

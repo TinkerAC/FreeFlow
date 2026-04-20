@@ -24,9 +24,9 @@ export function registerProfileHandlers(options: ProfileHandlerOptions): void {
     return profile;
   });
 
-  ipcMain.handle(Channels.Profile.ExitToGuide, async () => {
-    if (options.onExitToGuide) {
-      await options.onExitToGuide();
+  ipcMain.handle(Channels.Profile.RestartToGuide, async () => {
+    if (options.onRestartToGuide) {
+      await options.onRestartToGuide();
       return;
     }
 
@@ -53,10 +53,17 @@ export function registerProfileHandlers(options: ProfileHandlerOptions): void {
 export interface ProfileHandlerOptions {
   rootDataPath: string;
   onEnterProfile?: (profile: ProfileSummary) => Promise<void> | void;
-  onExitToGuide?: () => Promise<void> | void;
+  onRestartToGuide?: () => Promise<void> | void;
 }
 
 function relaunch(): void {
+  const relaunchArgs = process.argv.slice(1);
+  if (process.defaultApp) {
+    const appPath = app.getAppPath();
+    if (relaunchArgs[0] !== appPath) {
+      relaunchArgs.unshift(appPath);
+    }
+  }
   setTimeout(() => {
     app.relaunch();
     app.exit(0);
