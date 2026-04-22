@@ -4,16 +4,14 @@ set -euo pipefail
 
 SCRIPT_DIR="${0:A:h}"
 ROOT_DIR="${SCRIPT_DIR}/.."
-OUT_DIR="${ROOT_DIR}/out"
+OUT_ROOT_DIR="${ROOT_DIR}/out"
 FIGURES_DIR="${ROOT_DIR}/figures"
 FIGURES_OUT_DIR="${FIGURES_DIR}/out"
+VERSION_FILE="${ROOT_DIR}/version.tex"
 DRAWIO_SCALE="${DRAWIO_SCALE:-3}"
 DRAWIO_BORDER="${DRAWIO_BORDER:-10}"
 DRAWIO_EXTRA_ARGS=(${=DRAWIO_EXTRA_ARGS:-})
 OPEN_PDF="${OPEN_PDF:-1}"
-
-mkdir -p "$OUT_DIR"
-cd "$ROOT_DIR"
 
 find_drawio_cli() {
     if [[ -n "${DRAWIO_CLI:-}" ]]; then
@@ -48,6 +46,40 @@ find_drawio_cli() {
     done
 
     return 1
+}
+
+read_thesis_version() {
+    if [[ ! -f "$VERSION_FILE" ]]; then
+        print -u2 -- "Version file not found: ${VERSION_FILE}"
+        return 1
+    fi
+
+    local raw_version
+    raw_version="$(
+        sed -n 's/.*\\newcommand{\\thesisVersion}{\([^}]*\)}.*/\1/p' "$VERSION_FILE" | head -n 1
+    )"
+
+    if [[ -z "$raw_version" ]]; then
+        print -u2 -- "Unable to read \\thesisVersion from ${VERSION_FILE}"
+        return 1
+    fi
+
+    print -r -- "$raw_version"
+}
+
+sanitize_version_for_dir() {
+    local version_name="$1"
+    version_name="${version_name//\//_}"
+    version_name="${version_name//\\/_}"
+    version_name="${version_name//:/_}"
+    version_name="${version_name//\*/_}"
+    version_name="${version_name//\?/_}"
+    version_name="${version_name//\"/_}"
+    version_name="${version_name//</_}"
+    version_name="${version_name//>/_}"
+    version_name="${version_name//|/_}"
+    version_name="${version_name// /_}"
+    print -r -- "$version_name"
 }
 
 export_drawio_figures() {
@@ -93,10 +125,18 @@ EOF
     done
 }
 
+THESIS_VERSION="$(read_thesis_version)"
+OUT_VERSION_DIR_NAME="$(sanitize_version_for_dir "$THESIS_VERSION")"
+OUT_DIR="${OUT_ROOT_DIR}/${OUT_VERSION_DIR_NAME}"
+
+mkdir -p "$OUT_DIR"
+cd "$ROOT_DIR"
+print -r -- "Building thesis version ${THESIS_VERSION} -> ${OUT_DIR}"
+
 export_drawio_figures
 
 xelatex -interaction=nonstopmode -halt-on-error -output-directory="$OUT_DIR" main.tex
-biber --output-directory "$OUT_DIR" "$OUT_DIR/main"
+biber --input-directory "$OUT_DIR" --output-directory "$OUT_DIR" main
 xelatex -interaction=nonstopmode -halt-on-error -output-directory="$OUT_DIR" main.tex
 xelatex -interaction=nonstopmode -halt-on-error -output-directory="$OUT_DIR" main.tex
 

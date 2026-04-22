@@ -5,6 +5,7 @@
 ## 目录说明
 
 - `main.tex`：论文编译入口。
+- `version.tex`：论文版本号单一来源，封面显示和编译输出目录都读取这里。
 - `zufe.cls`：学校论文格式类文件，已适配本项目随附中文字体。
 - `chapters/`：论文正文、摘要、致谢、附录等内容。
 - `figures/`：论文图表源文件，`.drawio` 为源文件，`figures/out/` 为编译前自动导出的图片文件。
@@ -21,7 +22,9 @@
 
 如果本机没有安装 diagrams.net/draw.io 命令行导出器，需要先安装 diagrams.net Desktop，或通过 `DRAWIO_CLI` 指定可执行文件路径。临时只编译 LaTeX、不重新导出图片时，可设置 `SKIP_FIGURE_EXPORT=1`。
 
-编译完成后脚本会自动打开 `out/main.pdf`。如果只想生成 PDF、不自动打开，可设置 `OPEN_PDF=0`。
+编译脚本会从 `version.tex` 读取 `\thesisVersion`，并把产物输出到 `out/<版本号>/`，例如 `out/v1.0.0/main.pdf`。如果版本号包含 Windows 非法路径字符，脚本会自动替换为 `_` 后再作为目录名使用。
+
+编译完成后脚本会自动打开当前版本目录下的 PDF。如果只想生成 PDF、不自动打开，可设置 `OPEN_PDF=0`。
 
 ## 编译方式
 
@@ -77,3 +80,17 @@ powershell.exe -ExecutionPolicy Bypass -File scripts\compile-latex-windows.ps1
 ```
 
 两种脚本都会在 `papers/Latex-Mine` 下按 `xelatex -> biber -> xelatex -> xelatex` 的顺序生成 `main.pdf`。
+
+## 版本管理
+
+修改论文版本号时，只需要编辑 `version.tex`：
+
+```tex
+\newcommand{\thesisVersion}{v1.0.1}
+```
+
+下次编译后，论文封面会显示新版本号，产物会输出到对应目录：
+
+```text
+out/v1.0.1/main.pdf
+```

@@ -2,6 +2,7 @@ $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ThesisDir = Resolve-Path (Join-Path $ScriptDir "..")
+$VersionFile = Join-Path $ThesisDir "version.tex"
 $FiguresDir = Join-Path $ThesisDir "figures"
 $FiguresOutDir = Join-Path $FiguresDir "out"
 $DrawioScale = if ($env:DRAWIO_SCALE) { $env:DRAWIO_SCALE } else { "3" }
@@ -9,6 +10,23 @@ $DrawioBorder = if ($env:DRAWIO_BORDER) { $env:DRAWIO_BORDER } else { "10" }
 $DrawioExtraArgs = if ($env:DRAWIO_EXTRA_ARGS) { $env:DRAWIO_EXTRA_ARGS -split " " } else { @() }
 $OpenPdf = if ($env:OPEN_PDF) { $env:OPEN_PDF } else { "1" }
 Set-Location $ThesisDir
+
+function Get-ThesisVersion {
+    if (-not (Test-Path $VersionFile)) {
+        throw "Version file not found: $VersionFile"
+    }
+
+    $Match = Select-String -Path $VersionFile -Pattern '\\newcommand\{\\thesisVersion\}\{([^}]*)\}' | Select-Object -First 1
+    if (-not $Match) {
+        throw "Unable to read \thesisVersion from $VersionFile"
+    }
+
+    return $Match.Matches[0].Groups[1].Value
+}
+
+function Convert-VersionToFolderName([string]$Version) {
+    return ($Version -replace '[\\/:*?"<>| ]', '_')
+}
 
 function Resolve-DrawioCli {
     if ($env:DRAWIO_CLI) {
@@ -93,12 +111,18 @@ function Export-DrawioFigures {
 
 Export-DrawioFigures
 
+$ThesisVersion = Get-ThesisVersion
+$OutDirName = Convert-VersionToFolderName $ThesisVersion
+$OutDir = Join-Path $ThesisDir "out\$OutDirName"
+New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+Write-Host "Building thesis version $ThesisVersion -> $OutDir"
+
 latexmk `
   -pdfxe `
   -xelatex="xelatex -interaction=nonstopmode -halt-on-error %O %S" `
-  -outdir=out `
+  "-outdir=$OutDir" `
   main.tex
 
 if ($OpenPdf -ne "0") {
-    Start-Process (Join-Path $ThesisDir "out/main.pdf")
+    Start-Process (Join-Path $OutDir "main.pdf")
 }
