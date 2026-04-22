@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
@@ -18,8 +19,175 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const FRESHNESS_HALF_LIFE_DAYS = 45;
 const TOKEN_SPLIT_PATTERN = /[^\p{L}\p{N}]+/u;
 const TOKEN_COMPACT_PATTERN = /[^\p{L}\p{N}]+/gu;
-const NOW = new Date('2026-04-20T12:00:00.000Z');
+const NOW = new Date('2026-04-22T12:00:00.000Z');
 const PLATFORM_HUB_ADDRESS = '0x00000000000000000000000000000000ff11aa22';
+
+const GROUP_DEFINITIONS = [
+  {
+    key: 'witcher3',
+    artist: 'Marcin Przybyłowicz',
+    album: 'The Witcher 3: Wild Hunt (Soundtrack)',
+    limit: 4,
+    genreLabel: 'fantasy soundtrack',
+    descriptionHint: 'open world fantasy score',
+  },
+  {
+    key: 'stardew',
+    artist: 'ConcernedApe',
+    album: 'Stardew Valley Original Soundtrack',
+    limit: 4,
+    genreLabel: 'pastoral soundtrack',
+    descriptionHint: 'farm life soundtrack',
+  },
+  {
+    key: 'hollow_knight',
+    artist: 'Christopher Larkin',
+    album: 'Hollow Knight (Original Soundtrack)',
+    limit: 4,
+    genreLabel: 'ambient soundtrack',
+    descriptionHint: 'dream cavern atmosphere',
+  },
+  {
+    key: 'plants_vs_zombies',
+    artist: 'Laura Shigihara',
+    album: 'Plants Vs. Zombies (Original Video Game Soundtrack)',
+    limit: 4,
+    genreLabel: 'arcade soundtrack',
+    descriptionHint: 'garden defense soundtrack',
+  },
+  {
+    key: 'celeste_farewell',
+    artist: 'Lena Raine',
+    album: 'Celeste: Farewell (Original Soundtrack)',
+    limit: 4,
+    genreLabel: 'ambient electronic',
+    descriptionHint: 'climbing farewell theme',
+  },
+  {
+    key: 'undertale',
+    artist: 'Toby Fox',
+    album: 'UNDERTALE Soundtrack',
+    limit: 4,
+    genreLabel: 'chiptune soundtrack',
+    descriptionHint: 'retro battle soundtrack',
+  },
+  {
+    key: 'interstellar',
+    artist: 'Hans Zimmer',
+    album: 'Interstellar (Original Motion Picture Soundtrack) [Expanded Edition]',
+    limit: 4,
+    genreLabel: 'cinematic orchestral',
+    descriptionHint: 'space mission organ score',
+  },
+  {
+    key: 'jj_lin',
+    artist: '林俊杰',
+    album: '新地球 - 人 (Special Edition)',
+    limit: 4,
+    genreLabel: 'mandopop anthem',
+    descriptionHint: 'urban mandopop vocal',
+  },
+  {
+    key: 'joker_xue',
+    artist: '薛之谦',
+    album: '尘',
+    limit: 4,
+    genreLabel: 'mandopop ballad',
+    descriptionHint: 'melancholic mandopop ballad',
+  },
+  {
+    key: 'liu_yuning',
+    artist: '摩登兄弟刘宇宁',
+    album: '十',
+    limit: 4,
+    genreLabel: 'mandopop vocal',
+    descriptionHint: 'modern mandopop vocal',
+  },
+  {
+    key: 'slay_the_spire',
+    artist: 'Clark Aboud',
+    album: 'Slay the Spire (Original Soundtrack)',
+    limit: 4,
+    genreLabel: 'roguelike soundtrack',
+    descriptionHint: 'deckbuilding roguelike score',
+  },
+  {
+    key: 'terraria',
+    artist: 'Re-Logic',
+    album: 'Terraria, Vol. 4 (Original Soundtrack)',
+    limit: 4,
+    genreLabel: 'sandbox soundtrack',
+    descriptionHint: 'sandbox exploration theme',
+  },
+  {
+    key: 'minecraft_caves',
+    artist: 'Lena Raine/Minecraft',
+    album: 'Minecraft: Caves & Cliffs (Original Game Soundtrack)',
+    limit: 4,
+    genreLabel: 'voxel ambient',
+    descriptionHint: 'cave exploration ambient',
+  },
+  {
+    key: 'minecraft_beta',
+    artist: 'C418',
+    album: 'Minecraft - Volume Beta',
+    limit: 4,
+    genreLabel: 'minimal game ambient',
+    descriptionHint: 'voxel minimal ambience',
+  },
+];
+
+const TITLE_QUERY_GROUP_KEYS = [
+  'witcher3',
+  'stardew',
+  'hollow_knight',
+  'plants_vs_zombies',
+  'celeste_farewell',
+  'undertale',
+  'interstellar',
+  'jj_lin',
+  'joker_xue',
+  'liu_yuning',
+  'slay_the_spire',
+  'terraria',
+];
+
+const ARTIST_QUERY_GROUP_KEYS = [
+  'witcher3',
+  'stardew',
+  'hollow_knight',
+  'plants_vs_zombies',
+  'celeste_farewell',
+  'undertale',
+  'interstellar',
+  'jj_lin',
+  'joker_xue',
+  'liu_yuning',
+];
+
+const ALBUM_QUERY_GROUP_KEYS = [
+  'witcher3',
+  'stardew',
+  'hollow_knight',
+  'plants_vs_zombies',
+  'celeste_farewell',
+  'undertale',
+  'interstellar',
+  'jj_lin',
+  'slay_the_spire',
+  'minecraft_beta',
+];
+
+const GENRE_QUERY_GROUP_KEYS = [
+  'witcher3',
+  'stardew',
+  'hollow_knight',
+  'plants_vs_zombies',
+  'celeste_farewell',
+  'undertale',
+  'interstellar',
+  'jj_lin',
+];
 
 function normalizeText(value) {
   return String(value ?? '')
@@ -57,403 +225,339 @@ function makeHash(index) {
 }
 
 function sanitizeSlug(value) {
-  return value.toLowerCase().replace(/[^a-z]/g, '');
+  return normalizeText(value).replace(/[^a-z0-9\u4e00-\u9fff]/g, '');
 }
 
 function makeCid(kind, slug, index) {
   const serial = index.toString(36).replace(/[0189]/g, 'a');
-  const body = `${kind}${sanitizeSlug(slug)}${serial}freeflowdataset`
+  const body = `${kind}${sanitizeSlug(slug)}${serial}simset`
+    .toLowerCase()
     .replace(/[^a-z2-7]/g, 'a')
     .padEnd(34, 'a')
     .slice(0, 34);
   return `bafy${body}`;
 }
 
-function createRecord(index, definition) {
-  const publishedAt = new Date(NOW.getTime() - definition.daysAgo * DAY_MS);
-  const updatedAt = new Date(publishedAt.getTime() + 6 * 60 * 60 * 1000);
-  const createdAt = new Date(publishedAt.getTime() - DAY_MS);
+function escapeSql(value) {
+  return String(value).replace(/'/g, "''");
+}
+
+function resolveSeedLibraryPath() {
+  const candidates = [
+    resolve(repoRoot, 'temp/database.sqlite'),
+    resolve(repoRoot, 'Temp/database.sqlite'),
+  ];
+
+  const found = candidates.find((candidate) => existsSync(candidate));
+  if (!found) {
+    throw new Error('Missing simulation seed library at temp/database.sqlite');
+  }
+  return found;
+}
+
+function runSqliteJson(sql) {
+  const output = execFileSync('sqlite3', ['-json', resolveSeedLibraryPath(), sql], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  });
+  return JSON.parse(output || '[]');
+}
+
+function parseSqliteDate(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return new Date(NOW);
+
+  let normalized = text.replace(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}(?:\.\d+)?)/, '$1T$2');
+  normalized = normalized.replace(/\s+([+-]\d{2}:\d{2})$/, '$1');
+  if (!/[zZ]|[+-]\d{2}:\d{2}$/.test(normalized)) {
+    normalized += 'Z';
+  }
+  return new Date(normalized);
+}
+
+function seededNumber(seed) {
+  const text = String(seed);
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function seededFraction(seed) {
+  return seededNumber(seed) / 0xffffffff;
+}
+
+function toFullWidth(value) {
+  return [...value].map((char) => {
+    if (char === ' ') return '　';
+    const code = char.charCodeAt(0);
+    if (code >= 33 && code <= 126) return String.fromCharCode(code + 65248);
+    return char;
+  }).join('');
+}
+
+function removeSpaces(value) {
+  return String(value ?? '').replace(/\s+/g, '');
+}
+
+function makeTypo(value) {
+  const normalized = String(value ?? '');
+  if (normalized.includes('Scattered')) return normalized.replace('Scattered', 'Scatterd');
+  if (normalized.includes('Battle')) return normalized.replace('Hero', 'Heroo');
+  if (normalized.includes('Day One')) return normalized.replace('Demo', 'Demoo');
+  if (normalized.includes('Merchants')) return normalized.replace('Novigrad', 'Novigard');
+  if (normalized.includes('Journey')) return normalized.replace('Outlaw', 'Outlaaw');
+  return normalized.length > 4 ? `${normalized.slice(0, -1)}x` : `${normalized}x`;
+}
+
+function shortText(value, maxLength = 48) {
+  const text = String(value ?? '').trim();
+  return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
+}
+
+function buildDescription(row, group) {
+  return [
+    `${group.descriptionHint} simulation sample`,
+    `${row.artist} / ${row.album}`,
+    `${row.platform} metadata`,
+  ].join(' | ');
+}
+
+function deriveEngagement(row, groupRank) {
+  const bonus = Math.max(0, 5 - groupRank);
+  const jitterA = Math.floor(seededFraction(`${row.id}:comments`) * 3);
+  const jitterB = Math.floor(seededFraction(`${row.id}:purchases`) * 4);
 
   return {
-    id: `track-${String(index).padStart(2, '0')}`,
-    title: definition.title,
-    artistName: definition.artistName,
-    albumName: definition.albumName,
-    genreLabel: definition.genreLabel,
-    description: definition.description,
-    chainId: 11155111,
-    musicAssetAddress: makeAddress(10_000 + index),
-    platformHubAddress: PLATFORM_HUB_ADDRESS,
-    tokenId: String(200 + index),
-    publishTxHash: makeHash(90_000 + index),
-    audioStorageObject: { cid: makeCid('audio', definition.slug, index) },
-    coverStorageObject: { cid: makeCid('cover', definition.slug, index) },
-    metadataStorageObject: { cid: makeCid('meta', definition.slug, index) },
-    _count: {
-      comments: definition.comments,
-      purchases: definition.purchases,
-    },
-    createdAt,
-    updatedAt,
-    publishedAt,
+    comments: Math.min(24, 4 + bonus * 4 + jitterA),
+    purchases: Math.min(28, 5 + bonus * 5 + jitterB),
   };
 }
 
-const records = [
-  createRecord(1, {
-    slug: 'neon-harbor',
-    title: 'Neon Harbor',
-    artistName: 'Luna Byte',
-    albumName: 'Electric Tides',
-    genreLabel: 'synthwave',
-    description: 'A neon shoreline anthem for on-chain night drives and bright modular synth hooks.',
-    daysAgo: 11,
-    comments: 5,
-    purchases: 10,
-  }),
-  createRecord(2, {
-    slug: 'midnight-circuit',
-    title: 'Midnight Circuit',
-    artistName: 'Luna Byte',
-    albumName: 'Electric Tides',
-    genreLabel: 'synthwave',
-    description: 'Fast BPM sequencers, dashboard lights, and a crisp retro-futurist chorus.',
-    daysAgo: 4,
-    comments: 2,
-    purchases: 3,
-  }),
-  createRecord(3, {
-    slug: 'signal-bloom',
-    title: 'Signal Bloom',
-    artistName: 'Luna Byte',
-    albumName: 'Electric Tides',
-    genreLabel: 'synthwave',
-    description: 'A warmer lead line with heavier replay value and a longer melodic tail section.',
-    daysAgo: 18,
-    comments: 8,
-    purchases: 16,
-  }),
-  createRecord(4, {
-    slug: 'paper-lantern-sky',
-    title: 'Paper Lantern Sky',
-    artistName: 'Echo Harbor',
-    albumName: 'Eastbound Lights',
-    genreLabel: 'indie folk',
-    description: 'Acoustic textures, lantern imagery, and a steady chorus built for replay.',
-    daysAgo: 36,
-    comments: 3,
-    purchases: 4,
-  }),
-  createRecord(5, {
-    slug: 'haifeng-xinhao',
-    title: '海风信号',
-    artistName: 'Echo Harbor',
-    albumName: 'Eastbound Lights',
-    genreLabel: 'indie folk',
-    description: 'A bilingual single with fingerpicked guitar, tape hiss, and coastal imagery.',
-    daysAgo: 15,
-    comments: 6,
-    purchases: 12,
-  }),
-  createRecord(6, {
-    slug: 'shanyu-lvren',
-    title: '山雨旅人',
-    artistName: 'Echo Harbor',
-    albumName: 'Eastbound Lights',
-    genreLabel: 'indie folk',
-    description: 'Slower tempo writing focused on rainfall ambience and narrative verses.',
-    daysAgo: 52,
-    comments: 2,
-    purchases: 1,
-  }),
-  createRecord(7, {
-    slug: 'ledger-lullaby',
-    title: 'Ledger Lullaby',
-    artistName: 'Chain Choir',
-    albumName: 'Block Beats Vol.1',
-    genreLabel: 'electronic',
-    description: 'Melodic arpeggios and soft pads describing wallets, keys, and final balances.',
-    daysAgo: 21,
-    comments: 4,
-    purchases: 9,
-  }),
-  createRecord(8, {
-    slug: 'token-sunrise',
-    title: 'Token Sunrise',
-    artistName: 'Chain Choir',
-    albumName: 'Block Beats Vol.1',
-    genreLabel: 'electronic',
-    description: 'Brighter percussion and lighter vocal chops for a more accessible first listen.',
-    daysAgo: 7,
-    comments: 3,
-    purchases: 5,
-  }),
-  createRecord(9, {
-    slug: 'cid-carousel',
-    title: 'CID Carousel',
-    artistName: 'Chain Choir',
-    albumName: 'Block Beats Vol.1',
-    genreLabel: 'electronic',
-    description: 'A denser mix centered on IPFS loops, hash motifs, and club-oriented bass.',
-    daysAgo: 29,
-    comments: 5,
-    purchases: 11,
-  }),
-  createRecord(10, {
-    slug: 'velvet-proxy',
-    title: 'Velvet Proxy',
-    artistName: 'Blue Cache',
-    albumName: 'Proxy Dreams',
-    genreLabel: 'dream pop',
-    description: 'Dreamy chorused guitars framed around a proxy cache metaphor and slow drums.',
-    daysAgo: 27,
-    comments: 2,
-    purchases: 3,
-  }),
-  createRecord(11, {
-    slug: 'buffering-hearts',
-    title: 'Buffering Hearts',
-    artistName: 'Blue Cache',
-    albumName: 'Proxy Dreams',
-    genreLabel: 'dream pop',
-    description: 'A mid-tempo single about waiting, retry loops, and soft-focus vocal layers.',
-    daysAgo: 13,
-    comments: 4,
-    purchases: 5,
-  }),
-  createRecord(12, {
-    slug: 'cached-kisses',
-    title: 'Cached Kisses',
-    artistName: 'Blue Cache',
-    albumName: 'Proxy Dreams',
-    genreLabel: 'dream pop',
-    description: 'The strongest replay track in the album with glossy pads and a memorable refrain.',
-    daysAgo: 6,
-    comments: 7,
-    purchases: 14,
-  }),
-  createRecord(13, {
-    slug: 'sepolia-moon',
-    title: 'Sepolia Moon',
-    artistName: 'Testnet Kids',
-    albumName: 'Gasless Summer',
-    genreLabel: 'electro pop',
-    description: 'A playful single themed around faucets, test wallets, and summer release notes.',
-    daysAgo: 24,
-    comments: 2,
-    purchases: 5,
-  }),
-  createRecord(14, {
-    slug: 'faucet-romance',
-    title: 'Faucet Romance',
-    artistName: 'Testnet Kids',
-    albumName: 'Gasless Summer',
-    genreLabel: 'electro pop',
-    description: 'Lightweight hooks and bright pads designed for quick preview and casual listening.',
-    daysAgo: 9,
-    comments: 1,
-    purchases: 2,
-  }),
-  createRecord(15, {
-    slug: 'finality-waltz',
-    title: 'Finality Waltz',
-    artistName: 'Testnet Kids',
-    albumName: 'Gasless Summer',
-    genreLabel: 'electro pop',
-    description: 'The album centerpiece, pairing strong retention with a heavier chorus payoff.',
-    daysAgo: 14,
-    comments: 6,
-    purchases: 10,
-  }),
-  createRecord(16, {
-    slug: 'yinhe-zhantai',
-    title: '银河站台',
-    artistName: 'Orbit Diary',
-    albumName: '星港回声',
-    genreLabel: 'ambient',
-    description: 'A wide ambient mix with station ambience, distant bells, and slow filtered motion.',
-    daysAgo: 17,
-    comments: 5,
-    purchases: 8,
-  }),
-  createRecord(17, {
-    slug: 'xingyun-mandi',
-    title: '星云慢递',
-    artistName: 'Orbit Diary',
-    albumName: '星港回声',
-    genreLabel: 'ambient',
-    description: 'A shorter and newer ambient piece with softer highs and a gentler ending.',
-    daysAgo: 5,
-    comments: 4,
-    purchases: 4,
-  }),
-  createRecord(18, {
-    slug: 'darkmode-dancer',
-    title: 'Darkmode Dancer',
-    artistName: 'Pixel Pulse',
-    albumName: 'UI Afterglow',
-    genreLabel: 'future bass',
-    description: 'Animated drops, UI motion metaphors, and a clear side-chain pulse.',
-    daysAgo: 12,
-    comments: 3,
-    purchases: 6,
-  }),
-  createRecord(19, {
-    slug: 'gradient-heat',
-    title: 'Gradient Heat',
-    artistName: 'Pixel Pulse',
-    albumName: 'UI Afterglow',
-    genreLabel: 'future bass',
-    description: 'A softer drop with more background texture and a less prominent hook.',
-    daysAgo: 20,
-    comments: 1,
-    purchases: 2,
-  }),
-  createRecord(20, {
-    slug: 'modal-mirage',
-    title: 'Modal Mirage',
-    artistName: 'Pixel Pulse',
-    albumName: 'UI Afterglow',
-    genreLabel: 'future bass',
-    description: 'A newer single focused on modal transitions, stereo width, and sharper percussion.',
-    daysAgo: 8,
-    comments: 2,
-    purchases: 4,
-  }),
-  createRecord(21, {
-    slug: 'royalty-rain',
-    title: 'Royalty Rain',
-    artistName: 'Split Avenue',
-    albumName: 'Share of Sound',
-    genreLabel: 'alternative',
-    description: 'Alternative pop built around royalty splits, settlement logs, and a rainy bridge.',
-    daysAgo: 31,
-    comments: 2,
-    purchases: 7,
-  }),
-  createRecord(22, {
-    slug: 'mint-condition-melody',
-    title: 'Mint Condition Melody',
-    artistName: 'Split Avenue',
-    albumName: 'Share of Sound',
-    genreLabel: 'alternative',
-    description: 'A lighter song with easy hooks and a cleaner arrangement for first-time listeners.',
-    daysAgo: 6,
-    comments: 3,
-    purchases: 2,
-  }),
-  createRecord(23, {
-    slug: 'access-granted',
-    title: 'Access Granted',
-    artistName: 'Split Avenue',
-    albumName: 'Share of Sound',
-    genreLabel: 'alternative',
-    description: 'The most complete buyer access track, combining purchase intent and ownership cues.',
-    daysAgo: 14,
-    comments: 8,
-    purchases: 15,
-  }),
-  createRecord(24, {
-    slug: 'proof-of-chorus',
-    title: 'Proof of Chorus',
-    artistName: 'Consensus Club',
-    albumName: 'Validator Songs',
-    genreLabel: 'house',
-    description: 'Straightforward house structure with chant-like hooks and a steady kick drum.',
-    daysAgo: 26,
-    comments: 3,
-    purchases: 5,
-  }),
-  createRecord(25, {
-    slug: 'node-of-you',
-    title: 'Node of You',
-    artistName: 'Consensus Club',
-    albumName: 'Validator Songs',
-    genreLabel: 'house',
-    description: 'The strongest emotional hook in the set, with warmer chords and a fuller drop.',
-    daysAgo: 11,
-    comments: 4,
-    purchases: 7,
-  }),
-  createRecord(26, {
-    slug: 'hash-of-dawn',
-    title: 'Hash of Dawn',
-    artistName: 'Consensus Club',
-    albumName: 'Validator Songs',
-    genreLabel: 'house',
-    description: 'The newest track, emphasizing sunrise energy, looped vocals, and lighter percussion.',
-    daysAgo: 3,
-    comments: 2,
-    purchases: 4,
-  }),
-];
+function fetchRowsForGroup(group) {
+  const sql = `
+    select
+      id,
+      platform,
+      platform_unique_id,
+      title,
+      artist,
+      album,
+      duration,
+      played_count,
+      created_at,
+      modified_at
+    from track
+    where lower(platform) in ('neteasecloudmusic', 'qqmusic', 'youtubemusic')
+      and trim(coalesce(title, '')) != ''
+      and trim(coalesce(artist, '')) != ''
+      and trim(coalesce(album, '')) != ''
+      and duration between 60 and 900
+      and artist = '${escapeSql(group.artist)}'
+      and album = '${escapeSql(group.album)}'
+    order by played_count desc, modified_at desc, id asc
+    limit ${group.limit};
+  `;
 
-function byId(index) {
-  return records[index - 1];
+  const rows = runSqliteJson(sql);
+  if (rows.length < group.limit) {
+    throw new Error(`Insufficient seed tracks for group ${group.key}: expected ${group.limit}, got ${rows.length}`);
+  }
+  return rows;
+}
+
+function extractSourceStats() {
+  const [stats] = runSqliteJson(`
+    select
+      count(*) as total_seed_rows,
+      sum(case when lower(platform) != 'hifini' then 1 else 0 end) as total_non_hifini_rows,
+      sum(case when lower(platform) != 'hifini'
+        and trim(coalesce(title, '')) != ''
+        and trim(coalesce(artist, '')) != ''
+        and trim(coalesce(album, '')) != ''
+        and duration > 0
+      then 1 else 0 end) as complete_rows,
+      count(distinct case when lower(platform) != 'hifini' and trim(coalesce(artist, '')) != '' then artist end) as distinct_artists,
+      count(distinct case when lower(platform) != 'hifini' and trim(coalesce(album, '')) != '' then album end) as distinct_albums
+    from track;
+  `);
+
+  return stats ?? {};
+}
+
+function buildSimulationCorpus() {
+  const groups = [];
+  const flatRows = [];
+
+  for (const definition of GROUP_DEFINITIONS) {
+    const rows = fetchRowsForGroup(definition);
+    const group = { ...definition, rows };
+    groups.push(group);
+    flatRows.push(...rows.map((row, index) => ({ row, group, groupRank: index + 1 })));
+  }
+
+  const globalRecency = [...flatRows]
+    .sort((left, right) => {
+      const rightTime = parseSqliteDate(right.row.modified_at).getTime();
+      const leftTime = parseSqliteDate(left.row.modified_at).getTime();
+      return rightTime - leftTime;
+    })
+    .map((entry, index) => ({ ...entry, recencyRank: index }));
+
+  const recencyMap = new Map(globalRecency.map((entry) => [entry.row.id, entry.recencyRank]));
+  let recordIndex = 0;
+
+  const records = groups.flatMap((group, groupIndex) => {
+    return group.rows.map((row, rowIndex) => {
+      const index = ++recordIndex;
+      const recencyRank = recencyMap.get(row.id) ?? index;
+      const ageDays =
+        10 +
+        groupIndex * 7 +
+        rowIndex * 3 +
+        Math.floor(seededFraction(`${row.id}:age`) * 5) +
+        Math.floor(recencyRank / 8);
+      const publishedAt = new Date(NOW.getTime() - ageDays * DAY_MS);
+      const updatedAt = new Date(publishedAt.getTime() + (10 + rowIndex * 3) * 60 * 60 * 1000);
+      const createdAt = new Date(publishedAt.getTime() - (2 + rowIndex) * DAY_MS);
+      const engagement = deriveEngagement(row, rowIndex + 1);
+
+      return {
+        id: `track-${String(index).padStart(3, '0')}`,
+        title: row.title,
+        artistName: row.artist,
+        albumName: row.album,
+        genreLabel: group.genreLabel,
+        description: buildDescription(row, group),
+        chainId: 11155111,
+        musicAssetAddress: makeAddress(40_000 + index),
+        platformHubAddress: PLATFORM_HUB_ADDRESS,
+        tokenId: String(1_500 + index),
+        publishTxHash: makeHash(180_000 + index),
+        audioStorageObject: { cid: makeCid('audio', `${row.title}${row.artist}`, index) },
+        coverStorageObject: { cid: makeCid('cover', `${row.album}${row.artist}`, index) },
+        metadataStorageObject: { cid: makeCid('meta', `${row.title}${row.album}`, index) },
+        _count: engagement,
+        createdAt,
+        updatedAt,
+        publishedAt,
+        simulation: {
+          groupKey: group.key,
+          groupRank: rowIndex + 1,
+          seedTrackId: row.id,
+          seedPlatform: row.platform,
+          seedPlayedCount: Number(row.played_count ?? 0),
+        },
+      };
+    });
+  });
+
+  const groupsByKey = Object.fromEntries(groups.map((group) => [
+    group.key,
+    {
+      ...group,
+      records: records.filter((record) => record.simulation.groupKey === group.key),
+    },
+  ]));
+
+  return { records, groupsByKey, groups };
 }
 
 function graded(entries) {
-  return Object.fromEntries(entries.map(([index, grade]) => [byId(index).id, grade]));
+  return Object.fromEntries(entries.map(([record, grade]) => [record.id, grade]));
 }
 
-const queries = [
-  { id: 'q01', category: 'title_exact', text: byId(1).title, relevance: graded([[1, 3]]) },
-  { id: 'q02', category: 'title_exact', text: byId(7).title, relevance: graded([[7, 3]]) },
-  { id: 'q03', category: 'title_exact', text: byId(16).title, relevance: graded([[16, 3]]) },
-  { id: 'q04', category: 'title_exact', text: byId(21).title, relevance: graded([[21, 3]]) },
-  { id: 'q05', category: 'title_exact', text: byId(25).title, relevance: graded([[25, 3]]) },
-  { id: 'q06', category: 'artist', text: 'Luna Byte', relevance: graded([[3, 3], [1, 2], [2, 1]]) },
-  { id: 'q07', category: 'artist', text: 'Echo Harbor', relevance: graded([[5, 3], [4, 2], [6, 1]]) },
-  { id: 'q08', category: 'artist', text: 'Chain Choir', relevance: graded([[9, 3], [7, 2], [8, 1]]) },
-  { id: 'q09', category: 'artist', text: 'Testnet Kids', relevance: graded([[15, 3], [13, 2], [14, 1]]) },
-  { id: 'q10', category: 'album', text: 'Electric Tides', relevance: graded([[3, 3], [1, 2], [2, 1]]) },
-  { id: 'q11', category: 'album', text: 'Proxy Dreams', relevance: graded([[12, 3], [11, 2], [10, 1]]) },
-  { id: 'q12', category: 'album', text: 'Gasless Summer', relevance: graded([[15, 3], [13, 2], [14, 1]]) },
-  { id: 'q13', category: 'album', text: 'Validator Songs', relevance: graded([[25, 3], [26, 2], [24, 1]]) },
-  { id: 'q14', category: 'genre', text: 'synthwave', relevance: graded([[3, 3], [1, 2], [2, 1]]) },
-  { id: 'q15', category: 'genre', text: 'indie folk', relevance: graded([[5, 3], [4, 2], [6, 1]]) },
-  { id: 'q16', category: 'genre', text: 'alternative', relevance: graded([[23, 3], [21, 2], [22, 1]]) },
-  { id: 'q17', category: 'genre', text: 'house', relevance: graded([[25, 3], [26, 2], [24, 1]]) },
-  { id: 'q18', category: 'token_id', text: byId(7).tokenId, relevance: graded([[7, 3]]) },
-  { id: 'q19', category: 'token_id', text: byId(14).tokenId, relevance: graded([[14, 3]]) },
-  { id: 'q20', category: 'token_id', text: byId(23).tokenId, relevance: graded([[23, 3]]) },
-  { id: 'q21', category: 'address', text: byId(20).musicAssetAddress, relevance: graded([[20, 3]]) },
-  { id: 'q22', category: 'address', text: byId(25).musicAssetAddress, relevance: graded([[25, 3]]) },
-  { id: 'q23', category: 'cid', text: byId(9).audioStorageObject.cid, relevance: graded([[9, 3]]) },
-  { id: 'q24', category: 'cid', text: byId(17).metadataStorageObject.cid, relevance: graded([[17, 3]]) },
-  { id: 'q25', category: 'resource_key', text: buildResourceKey(byId(4)), relevance: graded([[4, 3]]) },
-  { id: 'q26', category: 'resource_key', text: buildResourceKey(byId(23)), relevance: graded([[23, 3]]) },
-  {
-    id: 'q27',
-    category: 'tx_hash',
-    text: byId(11).publishTxHash.slice(0, 18),
-    relevance: graded([[11, 3]]),
-  },
-  { id: 'q28', category: 'typo', text: 'sepolia mooon', relevance: graded([[13, 3]]) },
-  { id: 'q29', category: 'typo', text: 'legder lullaby', relevance: graded([[7, 3]]) },
-  { id: 'q30', category: 'typo', text: 'modal miragee', relevance: graded([[20, 3]]) },
-  { id: 'q31', category: 'typo', text: 'cache kisses', relevance: graded([[12, 3]]) },
-  { id: 'q32', category: 'compact', text: 'neonharbor', relevance: graded([[1, 3]]) },
-  { id: 'q33', category: 'fullwidth', text: 'Ｎｅｏｎ　Ｈａｒｂｏｒ', relevance: graded([[1, 3]]) },
-  { id: 'q34', category: 'compact', text: '海风 信号', relevance: graded([[5, 3]]) },
-  { id: 'q35', category: 'compact', text: 'finalitywaltz', relevance: graded([[15, 3]]) },
-  {
-    id: 'q36',
-    category: 'multi_term',
-    text: 'chain choir block beats',
-    relevance: graded([[9, 3], [7, 2], [8, 1]]),
-  },
-  { id: 'q37', category: 'title_exact', text: 'Access Granted', relevance: graded([[23, 3]]) },
-  { id: 'q38', category: 'description', text: 'buyer access track', relevance: graded([[23, 3]]) },
-  { id: 'q39', category: 'title_exact', text: 'CID Carousel', relevance: graded([[9, 3]]) },
-  { id: 'q40', category: 'compact', text: '银河 站台', relevance: graded([[16, 3]]) },
-  { id: 'q41', category: 'title_exact', text: 'Mint Condition Melody', relevance: graded([[22, 3]]) },
-  { id: 'q42', category: 'title_exact', text: 'Gradient Heat', relevance: graded([[19, 3]]) },
-  { id: 'q43', category: 'album', text: 'UI Afterglow', relevance: graded([[18, 3], [20, 2], [19, 1]]) },
-  { id: 'q44', category: 'genre', text: 'ambient', relevance: graded([[16, 3], [17, 2]]) },
-];
+function topGraded(group, limit = 3) {
+  return graded(
+    group.records
+      .slice(0, limit)
+      .map((record, index) => [record, Math.max(1, 3 - index)]),
+  );
+}
 
-function validateInputs() {
+function buildQueries(groupsByKey) {
+  const queries = [];
+  let counter = 1;
+
+  const push = (category, text, relevance, options = {}) => {
+    queries.push({
+      id: `q${String(counter).padStart(2, '0')}`,
+      category,
+      text,
+      relevance,
+      ...options,
+    });
+    counter++;
+  };
+
+  for (const key of TITLE_QUERY_GROUP_KEYS) {
+    const group = groupsByKey[key];
+    push('title_exact', group.records[0].title, graded([[group.records[0], 3]]));
+  }
+
+  for (const key of ARTIST_QUERY_GROUP_KEYS) {
+    const group = groupsByKey[key];
+    push('artist', group.artist, topGraded(group));
+  }
+
+  for (const key of ALBUM_QUERY_GROUP_KEYS) {
+    const group = groupsByKey[key];
+    push('album', group.album, topGraded(group));
+  }
+
+  for (const key of GENRE_QUERY_GROUP_KEYS) {
+    const group = groupsByKey[key];
+    push('genre', group.genreLabel, topGraded(group));
+  }
+
+  const identityPool = [
+    groupsByKey.witcher3.records[1],
+    groupsByKey.celeste_farewell.records[0],
+    groupsByKey.jj_lin.records[0],
+  ];
+  for (const record of identityPool) {
+    push('token_id', record.tokenId, graded([[record, 3]]));
+  }
+
+  push('address', groupsByKey.interstellar.records[0].musicAssetAddress, graded([[groupsByKey.interstellar.records[0], 3]]));
+  push('address', groupsByKey.minecraft_beta.records[2].musicAssetAddress, graded([[groupsByKey.minecraft_beta.records[2], 3]]));
+
+  push('cid', groupsByKey.stardew.records[0].audioStorageObject.cid, graded([[groupsByKey.stardew.records[0], 3]]));
+  push('cid', groupsByKey.slay_the_spire.records[1].metadataStorageObject.cid, graded([[groupsByKey.slay_the_spire.records[1], 3]]));
+
+  push('resource_key', buildResourceKey(groupsByKey.hollow_knight.records[0]), graded([[groupsByKey.hollow_knight.records[0], 3]]));
+  push('resource_key', buildResourceKey(groupsByKey.terraria.records[1]), graded([[groupsByKey.terraria.records[1], 3]]));
+
+  push('tx_hash', groupsByKey.undertale.records[1].publishTxHash.slice(0, 20), graded([[groupsByKey.undertale.records[1], 3]]));
+
+  const typoPool = [
+    groupsByKey.witcher3.records[0],
+    groupsByKey.celeste_farewell.records[1],
+    groupsByKey.undertale.records[0],
+    groupsByKey.interstellar.records[0],
+    groupsByKey.stardew.records[2],
+  ];
+  for (const record of typoPool) {
+    push('typo', makeTypo(record.title), graded([[record, 3]]));
+  }
+
+  push('compact', removeSpaces(groupsByKey.witcher3.records[0].title), graded([[groupsByKey.witcher3.records[0], 3]]));
+  push('compact', '新 地球', graded([[groupsByKey.jj_lin.records[0], 3]]));
+  push('compact', removeSpaces(groupsByKey.interstellar.records[0].title), graded([[groupsByKey.interstellar.records[0], 3]]));
+  push('compact', removeSpaces(groupsByKey.undertale.records[0].title), graded([[groupsByKey.undertale.records[0], 3]]));
+
+  push('fullwidth', toFullWidth(groupsByKey.hollow_knight.records[1].title), graded([[groupsByKey.hollow_knight.records[1], 3]]));
+
+  push('description', groupsByKey.interstellar.descriptionHint, graded([[groupsByKey.interstellar.records[0], 3], [groupsByKey.interstellar.records[1], 2], [groupsByKey.interstellar.records[2], 1]]));
+
+  push('multi_term', 'Toby Fox UNDERTALE soundtrack', topGraded(groupsByKey.undertale));
+
+  return queries;
+}
+
+function validateInputs(records, queries) {
   for (const query of queries) {
     for (const recordId of Object.keys(query.relevance)) {
       if (!records.some((record) => record.id === recordId)) {
@@ -776,7 +880,7 @@ function idsWithScores(results, limit = 10) {
   return results.slice(0, limit).map((item) => [item.record.id, item.score]);
 }
 
-function validateFullRankingParity() {
+function validateFullRankingParity(records, queries) {
   for (const query of queries) {
     const actual = idsWithScores(rankResourceRecords(records, query.text, NOW));
     const derived = idsWithScores(rankWithConfig(records, query.text, {
@@ -843,44 +947,46 @@ function percentile(values, p) {
   return sorted[index] ?? 0;
 }
 
-const methods = [
-  {
-    key: 'sql_contains',
-    label: 'SQL contains baseline',
-    rank: (queryText, recordsToRank = records) => sqlContainsBaseline(recordsToRank, queryText),
-  },
-  {
-    key: 'text_only',
-    label: 'Text scoring only',
-    rank: (queryText, recordsToRank = records) =>
-      rankWithConfig(recordsToRank, queryText, {
-        text: true,
-        fuzzy: true,
-        identity: false,
-        freshness: false,
-        popularity: false,
-      }),
-  },
-  {
-    key: 'text_identity',
-    label: 'Text plus identity fields',
-    rank: (queryText, recordsToRank = records) =>
-      rankWithConfig(recordsToRank, queryText, {
-        text: true,
-        fuzzy: true,
-        identity: true,
-        freshness: false,
-        popularity: false,
-      }),
-  },
-  {
-    key: 'full_ranker',
-    label: 'Full chain_resource_rank_v1',
-    rank: (queryText, recordsToRank = records) => rankResourceRecords(recordsToRank, queryText, NOW),
-  },
-];
+function buildMethods(records) {
+  return [
+    {
+      key: 'sql_contains',
+      label: 'SQL contains baseline',
+      rank: (queryText, recordsToRank = records) => sqlContainsBaseline(recordsToRank, queryText),
+    },
+    {
+      key: 'text_only',
+      label: 'Text scoring only',
+      rank: (queryText, recordsToRank = records) =>
+        rankWithConfig(recordsToRank, queryText, {
+          text: true,
+          fuzzy: true,
+          identity: false,
+          freshness: false,
+          popularity: false,
+        }),
+    },
+    {
+      key: 'text_identity',
+      label: 'Text plus identity fields',
+      rank: (queryText, recordsToRank = records) =>
+        rankWithConfig(recordsToRank, queryText, {
+          text: true,
+          fuzzy: true,
+          identity: true,
+          freshness: false,
+          popularity: false,
+        }),
+    },
+    {
+      key: 'full_ranker',
+      label: 'Full chain_resource_rank_v1',
+      rank: (queryText, recordsToRank = records) => rankResourceRecords(recordsToRank, queryText, NOW),
+    },
+  ];
+}
 
-function summarizeMethods() {
+function summarizeMethods(methods, queries) {
   return methods.map((method) => {
     let precisionTotal = 0;
     let mrrTotal = 0;
@@ -915,7 +1021,7 @@ function summarizeMethods() {
   });
 }
 
-function expandRecords(targetCount) {
+function expandRecords(records, targetCount) {
   const pool = [];
   let cloneIndex = 0;
 
@@ -931,15 +1037,15 @@ function expandRecords(targetCount) {
       pool.push({
         ...record,
         id: `${record.id}-pool-${serial}`,
-        tokenId: String(1_000 + serial),
-        musicAssetAddress: makeAddress(50_000 + serial),
-        publishTxHash: makeHash(150_000 + serial),
+        tokenId: String(5_000 + serial),
+        musicAssetAddress: makeAddress(80_000 + serial),
+        publishTxHash: makeHash(280_000 + serial),
         audioStorageObject: { cid: makeCid('audio', `${record.id}${serial}`, serial) },
         coverStorageObject: { cid: makeCid('cover', `${record.id}${serial}`, serial) },
         metadataStorageObject: { cid: makeCid('meta', `${record.id}${serial}`, serial) },
         _count: {
-          comments: (record._count.comments + serial) % 9,
-          purchases: (record._count.purchases + serial) % 17,
+          comments: (record._count.comments + serial) % 21,
+          purchases: (record._count.purchases + serial) % 25,
         },
         publishedAt,
         updatedAt,
@@ -952,20 +1058,20 @@ function expandRecords(targetCount) {
   return pool;
 }
 
-function summarizeLatency() {
+function summarizeLatency(records) {
   const queryTexts = [
-    'Neon Harbor',
-    'legder lullaby',
-    buildResourceKey(byId(23)),
-    byId(20).musicAssetAddress,
-    byId(9).audioStorageObject.cid,
-    'chain choir block beats',
-    '海风 信号',
-    'Validator Songs',
+    records[0].title,
+    makeTypo(records[12].title),
+    buildResourceKey(records[22]),
+    records[31].musicAssetAddress,
+    records[40].audioStorageObject.cid,
+    'Toby Fox UNDERTALE soundtrack',
+    '新 地球',
+    'fantasy soundtrack',
   ];
 
   return [50, 100, 300, 500].map((candidateCount) => {
-    const pool = expandRecords(candidateCount);
+    const pool = expandRecords(records, candidateCount);
     const samples = [];
 
     for (let i = 0; i < 18; i++) {
@@ -984,7 +1090,7 @@ function summarizeLatency() {
   });
 }
 
-function summarizeQueryCategories() {
+function summarizeQueryCategories(queries) {
   const counts = new Map();
   for (const query of queries) {
     counts.set(query.category, (counts.get(query.category) ?? 0) + 1);
@@ -994,28 +1100,36 @@ function summarizeQueryCategories() {
     .sort((left, right) => left.category.localeCompare(right.category));
 }
 
-function selectRepresentativeCases() {
-  const selectedIds = new Set(['q25', 'q29', 'q34', 'q36']);
-  return queries
-    .filter((query) => selectedIds.has(query.id))
-    .map((query) => {
-      const topResults = rankResourceRecords(records, query.text, NOW)
-        .slice(0, 3)
-        .map((item) => ({
-          id: item.record.id,
-          title: item.record.title,
-          score: item.score,
-          reasons: item.reasons,
-        }));
+function selectRepresentativeCases(records, queries) {
+  const selectedCategories = new Set(['typo', 'compact', 'resource_key']);
+  const selectedQueries = [];
 
-      return {
-        id: query.id,
-        category: query.category,
-        text: query.text,
-        relevant: query.relevance,
-        top_results: topResults,
-      };
-    });
+  for (const query of queries) {
+    if (selectedCategories.has(query.category)) {
+      selectedQueries.push(query);
+      selectedCategories.delete(query.category);
+    }
+    if (!selectedCategories.size) break;
+  }
+
+  return selectedQueries.map((query) => {
+    const topResults = rankResourceRecords(records, query.text, NOW)
+      .slice(0, 3)
+      .map((item) => ({
+        id: item.record.id,
+        title: item.record.title,
+        score: item.score,
+        reasons: item.reasons,
+      }));
+
+    return {
+      id: query.id,
+      category: query.category,
+      text: query.text,
+      relevant: query.relevance,
+      top_results: topResults,
+    };
+  });
 }
 
 function toCsv(rows, columns) {
@@ -1043,13 +1157,18 @@ function writeOutputs() {
   mkdirSync(figuresDataDir, { recursive: true });
   mkdirSync(experimentOutDir, { recursive: true });
 
-  validateInputs();
-  validateFullRankingParity();
+  const sourceStats = extractSourceStats();
+  const { records, groupsByKey, groups } = buildSimulationCorpus();
+  const queries = buildQueries(groupsByKey);
+  const methods = buildMethods(records);
 
-  const methodSummary = summarizeMethods();
-  const latencySummary = summarizeLatency();
-  const categorySummary = summarizeQueryCategories();
-  const representativeCases = selectRepresentativeCases();
+  validateInputs(records, queries);
+  validateFullRankingParity(records, queries);
+
+  const methodSummary = summarizeMethods(methods, queries);
+  const latencySummary = summarizeLatency(records);
+  const categorySummary = summarizeQueryCategories(queries);
+  const representativeCases = selectRepresentativeCases(records, queries);
 
   writeFileSync(
     resolve(figuresDataDir, 'search_ranking_metrics.csv'),
@@ -1089,8 +1208,25 @@ function writeOutputs() {
         dataset: {
           resource_count: records.length,
           query_count: queries.length,
-          now: NOW.toISOString(),
+          reference_time: NOW.toISOString(),
+          simulated_group_count: groups.length,
         },
+        seed_statistics: sourceStats,
+        groups: groups.map((group) => ({
+          key: group.key,
+          artist: group.artist,
+          album: group.album,
+          genre_label: group.genreLabel,
+          track_count: groupsByKey[group.key].records.length,
+        })),
+        sample_tracks: records.map((record) => ({
+          id: record.id,
+          title: record.title,
+          artist: record.artistName,
+          album: record.albumName,
+          genre_label: record.genreLabel,
+          token_id: record.tokenId,
+        })),
         methods: methodSummary,
         latency: latencySummary,
         query_categories: categorySummary,
@@ -1117,11 +1253,19 @@ function writeOutputs() {
     'P95 Latency (ms)': item.p95_latency_ms.toFixed(4),
   }));
 
+  const groupRows = groups.map((group) => ({
+    Group: group.key,
+    Artist: shortText(group.artist, 20),
+    Album: shortText(group.album, 34),
+    Tracks: groupsByKey[group.key].records.length,
+  }));
+
   const summaryMarkdown = [
     '# Search Ranking Experiment',
     '',
     `- Indexed resources: ${records.length}`,
     `- Query set size: ${queries.length}`,
+    `- Simulated artist/album clusters: ${groups.length}`,
     `- Reference timestamp: ${NOW.toISOString()}`,
     '',
     '## Retrieval Metrics',
@@ -1134,6 +1278,10 @@ function writeOutputs() {
       'Zero Result Rate',
       'Avg Latency (ms)',
     ]),
+    '',
+    '## Cluster Layout',
+    '',
+    toMarkdownTable(groupRows, ['Group', 'Artist', 'Album', 'Tracks']),
     '',
     '## Latency by Candidate Count',
     '',

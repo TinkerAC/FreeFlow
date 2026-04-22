@@ -134,7 +134,7 @@
 
 \section{检索效果评估设计}
 
-基于上述设计，本文构建了一个离线检索评估集，包含26条链上音乐资源和44个查询。查询类型覆盖标题、艺术家、专辑、流派、Token ID、合约地址、IPFS CID、resourceKey、交易哈希、全角输入、空格扰动和轻微拼写错误等场景。对于单目标定位查询，仅标注一个三级相关资源；对于艺术家、专辑和流派类多结果查询，则按照查询意图和资源代表性标注3/2/1三级相关性。
+基于上述设计，本文构建了一个离线检索评估集，包含56条模拟链上音乐资源和62个查询。评估集按14个艺术家/专辑簇组织，覆盖中英文标题、长专辑名、流派标签以及Token ID、合约地址、IPFS CID、resourceKey和交易哈希等链上身份字段。对于标题、Token ID、CID和resourceKey等单目标定位查询，仅标注一个三级相关资源；对于艺术家、专辑和流派类多结果查询，则按照查询意图和资源代表性标注3/2/1三级相关性。
 
 评价指标采用Precision@10、MRR、nDCG@10、Zero Result Rate和平均响应时间，对比方法设置为数据库contains基线、仅文本评分、文本加链上身份字段和完整chain\_resource\_rank\_v1算法。具体实验流程、数据分布与结果分析见第7章表\ref{tab:ranking_query_categories}、表\ref{tab:ranking_metrics_actual}和图\ref{fig:ranking_latency_curve}。
 

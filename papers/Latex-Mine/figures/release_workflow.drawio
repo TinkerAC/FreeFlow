@@ -1,1 +1,123 @@
-<mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="600" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5FBF5;strokeColor=#59A14F;" vertex="1" parent="1"><mxGeometry x="95" y="30" width="670" height="110" as="geometry"/></mxCell><mxCell id="3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF8EE;strokeColor=#F28E2B;" vertex="1" parent="1"><mxGeometry x="95" y="160" width="670" height="110" as="geometry"/></mxCell><mxCell id="4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F1FBFB;strokeColor=#4ECDC4;" vertex="1" parent="1"><mxGeometry x="95" y="290" width="670" height="110" as="geometry"/></mxCell><mxCell id="5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF3F6;strokeColor=#E15759;" vertex="1" parent="1"><mxGeometry x="95" y="420" width="670" height="110" as="geometry"/></mxCell><mxCell id="6" value="桌面端&#xa;Creators Workshop" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="5" y="65" width="80" height="40" as="geometry"/></mxCell><mxCell id="7" value="Web2.5 后端&#xa;releases / pinata" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="5" y="195" width="80" height="40" as="geometry"/></mxCell><mxCell id="8" value="IPFS / Pinata" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="5" y="325" width="80" height="30" as="geometry"/></mxCell><mxCell id="9" value="Sepolia 合约&#xa;PlatformHub" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="5" y="455" width="80" height="40" as="geometry"/></mxCell><mxCell id="10" value="" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="115" y="76" width="18" height="18" as="geometry"/></mxCell><mxCell id="11" value="1. SIWE 登录&#xa;创建发行草稿" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#59A14F;fontSize=12;" vertex="1" parent="1"><mxGeometry x="160" y="55" width="135" height="56" as="geometry"/></mxCell><mxCell id="12" value="2. 保存 CreatorRelease&#xa;状态 DRAFT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" vertex="1" parent="1"><mxGeometry x="165" y="185" width="140" height="56" as="geometry"/></mxCell><mxCell id="13" value="3. 编辑作品信息&#xa;访问模式 / 价格 / 分账" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#59A14F;fontSize=12;" vertex="1" parent="1"><mxGeometry x="335" y="55" width="160" height="56" as="geometry"/></mxCell><mxCell id="14" value="4. 代理上传音频和封面&#xa;/storage/pinata/files" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" vertex="1" parent="1"><mxGeometry x="350" y="185" width="170" height="56" as="geometry"/></mxCell><mxCell id="15" value="5. 固定音频 / 封面&#xa;返回 CID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4ECDC4;fontSize=12;" vertex="1" parent="1"><mxGeometry x="560" y="315" width="145" height="56" as="geometry"/></mxCell><mxCell id="16" value="6. 回写 StorageObject&#xa;状态 ASSETS_UPLOADED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" vertex="1" parent="1"><mxGeometry x="545" y="185" width="175" height="56" as="geometry"/></mxCell><mxCell id="17" value="7. 生成 metadata JSON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#59A14F;fontSize=12;" vertex="1" parent="1"><mxGeometry x="540" y="55" width="145" height="56" as="geometry"/></mxCell><mxCell id="18" value="8. 上传 metadata&#xa;获得 metadata CID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4ECDC4;fontSize=12;" vertex="1" parent="1"><mxGeometry x="330" y="315" width="165" height="56" as="geometry"/></mxCell><mxCell id="20" value="9. 调用 publishTrack(tokenURI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E15759;fontSize=12;" vertex="1" parent="1"><mxGeometry x="330" y="445" width="175" height="56" as="geometry"/></mxCell><mxCell id="21" value="10. 创建 Splitter&#xa;创建 ERC-1155 tokenId" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E15759;fontSize=12;" vertex="1" parent="1"><mxGeometry x="545" y="445" width="170" height="56" as="geometry"/></mxCell><mxCell id="25" value="11. 解析 TrackPublished&#xa;回写 tokenId / splitter / txHash" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" vertex="1" parent="1"><mxGeometry x="120" y="185" width="180" height="56" as="geometry"/></mxCell><mxCell id="27" value="12. 状态 PUBLISHED&#xa;进入 resources/search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" vertex="1" parent="1"><mxGeometry x="555" y="185" width="175" height="56" as="geometry"/></mxCell><mxCell id="28" value="" style="ellipse;aspect=fixed;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;" vertex="1" parent="1"><mxGeometry x="720" y="198" width="28" height="28" as="geometry"/></mxCell><mxCell id="29" value="" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="728" y="206" width="12" height="12" as="geometry"/></mxCell><mxCell id="40" value="开始" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#59A14F;fontSize=11;" edge="1" parent="1" source="10" target="11"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="41" value="POST /releases" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#666666;fontSize=11;" edge="1" parent="1" source="11" target="12"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="42" value="返回草稿" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#666666;fontSize=11;" edge="1" parent="1" source="12" target="13"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="320" y="213"/><mxPoint x="320" y="83"/></Array></mxGeometry></mxCell><mxCell id="43" value="上传素材" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#F28E2B;fontSize=11;" edge="1" parent="1" source="13" target="14"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="44" value="Pinata 固定" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;" edge="1" parent="1" source="14" target="15"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="45" value="CID 回传" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;" edge="1" parent="1" source="15" target="16"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="46" value="素材完成" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#666666;fontSize=11;" edge="1" parent="1" source="16" target="17"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="612" y="148"/></Array></mxGeometry></mxCell><mxCell id="47" value="上传 metadata" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;" edge="1" parent="1" source="17" target="18"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="48" value="metadata CID" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#666666;fontSize=11;" edge="1" parent="1" source="18" target="20"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="49" value="链上发布" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#E15759;fontSize=11;" edge="1" parent="1" source="20" target="21"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="50" value="TrackPublished 事件" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#E15759;fontSize=11;" edge="1" parent="1" source="21" target="25"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="600" y="213"/></Array></mxGeometry></mxCell><mxCell id="51" value="PATCH /releases/:id" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#F28E2B;fontSize=11;" edge="1" parent="1" source="25" target="27"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="52" value="结束" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4E79A7;fontSize=11;" edge="1" parent="1" source="27" target="28"><mxGeometry relative="1" as="geometry"/></mxCell></root></mxGraphModel>
+<mxfile host="drawio-plugin" modified="2026-04-22T07:58:20.371Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" version="22.1.22" etag="0V9zcvXK-YZjoQWYecTA" type="embed">
+  <diagram id="k9PU0wk43eUqNHUG60qo" name="Page-1">
+    <mxGraphModel dx="1987" dy="663" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5FBF5;strokeColor=#59A14F;" parent="1" vertex="1">
+          <mxGeometry x="95" y="30" width="1105" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF8EE;strokeColor=#F28E2B;" parent="1" vertex="1">
+          <mxGeometry x="95" y="160" width="1105" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F1FBFB;strokeColor=#4ECDC4;" parent="1" vertex="1">
+          <mxGeometry x="95" y="290" width="1105" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF3F6;strokeColor=#E15759;" parent="1" vertex="1">
+          <mxGeometry x="95" y="420" width="1105" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="桌面端&#xa;Creators Workshop" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="5" y="65" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Web2.5 后端&#xa;releases / pinata" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="5" y="195" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="IPFS / Pinata" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="5" y="325" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Sepolia 合约&#xa;PlatformHub" style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="5" y="455" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="115" y="76" width="18" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="1. SIWE 登录&#xa;创建发行草稿" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#59A14F;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="160" y="55" width="135" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="2. 保存 CreatorRelease&#xa;状态 DRAFT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="157.5" y="185" width="140" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="3. 编辑作品信息&#xa;访问模式 / 价格 / 分账" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#59A14F;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="332.5" y="57" width="160" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="4. 代理上传音频和封面&#xa;/storage/pinata/files" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="335" y="187" width="170" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="5. 固定音频 / 封面&#xa;返回 CID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4ECDC4;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="347.5" y="317" width="145" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="6. 回写 StorageObject&#xa;状态 ASSETS_UPLOADED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="530" y="187" width="175" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="7. 生成 metadata JSON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#59A14F;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="545" y="57" width="145" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="18" value="8. 上传 metadata&#xa;获得 metadata CID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4ECDC4;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="635" y="312" width="165" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="9. 调用 publishTrack(tokenURI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E15759;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="590" y="447" width="175" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="10. 创建 Splitter&#xa;创建 ERC-1155 tokenId" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E15759;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="840" y="447" width="170" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="25" value="11. 解析 TrackPublished&#xa;回写 tokenId / splitter / txHash" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="765" y="187" width="180" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="27" value="12. 状态 PUBLISHED&#xa;进入 resources/search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F28E2B;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="990" y="187" width="175" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="28" value="" style="ellipse;aspect=fixed;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1240" y="201" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="29" value="" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="1248" y="209" width="11" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="40" value="开始" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#59A14F;fontSize=11;" parent="1" source="10" target="11" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="41" value="POST /releases" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#666666;fontSize=11;" parent="1" source="11" target="12" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="42" value="返回草稿" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#666666;fontSize=11;" parent="1" source="12" target="13" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="213" />
+              <mxPoint x="320" y="83" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="43" value="上传素材" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#F28E2B;fontSize=11;" parent="1" source="13" target="14" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="44" value="Pinata 固定" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;" parent="1" source="14" target="15" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="45" value="CID 回传" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;" parent="1" source="15" target="16" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="46" value="素材完成" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#666666;fontSize=11;" parent="1" source="16" target="17" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="47" value="上传 metadata" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="17" target="18" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="48" value="metadata CID" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#666666;fontSize=11;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" parent="1" source="18" target="20" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="49" value="链上发布" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#E15759;fontSize=11;" parent="1" source="20" target="21" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="50" value="TrackPublished 事件" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#E15759;fontSize=11;" parent="1" source="21" target="25" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="51" value="PATCH /releases/:id" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#F28E2B;fontSize=11;" parent="1" source="25" target="27" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="52" value="结束" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4E79A7;fontSize=11;" parent="1" source="27" target="28" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

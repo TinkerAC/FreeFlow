@@ -58,8 +58,8 @@
     \begin{tabular}{|l|p{8.8cm}|}
         \hline
         项目 & 说明 \\ \hline
-        资源规模 & 26条链上音乐资源，覆盖标题、艺术家、专辑、流派、Token ID、CID、合约地址和resourceKey等字段 \\ \hline
-        查询规模 & 44个查询，覆盖标题精确匹配、艺术家/专辑/流派多结果查询、CID与resourceKey定位、全角输入、空格扰动和轻微拼写错误 \\ \hline
+        资源规模 & 56条模拟链上音乐资源，按14个艺术家/专辑簇组织，覆盖标题、艺术家、专辑、流派、Token ID、CID、合约地址和resourceKey等字段 \\ \hline
+        查询规模 & 62个查询，覆盖标题精确匹配、艺术家/专辑/流派多结果查询、CID与resourceKey定位、全角输入、空格扰动和轻微拼写错误 \\ \hline
         相关性标注 & 单目标定位查询使用三级相关；多结果查询按照3/2/1相关等级人工标注 \\ \hline
         评价指标 & Precision@10、MRR、nDCG@10、Zero Result Rate和平均响应时间 \\ \hline
         对比方法 & SQL contains基线、仅文本评分、文本+链上身份字段、完整\texttt{chain\_resource\_rank\_v1} \\ \hline

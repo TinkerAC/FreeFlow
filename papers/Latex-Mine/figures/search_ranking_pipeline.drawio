@@ -1,32 +1,96 @@
-<mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="600" math="0" shadow="0">
-  <root>
-    <mxCell id="0"/>
-    <mxCell id="1" parent="0"/>
-    <mxCell id="2" value="用户查询 q&#xa;标题 / 艺术家 / Token ID / CID / resourceKey" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#4E79A7;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="45" y="25" width="220" height="60" as="geometry"/></mxCell>
-    <mxCell id="3" value="查询归一化&#xa;NFKC / 小写 / 空格合并 / compact / 分词" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF7EA;strokeColor=#59A14F;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="300" y="25" width="220" height="60" as="geometry"/></mxCell>
-    <mxCell id="4" value="链上身份识别&#xa;EVM地址 / IPFS CID / txHash / tokenId" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF7EA;strokeColor=#59A14F;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="555" y="25" width="205" height="60" as="geometry"/></mxCell>
-    <mxCell id="5" value="数据库召回 C1&#xa;PUBLISHED 且 chainId / MusicAccess1155 / tokenId 非空&#xa;文本字段与链上身份字段 contains" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#F28E2B;fontSize=12;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="45" y="130" width="310" height="88" as="geometry"/></mxCell>
-    <mxCell id="6" value="最近资源补充 C2&#xa;用于轻微拼写差异和冷启动召回" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#F28E2B;fontSize=12;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="450" y="130" width="310" height="58" as="geometry"/></mxCell>
-    <mxCell id="7" value="合并去重候选集&#xa;C = C1 ∪ C2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6F6F6;strokeColor=#8C8C8C;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="285" y="250" width="230" height="55" as="geometry"/></mxCell>
-    <mxCell id="8" value="身份匹配分&#xa;resourceKey / tokenId / 地址 / txHash / CID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" vertex="1" parent="1"><mxGeometry x="35" y="350" width="140" height="65" as="geometry"/></mxCell>
-    <mxCell id="9" value="文本匹配分&#xa;标题 / 艺术家 / 专辑 / 流派 / 描述" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" vertex="1" parent="1"><mxGeometry x="190" y="350" width="140" height="65" as="geometry"/></mxCell>
-    <mxCell id="10" value="模糊相似度&#xa;Levenshtein 归一化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" vertex="1" parent="1"><mxGeometry x="345" y="350" width="130" height="65" as="geometry"/></mxCell>
-    <mxCell id="11" value="新鲜度&#xa;0.5^(ageDays/45)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" vertex="1" parent="1"><mxGeometry x="490" y="350" width="120" height="65" as="geometry"/></mxCell>
-    <mxCell id="12" value="热度&#xa;comments + purchases" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" vertex="1" parent="1"><mxGeometry x="625" y="350" width="130" height="65" as="geometry"/></mxCell>
-    <mxCell id="13" value="chain_resource_rank_v1&#xa;Score = identity + text + fuzzy + freshness + popularity" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E15759;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="220" y="455" width="360" height="55" as="geometry"/></mxCell>
-    <mxCell id="14" value="过滤无关候选，按总分降序排序&#xa;返回 top-k + reasons + features" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#4E79A7;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="250" y="535" width="300" height="50" as="geometry"/></mxCell>
-    <mxCell id="20" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#59A14F;" edge="1" parent="1" source="2" target="3"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="21" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#59A14F;" edge="1" parent="1" source="3" target="4"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="22" value="召回查询" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.3;exitY=1;entryX=0.5;entryY=0;strokeColor=#F28E2B;fontSize=11;" edge="1" parent="1" source="3" target="5"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="366" y="105"/><mxPoint x="200" y="105"/></Array></mxGeometry></mxCell>
-    <mxCell id="23" value="字段条件" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.6;entryY=0;strokeColor=#F28E2B;fontSize=11;" edge="1" parent="1" source="4" target="6"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="658" y="105"/><mxPoint x="636" y="105"/></Array></mxGeometry></mxCell>
-    <mxCell id="24" value="C1" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.7;exitY=1;entryX=0.35;entryY=0;strokeColor=#8C8C8C;fontSize=11;" edge="1" parent="1" source="5" target="7"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="25" value="C2" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.4;exitY=1;entryX=0.65;entryY=0;strokeColor=#8C8C8C;fontSize=11;" edge="1" parent="1" source="6" target="7"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="26" value="逐项评分" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;fontSize=11;" edge="1" parent="1" source="7" target="13"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="400" y="325"/><mxPoint x="400" y="335"/></Array></mxGeometry></mxCell>
-    <mxCell id="27" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.15;entryY=0;strokeColor=#E15759;" edge="1" parent="1" source="8" target="13"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="28" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.3;entryY=0;strokeColor=#E15759;" edge="1" parent="1" source="9" target="13"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="29" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;" edge="1" parent="1" source="10" target="13"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="30" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.7;entryY=0;strokeColor=#E15759;" edge="1" parent="1" source="11" target="13"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="31" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.85;entryY=0;strokeColor=#E15759;" edge="1" parent="1" source="12" target="13"><mxGeometry relative="1" as="geometry"/></mxCell>
-    <mxCell id="32" value="top-k" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#4E79A7;fontSize=11;" edge="1" parent="1" source="13" target="14"><mxGeometry relative="1" as="geometry"/></mxCell>
-  </root>
-</mxGraphModel>
+<mxfile host="drawio-plugin" modified="2026-04-22T07:43:46.550Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" version="22.1.22" etag="w3qNV3WPyGHiFu5HkEOP" type="embed">
+  <diagram id="BLqt47lZ0G5OVKIF3gYv" name="Page-1">
+    <mxGraphModel dx="1315" dy="917" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="用户查询 q&#xa;标题 / 艺术家 / Token ID / CID / resourceKey" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#4E79A7;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="25" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="查询归一化&#xa;NFKC / 小写 / 空格合并 / compact / 分词" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF7EA;strokeColor=#59A14F;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="300" y="25" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="链上身份识别&#xa;EVM地址 / IPFS CID / txHash / tokenId" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF7EA;strokeColor=#59A14F;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="612.5" y="25" width="205" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="数据库召回 C1&#xa;PUBLISHED 且 chainId / MusicAccess1155 / tokenId 非空&#xa;文本字段与链上身份字段 contains" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#F28E2B;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="210" y="170" width="310" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="最近资源补充 C2&#xa;用于轻微拼写差异和冷启动召回" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#F28E2B;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="550" y="170" width="330" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="合并去重候选集&#xa;C = C1 ∪ C2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6F6F6;strokeColor=#8C8C8C;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="425" y="300" width="230" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="身份匹配分&#xa;resourceKey / tokenId / 地址 / txHash / CID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="130" y="390" width="140" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="文本匹配分&#xa;标题 / 艺术家 / 专辑 / 流派 / 描述" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="300" y="390" width="140" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="新鲜度&#xa;0.5^(ageDays/45)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="640" y="390" width="120" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="热度&#xa;comments + purchases" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="790" y="390" width="130" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="chain_resource_rank_v1&#xa;Score = identity + text + fuzzy + freshness + popularity" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E15759;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="360" y="545" width="360" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="过滤无关候选，按总分降序排序&#xa;返回 top-k + reasons + features" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#4E79A7;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="390" y="620" width="300" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#59A14F;" parent="1" source="2" target="3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#59A14F;" parent="1" source="3" target="4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="召回查询" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.3;exitY=1;entryX=0.5;entryY=0;strokeColor=#F28E2B;fontSize=11;" parent="1" source="3" target="5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="字段条件" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#F28E2B;fontSize=11;entryDx=0;entryDy=0;" parent="1" source="4" target="6" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="24" value="C1" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0;entryY=0.5;strokeColor=#8C8C8C;fontSize=11;entryDx=0;entryDy=0;exitDx=0;exitDy=0;" parent="1" source="5" target="7" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="25" value="C2" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=1;entryY=0.5;strokeColor=#8C8C8C;fontSize=11;entryDx=0;entryDy=0;exitDx=0;exitDy=0;" parent="1" source="6" target="7" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="26" value="逐项评分" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;fontSize=11;" parent="1" source="10" target="13" edge="1">
+          <mxGeometry x="-0.4444" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="27" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;entryDx=0;entryDy=0;" parent="1" source="8" target="13" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="28" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;entryDx=0;entryDy=0;" parent="1" source="9" target="13" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="29" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;" parent="1" source="10" target="13" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="30" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;entryDx=0;entryDy=0;" parent="1" source="11" target="13" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="31" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;entryDx=0;entryDy=0;" parent="1" source="12" target="13" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="32" value="top-k" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#4E79A7;fontSize=11;" parent="1" source="13" target="14" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="35" value="" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#E15759;fontSize=11;" edge="1" parent="1" source="7" target="10">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="540" y="333" as="sourcePoint" />
+            <mxPoint x="540" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="10" value="模糊相似度&#xa;Levenshtein 归一化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="475" y="390" width="130" height="65" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
