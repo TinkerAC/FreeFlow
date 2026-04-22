@@ -58,6 +58,7 @@
 \RequirePackage{multirow}
 \RequirePackage{caption}
 \RequirePackage{tikz}
+\RequirePackage{pgfplots}
 \RequirePackage{etoolbox}
 \RequirePackage{hyperref}
 \RequirePackage{xcolor}
@@ -66,6 +67,8 @@
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
 \RequirePackage{pdfpages}
+
+\pgfplotsset{compat=1.18}
 
 \RequirePackage[
     backend=biber,

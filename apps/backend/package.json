@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm run prisma:generate && tsc -p tsconfig.json",
     "dev": "pnpm run build && node dist/index.js",
+    "experiment:ranking": "pnpm run build && node scripts/run-search-ranking-experiment.mjs",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:push": "prisma db push  --force-reset --schema prisma/schema.prisma",
     "prisma:comments": "prisma db execute --schema prisma/schema.prisma --file prisma/schema.comments.sql",

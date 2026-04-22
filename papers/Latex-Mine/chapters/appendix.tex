@@ -2,24 +2,83 @@
 
 \unnumchapter{附录A~~~~系统补充材料}
 \renewcommand{\thechapter}{附录}
-% % 设置附录编号格式
-% \ctexset{
-%   section/number = 附录\Alph{section}
-% }
 
-本附录用于放置正文中过长的补充材料。当前可先保留以下占位内容，最终定稿时可根据实际情况删除或替换。
+\newcommand{\uiscreenshotplaceholder}[2]{
+    \begin{figure}[htbp]
+        \centering
+        \IfFileExists{figures/screenshots/#1}{
+            \includegraphics[width=0.9\textwidth]{figures/screenshots/#1}
+        }{
+            \fbox{
+                \parbox[c][5.2cm][c]{0.86\textwidth}{
+                    \centering
+                    待补充界面截图\\[6pt]
+                    截图内容：#2\\[6pt]
+                    建议文件名：\texttt{\detokenize{#1}}
+                }
+            }
+        }
+        \caption{#2}
+    \end{figure}
+}
+
+本附录用于放置正文中不宜展开过长描述但对系统实现与答辩展示有辅助价值的补充材料，包括后端接口模块清单、检索评估集说明以及主要界面截图位置。后续如补充正式截图，只需将图片保存到\texttt{papers/Latex-Mine/figures/screenshots/}目录并保持本文给出的文件名即可自动替换占位框。
 
 
-\section{核心接口清单}
+\section{核心接口模块清单}
 
-本节后续可补充FreeFlow后端主要API接口，包括SIWE认证、Pinata上传、发行管理、资源检索、购买记录和评论等接口。
+\begin{table}[htbp]
+    \linespread{1.45}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{FreeFlow后端核心接口模块清单}\label{tab:appendix_api_modules}
+    \begin{tabular}{|l|p{4.4cm}|p{6.1cm}|}
+        \hline
+        模块 & 代表接口前缀 & 主要用途 \\ \hline
+        认证模块 & \texttt{/api/v1/auth} & SIWE nonce申请、签名验证、会话查询与退出登录 \\ \hline
+        存储模块 & \texttt{/api/v1/storage/pinata} & 上传音频、封面与metadata文件，返回CID与网关信息 \\ \hline
+        发行模块 & \texttt{/api/v1/releases} & 创建、查询、更新和删除创作者发行草稿 \\ \hline
+        资源模块 & \texttt{/api/v1/resources} & 链上资源搜索、resourceKey解析与详情读取 \\ \hline
+        购买模块 & \texttt{/api/v1/purchases} & 记录购买结果并维护访问权投影数据 \\ \hline
+        评论模块 & \texttt{/api/v1/comments} & 查询评论列表并为已登录用户创建评论 \\ \hline
+        分账模块 & \texttt{/api/v1/royalties} & 查询收益工作台并记录分账提取结果 \\ \hline
+    \end{tabular}
+\end{table}
 
 
-\section{检索测试集样例}
+\section{检索评估集补充说明}
 
-本节后续可补充链上音乐资源检索测试集，包括查询词、目标资源、相关性标注和排序结果。
+\begin{table}[htbp]
+    \linespread{1.45}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{检索评估集组成说明}\label{tab:appendix_ranking_dataset}
+    \begin{tabular}{|l|p{8.8cm}|}
+        \hline
+        项目 & 说明 \\ \hline
+        资源规模 & 26条链上音乐资源，覆盖标题、艺术家、专辑、流派、Token ID、CID、合约地址和resourceKey等字段 \\ \hline
+        查询规模 & 44个查询，覆盖标题精确匹配、艺术家/专辑/流派多结果查询、CID与resourceKey定位、全角输入、空格扰动和轻微拼写错误 \\ \hline
+        相关性标注 & 单目标定位查询使用三级相关；多结果查询按照3/2/1相关等级人工标注 \\ \hline
+        评价指标 & Precision@10、MRR、nDCG@10、Zero Result Rate和平均响应时间 \\ \hline
+        对比方法 & SQL contains基线、仅文本评分、文本+链上身份字段、完整\texttt{chain\_resource\_rank\_v1} \\ \hline
+    \end{tabular}
+\end{table}
 
 
-\section{系统截图清单}
+\section{系统界面截图占位}
 
-本节后续可补充Profile引导、创作者工作台、素材上传、链上发布、搜索结果、链上详情页、评论页和链上音乐库等截图。
+以下截图位用于展示系统主要界面。若当前尚未截取正式图片，可先保留占位框；完成截图后，按建议文件名保存图片即可直接生成正式版图稿。
+
+\uiscreenshotplaceholder{profile_guide.png}{Profile引导与钱包登录界面}
+
+\uiscreenshotplaceholder{creators_workshop.png}{创作者工作台主界面}
+
+\uiscreenshotplaceholder{publish_form.png}{发行信息编辑与素材上传界面}
+
+\uiscreenshotplaceholder{search_results.png}{链上资源搜索结果界面}
+
+\uiscreenshotplaceholder{track_detail.png}{链上音乐详情与购买界面}
+
+\uiscreenshotplaceholder{comment_and_library.png}{评论区或链上音乐库界面}

@@ -1,19 +1,97 @@
-<mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="600" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="2" value="DRAFT&#xa;创建草稿&#xa;编辑作品信息" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#4E79A7;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="45" y="70" width="125" height="70" as="geometry"/></mxCell>
-<mxCell id="3" value="ASSETS_PENDING&#xa;选择音频/封面&#xa;准备上传" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#F28E2B;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="235" y="70" width="140" height="70" as="geometry"/></mxCell>
-<mxCell id="4" value="ASSETS_UPLOADED&#xa;音频与封面 CID&#xa;已写入后端" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F7F7;strokeColor=#4ECDC4;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="450" y="70" width="145" height="70" as="geometry"/></mxCell>
-<mxCell id="5" value="METADATA_UPLOADED&#xa;metadata JSON CID&#xa;已写入发行记录" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F7F7;strokeColor=#4ECDC4;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="640" y="70" width="145" height="70" as="geometry"/></mxCell>
-<mxCell id="6" value="PUBLISHING&#xa;调用 PlatformHub.publishTrack&#xa;等待交易确认" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="450" y="245" width="175" height="80" as="geometry"/></mxCell>
-<mxCell id="7" value="PUBLISHED&#xa;解析 TrackPublished&#xa;回写 tokenId / splitter / txHash" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF7EA;strokeColor=#59A14F;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="215" y="245" width="180" height="80" as="geometry"/></mxCell>
-<mxCell id="8" value="FAILED&#xa;上传、metadata 或链上交易失败&#xa;记录 latestError" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6F6F6;strokeColor=#8C8C8C;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="235" y="430" width="180" height="80" as="geometry"/></mxCell>
-<mxCell id="9" value="CANCELLED&#xa;用户取消或删除草稿" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6F6F6;strokeColor=#8C8C8C;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="480" y="430" width="170" height="70" as="geometry"/></mxCell>
-<mxCell id="20" value="创建" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4E79A7;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="2" target="3"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="21" value="上传素材" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#F28E2B;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="3" target="4"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="22" value="构建并上传 metadata" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="4" target="5"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="23" value="发起链上发布" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#E15759;fontSize=11;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="5" target="6"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="713" y="190"/><mxPoint x="581" y="190"/></Array></mxGeometry></mxCell>
-<mxCell id="24" value="事件回写" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#59A14F;fontSize=11;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="6" target="7"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="25" value="失败分支" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#8C8C8C;fontSize=11;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="3" target="8"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="305" y="180"/><mxPoint x="305" y="380"/></Array></mxGeometry></mxCell>
-<mxCell id="26" value="失败分支" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#8C8C8C;fontSize=11;exitX=0.5;exitY=1;entryX=0.65;entryY=0;" edge="1" parent="1" source="6" target="8"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="538" y="375"/><mxPoint x="360" y="375"/></Array></mxGeometry></mxCell>
-<mxCell id="27" value="取消" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#8C8C8C;fontSize=11;exitX=0.8;exitY=1;entryX=0.2;entryY=0;" edge="1" parent="1" source="2" target="9"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="145" y="360"/><mxPoint x="514" y="360"/></Array></mxGeometry></mxCell>
-<mxCell id="28" value="修复后重试" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#4E79A7;fontSize=11;exitX=0;exitY=0.5;entryX=0.4;entryY=1;" edge="1" parent="1" source="8" target="2"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="120" y="470"/><mxPoint x="120" y="160"/></Array></mxGeometry></mxCell>
-</root></mxGraphModel>
+<mxfile host="drawio-plugin" modified="2026-04-22T07:14:57.671Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" version="22.1.22" etag="KfoZVQTinUrlEozqXUd1" type="embed">
+  <diagram id="2dVYr5Y86-V4VlP1IvHt" name="Page-1">
+    <mxGraphModel dx="884" dy="554" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="20" y="260" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="DRAFT&#xa;创建草稿&#xa;编辑作品信息" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#4E79A7;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="240" width="120" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="ASSETS_PENDING&#xa;选择音频/封面&#xa;准备上传" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#F28E2B;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="270" y="240" width="155" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="ASSETS_UPLOADED&#xa;音频与封面 CID&#xa;已写入后端" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F7F7;strokeColor=#4ECDC4;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="580" y="240" width="155" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="METADATA_UPLOADED&#xa;metadata JSON CID&#xa;已写入发行记录" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F7F7;strokeColor=#4ECDC4;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="580" y="350" width="155" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="PUBLISHING&#xa;调用 PlatformHub.publishTrack&#xa;等待交易确认" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE8EF;strokeColor=#E15759;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="570" y="455" width="175" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="PUBLISHED&#xa;解析 TrackPublished&#xa;回写 tokenId / splitter / txHash" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF7EA;strokeColor=#59A14F;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="282.5" y="550" width="185" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="FAILED&#xa;上传、metadata 或链上交易失败&#xa;记录 latestError" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6F6F6;strokeColor=#8C8C8C;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="300" y="455" width="190" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="CANCELLED&#xa;用户取消或删除草稿" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6F6F6;strokeColor=#8C8C8C;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="50" y="530" width="130" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="创建草稿" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4E79A7;fontSize=11;" parent="1" source="2" target="3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="选择素材" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#F28E2B;fontSize=11;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="3" target="4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="上传音频/封面" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;" parent="1" source="4" target="5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="生成并上传 metadata" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#4ECDC4;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="5" target="6" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="24" value="publishTrack()" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#E15759;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="6" target="7" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="25" value="TrackPublished 回写" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#59A14F;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="7" target="8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="26" value="发布完成" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#59A14F;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="8" target="11" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="27" value="取消/删除草稿" style="endArrow=classic;html=1;rounded=0;strokeColor=#8C8C8C;fontSize=11;exitX=0.25;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="3" target="10" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="28" value="结束" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#8C8C8C;fontSize=11;" parent="1" source="10" target="13" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="29" value="上传失败" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#8C8C8C;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" parent="1" source="4" target="9" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="30" value="metadata 失败" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#8C8C8C;fontSize=11;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="6" target="9" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="31" value="交易失败" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#8C8C8C;fontSize=11;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="7" target="9" edge="1">
+          <mxGeometry x="0.0105" relative="1" as="geometry">
+            <mxPoint x="460" y="640" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="32" value="修复后重试" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#4E79A7;fontSize=11;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" parent="1" source="9" target="3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="35" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="100" y="690" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="" style="ellipse;aspect=fixed;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;" parent="35" vertex="1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" parent="35" vertex="1">
+          <mxGeometry x="8" y="8" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="36" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="360" y="680" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="" style="ellipse;aspect=fixed;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;" parent="36" vertex="1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="" style="ellipse;aspect=fixed;fillColor=#000000;strokeColor=#000000;" parent="36" vertex="1">
+          <mxGeometry x="8" y="8" width="14" height="14" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

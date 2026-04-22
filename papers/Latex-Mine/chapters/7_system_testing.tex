@@ -3,126 +3,214 @@
 \chapter{系统测试与效果分析}
 
 
-\section{测试环境}
+\section{实验环境与复现流程}
 
-系统测试环境应在最终论文中结合实际设备填写。当前可先按表\ref{tab:test_environment}整理。
+考虑到FreeFlow同时涉及桌面端、后端、智能合约与外部IPFS服务，本文将实验划分为两类可复现任务：一类是基于本地数据集的检索排序离线评估，另一类是基于Hardhat本地链的智能合约自动化测试。前者用于验证链上资源检索与排序算法的有效性和性能，后者用于验证发布、购买和访问控制等链上核心业务逻辑。
+
+实验过程已整理为可直接运行的脚本，检索排序实验命令为\texttt{pnpm --filter freeflow-web25-backend run experiment:ranking}，合约测试命令为\texttt{pnpm --filter @freeflow/contracts run test}，也可以通过\texttt{papers/Latex-Mine/scripts/run-thesis-experiments.sh}统一执行。实验生成的指标数据会自动写入\texttt{papers/Latex-Mine/figures/data/}目录，供本章图表直接读取。
 
 \begin{table}[htbp]
     \linespread{1.5}
     \zihao{5}
     \songti
     \centering
-    \caption{系统测试环境}\label{tab:test_environment}
+    \caption{实验环境配置}\label{tab:test_environment}
     \begin{tabular}{|l|p{10cm}|}
         \hline
-        类别    & 环境说明                       \\ \hline
-        操作系统  & macOS，后续可补充Windows测试环境     \\ \hline
-        桌面端   & Electron、React、TypeScript  \\ \hline
-        后端    & Node.js、Express、Prisma     \\ \hline
-        数据库   & PostgreSQL、SQLite          \\ \hline
-        区块链网络 & Sepolia测试网                 \\ \hline
-        存储服务  & Pinata/IPFS                \\ \hline
-        钱包    & MetaMask或WalletConnect兼容钱包 \\ \hline
+        类别 & 环境说明 \\ \hline
+        硬件设备 & Apple M4，16 GB 内存 \\ \hline
+        操作系统 & macOS 26.1（arm64） \\ \hline
+        后端运行时 & Node.js v20.18.0，pnpm 10.0.0 \\ \hline
+        桌面端技术栈 & Electron、React、TypeScript \\ \hline
+        后端技术栈 & Node.js、Express、Prisma \\ \hline
+        合约测试工具链 & Hardhat 2.28.6，Solidity 0.8.26 \\ \hline
+        排序评估集规模 & 26条资源，44个查询 \\ \hline
+        参考时间点 & 2026-04-20 12:00:00 UTC \\ \hline
     \end{tabular}
 \end{table}
 
 
-\section{后端接口测试}
+\section{检索排序实验设置}
 
-后端接口测试应覆盖认证、上传、发行、检索、购买和评论等模块。测试方法可采用手动接口请求、桌面端联调和日志观察相结合的方式。
+离线检索评估集围绕论文第6章提出的链上资源排序目标构建。26条资源覆盖标题、艺术家、专辑、流派、Token ID、合约地址、CID、resourceKey和交易哈希等字段；44个查询覆盖精确检索、模糊检索、链上身份定位和输入扰动等场景。对于标题、Token ID、CID和resourceKey等单目标查询，只标注一个三级相关结果；对于艺术家、专辑和流派查询，则按照人工标注的3/2/1相关等级评价排序质量。
 
 \begin{table}[htbp]
-    \linespread{1.5}
+    \linespread{1.45}
     \zihao{5}
     \songti
     \centering
-    \caption{后端接口测试用例占位}\label{tab:api_tests}
-    \begin{tabular}{|l|l|p{7cm}|l|}
+    \caption{检索评估查询类型分布}\label{tab:ranking_query_categories}
+    \begin{tabular}{|l|c|l|}
         \hline
-        编号     & 模块 & 测试内容                & 预期结果                  \\ \hline
-        API-01 & 认证 & 申请SIWE nonce并完成签名验证 & 返回会话token             \\ \hline
-        API-02 & 上传 & 上传音频文件到Pinata       & 返回CID和storageObjectId \\ \hline
-        API-03 & 发行 & 创建并更新发行草稿           & 草稿状态正确保存              \\ \hline
-        API-04 & 检索 & 使用标题关键词检索资源         & 返回目标资源和排序原因           \\ \hline
-        API-05 & 购买 & 写入购买交易记录            & purchase记录创建或更新成功     \\ \hline
-        API-06 & 评论 & 登录用户发表评论            & 评论出现在列表首位             \\ \hline
+        查询类型 & 数量 & 说明 \\ \hline
+        标题精确匹配 & 9 & 直接定位单首作品 \\ \hline
+        艺术家查询 & 4 & 返回同创作者多首作品 \\ \hline
+        专辑查询 & 5 & 验证同专辑资源排序 \\ \hline
+        流派查询 & 5 & 验证多结果排序质量 \\ \hline
+        Token ID 查询 & 3 & 验证链上标识精确定位 \\ \hline
+        合约地址查询 & 2 & 验证MusicAccess合约检索 \\ \hline
+        CID 查询 & 2 & 验证IPFS内容寻址检索 \\ \hline
+        resourceKey 查询 & 2 & 验证链上资源键精确定位 \\ \hline
+        交易哈希查询 & 1 & 验证发布交易定位 \\ \hline
+        拼写扰动查询 & 4 & 如\texttt{legder lullaby} \\ \hline
+        紧凑输入/空格扰动 & 4 & 如\texttt{neonharbor}、\texttt{海风 信号} \\ \hline
+        全角输入 & 1 & 验证NFKC归一化 \\ \hline
+        描述关键词查询 & 1 & 验证长文本辅助召回 \\ \hline
+        多词组合查询 & 1 & 验证艺术家与专辑联合意图 \\ \hline
     \end{tabular}
 \end{table}
 
-
-\section{智能合约测试}
-
-合约测试主要验证PlatformHub、MusicAccess1155和RoyaltySplitter的核心逻辑。当前项目已覆盖以下测试点：
-
-\begin{enumerate}
-    \item 付费作品发布后，用户支付正确金额可获得访问凭证。
-    \item 公开作品发布后，用户默认拥有访问权限。
-    \item ERC-1155访问凭证不可在用户之间转让。
-    \item 只有创作者可以修改作品销售配置。
-\end{enumerate}
-
-后续正式论文应补充合约测试命令、测试截图和Sepolia烟雾测试结果。
+对比方法共设置4组。SQL contains基线只依赖数据库字段包含匹配；仅文本评分方法只计算标题、艺术家、专辑、流派、描述及模糊相似度；文本+链上身份字段方法在此基础上增加Token ID、合约地址、CID、resourceKey和交易哈希等身份特征；完整排序算法即本文实现的\texttt{chain\_resource\_rank\_v1}，进一步引入新鲜度和热度信号。评价指标包括Precision@10、MRR、nDCG@10、Zero Result Rate和平均响应时间。
 
 
-\section{核心业务流程测试}
+\section{智能合约自动化测试结果}
 
-核心业务流程测试应覆盖从创作者发布到用户购买播放的完整链路。
+智能合约测试使用\texttt{packages/contracts/test/platformHub.js}中的Hardhat测试集执行，命令为\texttt{pnpm --filter @freeflow/contracts run test}。测试总计4项，全部通过，总耗时为758 ms。测试结果如表\ref{tab:contract_tests}所示。
 
 \begin{table}[htbp]
-    \linespread{1.5}
+    \linespread{1.45}
     \zihao{5}
     \songti
     \centering
-    \caption{核心业务流程测试用例}\label{tab:business_tests}
-    \begin{tabular}{|l|p{5.5cm}|p{5.5cm}|}
+    \caption{智能合约自动化测试结果}\label{tab:contract_tests}
+    \begin{tabular}{|l|p{8.3cm}|l|}
         \hline
-        编号  & 测试流程             & 预期结果                       \\ \hline
-        T01 & 用户完成SIWE登录       & Profile地址与会话地址一致           \\ \hline
-        T02 & 创作者创建发行草稿        & 系统生成DRAFT状态发行记录            \\ \hline
-        T03 & 上传音频、封面和metadata & 数据库保存CID和gateway地址         \\ \hline
-        T04 & 调用合约发布作品         & 生成tokenId、splitter和发布交易哈希  \\ \hline
-        T05 & 用户检索已发布作品        & 搜索结果展示作品并包含排序原因            \\ \hline
-        T06 & 用户购买付费作品         & ERC-1155余额变为1，后端记录purchase \\ \hline
-        T07 & 用户播放链上音乐         & 音频代理能够返回可播放音频流             \\ \hline
-        T08 & 用户发表评论           & 评论写入后端并显示在评论列表             \\ \hline
+        编号 & 测试内容 & 结果 \\ \hline
+        C01 & 付费作品发布后，用户支付正确金额可获得ERC-1155访问凭证 & 通过 \\ \hline
+        C02 & 公开作品发布后，未购买用户默认拥有访问权限 & 通过 \\ \hline
+        C03 & ERC-1155访问凭证不可在普通用户之间转让 & 通过 \\ \hline
+        C04 & 只有创作者本人可以修改作品销售配置 & 通过 \\ \hline
     \end{tabular}
 \end{table}
 
+该测试结果说明PlatformHub、MusicAccess1155与RoyaltySplitter之间的协作逻辑能够正确支撑作品发布、权限校验和收益分账，是系统后续联调和桌面端调用的基础。
 
-\section{检索排序模块测试}
 
-检索排序测试建议设置多个查询集合，包括文本查询、链上身份查询和扰动查询。对比策略包括数据库contains基线、仅文本评分、文本加链上身份字段和完整算法。
+\section{检索效果对比实验}
+
+表\ref{tab:ranking_metrics_actual}给出了4种方法在44个查询上的总体表现。由于评估集包含较多单目标定位查询，Precision@10的绝对值受到上限约束，因此本节重点结合MRR和nDCG@10分析排序质量。
 
 \begin{table}[htbp]
-    \linespread{1.5}
+    \linespread{1.45}
     \zihao{5}
     \songti
     \centering
-    \caption{检索排序指标对比表占位}\label{tab:ranking_metrics}
-    \begin{tabular}{|l|l|l|l|l|}
+    \caption{检索排序指标对比结果}\label{tab:ranking_metrics_actual}
+    \begin{tabular}{|p{3.2cm}|c|c|c|c|c|}
         \hline
-        方法             & Precision@10 & MRR & nDCG@10 & 平均响应时间 \\ \hline
-        SQL contains基线 & 待测           & 待测  & 待测      & 待测     \\ \hline
-        仅文本评分          & 待测           & 待测  & 待测      & 待测     \\ \hline
-        文本+链上身份字段      & 待测           & 待测  & 待测      & 待测     \\ \hline
-        完整排序算法         & 待测           & 待测  & 待测      & 待测     \\ \hline
+        方法 & Precision@10 & MRR & nDCG@10 & Zero Result Rate & 平均响应时间/ms \\ \hline
+        SQL contains基线 & 0.1432 & 0.8182 & 0.7567 & 15.91\% & 0.0681 \\ \hline
+        仅文本评分 & 0.1432 & 0.7727 & 0.6989 & 18.18\% & 0.8264 \\ \hline
+        文本+链上身份字段 & 0.1636 & 0.9773 & 0.9034 & 0.00\% & 0.8524 \\ \hline
+        完整排序算法 & 0.1636 & 0.9773 & 0.9327 & 0.00\% & 0.8128 \\ \hline
     \end{tabular}
 \end{table}
 
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            width=0.98\textwidth,
+            height=8.1cm,
+            bar width=9pt,
+            ymin=0,
+            ymax=105,
+            ylabel={指标值（\%）},
+            symbolic x coords={sql_contains,text_only,text_identity,full_ranker},
+            xtick=data,
+            xticklabels={SQL contains基线,仅文本评分,文本+链上身份字段,完整排序算法},
+            xticklabel style={rotate=18,anchor=east,font=\zihao{6}},
+            ymajorgrids=true,
+            legend style={at={(0.5,1.05)},anchor=south,legend columns=3,font=\zihao{6}},
+            enlarge x limits=0.08,
+        ]
+            \addplot table[x=method_key,y=precision_at_10_pct,col sep=comma]{figures/data/search_ranking_metrics.csv};
+            \addplot table[x=method_key,y=mrr_pct,col sep=comma]{figures/data/search_ranking_metrics.csv};
+            \addplot table[x=method_key,y=ndcg_at_10_pct,col sep=comma]{figures/data/search_ranking_metrics.csv};
+            \legend{Precision@10,MRR,nDCG@10}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{不同排序策略的检索质量对比}
+    \label{fig:ranking_metrics_bar}
+\end{figure}
 
-\section{性能测试与结果分析}
+从实验结果可以看出，单纯依赖SQL字段包含匹配虽然开销最低，但在拼写扰动、空格扰动和链上复杂身份查询场景中会出现明显漏召回，Zero Result Rate达到15.91\%。仅文本评分方法能够处理一部分模糊查询，但由于缺少身份字段特征，对Token ID、合约地址、CID和resourceKey等链上定位查询支持不足，其MRR和nDCG@10均低于SQL contains基线。
 
-性能测试建议从检索响应时间、播放启动时间和发布流程耗时三个方面展开。
+当加入链上身份字段后，Zero Result Rate下降到0，MRR从0.7727提升到0.9773，说明绝大多数查询都能在首位或前两位命中目标资源。完整排序算法在此基础上继续引入新鲜度和热度特征，使nDCG@10从0.9034进一步提升到0.9327，表明在多结果查询场景下，结果前列排序更加符合人工标注的相关性偏好。
 
-\begin{enumerate}
-    \item 检索响应时间：分别在50、100、300和500条候选数据下测试平均响应时间和P95响应时间。
-    \item 播放启动时间：比较缓存命中和缓存未命中时，从点击播放到开始播放的耗时。
-    \item 发布流程耗时：统计音频上传、metadata上传和链上交易确认的耗时。
-\end{enumerate}
 
-后续正式论文应补充折线图或柱状图展示测试结果。
+\section{典型查询案例分析}
+
+完整排序算法除了输出结果列表外，还会返回排序原因，便于定位命中特征与答辩展示。表\ref{tab:ranking_case_analysis}给出了3类典型查询的实验结果。
+
+\begin{table}[htbp]
+    \linespread{1.45}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{典型查询案例分析}\label{tab:ranking_case_analysis}
+    \begin{tabular}{|p{3.6cm}|p{3.6cm}|p{5.2cm}|}
+        \hline
+        查询输入 & Top-1结果 & 主要排序原因 \\ \hline
+        \texttt{legder lullaby} & Ledger Lullaby & 标题分词命中50\%，文本相似度85\%，能够纠正轻微拼写错误 \\ \hline
+        \texttt{海风 信号} & 海风信号 & 标题经紧凑化后精确匹配，文本相似度为100\% \\ \hline
+        resourceKey精确查询 & Paper Lantern Sky & resourceKey精确匹配，同时命中音乐合约地址 \\ \hline
+    \end{tabular}
+\end{table}
+
+上述结果表明，排序模块不仅能够处理传统文本检索，还能处理链上身份字段定位以及带空格、大小写和轻微拼写误差的输入。排序原因字段使系统具备了较强的可解释性，也便于后续继续调权和排查误召回问题。
+
+
+\section{性能测试结果}
+
+为了观察完整排序算法在不同候选规模下的开销变化，本文将候选集合分别扩展到50、100、300和500条，并统计平均响应时间与P95响应时间。结果如表\ref{tab:ranking_latency}和图\ref{fig:ranking_latency_curve}所示。
+
+\begin{table}[htbp]
+    \linespread{1.45}
+    \zihao{5}
+    \songti
+    \centering
+    \caption{不同候选规模下的排序耗时}\label{tab:ranking_latency}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        候选数量 & 平均响应时间/ms & P95响应时间/ms \\ \hline
+        50 & 2.47 & 4.97 \\ \hline
+        100 & 4.93 & 9.96 \\ \hline
+        300 & 14.28 & 28.47 \\ \hline
+        500 & 23.27 & 46.90 \\ \hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=0.94\textwidth,
+            height=7.8cm,
+            xlabel={候选数量},
+            ylabel={响应时间/ms},
+            xmin=40,
+            xmax=510,
+            ymin=0,
+            ymax=50,
+            ymajorgrids=true,
+            legend style={at={(0.5,1.05)},anchor=south,legend columns=2,font=\zihao{6}},
+            tick label style={font=\zihao{6}},
+            label style={font=\zihao{6}},
+        ]
+            \addplot+[mark=*,line width=1pt] table[x=candidate_count,y=avg_latency_ms,col sep=comma]{figures/data/search_latency_candidates.csv};
+            \addplot+[mark=square*,line width=1pt] table[x=candidate_count,y=p95_latency_ms,col sep=comma]{figures/data/search_latency_candidates.csv};
+            \legend{平均响应时间,P95响应时间}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{完整排序算法在不同候选规模下的延迟变化}
+    \label{fig:ranking_latency_curve}
+\end{figure}
+
+结果显示，随着候选数量增加，平均响应时间近似线性增长，这与第6章中的复杂度分析一致。在500条候选资源下，完整排序算法的平均响应时间为23.27 ms，P95响应时间为46.90 ms，仍处于桌面端检索交互可接受范围内。因此，在当前毕业设计场景下，\texttt{chain\_resource\_rank\_v1}能够在保证排序质量的同时维持较低的在线响应开销。
 
 
 \section{本章小结}
 
-本章规划了FreeFlow系统测试方案，包括接口测试、合约测试、业务流程测试、检索排序测试和性能测试。当前数据为占位内容，后续应结合实际测试结果补充数值、截图和分析。
+本章基于可复现脚本完成了FreeFlow系统的实验验证。结果表明，智能合约核心逻辑已经能够稳定支撑作品发布、购买与权限控制；链上资源排序模块在引入身份字段、新鲜度和热度后，能够显著提升MRR与nDCG@10，并将Zero Result Rate降至0；在500条候选规模下，完整排序算法仍可保持23.27 ms的平均响应时间。综合来看，FreeFlow已经具备较完整的链上音乐发布、访问和检索能力。
