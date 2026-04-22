@@ -2,24 +2,22 @@
 
 \chapter{系统总体设计}
 
-
 \section{系统总体架构}
 
-FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架构。桌面端负责用户交互、音频播放、本地缓存和钱包交互；后端负责SIWE认证、Pinata上传代理、发行数据管理、资源检索、购买记录和评论；智能合约负责链上发布、访问凭证、购买授权和收益分账；IPFS/Pinata负责保存音频、封面和metadata资源。整体设计遵循“低频且需要强可信的数据上链，高频且需要快速查询的数据链下处理”的原则：作品发布结果、访问授权和交易记录放在链上，评论、搜索索引、登录会话和上传状态等高频数据放在链下。
+FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整体架构。桌面端负责用户交互、钱包连接、播放控制与本地缓存；后端负责认证、上传代理、资源索引、购买记录与评论服务；智能合约负责作品发布、访问授权与收益分账；IPFS/Pinata负责音频、封面与metadata资源存储。系统总体架构如图\ref{fig:system_architecture}所示。
 
-系统总体架构如图\ref{fig:system_architecture}所示。Electron桌面端通过Web2.5 API访问后端业务服务，通过ethers.js与Sepolia测试网合约交互，并通过本地音频代理播放IPFS gateway音频资源。后端通过Prisma维护PostgreSQL中的用户、发行、存储、购买和评论数据，同时代理Pinata上传，形成链上状态和链下索引协同的系统结构。之所以不把评论、全文检索索引和会话信息直接写入链上，是因为这类数据更新频繁、查询维度多、需要分页与条件过滤，若全部转化为链上写入和链上读取，不仅会持续消耗gas，还会受到区块确认延迟与链上检索能力限制，不利于音乐应用中的即时交互与内容服务\cite{Eren2025,Friedl2024}。
+在职责划分上，作品发布结果、访问凭证、交易记录等关键状态由链上维护，评论、会话、搜索索引和上传记录等高频业务数据由链下维护。该分层方式能够兼顾状态可信性、检索效率与系统响应能力\cite{Eren2025,Friedl2024}。
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{figures/out/system_architecture.png}
+    \figmax{figures/out/system_architecture.png}{}
     \caption{FreeFlow系统总体架构图}
     \label{fig:system_architecture}
 \end{figure}
 
-
 \section{功能模块设计}
 
-系统功能模块可划分为用户资料与认证模块、创作者工作台模块、素材上传模块、链上发布模块、资源检索模块、购买与访问验证模块、播放与缓存模块、链上音乐库模块和评论模块。需要说明的是，当前模块划分围绕作品发布、访问控制、资源发现与基础互动展开，不包含治理代币、提案投票或自治审核等治理模块。
+系统模块围绕发布、检索、访问与播放四条主线展开，模块划分如表\ref{tab:module_design}所示。
 
 \begin{table}[htbp]
     \linespread{1.5}
@@ -41,16 +39,15 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
     \end{tabular}
 \end{table}
 
-
 \section{业务流程设计}
 
 \subsection{创作者发布流程}
 
-创作者发布流程如图\ref{fig:release_workflow}所示。该流程以创作者工作台为入口，依次完成发行草稿维护、素材上传、元数据生成、合约发布和链上索引回写。该流程的关键设计点在于：音频文件、封面文件和扩展metadata由IPFS承载，链上只记录metadata URI、销售配置和访问凭证等关键状态，从而避免把大体积媒体内容直接写入链上。
+创作者发布流程如图\ref{fig:release_workflow}所示。该流程从发行草稿创建开始，依次完成素材上传、metadata生成、链上发布与结果回写。媒体资源由IPFS保存，链上记录metadata URI、访问配置与发行结果等关键状态。
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.98\textwidth]{figures/out/release_workflow.png}
+    \figmax{figures/out/release_workflow.png}
     \caption{创作者链上音乐发布流程图}
     \label{fig:release_workflow}
 \end{figure}
@@ -59,47 +56,44 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
 
 \begin{enumerate}
     \item 用户连接钱包并完成SIWE登录。
-    \item 创作者在工作台创建发行草稿。
-    \item 编辑标题、歌手、专辑、流派、描述、访问模式、价格和分账信息。
-    \item 选择音频和封面文件，系统读取并校验音频metadata。
-    \item 后端代理上传音频和封面到Pinata，并保存CID。
-    \item 桌面端生成作品元数据文件，并上传到Pinata。
-    \item 桌面端调用PlatformHub合约发布作品。
-    \item 系统解析链上事件，将tokenId、splitter地址、交易哈希和区块号回写后端。
+    \item 创作者创建并编辑发行草稿。
+    \item 系统上传音频、封面与metadata，并保存CID。
+    \item 客户端调用\texttt{PlatformHub}发布作品。
+    \item 交易确认后，系统回写\texttt{tokenId}、分账合约地址、交易哈希与区块信息。
 \end{enumerate}
 
 \subsection{用户购买播放流程}
 
-用户购买播放流程如图\ref{fig:purchase_playback_sequence}所示。系统先通过后端检索和解析链上资源，再以合约访问状态决定是否需要购买，最后将拥有访问权的作品加入链上音乐库并交由音频代理播放。该流程体现了“链下负责组织资源与加速查询，链上负责判定访问资格”的分工方式：检索与详情展示依赖链下索引，访问权确认依赖链上合约结果。
+用户购买播放流程如图\ref{fig:purchase_playback_sequence}所示。系统先基于链下索引提供检索与详情展示，再以链上状态完成访问资格确认，最后进入播放或下载链路。
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{figures/out/purchase_playback_sequence.png}
+    \figmax{figures/out/purchase_playback_sequence.png}
     \caption{用户购买与播放流程图}
     \label{fig:purchase_playback_sequence}
 \end{figure}
 
+\FloatBarrier
+
 用户购买播放流程的主要步骤如下：
 
 \begin{enumerate}
-    \item 用户输入关键词检索链上音乐资源。
-    \item 后端召回已发布资源并进行排序。
-    \item 用户进入链上音乐详情页。
-    \item 桌面端读取链上销售配置和访问状态。
-    \item 若作品公开，用户可直接加入链上音乐库并播放。
-    \item 若作品付费，用户调用buyAccess购买访问权。
-    \item 购买成功后，系统记录购买交易并将作品加入链上音乐库。
-    \item 用户通过音频代理播放或下载作品。
+    \item 用户检索并查看链上音乐资源。
+    \item 客户端读取销售配置和访问状态。
+    \item 公开作品可直接播放，付费作品需调用\texttt{buyAccess}完成购买。
+    \item 访问校验通过后，作品加入链上音乐库并进入播放或下载流程。
 \end{enumerate}
 
 
+\FloatBarrier
+
 \section{数据库设计}
 
-FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。客户端数据库以\texttt{database.sqlite}文件形式存放于用户本地数据目录中，主要保存本地音乐库、歌单关系、链上音乐库投影、下载状态和应用启动会话；服务器数据库由Prisma管理，主要保存用户身份、SIWE认证会话、IPFS存储对象、创作者发行项目、购买交易投影和评论数据。两类数据库的职责边界不同：SQLite面向桌面端本地播放体验和离线管理，PostgreSQL面向Web2.5业务协同和链上资源索引。系统采用双数据库设计，是因为播放缓存、会话状态、评论列表和搜索排序都依赖频繁更新、分页查询与多条件过滤，这类数据更适合由本地数据库或关系型数据库承载。
+系统采用客户端SQLite数据库与服务器PostgreSQL数据库的双数据库方案。前者服务于本地音乐管理、缓存与播放状态维护，后者服务于身份认证、资源索引、上传记录、购买记录与评论存储。双数据库设计能够分别满足桌面端本地能力与链下业务协同的需要。
 
 \subsection{客户端SQLite数据库设计}
 
-客户端SQLite数据库采用Sequelize模型定义。其核心ER关系如图\ref{fig:client_sqlite_er}所示。\texttt{track}表保存本地音乐、外部平台音乐和FreeFlow链上音乐在桌面端的统一歌曲记录，其中\texttt{platform}和\texttt{platform\_unique\_id}构成唯一索引。对于FreeFlow资源，系统将链上资源键、chainId、合约地址、tokenId、metadata CID、音频CID和发布交易哈希等信息序列化保存到\texttt{freeflow\_metadata\_json}字段中，从而使链上音乐可以复用本地播放队列、歌单、下载和缓存逻辑。
+客户端SQLite数据库以统一歌曲记录为核心，其ER关系如图\ref{fig:client_sqlite_er}所示。\texttt{track}表承载本地音乐、外部来源音乐与FreeFlow链上音乐的统一表示；歌单与会话信息则围绕该表组织。链上音乐的扩展字段序列化保存在\texttt{freeflow\_metadata\_json}中，以复用本地播放、缓存与下载逻辑。
 
 \begin{figure}[htbp]
     \centering
@@ -124,11 +118,9 @@ FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。�
     \end{tabular}
 \end{table}
 
-\texttt{playlist\_detail}通过外键关联\texttt{playlists.playlist\_id}和\texttt{track.id}，删除歌单或歌曲时关联记录随之级联删除。音频下载模块会更新\texttt{track.relative\_local\_path}、\texttt{download\_status}、\texttt{download\_source\_cid}、\texttt{download\_source\_gateway}、\texttt{download\_error}和\texttt{downloaded\_at}等字段；链上音乐库则通过筛选\texttt{platform}为\texttt{FreeFlow}的\texttt{track}记录形成专门视图，无需另建一套重复的链上歌曲表。
-
 \subsection{服务器PostgreSQL数据库设计}
 
-服务器PostgreSQL数据库的核心ER关系如图\ref{fig:server_postgresql_er}所示。后端以\texttt{creator\_releases}作为链上音乐资源索引中心，围绕它关联创作者用户、IPFS存储对象、购买记录和评论记录。链上状态以智能合约为权威来源，后端数据库保存的是便于检索、展示和业务联动的链下投影。这样设计后，链上只承担权威状态确认，链下数据库则承担条件检索、分页展示、聚合统计和高频互动数据存储。
+服务器PostgreSQL数据库的ER关系如图\ref{fig:server_postgresql_er}所示。后端以\texttt{creator\_releases}为资源索引中心，关联用户、钱包身份、存储对象、购买记录与评论数据。该设计支持资源检索、详情展示、阶段恢复和交易投影等业务需求。
 
 \begin{figure}[htbp]
     \centering
@@ -158,16 +150,13 @@ FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。�
     \end{tabular}
 \end{table}
 
-\texttt{creator\_releases}表包含发行流程状态字段\texttt{status}和\texttt{currentStage}，用于支撑创作者工作台的阶段展示；包含\texttt{audioStorageObjectId}、\texttt{coverStorageObjectId}和\texttt{metadataStorageObjectId}，用于关联三类IPFS资源；包含\texttt{chainId}、\texttt{musicAssetAddress}、\texttt{platformHubAddress}、\texttt{splitterAddress}、\texttt{publishTxHash}、\texttt{publishBlockNumber}和\texttt{tokenId}，用于把链下发行记录定位到具体链上作品。系统对\texttt{chainId + musicAssetAddress + tokenId}设置唯一约束，确保同一链上访问凭证不会被重复索引。由此，资源搜索、详情页展示和排序计算都可以直接使用该链下索引，查询阶段也无需频繁遍历链上事件。
+在约束设计上，\texttt{creator\_releases}通过\texttt{chainId + musicAssetAddress + tokenId}保证链上资源索引唯一；\texttt{purchases}通过交易哈希与用户-资源组合约束防止重复确认；\texttt{comments}通过资源与用户索引支持评论列表和用户行为查询。
 
-购买记录表\texttt{purchases}同时设置\texttt{chainId + txHashLower}和\texttt{releaseId + walletAddressLower + chainId}两组唯一约束。前者避免同一链上交易被重复写入，后者避免同一用户在同一链上对同一作品产生重复确认记录。评论表\texttt{comments}则以\texttt{releaseId}和\texttt{userId}分别建立索引，满足按作品拉取评论列表和按用户追踪评论行为的需求。评论数据保存在PostgreSQL中。评论需要频繁追加、分页读取、条件过滤和必要的内容处理，链下数据库更适合承载此类互动数据。
-
+\FloatBarrier
 
 \section{智能合约设计}
 
-系统合约由MusicAccess1155、PlatformHub和RoyaltySplitter组成。MusicAccess1155负责访问凭证，PlatformHub负责发布、购买和访问判断，RoyaltySplitter负责收益分账。
-
-智能合约结构如图\ref{fig:contract_architecture}所示。创作者通过PlatformHub发布作品，PlatformHub在发布过程中调用RoyaltySplitterFactory为作品创建收益分账合约，并调用MusicAccess1155创建新的tokenId。听众购买付费作品时，PlatformHub校验销售配置和支付金额，随后调用MusicAccess1155铸造访问凭证，并将创作者及协作者对应的收益转入对应的RoyaltySplitter；平台手续费则保留在PlatformHub侧。这样的设计将平台收费与创作者侧分账分离，便于分别管理销售逻辑与收益提取逻辑。
+系统合约由\texttt{MusicAccess1155}、\texttt{PlatformHub}和\texttt{RoyaltySplitter}组成，其结构如图\ref{fig:contract_architecture}所示。\texttt{MusicAccess1155}负责访问凭证创建与校验；\texttt{PlatformHub}负责作品发布、销售配置维护、购买处理与访问状态判断；\texttt{RoyaltySplitter}负责收益保存与提取。
 
 \begin{figure}[htbp]
     \centering
@@ -175,6 +164,8 @@ FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。�
     \caption{智能合约结构图}
     \label{fig:contract_architecture}
 \end{figure}
+
+在发布流程中，\texttt{PlatformHub}为作品创建新的\texttt{tokenId}并关联分账合约；在购买流程中，合约校验支付金额与销售配置，随后铸造访问凭证并完成收益分配。各合约职责如表\ref{tab:contract_design}所示。
 
 \begin{table}[htbp]
     \linespread{1.5}
@@ -194,15 +185,10 @@ FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。�
 
 \section{系统安全设计}
 
-系统安全设计主要包括以下方面：
+系统安全设计围绕身份建立、访问控制、交易执行、接口保护和资源访问边界展开。在身份认证方面，系统采用 SIWE 签名登录机制，后端对 nonce、地址、链 ID、domain、uri 和签发时间进行校验，以降低签名重放和身份伪造风险。
 
-\begin{enumerate}
-    \item 身份认证安全：使用SIWE签名登录，后端校验nonce、地址、链ID、domain、uri和签发时间。
-    \item 链上访问安全：付费作品的访问状态以ERC-1155凭证和合约hasAccess结果为依据。
-    \item 交易安全：购买价格和销售状态由PlatformHub合约校验，避免客户端单独决定访问权。
-    \item 接口安全：后端上传、发行、购买和评论等接口需要会话认证，并通过链下接口隔离高频业务写入与链上状态写入。
-    \item 资源安全：当前IPFS资源仍存在CID公开后可直接访问的问题，后续可引入音频加密和授权网关。
-\end{enumerate}
+在访问控制方面，付费作品的访问资格以链上凭证与合约访问结果为依据，客户端仅负责发起查询与展示结果，不直接决定最终权限。购买流程中的价格、销售状态和凭证发放均由合约完成校验与执行，从而保证关键业务规则由链上统一约束。
 
+在接口保护方面，上传、发行、购买和评论等链下接口均要求会话认证，并通过服务端统一维护用户身份、上传记录和交易投影。需要说明的是，当前系统的音频资源仍基于 CID 和网关访问，若资源地址被直接获取，仍可能绕过应用侧访问流程。因此，现阶段的访问控制更适合作为原型系统中的授权验证机制，后续仍需结合音频加密、授权网关或短期签名 URL 等方案进一步完善资源保护能力。
 
-
+\FloatBarrier

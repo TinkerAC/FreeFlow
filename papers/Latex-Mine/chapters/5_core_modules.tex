@@ -6,7 +6,7 @@
     \begin{figure}[htbp]
     \centering
     \IfFileExists{figures/screenshots/#1}{
-        \includegraphics[width=0.9\textwidth]{figures/screenshots/#1}
+        \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{figures/screenshots/#1}
     }{
         \fbox{
             \parbox[c][5.2cm][c]{0.86\textwidth}{
@@ -20,24 +20,23 @@
     \label{fig:#1}
     \end{figure}
 }
-
-本章围绕FreeFlow已经实现的几条核心业务链路展开说明：身份建立与会话协同、创作者发行、资源检索与详情联动、购买授权与访问校验，以及播放与评论互动。这样的组织方式更适合突出“桌面端 + Web2.5后端 + 智能合约 + IPFS”之间的协同关系，说明系统如何在既定边界内完成从创作者发布到听众消费的系统实现。
-
+本章围绕系统关键业务链路展开，重点说明身份建立、创作者发行、资源检索、购买授权以及播放与评论等模块的实现方式。
 
 \section{身份建立与会话协同}
 
-用户进入系统后的第一条关键链路是身份建立。FreeFlow以本地Profile、钱包地址和SIWE会话的组合作为统一身份基础。桌面端首先读取本地保存的Profile列表，恢复最近一次使用的身份；随后，用户连接外部钱包并切换到目标链；客户端向后端申请nonce，构造符合EIP-4361规范的登录消息，请求钱包签名，并把签名结果提交后端验签。验签成功后，后端创建或更新用户实体、钱包身份和会话记录，客户端再将当前钱包地址与本地Profile绑定，从而形成“本地身份 + 链上地址 + 服务器会话”一致的登录状态。
+系统以本地Profile、钱包地址与SIWE会话共同构成用户身份基础。桌面端启动后读取本地Profile列表并恢复最近一次使用的身份；用户连接钱包并切换到目标链后，客户端向后端申请nonce，构造登录消息并请求钱包签名；后端完成签名验证后，创建或更新用户实体、钱包身份与会话记录，客户端再将当前钱包地址与本地Profile绑定。
 
-该链路的关键实现点在于职责划分。桌面端只负责连接钱包、展示签名内容和保存会话令牌；后端负责校验nonce是否过期或已消费、签名恢复地址是否与声明地址一致，以及chainId、domain、uri和issuedAt等字段是否合法。这样可以避免由客户端单独判定身份有效性，也为后续发行草稿、评论、购买记录和资源管理接口提供统一的鉴权基础。
+在职责划分上，桌面端负责钱包连接、签名发起与令牌保存，后端负责nonce有效性、签名恢复地址、链ID与消息字段校验。该实现为后续发行、购买、评论和资源管理接口提供了统一的鉴权基础。
 
 \chapteruiscreenshotplaceholder{profile_guide.png}{用户资料引导与钱包登录界面}
 
+\FloatBarrier
 
 \section{创作者发行链路实现}
 
 \subsection{工作台与状态驱动表单}
 
-创作者工作台是系统最核心的业务入口，负责承接作品草稿创建、信息编辑、素材上传、metadata生成和链上发布等连续操作。与单纯展示页面不同，工作台采用状态驱动方式限制操作顺序：只有当音频、封面和metadata都准备完成后，发布按钮才会进入可用状态；当交易发送后，界面会切换到发布中状态，避免用户重复发起链上交易。
+创作者工作台承担草稿编辑、素材上传、metadata生成与链上发布等连续操作。系统采用状态驱动方式约束操作顺序，并通过状态字段控制表单可编辑性、按钮可用性与错误提示。创作者工作台主要界面区域如表\ref{tab:creator_workshop_regions}所示。
 
 \begin{table}[htbp]
     \linespread{1.45}
@@ -56,24 +55,24 @@
     \end{tabular}
 \end{table}
 
-发行状态主要包括草稿（\texttt{DRAFT}）、素材待完善（\texttt{ASSETS\_PENDING}）、素材已上传（\texttt{ASSETS\_UPLOADED}）、元数据已上传（\texttt{METADATA\_UPLOADED}）、发布中（\texttt{PUBLISHING}）、已发布（\texttt{PUBLISHED}）和失败（\texttt{FAILED}）。桌面端根据状态字段控制表单可编辑性、按钮可用性和错误提示文案，后端则将这些状态持久化到发行记录中，用于支撑跨次会话恢复和异常重试。
+发行状态包括\texttt{DRAFT}、\texttt{ASSETS\_PENDING}、\texttt{ASSETS\_UPLOADED}、\texttt{METADATA\_UPLOADED}、\texttt{PUBLISHING}、\texttt{PUBLISHED}和\texttt{FAILED}。这些状态由后端持久化保存，用于跨会话恢复与异常重试。
 
 \chapteruiscreenshotplaceholder{creators_workshop.png}{创作者工作台主界面}
 
 \chapteruiscreenshotplaceholder{publish_form.png}{发行信息编辑与素材上传界面}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{figures/out/release_state_flow.png}
+    \figmax{figures/out/release_state_flow.png}
     \caption{创作者发行状态流转图}
     \label{fig:release_state_flow}
 \end{figure}
 
 \subsection{素材上传、metadata生成与链上发布}
 
-当创作者选择音频和封面后，客户端会将文件提交给后端上传接口，由后端代理调用Pinata完成文件持久化，并把CID、文件大小、MIME类型和上传结果写入数据库。系统采用服务器代理上传，是为了集中保存上传记录、便于定位失败原因，并避免在桌面端直接暴露第三方存储服务的敏感配置。
+音频和封面文件由客户端提交至后端上传接口，再由后端代理Pinata完成持久化，并记录CID、文件大小、MIME类型与上传结果。该方式有助于集中管理上传记录与异常信息。
 
-metadata文件由客户端根据作品信息、音频CID、封面CID、访问模式、价格以及扩展字段动态生成，再由后端上传到Pinata并把metadata URI回写发行记录。其主要字段如表\ref{tab:metadata_json_fields}所示。metadata上传成功后，客户端才允许调用链上发布流程，从而保证链上保存的是一份可解析、可追溯的资源引用，避免将不完整的草稿数据写入链上。
+metadata由客户端根据作品信息、资源CID与访问配置动态生成，经后端上传后回写metadata URI。其主要字段如表\ref{tab:metadata_json_fields}所示。
 
 \begin{table}[htbp]
     \linespread{1.5}
@@ -94,34 +93,33 @@ metadata文件由客户端根据作品信息、音频CID、封面CID、访问模
     \end{tabular}
 \end{table}
 
-链上发布由\texttt{PlatformHub}合约统一承接。客户端在metadata准备完成后调用\texttt{publishTrack}方法，合约根据销售配置创建新的\texttt{tokenId}，记录作品销售参数，并为创作者侧收益关联一个\texttt{RoyaltySplitter}分账合约。交易确认后，客户端解析\texttt{TrackPublished}事件中的\texttt{tokenId}、交易哈希和分账合约地址，再由后端将这些链上结果回写到发行记录中。由此，系统形成“链上保存权威状态，链下保存检索投影和界面恢复信息”的发行实现方式。
+当metadata准备完成后，客户端调用\texttt{PlatformHub.publishTrack}发起链上发布。交易确认后，客户端解析事件中的\texttt{tokenId}、交易哈希与分账合约地址，并由后端回写发行记录，形成后续检索、详情展示与状态恢复所需的链下投影。
 
+\FloatBarrier
 
 \section{资源索引、检索与详情联动}
 
-作品发布成功后，后端会以\texttt{creator\_releases}为核心构建链上资源索引。该索引将标题、艺术家、专辑、流派、tokenId、合约地址、CID、交易哈希等字段投影为可检索、可分页、可展示的数据视图，以支撑桌面端资源搜索和详情页加载。第六章重点讨论了排序算法本身，本章更关心检索结果如何与详情页、购买逻辑和播放链路联动。
+作品发布成功后，后端以\texttt{creator\_releases}为核心构建资源索引，并将标题、艺术家、专辑、流派、合约地址、\texttt{tokenId}、CID和交易哈希等字段组织为可检索视图。桌面端据此完成搜索结果展示和详情页加载。
 
-搜索结果页承担“发现入口”的作用。系统以列表方式展示封面、标题、创作者、价格、访问模式以及链上身份摘要，使用户先完成快速浏览和初步筛选，再进入详情页查看完整信息。这里的实现重点在于将用户最关心的消费信息与可验证的链上字段同时呈现，从而兼顾可读性和可追溯性。
+搜索结果页展示封面、标题、创作者、价格、访问模式与链上身份摘要，便于用户快速筛选。用户进入详情页后，客户端根据\texttt{resourceKey}请求后端解析资源信息，并同步读取链上销售配置与访问状态，从而完成详情展示与购买入口联动。
 
 \chapteruiscreenshotplaceholder{search_results.png}{链上资源搜索结果界面}
 
-当用户进入详情页后，客户端会根据\texttt{resourceKey}请求后端解析资源索引，并同步读取链上销售配置与访问状态。详情页既展示标题、封面、描述和价格等常规信息，也展示合约地址、Token ID、metadata链接和交易哈希等可验证字段。由此，后端索引负责“更快地找到和组织资源”，而真正的购买状态和访问资格仍以链上合约结果为准。
-
+\FloatBarrier
 
 \section{购买授权、访问校验与链上音乐库}
 
-用户购买付费作品时，客户端调用\texttt{PlatformHub.buyAccess}发起链上交易。合约会先校验销售配置和支付金额，再调用\texttt{MusicAccess1155}向购买者地址铸造对应\texttt{tokenId}的访问凭证。购买完成后，客户端重新读取\texttt{hasAccess}和ERC-1155余额，以确认当前钱包是否真正拥有访问权；后端仅把购买结果写入\texttt{purchases}表，供购买历史、热度统计和重复写入防护使用，访问资格仍以链上结果为准。
+购买付费作品时，客户端调用\texttt{PlatformHub.buyAccess}发起链上交易。合约完成销售配置与支付金额校验后，向购买者地址铸造对应\texttt{tokenId}的访问凭证。交易完成后，客户端重新读取\texttt{hasAccess}和ERC-1155余额，以确认当前钱包已获得访问资格；后端则将购买结果写入\texttt{purchases}表，用于购买历史维护与统计分析。
 
-这一实现将“显示态”和“权威态”分离开来：详情页中的价格、简介和评论数量可以由后端快速返回，但是否允许播放或下载，最终仍取决于链上访问凭证。对于公开作品，用户可直接进入播放链路；对于付费作品，只有在访问校验通过后，详情页中的播放、下载和加入链上音乐库等操作才会解锁。
-
-链上音乐库是用户侧承接链上资源消费的重要投影层。用户将公开或已购买资源加入链上音乐库后，客户端会把对应记录写入本地歌曲库，并保留\texttt{resourceKey}、chainId、合约地址、\texttt{tokenId}、metadata CID和音频CID等扩展字段。这样做的目的是让链上资源在播放器侧能够复用本地歌曲管理、缓存与下载逻辑，播放器无需为链上音乐单独设计一套完全独立的播放体系。
+链上音乐库用于承接已购买或公开资源的本地投影。用户将作品加入音乐库后，客户端将相关记录写入本地歌曲库，并保留\texttt{resourceKey}、链ID、合约地址、\texttt{tokenId}和资源CID等扩展字段，使链上音乐能够复用本地播放、缓存与下载逻辑。
 
 \chapteruiscreenshotplaceholder{track_detail.png}{链上音乐详情与购买界面}
 
+\FloatBarrier
 
 \section{音频代理、播放与评论联动}
 
-播放链路的核心是把链上访问控制、IPFS资源解析和桌面端本地能力统一起来。FreeFlow通过本地音频代理统一处理播放请求。播放器优先读取本地文件或磁盘缓存，缓存未命中时再由代理根据资源解析结果访问远程音频源。代理服务支持HTTP Range请求，因此用户拖动进度条时不需要重新拉取完整音频文件，只需请求目标字节区间即可。
+播放器通过本地音频代理统一访问音频资源。系统优先读取本地文件或磁盘缓存，缓存未命中时再访问远程音频源。代理层支持HTTP Range请求，可在进度跳转时按字节区间返回音频数据，从而改善播放响应效率。
 
 \chapteruiscreenshotplaceholder{lyric.png}{歌词联动与播放控制界面}
 
@@ -132,9 +130,7 @@ metadata文件由客户端根据作品信息、音频CID、封面CID、访问模
     \label{fig:audio_proxy_cache_flow}
 \end{figure}
 
-这种代理机制带来了三点好处。第一，它把本地文件、缓存文件和远程IPFS网关资源抽象成统一入口，简化了播放器实现。第二，它将鉴权、Range透传、缓存命中和异常恢复等逻辑集中到代理层，降低了渲染进程直接处理网络细节的复杂度。第三，它使链上音乐、本地音乐和外部来源音乐在播放器中获得更一致的使用体验。
+\FloatBarrier
 
-评论模块则体现了Web2.5链下互动的实现边界。用户登录后可以针对特定发行资源发表评论，后端保存评论内容、用户标识和时间信息，客户端再展示评论列表和发布时间。评论数据位于链下服务层，也未纳入投票式治理机制。评论需要频繁写入、分页读取、审核隐藏和聚合展示，若直接写入链上会带来持续gas开销，并受区块确认延迟和链上检索能力限制，因此本文采用链下评论服务。它在当前实现中承担的是作品消费后的基础互动功能，用于补足“发布 - 访问 - 播放”之外的轻量社区链路。
-
-
+评论功能部署在链下服务层。用户登录后可针对作品查看和发布评论，后端保存评论内容、用户标识与时间信息，客户端负责评论列表展示。该模块为作品消费提供了基础互动能力，并与详情页、播放页共同构成用户侧主要使用链路。
 
