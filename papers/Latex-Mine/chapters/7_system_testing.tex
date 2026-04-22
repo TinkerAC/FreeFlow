@@ -7,7 +7,7 @@
 
 考虑到FreeFlow同时涉及桌面端、后端、智能合约与外部IPFS服务，本文将实验划分为两类可复现任务：一类是基于本地数据集的检索排序离线评估，另一类是基于Hardhat本地链的智能合约自动化测试。前者用于验证链上资源检索与排序算法的有效性和性能，后者用于验证发布、购买和访问控制等链上核心业务逻辑。
 
-实验过程已整理为可直接运行的脚本，检索排序实验命令为\texttt{pnpm --filter freeflow-web25-backend run experiment:ranking}，合约测试命令为\texttt{pnpm --filter @freeflow/contracts run test}，也可以通过\texttt{papers/Latex-Mine/scripts/run-thesis-experiments.sh}统一执行。实验生成的指标数据会自动写入\texttt{papers/Latex-Mine/figures/data/}目录，供本章图表直接读取。
+为保证实验过程可复现，本文将检索排序评估与智能合约测试整理为统一实验流程，并将结果保存为结构化数据，用于本章统计图表的生成与分析。
 
 \begin{table}[htbp]
     \linespread{1.5}
@@ -60,12 +60,12 @@
     \end{tabular}
 \end{table}
 
-对比方法共设置4组。SQL contains基线只依赖数据库字段包含匹配；仅文本评分方法只计算标题、艺术家、专辑、流派、描述及模糊相似度；文本+链上身份字段方法在此基础上增加Token ID、合约地址、CID、resourceKey和交易哈希等身份特征；完整排序算法即本文实现的\texttt{chain\_resource\_rank\_v1}，进一步引入新鲜度和热度信号。评价指标包括Precision@10、MRR、nDCG@10、Zero Result Rate和平均响应时间。
+对比方法共设置4组。数据库字段包含匹配基线只依赖字段包含关系；仅文本评分方法只计算标题、艺术家、专辑、流派、描述及模糊相似度；文本+链上身份字段方法在此基础上增加Token ID、合约地址、CID、resourceKey和交易哈希等身份特征；完整排序算法即本文实现的\texttt{chain\_resource\_rank\_v1}，进一步引入新鲜度和热度信号。评价指标包括Precision@10、MRR、nDCG@10、零结果率和平均响应时间。
 
 
 \section{智能合约自动化测试结果}
 
-智能合约测试使用\texttt{packages/contracts/test/platformHub.js}中的Hardhat测试集执行，命令为\texttt{pnpm --filter @freeflow/contracts run test}。测试总计4项，全部通过，总耗时为758 ms。测试结果如表\ref{tab:contract_tests}所示。
+智能合约测试基于Hardhat测试框架完成，围绕作品发布、购买授权、访问控制和销售配置修改等核心场景设计自动化用例。测试总计4项，全部通过，总耗时为758 ms。测试结果如表\ref{tab:contract_tests}所示。
 
 \begin{table}[htbp]
     \linespread{1.45}
@@ -98,8 +98,8 @@
     \caption{检索排序指标对比结果}\label{tab:ranking_metrics_actual}
     \begin{tabular}{|p{3.2cm}|c|c|c|c|c|}
         \hline
-        方法 & Precision@10 & MRR & nDCG@10 & Zero Result Rate & 平均响应时间/ms \\ \hline
-        SQL contains基线 & 0.1790 & 0.8468 & 0.8489 & 12.90\% & 0.2350 \\ \hline
+        方法 & Precision@10 & MRR & nDCG@10 & 零结果率 & 平均响应时间/ms \\ \hline
+        数据库字段包含匹配基线 & 0.1790 & 0.8468 & 0.8489 & 12.90\% & 0.2350 \\ \hline
         仅文本评分 & 0.1806 & 0.8306 & 0.8237 & 16.13\% & 3.1300 \\ \hline
         文本+链上身份字段 & 0.1952 & 0.9758 & 0.9646 & 0.00\% & 3.1406 \\ \hline
         完整排序算法 & 0.1952 & 0.9758 & 0.9646 & 0.00\% & 3.3014 \\ \hline
@@ -119,7 +119,7 @@
             ylabel={指标值（\%）},
             symbolic x coords={sql_contains,text_only,text_identity,full_ranker},
             xtick=data,
-            xticklabels={SQL contains基线,仅文本评分,文本+链上身份字段,完整排序算法},
+            xticklabels={字段包含匹配基线,仅文本评分,文本+链上身份字段,完整排序算法},
             xticklabel style={rotate=18,anchor=east,font=\zihao{6}},
             ymajorgrids=true,
             legend style={at={(0.5,1.05)},anchor=south,legend columns=3,font=\zihao{6}},
@@ -135,14 +135,14 @@
     \label{fig:ranking_metrics_bar}
 \end{figure}
 
-从实验结果可以看出，单纯依赖SQL字段包含匹配虽然开销最低，但在拼写扰动、空格扰动和链上复杂身份查询场景中会出现明显漏召回，Zero Result Rate达到12.90\%。仅文本评分方法能够处理一部分模糊查询，但由于缺少身份字段特征，对Token ID、合约地址、CID和resourceKey等链上定位查询支持不足，其MRR和nDCG@10分别只有0.8306和0.8237，且Zero Result Rate进一步上升到16.13\%。
+从实验结果可以看出，单纯依赖数据库字段包含匹配虽然开销最低，但在拼写扰动、空格扰动和链上复杂身份查询场景中会出现明显漏召回，零结果率达到12.90\%。仅文本评分方法能够处理一部分模糊查询，但由于缺少身份字段特征，对Token ID、合约地址、CID和resourceKey等链上定位查询支持不足，其MRR和nDCG@10分别只有0.8306和0.8237，且零结果率进一步上升到16.13\%。
 
-当加入链上身份字段后，Zero Result Rate下降到0，MRR从0.8306提升到0.9758，nDCG@10提升到0.9646，说明绝大多数查询都能在首位或前两位命中目标资源。完整排序算法在此基础上继续引入新鲜度和热度特征，在Precision@10、MRR和nDCG@10上保持与文本+链上身份字段方法一致的总体表现，同时为在线检索结果补充了业务可解释因子，说明新增排序特征没有破坏结果稳定性。
+当加入链上身份字段后，零结果率下降到0，MRR从0.8306提升到0.9758，nDCG@10提升到0.9646，说明绝大多数查询都能在首位或前两位命中目标资源。完整排序算法在此基础上继续引入新鲜度和热度特征，在Precision@10、MRR和nDCG@10上保持与文本+链上身份字段方法一致的总体表现，同时为在线检索结果补充了可解释因子，说明新增排序特征没有破坏结果稳定性。
 
 
 \section{典型查询案例分析}
 
-完整排序算法除了输出结果列表外，还会返回排序原因，便于定位命中特征与答辩展示。表\ref{tab:ranking_case_analysis}给出了3类典型查询的实验结果。
+完整排序算法除了输出结果列表外，还会返回排序原因，便于分析命中特征与排序依据。表\ref{tab:ranking_case_analysis}给出了3类典型查询的实验结果。
 
 \begin{table}[htbp]
     \linespread{1.45}
@@ -152,7 +152,7 @@
     \caption{典型查询案例分析}\label{tab:ranking_case_analysis}
     \begin{tabular}{|p{3.6cm}|p{3.6cm}|p{5.2cm}|}
         \hline
-        查询输入 & Top-1结果 & 主要排序原因 \\ \hline
+        查询输入 & 首位结果 & 主要排序原因 \\ \hline
         \texttt{The Fields of Ard Skellix} & The Fields of Ard Skellig & 标题分词命中80\%，文本相似度95\%，能够纠正轻微拼写错误 \\ \hline
         \texttt{新 地球} & 新地球 & 标题经紧凑化后精确匹配，能够处理空格扰动输入 \\ \hline
         resourceKey精确查询 & White Palace & resourceKey精确匹配，同时命中音乐合约地址 \\ \hline
@@ -164,7 +164,7 @@
 
 \section{性能测试结果}
 
-为了观察完整排序算法在不同候选规模下的开销变化，本文将候选集合分别扩展到50、100、300和500条，并统计平均响应时间与P95响应时间。结果如表\ref{tab:ranking_latency}和图\ref{fig:ranking_latency_curve}所示。
+为了观察完整排序算法在不同候选规模下的开销变化，本文将候选集合分别扩展到50、100、300和500条，并统计平均响应时间与95\%分位响应时间。结果如表\ref{tab:ranking_latency}和图\ref{fig:ranking_latency_curve}所示。
 
 \begin{table}[htbp]
     \linespread{1.45}
@@ -174,7 +174,7 @@
     \caption{不同候选规模下的排序耗时}\label{tab:ranking_latency}
     \begin{tabular}{|c|c|c|}
         \hline
-        候选数量 & 平均响应时间/ms & P95响应时间/ms \\ \hline
+        候选数量 & 平均响应时间/ms & 95\%分位响应时间/ms \\ \hline
         50 & 3.80 & 6.73 \\ \hline
         100 & 7.49 & 13.42 \\ \hline
         300 & 21.99 & 39.68 \\ \hline
@@ -201,16 +201,16 @@
         ]
             \addplot+[mark=*,line width=1pt] table[x=candidate_count,y=avg_latency_ms,col sep=comma]{figures/data/search_latency_candidates.csv};
             \addplot+[mark=square*,line width=1pt] table[x=candidate_count,y=p95_latency_ms,col sep=comma]{figures/data/search_latency_candidates.csv};
-            \legend{平均响应时间,P95响应时间}
+            \legend{平均响应时间,95\%分位响应时间}
         \end{axis}
     \end{tikzpicture}
     \caption{完整排序算法在不同候选规模下的延迟变化}
     \label{fig:ranking_latency_curve}
 \end{figure}
 
-结果显示，随着候选数量增加，平均响应时间近似线性增长，这与第6章中的复杂度分析一致。在500条候选资源下，完整排序算法的平均响应时间为36.09 ms，P95响应时间为64.37 ms，仍处于桌面端检索交互可接受范围内。因此，在当前毕业设计场景下，\texttt{chain\_resource\_rank\_v1}能够在保证排序质量的同时维持可接受的在线响应开销。
+结果显示，随着候选数量增加，平均响应时间近似线性增长，这与第6章中的复杂度分析一致。在500条候选资源下，完整排序算法的平均响应时间为36.09 ms，95\%分位响应时间为64.37 ms，仍处于桌面端检索交互可接受范围内。因此，在本文面向的系统规模与应用场景下，\texttt{chain\_resource\_rank\_v1}能够在保证排序质量的同时维持可接受的在线响应开销。
 
 
 \section{本章小结}
 
-本章基于可复现脚本完成了FreeFlow系统的实验验证。结果表明，智能合约核心逻辑已经能够稳定支撑作品发布、购买与权限控制；链上资源排序模块在引入身份字段后，MRR提升到0.9758、nDCG@10提升到0.9646，并将Zero Result Rate降至0；在500条候选规模下，完整排序算法仍可保持36.09 ms的平均响应时间。综合来看，FreeFlow已经具备较完整的链上音乐发布、访问和检索能力。
+本章基于统一实验流程完成了FreeFlow系统的实验验证。结果表明，智能合约核心逻辑已经能够稳定支撑作品发布、购买与权限控制；链上资源排序模块在引入身份字段后，MRR提升到0.9758、nDCG@10提升到0.9646，并将零结果率降至0；在500条候选规模下，完整排序算法仍可保持36.09 ms的平均响应时间。综合来看，FreeFlow已经具备较完整的链上音乐发布、访问和检索能力。

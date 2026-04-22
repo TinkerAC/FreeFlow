@@ -19,7 +19,7 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
 
 \section{功能模块设计}
 
-系统功能模块可划分为Profile与认证模块、创作者工作台模块、素材上传模块、链上发布模块、资源检索模块、购买与访问验证模块、播放与缓存模块、链上音乐库模块和评论模块。
+系统功能模块可划分为用户资料与认证模块、创作者工作台模块、素材上传模块、链上发布模块、资源检索模块、购买与访问验证模块、播放与缓存模块、链上音乐库模块和评论模块。
 
 \begin{table}[htbp]
     \linespread{1.5}
@@ -30,7 +30,7 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
     \begin{tabular}{|l|p{10cm}|}
         \hline
         模块           & 设计说明                                           \\ \hline
-        Profile与认证模块 & 使用SIWE完成钱包登录，并在后端创建用户、钱包身份和会话                  \\ \hline
+        用户资料与认证模块 & 使用SIWE完成钱包登录，并在后端创建用户、钱包身份和会话                  \\ \hline
         创作者工作台模块     & 管理发行草稿、作品信息、发布阶段、素材状态和链上发布结果                   \\ \hline
         素材上传模块       & 经后端将音频、封面和metadata上传到Pinata，并保存StorageObject   \\ \hline
         链上发布模块       & 调用PlatformHub发布作品，解析事件并回写tokenId、splitter和交易哈希 \\ \hline
@@ -46,7 +46,7 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
 
 \subsection{创作者发布流程}
 
-创作者发布流程如图\ref{fig:release_workflow}所示。该流程以Creators Workshop为入口，依次完成发行草稿维护、素材上传、metadata生成、合约发布和链上索引回写。
+创作者发布流程如图\ref{fig:release_workflow}所示。该流程以创作者工作台为入口，依次完成发行草稿维护、素材上传、元数据生成、合约发布和链上索引回写。
 
 \begin{figure}[htbp]
     \centering
@@ -63,7 +63,7 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
     \item 编辑标题、歌手、专辑、流派、描述、访问模式、价格和分账信息。
     \item 选择音频和封面文件，系统读取并校验音频metadata。
     \item 后端代理上传音频和封面到Pinata，并保存CID。
-    \item 桌面端生成metadata JSON，并上传到Pinata。
+    \item 桌面端生成作品元数据文件，并上传到Pinata。
     \item 桌面端调用PlatformHub合约发布作品。
     \item 系统解析链上事件，将tokenId、splitter地址、交易哈希和区块号回写后端。
 \end{enumerate}
@@ -95,7 +95,7 @@ FreeFlow采用桌面端、Web2.5后端、智能合约和IPFS存储协同的架�
 
 \section{数据库设计}
 
-FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。客户端数据库位于当前Profile目录下的\texttt{database.sqlite}文件中，主要保存本地音乐库、歌单关系、链上音乐库投影、下载状态和应用启动会话；服务器数据库由Prisma管理，主要保存用户身份、SIWE认证会话、IPFS存储对象、创作者发行项目、购买交易投影和评论数据。两类数据库的职责边界不同：SQLite面向桌面端本地播放体验和离线管理，PostgreSQL面向Web2.5业务协同和链上资源索引。
+FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。客户端数据库以\texttt{database.sqlite}文件形式存放于用户本地数据目录中，主要保存本地音乐库、歌单关系、链上音乐库投影、下载状态和应用启动会话；服务器数据库由Prisma管理，主要保存用户身份、SIWE认证会话、IPFS存储对象、创作者发行项目、购买交易投影和评论数据。两类数据库的职责边界不同：SQLite面向桌面端本地播放体验和离线管理，PostgreSQL面向Web2.5业务协同和链上资源索引。
 
 \subsection{客户端SQLite数据库设计}
 
@@ -121,7 +121,6 @@ FreeFlow同时使用客户端SQLite数据库和服务器PostgreSQL数据库。�
         playlists             & 保存用户歌单信息，包括标题、描述、封面、创建者、来源平台、播放次数和排序位置                                  \\ \hline
         playlist\_detail      & 保存歌单与歌曲的多对多关系，以playlist\_id和track\_id作为联合主键，并记录歌曲在歌单中的排序位置                 \\ \hline
         sessions              & 保存应用启动会话，包括启动时间、操作系统和应用版本，用于记录桌面端运行情况                                  \\ \hline
-        hifini\_thread\_cache & 保存Hifini历史内容提供者的帖子解析缓存，避免重复解析相同data\_href                                      \\ \hline
     \end{tabular}
 \end{table}
 

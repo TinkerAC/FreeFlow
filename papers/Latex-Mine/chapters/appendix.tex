@@ -12,9 +12,8 @@
             \fbox{
                 \parbox[c][5.2cm][c]{0.86\textwidth}{
                     \centering
-                    待补充界面截图\\[6pt]
-                    截图内容：#2\\[6pt]
-                    建议文件名：\texttt{\detokenize{#1}}
+                    界面截图待补充\\[6pt]
+                    对应界面：#2
                 }
             }
         }
@@ -22,7 +21,7 @@
     \end{figure}
 }
 
-本附录用于放置正文中不宜展开过长描述但对系统实现与答辩展示有辅助价值的补充材料，包括后端接口模块清单、检索评估集说明以及主要界面截图位置。后续如补充正式截图，只需将图片保存到\texttt{papers/Latex-Mine/figures/screenshots/}目录并保持本文给出的文件名即可自动替换占位框。
+本附录用于补充正文中不宜展开过长描述但有助于说明系统实现细节的材料，主要包括后端接口模块清单、检索评估集说明以及系统关键界面示意。
 
 
 \section{核心接口模块清单}
@@ -61,17 +60,17 @@
         资源规模 & 56条模拟链上音乐资源，按14个艺术家/专辑簇组织，覆盖标题、艺术家、专辑、流派、Token ID、CID、合约地址和resourceKey等字段 \\ \hline
         查询规模 & 62个查询，覆盖标题精确匹配、艺术家/专辑/流派多结果查询、CID与resourceKey定位、全角输入、空格扰动和轻微拼写错误 \\ \hline
         相关性标注 & 单目标定位查询使用三级相关；多结果查询按照3/2/1相关等级人工标注 \\ \hline
-        评价指标 & Precision@10、MRR、nDCG@10、Zero Result Rate和平均响应时间 \\ \hline
+        评价指标 & Precision@10、MRR、nDCG@10、零结果率和平均响应时间 \\ \hline
         对比方法 & SQL contains基线、仅文本评分、文本+链上身份字段、完整\texttt{chain\_resource\_rank\_v1} \\ \hline
     \end{tabular}
 \end{table}
 
 
-\section{系统界面截图占位}
+\section{系统界面截图}
 
-以下截图位用于展示系统主要界面。若当前尚未截取正式图片，可先保留占位框；完成截图后，按建议文件名保存图片即可直接生成正式版图稿。
+以下图示用于补充展示系统主要界面，包括钱包登录、创作者工作台、发行编辑、检索结果、作品详情以及评论或音乐库等功能页面。
 
-\uiscreenshotplaceholder{profile_guide.png}{Profile引导与钱包登录界面}
+\uiscreenshotplaceholder{profile_guide.png}{用户资料引导与钱包登录界面}
 
 \uiscreenshotplaceholder{creators_workshop.png}{创作者工作台主界面}
 
@@ -80,5 +79,11 @@
 \uiscreenshotplaceholder{search_results.png}{链上资源搜索结果界面}
 
 \uiscreenshotplaceholder{track_detail.png}{链上音乐详情与购买界面}
+
+\uiscreenshotplaceholder{playlist.png}{歌单浏览与批量播放界面}
+
+\uiscreenshotplaceholder{play_queue.png}{播放队列与最近播放界面}
+
+\uiscreenshotplaceholder{lyric.png}{歌词联动与播放控制界面}
 
 \uiscreenshotplaceholder{comment_and_library.png}{评论区或链上音乐库界面}

@@ -7,10 +7,13 @@ export default class ProfileGuideWindow extends AbstractWindow {
   constructor() {
     super({
       title: 'FreeFlow Profile',
-      width: 680,
-      height: 480,
+      width: 620,
+      height: 700,
       minWidth: 640,
       minHeight: 440,
+      resizable: false,
+      maximizable: false,
+      fullscreenable: false,
       frame: false,
       backgroundColor: '#171a21',
       webPreferences: {
