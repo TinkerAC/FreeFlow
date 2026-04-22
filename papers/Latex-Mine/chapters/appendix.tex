@@ -3,25 +3,7 @@
 \unnumchapter{附录A~~~~系统补充材料}
 \renewcommand{\thechapter}{附录}
 
-\newcommand{\uiscreenshotplaceholder}[2]{
-    \begin{figure}[htbp]
-        \centering
-        \IfFileExists{figures/screenshots/#1}{
-            \includegraphics[width=0.9\textwidth]{figures/screenshots/#1}
-        }{
-            \fbox{
-                \parbox[c][5.2cm][c]{0.86\textwidth}{
-                    \centering
-                    界面截图待补充\\[6pt]
-                    对应界面：#2
-                }
-            }
-        }
-        \caption{#2}
-    \end{figure}
-}
-
-本附录用于补充正文中不宜展开过长描述但有助于说明系统实现细节的材料，主要包括后端接口模块清单、检索评估集说明以及系统关键界面示意。
+本附录用于补充正文中不宜展开过长描述但有助于说明系统实现细节的材料，主要包括后端接口模块清单和检索评估集说明。
 
 
 \section{核心接口模块清单}
@@ -34,14 +16,14 @@
     \caption{FreeFlow后端核心接口模块清单}\label{tab:appendix_api_modules}
     \begin{tabular}{|l|p{4.4cm}|p{6.1cm}|}
         \hline
-        模块 & 代表接口前缀 & 主要用途 \\ \hline
-        认证模块 & \texttt{/api/v1/auth} & SIWE nonce申请、签名验证、会话查询与退出登录 \\ \hline
+        模块   & 代表接口前缀                          & 主要用途                          \\ \hline
+        认证模块 & \texttt{/api/v1/auth}           & SIWE nonce申请、签名验证、会话查询与退出登录   \\ \hline
         存储模块 & \texttt{/api/v1/storage/pinata} & 上传音频、封面与metadata文件，返回CID与网关信息 \\ \hline
-        发行模块 & \texttt{/api/v1/releases} & 创建、查询、更新和删除创作者发行草稿 \\ \hline
-        资源模块 & \texttt{/api/v1/resources} & 链上资源搜索、resourceKey解析与详情读取 \\ \hline
-        购买模块 & \texttt{/api/v1/purchases} & 记录购买结果并维护访问权投影数据 \\ \hline
-        评论模块 & \texttt{/api/v1/comments} & 查询评论列表并为已登录用户创建评论 \\ \hline
-        分账模块 & \texttt{/api/v1/royalties} & 查询收益工作台并记录分账提取结果 \\ \hline
+        发行模块 & \texttt{/api/v1/releases}       & 创建、查询、更新和删除创作者发行草稿            \\ \hline
+        资源模块 & \texttt{/api/v1/resources}      & 链上资源搜索、resourceKey解析与详情读取     \\ \hline
+        购买模块 & \texttt{/api/v1/purchases}      & 记录购买结果并维护访问权投影数据              \\ \hline
+        评论模块 & \texttt{/api/v1/comments}       & 查询评论列表并为已登录用户创建评论             \\ \hline
+        分账模块 & \texttt{/api/v1/royalties}      & 查询收益工作台并记录分账提取结果              \\ \hline
     \end{tabular}
 \end{table}
 
@@ -56,34 +38,11 @@
     \caption{检索评估集组成说明}\label{tab:appendix_ranking_dataset}
     \begin{tabular}{|l|p{8.8cm}|}
         \hline
-        项目 & 说明 \\ \hline
-        资源规模 & 56条模拟链上音乐资源，按14个艺术家/专辑簇组织，覆盖标题、艺术家、专辑、流派、Token ID、CID、合约地址和resourceKey等字段 \\ \hline
-        查询规模 & 62个查询，覆盖标题精确匹配、艺术家/专辑/流派多结果查询、CID与resourceKey定位、全角输入、空格扰动和轻微拼写错误 \\ \hline
-        相关性标注 & 单目标定位查询使用三级相关；多结果查询按照3/2/1相关等级人工标注 \\ \hline
-        评价指标 & Precision@10、MRR、nDCG@10、零结果率和平均响应时间 \\ \hline
-        对比方法 & SQL contains基线、仅文本评分、文本+链上身份字段、完整\texttt{chain\_resource\_rank\_v1} \\ \hline
+        项目    & 说明                                                                        \\ \hline
+        资源规模  & 56条模拟链上音乐资源，按14个艺术家/专辑簇组织，覆盖标题、艺术家、专辑、流派、Token ID、CID、合约地址和resourceKey等字段 \\ \hline
+        查询规模  & 62个查询，覆盖标题精确匹配、艺术家/专辑/流派多结果查询、CID与resourceKey定位、全角输入、空格扰动和轻微拼写错误          \\ \hline
+        相关性标注 & 单目标定位查询使用三级相关；多结果查询按照3/2/1相关等级人工标注                                        \\ \hline
+        评价指标  & Precision@10、MRR、nDCG@10、零结果率和平均响应时间                                      \\ \hline
+        对比方法  & SQL contains基线、仅文本评分、文本+链上身份字段、完整\texttt{chain\_resource\_rank\_v1}       \\ \hline
     \end{tabular}
 \end{table}
-
-
-\section{系统界面截图}
-
-以下图示用于补充展示系统主要界面，包括钱包登录、创作者工作台、发行编辑、检索结果、作品详情以及评论或音乐库等功能页面。
-
-\uiscreenshotplaceholder{profile_guide.png}{用户资料引导与钱包登录界面}
-
-\uiscreenshotplaceholder{creators_workshop.png}{创作者工作台主界面}
-
-\uiscreenshotplaceholder{publish_form.png}{发行信息编辑与素材上传界面}
-
-\uiscreenshotplaceholder{search_results.png}{链上资源搜索结果界面}
-
-\uiscreenshotplaceholder{track_detail.png}{链上音乐详情与购买界面}
-
-\uiscreenshotplaceholder{playlist.png}{歌单浏览与批量播放界面}
-
-\uiscreenshotplaceholder{play_queue.png}{播放队列与最近播放界面}
-
-\uiscreenshotplaceholder{lyric.png}{歌词联动与播放控制界面}
-
-\uiscreenshotplaceholder{comment_and_library.png}{评论区或链上音乐库界面}
