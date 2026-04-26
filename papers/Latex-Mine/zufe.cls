@@ -43,7 +43,7 @@
 \ProcessOptions\relax
 
 
-\LoadClass[UTF8,zihao=-4,oneside,openany,fontset=none]{ctexbook}
+\LoadClass[UTF8,zihao=-4,oneside,openany]{ctexbook}
 
 \RequirePackage[a4paper,left=2.5cm,right=2.5cm,top=3.5cm,bottom=2.5cm]{geometry}
 \RequirePackage{xeCJK}
@@ -87,9 +87,6 @@
 
 
 \setromanfont{Times New Roman}
-\setCJKmainfont[Path=./,Extension=.ttf,AutoFakeBold,AutoFakeSlant]{stsong}
-\setCJKsansfont[Path=./,Extension=.ttf,AutoFakeBold,AutoFakeSlant]{simhei}
-\setCJKmonofont[Path=./,Extension=.ttf,AutoFakeBold,AutoFakeSlant]{stsong}
 % \setCJKfamilyfont{xihei}[AutoFakeBold,AutoFakeSlant]{[simhei.TTF]} % 若希望使用本机字体，也可以用 {STXihei} 来调用
 \setCJKfamilyfont{xihei}[Path=./,Extension=.ttf,AutoFakeBold,AutoFakeSlant]{simhei}
 \newcommand{\xihei}{\CJKfamily{xihei}}
@@ -102,12 +99,6 @@
 \newcommand{\mystsong}{\CJKfamily{mystsong}}
 \setCJKfamilyfont{mystkaiti}[Path=./,Extension=.ttf,AutoFakeBold,AutoFakeSlant]{stkaiti}
 \newcommand{\mystkaiti}{\CJKfamily{mystkaiti}}
-\providecommand{\songti}{}
-\renewcommand{\songti}{\CJKfamily{mystsong}}
-\providecommand{\heiti}{}
-\renewcommand{\heiti}{\CJKfamily{xihei}}
-\providecommand{\kaishu}{}
-\renewcommand{\kaishu}{\CJKfamily{mystkaiti}}
 
 \fancypagestyle{ZUFEThesis}{
 % 页眉高度

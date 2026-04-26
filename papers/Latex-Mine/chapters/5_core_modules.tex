@@ -3,22 +3,60 @@
 \chapter{系统核心模块实现}
 
 \newcommand{\chapteruiscreenshotplaceholder}[2]{
-    \begin{figure}[htbp]
-    \centering
+    \begin{center}
     \IfFileExists{figures/screenshots/#1}{
-        \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{figures/screenshots/#1}
+        \includegraphics[width=0.82\textwidth,height=0.34\textheight,keepaspectratio]{figures/screenshots/#1}
     }{
         \fbox{
-            \parbox[c][5.2cm][c]{0.86\textwidth}{
+            \parbox[c][4.2cm][c]{0.78\textwidth}{
                 \centering
                 截图文件缺失\\[6pt]
                 请检查资源：#1
             }
         }
     }
-    \caption{#2}
+    \captionsetup{hypcap=false}
+    \captionof{figure}{#2}
     \label{fig:#1}
-    \end{figure}
+    \end{center}
+}
+\newcommand{\chapteruiscreenshotpair}[4]{
+    \begin{center}
+    \begin{minipage}[t]{0.49\textwidth}
+        \centering
+        \IfFileExists{figures/screenshots/#1}{
+            \includegraphics[width=\linewidth,height=0.24\textheight,keepaspectratio]{figures/screenshots/#1}
+        }{
+            \fbox{
+                \parbox[c][3.6cm][c]{0.92\linewidth}{
+                    \centering
+                    截图文件缺失\\[6pt]
+                    请检查资源：#1
+                }
+            }
+        }
+        \captionsetup{hypcap=false}
+        \captionof{figure}{#2}
+        \label{fig:#1}
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.49\textwidth}
+        \centering
+        \IfFileExists{figures/screenshots/#3}{
+            \includegraphics[width=\linewidth,height=0.24\textheight,keepaspectratio]{figures/screenshots/#3}
+        }{
+            \fbox{
+                \parbox[c][3.6cm][c]{0.92\linewidth}{
+                    \centering
+                    截图文件缺失\\[6pt]
+                    请检查资源：#3
+                }
+            }
+        }
+        \captionsetup{hypcap=false}
+        \captionof{figure}{#4}
+        \label{fig:#3}
+    \end{minipage}
+    \end{center}
 }
 本章围绕系统关键业务链路展开，重点说明身份建立、创作者发行、资源检索、购买授权以及播放与评论等模块的实现方式。
 
@@ -28,9 +66,9 @@
 
 在职责划分上，桌面端负责钱包连接、签名发起与令牌保存，后端负责nonce有效性、签名恢复地址、链ID与消息字段校验。该实现为后续发行、购买、评论和资源管理接口提供了统一的鉴权基础。
 
-\chapteruiscreenshotplaceholder{profile_guide.png}{用户资料引导与钱包登录界面}
+用户资料引导、钱包连接与签名登录界面如图\ref{fig:profile_guide.png}所示。
 
-\FloatBarrier
+\chapteruiscreenshotplaceholder{profile_guide.png}{用户资料引导与钱包登录界面}
 
 \section{创作者发行链路实现}
 
@@ -57,13 +95,15 @@
 
 发行状态包括\texttt{DRAFT}、\texttt{ASSETS\_PENDING}、\texttt{ASSETS\_UPLOADED}、\texttt{METADATA\_UPLOADED}、\texttt{PUBLISHING}、\texttt{PUBLISHED}和\texttt{FAILED}。这些状态由后端持久化保存，用于跨会话恢复与异常重试。
 
-\chapteruiscreenshotplaceholder{creators_workshop.png}{创作者工作台主界面}
+创作者工作台主界面与发行信息编辑界面分别如图\ref{fig:creators_workshop.png}和图\ref{fig:publish_form.png}所示，状态流转关系如图\ref{fig:release_state_flow}所示。
 
-\chapteruiscreenshotplaceholder{publish_form.png}{发行信息编辑与素材上传界面}
+\chapteruiscreenshotpair
+    {creators_workshop.png}{创作者工作台主界面}
+    {publish_form.png}{发行信息编辑与素材上传界面}
 
 \begin{figure}[H]
     \centering
-    \figmax{figures/out/release_state_flow.png}
+    \includegraphics[width=\textwidth]{figures/out/release_state_flow.png}
     \caption{创作者发行状态流转图}
     \label{fig:release_state_flow}
 \end{figure}
@@ -95,17 +135,15 @@ metadata由客户端根据作品信息、资源CID与访问配置动态生成，
 
 当metadata准备完成后，客户端调用\texttt{PlatformHub.publishTrack}发起链上发布。交易确认后，客户端解析事件中的\texttt{tokenId}、交易哈希与分账合约地址，并由后端回写发行记录，形成后续检索、详情展示与状态恢复所需的链下投影。
 
-\FloatBarrier
-
 \section{资源索引、检索与详情联动}
 
 作品发布成功后，后端以\texttt{creator\_releases}为核心构建资源索引，并将标题、艺术家、专辑、流派、合约地址、\texttt{tokenId}、CID和交易哈希等字段组织为可检索视图。桌面端据此完成搜索结果展示和详情页加载。
 
 搜索结果页展示封面、标题、创作者、价格、访问模式与链上身份摘要，便于用户快速筛选。用户进入详情页后，客户端根据\texttt{resourceKey}请求后端解析资源信息，并同步读取链上销售配置与访问状态，从而完成详情展示与购买入口联动。
 
-\chapteruiscreenshotplaceholder{search_results.png}{链上资源搜索结果界面}
+链上资源搜索结果界面如图\ref{fig:search_results.png}所示。
 
-\FloatBarrier
+\chapteruiscreenshotplaceholder{search_results.png}{链上资源搜索结果界面}
 
 \section{购买授权、访问校验与链上音乐库}
 
@@ -113,24 +151,23 @@ metadata由客户端根据作品信息、资源CID与访问配置动态生成，
 
 链上音乐库用于承接已购买或公开资源的本地投影。用户将作品加入音乐库后，客户端将相关记录写入本地歌曲库，并保留\texttt{resourceKey}、链ID、合约地址、\texttt{tokenId}和资源CID等扩展字段，使链上音乐能够复用本地播放、缓存与下载逻辑。
 
-\chapteruiscreenshotplaceholder{track_detail.png}{链上音乐详情与购买界面}
+链上音乐详情与购买界面如图\ref{fig:track_detail.png}所示。
 
-\FloatBarrier
+\chapteruiscreenshotplaceholder{track_detail.png}{链上音乐详情与购买界面}
 
 \section{音频代理、播放与评论联动}
 
 播放器通过本地音频代理统一访问音频资源。系统优先读取本地文件或磁盘缓存，缓存未命中时再访问远程音频源。代理层支持HTTP Range请求，可在进度跳转时按字节区间返回音频数据，从而改善播放响应效率。
 
+歌词联动与播放控制界面如图\ref{fig:lyric.png}所示，音频代理与缓存流程如图\ref{fig:audio_proxy_cache_flow}所示。
+
 \chapteruiscreenshotplaceholder{lyric.png}{歌词联动与播放控制界面}
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{figures/out/audio_proxy_cache_flow.png}
+    \includegraphics[width=0.82\textwidth]{figures/out/audio_proxy_cache_flow.png}
     \caption{音频代理与缓存流程图}
     \label{fig:audio_proxy_cache_flow}
 \end{figure}
 
-\FloatBarrier
-
 评论功能部署在链下服务层。用户登录后可针对作品查看和发布评论，后端保存评论内容、用户标识与时间信息，客户端负责评论列表展示。该模块为作品消费提供了基础互动能力，并与详情页、播放页共同构成用户侧主要使用链路。
-

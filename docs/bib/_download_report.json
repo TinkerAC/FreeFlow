@@ -1,0 +1,456 @@
+
+{
+  "downloaded": [
+    {
+      "type": "article",
+      "key": "Alawadi2024",
+      "title": "Decentralized Autonomous Organizations (DAOs): Stewardship Talks but Agency Walks",
+      "doi": "10.1016/j.jbusres.2024.114672",
+      "url": "https://www.sciencedirect.com/science/article/pii/S0148296324001760",
+      "file": "docs/bib/Alawadi2024.pdf",
+      "source_url": "https://centaur.reading.ac.uk/116149/3/116149%20AAM.pdf"
+    },
+    {
+      "type": "article",
+      "key": "Shi2025",
+      "title": "Application of Blockchain Technology in Digital Music Copyright Management: A Case Study of VNT Chain Platform",
+      "doi": "10.3389/fbloc.2024.1388832",
+      "url": "https://www.frontiersin.org/journals/blockchain/articles/10.3389/fbloc.2024.1388832/full",
+      "file": "docs/bib/Shi2025.pdf",
+      "source_url": "https://public-pages-files-2025.frontiersin.org/journals/blockchain/articles/10.3389/fbloc.2024.1388832/pdf"
+    },
+    {
+      "type": "article",
+      "key": "Alaei2022ProRata",
+      "title": "Revenue-Sharing Allocation Strategies for Two-Sided Media Platforms: Pro-Rata vs. User-Centric",
+      "doi": "10.1287/mnsc.2022.4307",
+      "url": "",
+      "file": "docs/bib/Alaei2022ProRata.pdf",
+      "source_url": "https://utoronto.scholaris.ca/server/api/core/bitstreams/54f9aed0-dfe9-4a62-b757-8b14bc41cece/content"
+    },
+    {
+      "type": "inproceedings",
+      "key": "msd2011",
+      "title": "The Million Song Dataset",
+      "doi": "",
+      "url": "https://doi.org/10.5281/zenodo.1415820",
+      "file": "docs/bib/msd2011.pdf",
+      "source_url": "https://ismir2011.ismir.net/papers/OS6-1.pdf"
+    },
+    {
+      "type": "inproceedings",
+      "key": "fma2017",
+      "title": "FMA: A Dataset for Music Analysis",
+      "doi": "",
+      "url": "https://archives.ismir.net/ismir2017/paper/000075.pdf",
+      "file": "docs/bib/fma2017.pdf",
+      "source_url": "https://archives.ismir.net/ismir2017/paper/000075.pdf"
+    },
+    {
+      "type": "article",
+      "key": "Six2022DAppPatterns",
+      "title": "Blockchain software patterns for the design of decentralized applications: A systematic literature review",
+      "doi": "10.1016/j.bcra.2022.100061",
+      "url": "",
+      "file": "docs/bib/Six2022DAppPatterns.pdf",
+      "source_url": "https://arxiv.org/pdf/2201.04374"
+    },
+    {
+      "type": "inproceedings",
+      "key": "DArcher2021",
+      "title": "{\\DH}Archer: Detecting On-Chain-Off-Chain Synchronization Bugs in Decentralized Applications",
+      "doi": "10.1145/3468264.3468546",
+      "url": "",
+      "file": "docs/bib/DArcher2021.pdf",
+      "source_url": "https://arxiv.org/pdf/2106.09440"
+    },
+    {
+      "type": "article",
+      "key": "Maesa2019AuditableAC",
+      "title": "A blockchain based approach for the definition of auditable Access Control systems",
+      "doi": "10.1016/j.cose.2019.03.016",
+      "url": "",
+      "file": "docs/bib/Maesa2019AuditableAC.pdf",
+      "source_url": "https://api.repository.cam.ac.uk/server/api/core/bitstreams/8b2b29dc-c762-4183-a88b-ce45cad7c797/content"
+    },
+    {
+      "type": "article",
+      "key": "Liu2020GasExceptions",
+      "title": "Studying gas exceptions in blockchain-based cloud applications",
+      "doi": "10.1186/s13677-020-00176-9",
+      "url": "",
+      "file": "docs/bib/Liu2020GasExceptions.pdf",
+      "source_url": "https://link.springer.com/content/pdf/10.1186/s13677-020-00176-9.pdf"
+    },
+    {
+      "type": "article",
+      "key": "Punia2024AccessReview",
+      "title": "A systematic review on blockchain-based access control systems in cloud environment",
+      "doi": "10.1186/s13677-024-00697-7",
+      "url": "",
+      "file": "docs/bib/Punia2024AccessReview.pdf",
+      "source_url": "https://link.springer.com/content/pdf/10.1186/s13677-024-00697-7.pdf"
+    }
+  ],
+  "not_found": [
+    {
+      "type": "inproceedings",
+      "key": "Torbensen2019",
+      "title": "Tuning into Blockchain: Challenges and Opportunities of Blockchain-Based Music Platforms",
+      "doi": "",
+      "url": "https://aisel.aisnet.org/ecis2019_rp/62/",
+      "tried": [
+        {
+          "candidate": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3919998",
+          "final_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3919998",
+          "info": "text/html; charset=utf-8"
+        }
+      ],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Arenal2024",
+      "title": "Digital Transformation, Blockchain, and the Music Industry: A Review from the Perspective of Performers' Collective Management Organizations",
+      "doi": "10.1016/j.telpol.2024.102817",
+      "url": "https://www.sciencedirect.com/science/article/pii/S0308596124001149",
+      "tried": [
+        {
+          "candidate": "https://doi.org/10.1016/j.telpol.2024.102817",
+          "final_url": "https://doi.org/10.1016/j.telpol.2024.102817",
+          "info": "text/html;charset=utf-8"
+        }
+      ],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Chen2021",
+      "title": "Decentralized Governance of Digital Platforms",
+      "doi": "10.1177/0149206320916755",
+      "url": "https://journals.sagepub.com/doi/10.1177/0149206320916755",
+      "tried": [],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Rikken2019",
+      "title": "Governance Challenges of Blockchain and Decentralized Autonomous Organizations",
+      "doi": "10.3233/IP-190154",
+      "url": "https://journals.sagepub.com/doi/10.3233/IP-190154",
+      "tried": [
+        {
+          "candidate": "https://content.iospress.com:443/download/information-polity/ip190154?id=information-polity%2Fip190154",
+          "final_url": "https://content.iospress.com:443/download/information-polity/ip190154?id=information-polity%2Fip190154",
+          "info": "text/html; charset=utf-8"
+        }
+      ],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Li2021",
+      "title": "A Decentralized Music Copyright Operation Management System Based on Blockchain Technology",
+      "doi": "10.1016/j.procs.2021.04.084",
+      "url": "https://www.sciencedirect.com/science/article/pii/S1877050921008826",
+      "tried": [
+        {
+          "candidate": "https://doi.org/10.1016/j.procs.2021.04.084",
+          "final_url": "https://doi.org/10.1016/j.procs.2021.04.084",
+          "info": "text/html;charset=utf-8"
+        }
+      ],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Niu2022",
+      "title": "基于联盟链的音乐版权保护与交易系统",
+      "doi": "10.19734/j.issn.1001-3695.2021.06.0241",
+      "url": "https://www.arocmag.cn/abs/2021.06.0241",
+      "tried": [],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Centorrino2023",
+      "title": "A New Era of the Music Industry? Blockchain and Value Co-Creation: The BitSong Case Study",
+      "doi": "10.1108/EJIM-07-2022-0362",
+      "url": "https://doi.org/10.1108/EJIM-07-2022-0362",
+      "tried": [
+        {
+          "candidate": "https://www.emerald.com/insight/content/doi/10.1108/EJIM-07-2022-0362/full/pdf?title=a-new-era-of-the-music-industry-blockchain-and-value-co-creation-the-bitsong-case-study",
+          "final_url": "https://www.emerald.com/insight/content/doi/10.1108/EJIM-07-2022-0362/full/pdf?title=a-new-era-of-the-music-industry-blockchain-and-value-co-creation-the-bitsong-case-study",
+          "info": "text/html; charset=utf-8"
+        }
+      ],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Moreau2024PaymentModels",
+      "title": "Alternative payment models in the music streaming market: A comparative approach based on stream-level data",
+      "doi": "10.1016/j.infoecopol.2024.101103",
+      "url": "",
+      "tried": [
+        {
+          "candidate": "https://doi.org/10.1016/j.infoecopol.2024.101103",
+          "final_url": "https://doi.org/10.1016/j.infoecopol.2024.101103",
+          "info": "text/html;charset=utf-8"
+        },
+        {
+          "candidate": "https://hal.science/hal-04679366/document",
+          "final_url": "https://hal.science/hal-04679366/document",
+          "info": "text/html; charset=utf-8"
+        }
+      ],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "inproceedings",
+      "key": "lfm1b2016",
+      "title": "The LFM-1b Dataset for Music Retrieval and Recommendation",
+      "doi": "10.1145/2911996.2912004",
+      "url": "https://dl.acm.org/doi/10.1145/2911996.2912004",
+      "tried": [],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "misc",
+      "key": "musdb18",
+      "title": "The MUSDB18 Corpus for Music Separation",
+      "doi": "10.5281/zenodo.1117372",
+      "url": "https://doi.org/10.5281/zenodo.1117372",
+      "tried": [
+        {
+          "candidate": "https://zenodo.org/record/1117372",
+          "final_url": "https://zenodo.org/record/1117372",
+          "info": "text/html; charset=utf-8"
+        }
+      ],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Wei2022BDMSSurvey",
+      "title": "A Survey of Blockchain Data Management Systems",
+      "doi": "10.1145/3502741",
+      "url": "",
+      "tried": [],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Qin2021BlockchainAccess",
+      "title": "A Blockchain-based access control scheme with multiple attribute authorities for secure cloud data sharing",
+      "doi": "10.1016/j.sysarc.2020.101854",
+      "url": "",
+      "tried": [],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "inproceedings",
+      "key": "Ali2017IoTIPFS",
+      "title": "IoT data privacy via blockchains and {IPFS}",
+      "doi": "10.1145/3131542.3131563",
+      "url": "",
+      "tried": [],
+      "reason": "no_open_pdf_found"
+    },
+    {
+      "type": "article",
+      "key": "Jarvelin2002CG",
+      "title": "Cumulated gain-based evaluation of {IR} techniques",
+      "doi": "10.1145/582415.582418",
+      "url": "",
+      "tried": [],
+      "reason": "no_open_pdf_found"
+    }
+  ],
+  "excluded": [
+    {
+      "type": "online",
+      "key": "electronDocs",
+      "title": "Process Model",
+      "doi": "",
+      "url": "https://electronjs.org/docs/latest/tutorial/process-model",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "electronIPC",
+      "title": "Inter-Process Communication",
+      "doi": "",
+      "url": "https://electronjs.org/docs/latest/tutorial/ipc",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "reactDocs",
+      "title": "React Documentation",
+      "doi": "",
+      "url": "https://react.dev/",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "nodeDocs",
+      "title": "Node.js Documentation",
+      "doi": "",
+      "url": "https://nodejs.org/api/",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "nodeHttp",
+      "title": "HTTP | Node.js Documentation",
+      "doi": "",
+      "url": "https://nodejs.org/api/http.html",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "nodeStream",
+      "title": "Stream | Node.js Documentation",
+      "doi": "",
+      "url": "https://nodejs.org/api/stream.html",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "expressDocs",
+      "title": "Express -- Node.js Web Application Framework",
+      "doi": "",
+      "url": "https://expressjs.com/",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "prismaDocs",
+      "title": "Prisma Documentation",
+      "doi": "",
+      "url": "https://www.prisma.io/docs",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "eip4361",
+      "title": "EIP-4361: Sign-In with Ethereum",
+      "doi": "",
+      "url": "https://eips.ethereum.org/EIPS/eip-4361",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "eip721",
+      "title": "ERC-721: Non-Fungible Token Standard",
+      "doi": "",
+      "url": "https://eips.ethereum.org/EIPS/eip-721",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "eip2981",
+      "title": "ERC-2981: NFT Royalty Standard",
+      "doi": "",
+      "url": "https://eips.ethereum.org/EIPS/eip-2981",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "ipfsDocs",
+      "title": "IPFS Documentation",
+      "doi": "",
+      "url": "https://docs.ipfs.tech/",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "ipfsPinning",
+      "title": "Persistence, Permanence, and Pinning",
+      "doi": "",
+      "url": "https://docs.ipfs.tech/concepts/persistence/",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "pinataDocs",
+      "title": "Uploading Files",
+      "doi": "",
+      "url": "https://docs.pinata.cloud/files/uploading-files",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "pinataUploadApi",
+      "title": "Upload a File",
+      "doi": "",
+      "url": "https://docs.pinata.cloud/api-reference/endpoint/upload-a-file",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "solidityDocs",
+      "title": "Solidity Documentation",
+      "doi": "",
+      "url": "https://docs.soliditylang.org/en/latest/",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "eip1155",
+      "title": "EIP-1155: Multi Token Standard",
+      "doi": "",
+      "url": "https://eips.ethereum.org/EIPS/eip-1155",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "openzeppelinContracts",
+      "title": "OpenZeppelin Contracts Documentation",
+      "doi": "",
+      "url": "https://docs.openzeppelin.com/contracts",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "openzeppelinERC1155",
+      "title": "ERC1155",
+      "doi": "",
+      "url": "https://docs.openzeppelin.com/contracts/api/token/erc1155",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "techreport",
+      "key": "rfc9110",
+      "title": "RFC 9110: HTTP Semantics",
+      "doi": "",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "chinaCopyrightChain2021",
+      "title": "中国版权链发布上线",
+      "doi": "",
+      "url": "https://www.ncsti.gov.cn/kjdt/xwjj/202106/t20210604_33729.html",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "beijingCopyrightChain2022",
+      "title": "版权链-数字版权服务新模式",
+      "doi": "",
+      "url": "https://zscqj.beijing.gov.cn/zscqj/ztzl/zscqggfwzl/gykt/dxal/zlq94/325920691/index.html",
+      "reason": "excluded_non_article_or_web_doc"
+    },
+    {
+      "type": "online",
+      "key": "ddexSimpleMusicNft",
+      "title": "Simple Music NFT",
+      "doi": "",
+      "url": "https://kb.ddex.net/implementing-each-standard/simple-music-nft",
+      "reason": "excluded_non_article_or_web_doc"
+    }
+  ]
+}

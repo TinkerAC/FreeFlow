@@ -2,6 +2,7 @@
 
 \chapter{链上音乐资源发现与检索机制设计}
 
+
 \section{模块目标与总体设计}
 
 在 FreeFlow 系统中，资源发现模块承担链上音乐资源检索、定位和结果组织等支撑任务。链上音乐资源同时具有传统音乐信息与链上身份信息两类属性。前者包括标题、艺术家、专辑、流派和描述等元数据，后者包括链网络编号、合约地址、Token ID、发布交易哈希、IPFS 内容标识以及资源唯一键等标识字段。两类属性在检索场景中的作用存在明显差异：传统元数据主要服务于歌曲发现与内容浏览，链上身份字段主要服务于精确定位、资产确认和链上资源追踪。基于这一特点，系统中的资源发现模块需要同时支持自然语言查询与链上身份查询，并在统一结果列表中给出清晰的结果依据。
@@ -9,6 +10,7 @@
 本模块面向系统冷启动阶段的资源发现需求，主要关注以下几个方面。当用户输入歌曲名、艺术家、专辑名或流派标签时，系统能够召回语义相关的链上音乐资源；当用户输入 Token ID、合约地址、交易哈希、IPFS CID 或 resourceKey 等链上标识时，系统能够优先返回目标明确的资源；当查询中存在大小写差异、空格变化、符号干扰或轻微拼写偏差时，系统仍能保持较好的召回能力与结果稳定性；同时，系统还需要在结果展示时保留字段命中情况和得分来源，以支持结果分析、功能调试与用户侧解释。
 
 结合上述目标，本文将链上音乐资源发现支撑模块划分为查询归一化、候选召回、规则评分和结果排序四个阶段。该结构能够将查询处理、候选生成与结果组织解耦，便于后续根据系统规模和数据积累情况继续扩展更复杂的检索能力。
+
 
 \section{检索对象与索引字段设计}
 
@@ -28,27 +30,28 @@
     \songti
     \centering
     \caption{链上音乐资源检索字段设计}\label{tab:ranking_fields_rewrite}
-    \begin{tabular}{|l|p{9.5cm}|}
+    \begin{tabular}{|p{3.35cm}|p{8.6cm}|}
         \hline
-        字段 & 用途 \\ \hline
-        \texttt{title} & 标题匹配、标题词元重合计算与模糊相似度计算 \\ \hline
-        \texttt{artistName} & 艺术家名称匹配 \\ \hline
-        \texttt{albumName} & 专辑名称匹配 \\ \hline
-        \texttt{genreLabel} & 流派标签匹配 \\ \hline
-        \texttt{description} & 长文本辅助召回 \\ \hline
-        \texttt{chainId} & 链网络识别 \\ \hline
-        \texttt{musicAssetAddress} & 音乐资源合约定位 \\ \hline
-        \texttt{platformHubAddress} & 平台相关合约定位 \\ \hline
-        \texttt{tokenId} & 链上作品唯一 Token 定位 \\ \hline
-        \texttt{publishTxHash} & 发布交易定位 \\ \hline
-        \texttt{audioCid}、\texttt{coverCid}、\texttt{metadataCid} & IPFS 内容寻址检索 \\ \hline
-        \texttt{resourceKey} & 资源唯一键定位 \\ \hline
-        \texttt{comments}、\texttt{purchases} & 行为热度估计 \\ \hline
-        \texttt{publishedAt}、\texttt{updatedAt} & 时效性估计 \\ \hline
+        字段                                                       & 用途                    \\ \hline
+        \texttt{title}                                           & 标题匹配、标题词元重合计算与模糊相似度计算 \\ \hline
+        \texttt{artistName}                                      & 艺术家名称匹配               \\ \hline
+        \texttt{albumName}                                       & 专辑名称匹配                \\ \hline
+        \texttt{genreLabel}                                      & 流派标签匹配                \\ \hline
+        \texttt{description}                                     & 长文本辅助召回               \\ \hline
+        \texttt{chainId}                                         & 链网络识别                 \\ \hline
+        \texttt{musicAssetAddress}                               & 音乐资源合约定位              \\ \hline
+        \texttt{platformHubAddress}                              & 平台相关合约定位              \\ \hline
+        \texttt{tokenId}                                         & 链上作品唯一 Token 定位       \\ \hline
+        \texttt{publishTxHash}                                   & 发布交易定位                \\ \hline
+        \texttt{audioCid}、\texttt{coverCid}、\texttt{metadataCid} & IPFS 内容寻址检索           \\ \hline
+        \texttt{resourceKey}                                     & 资源唯一键定位               \\ \hline
+        \texttt{comments}、\texttt{purchases}                     & 行为热度估计                \\ \hline
+        \texttt{publishedAt}、\texttt{updatedAt}                  & 时效性估计                 \\ \hline
     \end{tabular}
 \end{table}
 
 上述字段设计体现出两项原则。其一，标题、艺术家、专辑与流派承担主要的内容发现功能；其二，Token ID、合约地址、CID 和交易哈希承担高确定性的资源定位功能。通过对这两类字段的联合组织，系统能够在歌曲搜索与链上资产搜索两类场景下保持较稳定的表现。
+
 
 \section{查询处理与候选召回}
 
@@ -78,11 +81,12 @@
 
 为控制后续处理阶段的计算复杂度，系统对候选规模设置上限。当前实现中，主召回候选数根据查询命中情况动态调整，总量限制在 500 条以内；补充召回的近期资源不超过 200 条。该限制能够保证资源发现链路在常规负载下保持可控延迟。
 
+
 \section{结果组织规则与评分机制}
 
 \subsection{评分机制定义}
 
-为便于对候选资源进行统一比较，系统采用固定权重的规则化加和方式生成结果分值，并将该实现记为\texttt{chain\_resource\_rank\_v1}。对任意候选资源$d$和查询$q$，其总分定义为
+为便于对候选资源进行统一比较，系统采用固定权重的规则化加和方式生成结果分值，并将该实现记为\texttt{chain\_resource\_rank\_v1}。对任意候选资源$d$和查询$q$，其总分定义如公式\eqref{eq:rank_score_rewrite}所示：
 
 \begin{equation}
     Score(d,q)=S_{identity}(d,q)+S_{text}(d,q)+S_{fuzzy}(d,q)+S_{freshness}(d)+S_{popularity}(d)
@@ -91,14 +95,7 @@
 
 其中，$S_{identity}$表示身份匹配分，$S_{text}$表示文本匹配分，$S_{fuzzy}$表示模糊相似度分，$S_{freshness}$表示时效性分，$S_{popularity}$表示热度分。
 
-该评分结构主要服务于结果组织过程，可对应为三类判断信息。第一类为资源定位信息，用于判断候选资源与查询在链上身份层面的对应关系；第二类为内容相关信息，用于判断候选资源与查询在标题、艺术家和专辑等内容层面的接近程度；第三类为辅助区分信息，用于在多个相关候选之间进一步比较发布时间和用户关注程度。整体结构如图\ref{fig:ranking_score_model}所示。
-
-\begin{figure}[H]
-    \centering
-    \figmax{figures/out/ranking_score_model.png}
-    \caption{链上资源发现评分结构图}
-    \label{fig:ranking_score_model}
-\end{figure}
+该评分结构主要服务于结果组织过程，可对应为三类判断信息。第一类为资源定位信息，用于判断候选资源与查询在链上身份层面的对应关系；第二类为内容相关信息，用于判断候选资源与查询在标题、艺术家和专辑等内容层面的接近程度；第三类为辅助区分信息，用于在多个相关候选之间进一步比较发布时间和用户关注程度。
 
 \subsection{身份匹配规则}
 
@@ -120,12 +117,12 @@
     \caption{文本字段匹配权重设置}\label{tab:text_matching_weights}
     \begin{tabular}{|l|c|c|c|c|}
         \hline
-        字段 & 精确匹配 & 前缀匹配 & 包含匹配 & 词元重合 \\ \hline
-        标题 & 45 & 30 & 20 & 14 \\ \hline
-        艺术家 & 34 & 24 & 16 & 12 \\ \hline
-        专辑 & 24 & 16 & 10 & 8 \\ \hline
-        流派 & 20 & 14 & 8 & 6 \\ \hline
-        描述 & 10 & 8 & 6 & 4 \\ \hline
+        字段  & 精确匹配 & 前缀匹配 & 包含匹配 & 词元重合 \\ \hline
+        标题  & 45   & 30   & 20   & 14   \\ \hline
+        艺术家 & 34   & 24   & 16   & 12   \\ \hline
+        专辑  & 24   & 16   & 10   & 8    \\ \hline
+        流派  & 20   & 14   & 8    & 6    \\ \hline
+        描述  & 10   & 8    & 6    & 4    \\ \hline
     \end{tabular}
 \end{table}
 
@@ -133,7 +130,7 @@
 
 \subsection{模糊匹配规则}
 
-为增强系统对轻微拼写错误、分隔符变化和局部字符缺失的适应能力，结果组织阶段进一步引入模糊相似度规则。本文采用基于 Levenshtein 距离的归一化字符串相似度，对查询与候选资源的\texttt{compact}文本进行比较。设归一化后的查询紧凑文本为$q_c$，候选字段紧凑文本为$d_c$，则相似度可表示为
+为增强系统对轻微拼写错误、分隔符变化和局部字符缺失的适应能力，结果组织阶段进一步引入模糊相似度规则。本文采用基于 Levenshtein 距离的归一化字符串相似度，对查询与候选资源的\texttt{compact}文本进行比较。设归一化后的查询紧凑文本为$q_c$，候选字段紧凑文本为$d_c$，则相似度可表示为公式\eqref{eq:lev_similarity}：
 
 \begin{equation}
     sim_{lev}(q_c,d_c)=1-\frac{Lev(q_c,d_c)}{\max(|q_c|,|d_c|)}
@@ -148,7 +145,7 @@
 
 当多个候选资源都满足文本相关或身份相关条件时，系统进一步引入时效性与热度信息进行区分。
 
-新鲜度分采用指数衰减形式。设资源发布时间距当前时刻的天数为$ageDays$，则新鲜度定义为
+新鲜度分采用指数衰减形式。设资源发布时间距当前时刻的天数为$ageDays$，则新鲜度定义如公式\eqref{eq:freshness_rewrite}所示：
 
 \begin{equation}
     freshness(d)=0.5^{ageDays/45}
@@ -157,7 +154,7 @@
 
 该式表示资源每经过 45 天，其新鲜度贡献衰减为原值的一半。当前实现中，新鲜度项的最高贡献为 8 分。该设计能够使近期发布资源在分值接近时获得更高排序位置，同时避免时间因素过度主导结果顺序。
 
-热度分由评论数与购买数共同决定，其归一化形式为
+热度分由评论数与购买数共同决定，其归一化形式如公式\eqref{eq:popularity_rewrite}所示：
 
 \begin{equation}
     popularity(d)=\min\left(1,\frac{\ln(1+comments+3\times purchases)}{\ln(31)}\right)
@@ -165,6 +162,7 @@
 \end{equation}
 
 当前实现中，热度项的最高贡献为 7 分。式中对购买数给予更高权重，原因在于购买行为代表了更强的资源确认信号与价值投入，相较评论行为具有更高的可信度和业务指向性。对数归一化处理能够减弱极端高活跃样本对结果的影响，使热度特征在不同规模资源之间保持更平滑的区分能力。
+
 
 \section{结果说明与处理流程}
 
@@ -180,7 +178,7 @@
 
 \begin{figure}[H]
     \centering
-    \figmax{figures/out/search_ranking_pipeline.png}
+    \includegraphics[width=\textwidth]{figures/out/search_ranking_pipeline.png}
     \caption{链上音乐资源发现处理流程图}
     \label{fig:search_ranking_pipeline}
 \end{figure}
@@ -208,8 +206,6 @@
     \end{algorithmic}
 \end{algorithm}
 
-\FloatBarrier
-
 \section{复杂度分析}
 
 设候选资源数量为$N$，平均参与比较的文本长度为$L$。候选召回阶段主要由数据库字段查询完成，计算开销主要集中在结果组织阶段。
@@ -217,6 +213,7 @@
 文本匹配分的计算主要依赖字段比较与词元重合统计，其时间复杂度近似为$O(NL)$。模糊相似度采用 Levenshtein 距离，在单次比较中的时间复杂度近似为$O(L^2)$，因此在候选集合上的总体复杂度近似为$O(NL^2)$。最终排序采用基于总分的比较排序，其复杂度为$O(N\log N)$。
 
 考虑到编辑距离计算对长文本较为敏感，系统在实现中对参与模糊比较的文本长度进行截断，并对候选数量设置上限，因此整体运行开销能够维持在可接受范围内。对于原型系统当前的资源规模，该复杂度设计能够满足离线评估与在线检索的基本需求。
+
 
 \section{检索效果评估设计}
 
@@ -228,9 +225,10 @@
 
 当前评估集属于面向原型验证的结构化模拟数据集，主要用于检验冷启动阶段资源发现链路的工程可用性与结果合理性。基于真实线上行为日志构建的大规模评估体系仍需在系统投入实际运行后进一步完善。
 
-本文从排序质量、召回有效性和响应效率三个方面评估检索效果。其中，Precision@10 用于衡量前 10 个结果中的相关资源比例，MRR 用于衡量首个高相关结果出现的位置，nDCG@10 用于衡量分级相关性条件下前 10 个结果的排序质量，零结果率用于反映检索请求中无返回结果的比例，平均响应时间则用于衡量检索链路的效率表现。
+本文从排序质量、召回有效性和响应效率三个方面评估检索效果。其中，nDCG@10 的使用参考了分级相关性条件下的经典累积增益评价方法\cite{Jarvelin2002CG}。其中，Precision@10 用于衡量前 10 个结果中的相关资源比例，MRR 用于衡量首个高相关结果出现的位置，nDCG@10 用于衡量分级相关性条件下前 10 个结果的排序质量，零结果率用于反映检索请求中无返回结果的比例，平均响应时间则用于衡量检索链路的效率表现。
 
 对比方法设置为四组：数据库字段包含匹配基线、仅使用文本评分的方法、文本评分叠加链上身份字段的方法，以及完整的\texttt{chain\_resource\_rank\_v1}实现。通过分层对比，可以观察身份字段、模糊相似度以及辅助排序信息对整体检索效果的影响。具体实验过程、数据分布和结果分析见第 7 章表\ref{tab:ranking_query_categories}、表\ref{tab:ranking_metrics_actual}和图\ref{fig:ranking_latency_curve}。
+
 
 \section{本章小结}
 

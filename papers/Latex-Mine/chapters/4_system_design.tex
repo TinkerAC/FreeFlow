@@ -6,11 +6,11 @@
 
 FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整体架构。桌面端负责用户交互、钱包连接、播放控制与本地缓存；后端负责认证、上传代理、资源索引、购买记录与评论服务；智能合约负责作品发布、访问授权与收益分账；IPFS/Pinata负责音频、封面与metadata资源存储。系统总体架构如图\ref{fig:system_architecture}所示。
 
-在职责划分上，作品发布结果、访问凭证、交易记录等关键状态由链上维护，评论、会话、搜索索引和上传记录等高频业务数据由链下维护。该分层方式能够兼顾状态可信性、检索效率与系统响应能力\cite{Eren2025,Friedl2024}。
+在职责划分上，作品发布结果、访问凭证、交易记录等关键状态由链上维护，评论、会话、搜索索引和上传记录等高频业务数据由链下维护。该分层方式能够在链上可信记录与链下处理效率之间形成较稳妥的工程折中，并降低链上应用在同步、成本和交互延迟方面的实现压力\cite{Wei2022BDMSSurvey,Six2022DAppPatterns,DArcher2021}。。
 
 \begin{figure}[H]
     \centering
-    \figmax{figures/out/system_architecture.png}{}
+    \includegraphics[width=\textwidth]{figures/out/system_architecture.png}
     \caption{FreeFlow系统总体架构图}
     \label{fig:system_architecture}
 \end{figure}
@@ -47,7 +47,7 @@ FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整�
 
 \begin{figure}[H]
     \centering
-    \figmax{figures/out/release_workflow.png}
+    \includegraphics[width=\textwidth]{figures/out/release_workflow.png}
     \caption{创作者链上音乐发布流程图}
     \label{fig:release_workflow}
 \end{figure}
@@ -68,12 +68,10 @@ FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整�
 
 \begin{figure}[H]
     \centering
-    \figmax{figures/out/purchase_playback_sequence.png}
+    \includegraphics[width=\textwidth]{figures/out/purchase_playback_sequence.png}
     \caption{用户购买与播放流程图}
     \label{fig:purchase_playback_sequence}
 \end{figure}
-
-\FloatBarrier
 
 用户购买播放流程的主要步骤如下：
 
@@ -83,9 +81,6 @@ FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整�
     \item 公开作品可直接播放，付费作品需调用\texttt{buyAccess}完成购买。
     \item 访问校验通过后，作品加入链上音乐库并进入播放或下载流程。
 \end{enumerate}
-
-
-\FloatBarrier
 
 \section{数据库设计}
 
@@ -101,6 +96,8 @@ FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整�
     \caption{客户端SQLite数据库ER图}
     \label{fig:client_sqlite_er}
 \end{figure}
+
+客户端SQLite数据库中的核心数据表及其职责如表\ref{tab:client_sqlite_tables}所示。
 
 \begin{table}[htbp]
     \linespread{1.5}
@@ -129,6 +126,8 @@ FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整�
     \label{fig:server_postgresql_er}
 \end{figure}
 
+服务器PostgreSQL数据库中的核心数据表及其职责如表\ref{tab:server_postgresql_tables}所示。
+
 \begin{table}[htbp]
     \linespread{1.5}
     \zihao{5}
@@ -151,8 +150,6 @@ FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整�
 \end{table}
 
 在约束设计上，\texttt{creator\_releases}通过\texttt{chainId + musicAssetAddress + tokenId}保证链上资源索引唯一；\texttt{purchases}通过交易哈希与用户-资源组合约束防止重复确认；\texttt{comments}通过资源与用户索引支持评论列表和用户行为查询。
-
-\FloatBarrier
 
 \section{智能合约设计}
 
@@ -187,8 +184,6 @@ FreeFlow采用桌面端、链下服务、智能合约与IPFS存储协同的整�
 
 系统安全设计围绕身份建立、访问控制、交易执行、接口保护和资源访问边界展开。在身份认证方面，系统采用 SIWE 签名登录机制，后端对 nonce、地址、链 ID、domain、uri 和签发时间进行校验，以降低签名重放和身份伪造风险。
 
-在访问控制方面，付费作品的访问资格以链上凭证与合约访问结果为依据，客户端仅负责发起查询与展示结果，不直接决定最终权限。购买流程中的价格、销售状态和凭证发放均由合约完成校验与执行，从而保证关键业务规则由链上统一约束。
+在访问控制方面，付费作品的访问资格以链上凭证与合约访问结果为依据，客户端仅负责发起查询与展示结果，不直接决定最终权限。购买流程中的价格、销售状态和凭证发放均由合约完成校验与执行，从而使关键访问规则能够在链上形成可验证、可审计的统一约束\cite{Maesa2019AuditableAC,Qin2021BlockchainAccess,Punia2024AccessReview}。
 
-在接口保护方面，上传、发行、购买和评论等链下接口均要求会话认证，并通过服务端统一维护用户身份、上传记录和交易投影。需要说明的是，当前系统的音频资源仍基于 CID 和网关访问，若资源地址被直接获取，仍可能绕过应用侧访问流程。因此，现阶段的访问控制更适合作为原型系统中的授权验证机制，后续仍需结合音频加密、授权网关或短期签名 URL 等方案进一步完善资源保护能力。
-
-\FloatBarrier
+在接口保护方面，上传、发行、购买和评论等链下接口均要求会话认证，并通过服务端统一维护用户身份、上传记录和交易投影。当前系统的音频资源仍基于 CID 和网关访问，若资源地址被直接获取，仍可能绕过应用侧访问流程。已有研究也表明，在区块链与 IPFS 结合的数据共享场景中，链上访问授权通常仍需配合链下加密、密钥管理或受控解密流程，才能更完整地约束实际资源访问\cite{Ali2017IoTIPFS,Qin2021BlockchainAccess}。因此，现阶段的访问控制更适合作为原型系统中的授权验证机制，后续仍需结合音频加密、授权网关或短期签名 URL 等方案进一步完善资源保护能力。
