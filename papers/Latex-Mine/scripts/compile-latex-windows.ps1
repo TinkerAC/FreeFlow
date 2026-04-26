@@ -109,23 +109,25 @@ function Export-DrawioFigures {
             $DrawioArgs += $DrawioExtraArgs
         }
         $DrawioArgs += @(
-            "--export"
-            "--format", "png"
-            "--scale", $DrawioScale
-            "--border", $DrawioBorder
-            "--output", $OutputFile
+            "-x"
+            "-f", "png"
+            "-s", $DrawioScale
+            "-b", $DrawioBorder
+            "-o", $OutputFile
             $Source.FullName
         )
 
-        & $DrawioCli @DrawioArgs
-        $ExitCode = $LASTEXITCODE
+        $Process = Start-Process `
+            -FilePath $DrawioCli `
+            -ArgumentList $DrawioArgs `
+            -Wait `
+            -PassThru `
+            -WindowStyle Hidden
 
-        if ($ExitCode -ne 0 -and -not (Test-Path $OutputFile)) {
-            throw "draw.io export failed for $($Source.FullName) (exit code: $ExitCode)"
-        }
+        $ExitCode = $Process.ExitCode
 
         if (-not (Test-Path $OutputFile)) {
-            throw "draw.io did not create output file: $OutputFile"
+            throw "draw.io did not create output file: $OutputFile (exit code: $ExitCode)"
         }
     }
 }
