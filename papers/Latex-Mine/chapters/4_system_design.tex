@@ -88,7 +88,7 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
 
 \subsection{客户端SQLite数据库设计}
 
-客户端 SQLite 数据库以统一歌曲记录为核心，其 ER 关系如图\ref{fig:client_sqlite_er}所示。\texttt{track}表承载本地音乐、外部来源音乐与 FreeFlow 链上音乐的统一表示；歌单与会话信息则围绕该表组织。链上音乐的扩展字段序列化保存在\texttt{freeflow\_metadata\_json}中，以复用本地播放、缓存与下载逻辑。
+客户端 SQLite 数据库以统一歌曲记录为核心，其 ER 关系如图\ref{fig:client_sqlite_er}所示。
 
 \begin{figure}[htbp]
     \centering
