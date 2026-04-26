@@ -9,6 +9,7 @@ $DrawioScale = if ($env:DRAWIO_SCALE) { $env:DRAWIO_SCALE } else { "3" }
 $DrawioBorder = if ($env:DRAWIO_BORDER) { $env:DRAWIO_BORDER } else { "10" }
 $DrawioExtraArgs = if ($env:DRAWIO_EXTRA_ARGS) { $env:DRAWIO_EXTRA_ARGS -split " " } else { @() }
 $OpenPdf = if ($env:OPEN_PDF) { $env:OPEN_PDF } else { "1" }
+$PreferredDrawioDir = "D:\DrawIO\draw.io"
 Set-Location $ThesisDir
 
 function Get-ThesisVersion {
@@ -50,6 +51,9 @@ function Resolve-DrawioCli {
     }
 
     $Candidates = @(
+        (Join-Path $PreferredDrawioDir "draw.io.exe"),
+        (Join-Path $PreferredDrawioDir "drawio.exe"),
+        (Join-Path $PreferredDrawioDir "diagrams.net.exe"),
         "$env:LOCALAPPDATA\Programs\draw.io\draw.io.exe",
         "$env:LOCALAPPDATA\Programs\diagrams.net\diagrams.net.exe",
         "$env:ProgramFiles\draw.io\draw.io.exe",
@@ -69,7 +73,7 @@ Unable to find diagrams.net/draw.io command line exporter.
 
 Install diagrams.net Desktop, add draw.io.exe to PATH, or set DRAWIO_CLI to the executable path.
 Windows example:
-  `$env:DRAWIO_CLI = "C:\Program Files\draw.io\draw.io.exe"
+  `$env:DRAWIO_CLI = "D:\DrawIO\draw.io\draw.io.exe"
   powershell.exe -ExecutionPolicy Bypass -File scripts\compile-latex-windows.ps1
 
 To compile LaTeX without regenerating figures, run:
@@ -117,9 +121,18 @@ $OutDir = Join-Path $ThesisDir "out\$OutDirName"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 Write-Host "Building thesis version $ThesisVersion -> $OutDir"
 
+if (-not (Get-Command latexmk -ErrorAction SilentlyContinue)) {
+    throw "latexmk was not found in PATH. Please install TeX Live/MiKTeX with latexmk and ensure it is available in PATH."
+}
+
 latexmk `
   -pdfxe `
   -xelatex="xelatex -interaction=nonstopmode -halt-on-error %O %S" `
+  -usebiber `
+  -file-line-error `
+  -synctex=1 `
+  -interaction=nonstopmode `
+  -halt-on-error `
   "-outdir=$OutDir" `
   main.tex
 
