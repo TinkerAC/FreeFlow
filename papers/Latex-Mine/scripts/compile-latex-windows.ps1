@@ -104,8 +104,11 @@ function Export-DrawioFigures {
             Remove-Item -Force $OutputFile
         }
 
-        $DrawioArgs = @(
-            @DrawioExtraArgs
+        $DrawioArgs = @()
+        if ($DrawioExtraArgs.Count -gt 0) {
+            $DrawioArgs += $DrawioExtraArgs
+        }
+        $DrawioArgs += @(
             "--export"
             "--format", "png"
             "--scale", $DrawioScale
