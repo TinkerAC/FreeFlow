@@ -140,21 +140,52 @@ $OutDir = Join-Path $ThesisDir "out\$OutDirName"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 Write-Host "Building thesis version $ThesisVersion -> $OutDir"
 
-if (-not (Get-Command latexmk -ErrorAction SilentlyContinue)) {
-    throw "latexmk was not found in PATH. Please install TeX Live/MiKTeX with latexmk and ensure it is available in PATH."
+foreach ($CommandName in @("xelatex", "biber")) {
+    if (-not (Get-Command $CommandName -ErrorAction SilentlyContinue)) {
+        throw "$CommandName was not found in PATH. Please install a TeX distribution that provides $CommandName and ensure it is available in PATH."
+    }
 }
 
-latexmk `
-  -pdfxe `
-  -xelatex="xelatex -interaction=nonstopmode -halt-on-error %O %S" `
-  -usebiber `
-  -file-line-error `
-  -synctex=1 `
-  -interaction=nonstopmode `
-  -halt-on-error `
-  "-outdir=$OutDir" `
-  main.tex
+& xelatex `
+    -interaction=nonstopmode `
+    -halt-on-error `
+    "-output-directory=$OutDir" `
+    main.tex
+if ($LASTEXITCODE -ne 0) {
+    throw "xelatex failed on the first pass (exit code: $LASTEXITCODE)"
+}
+
+& biber `
+    "--input-directory=$OutDir" `
+    "--output-directory=$OutDir" `
+    main
+if ($LASTEXITCODE -ne 0) {
+    throw "biber failed (exit code: $LASTEXITCODE)"
+}
+
+& xelatex `
+    -interaction=nonstopmode `
+    -halt-on-error `
+    "-output-directory=$OutDir" `
+    main.tex
+if ($LASTEXITCODE -ne 0) {
+    throw "xelatex failed on the second pass (exit code: $LASTEXITCODE)"
+}
+
+& xelatex `
+    -interaction=nonstopmode `
+    -halt-on-error `
+    "-output-directory=$OutDir" `
+    main.tex
+if ($LASTEXITCODE -ne 0) {
+    throw "xelatex failed on the third pass (exit code: $LASTEXITCODE)"
+}
+
+$PdfPath = Join-Path $OutDir "main.pdf"
+if (-not (Test-Path $PdfPath)) {
+    throw "Compilation finished but PDF was not found: $PdfPath"
+}
 
 if ($OpenPdf -ne "0") {
-    Start-Process (Join-Path $OutDir "main.pdf")
+    Start-Process $PdfPath
 }
