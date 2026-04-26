@@ -9,7 +9,7 @@ $DrawioScale = if ($env:DRAWIO_SCALE) { $env:DRAWIO_SCALE } else { "3" }
 $DrawioBorder = if ($env:DRAWIO_BORDER) { $env:DRAWIO_BORDER } else { "10" }
 $DrawioExtraArgs = if ($env:DRAWIO_EXTRA_ARGS) { $env:DRAWIO_EXTRA_ARGS -split " " } else { @() }
 $OpenPdf = if ($env:OPEN_PDF) { $env:OPEN_PDF } else { "1" }
-$PreferredDrawioDir = "D:\DrawIO\draw.io"
+$PreferredDrawioCli = "D:\DrawIO\draw.io\draw.io.exe"
 Set-Location $ThesisDir
 
 function Get-ThesisVersion {
@@ -51,9 +51,9 @@ function Resolve-DrawioCli {
     }
 
     $Candidates = @(
-        (Join-Path $PreferredDrawioDir "draw.io.exe"),
-        (Join-Path $PreferredDrawioDir "drawio.exe"),
-        (Join-Path $PreferredDrawioDir "diagrams.net.exe"),
+        $PreferredDrawioCli,
+        "D:\DrawIO\draw.io\drawio.exe",
+        "D:\DrawIO\draw.io\diagrams.net.exe",
         "$env:LOCALAPPDATA\Programs\draw.io\draw.io.exe",
         "$env:LOCALAPPDATA\Programs\diagrams.net\diagrams.net.exe",
         "$env:ProgramFiles\draw.io\draw.io.exe",
@@ -99,16 +99,30 @@ function Export-DrawioFigures {
     foreach ($Source in $Sources) {
         $OutputFile = Join-Path $FiguresOutDir ($Source.BaseName + ".png")
         Write-Host "Exporting $($Source.Name) -> $OutputFile (scale=$DrawioScale, border=$DrawioBorder)"
-        & $DrawioCli `
-            @DrawioExtraArgs `
-            --export `
-            --format png `
-            --scale $DrawioScale `
-            --border $DrawioBorder `
-            --output $OutputFile `
+
+        if (Test-Path $OutputFile) {
+            Remove-Item -Force $OutputFile
+        }
+
+        $DrawioArgs = @(
+            @DrawioExtraArgs
+            "--export"
+            "--format", "png"
+            "--scale", $DrawioScale
+            "--border", $DrawioBorder
+            "--output", $OutputFile
             $Source.FullName
-        if ($LASTEXITCODE -ne 0) {
-            throw "draw.io export failed for $($Source.FullName)"
+        )
+
+        & $DrawioCli @DrawioArgs
+        $ExitCode = $LASTEXITCODE
+
+        if ($ExitCode -ne 0 -and -not (Test-Path $OutputFile)) {
+            throw "draw.io export failed for $($Source.FullName) (exit code: $ExitCode)"
+        }
+
+        if (-not (Test-Path $OutputFile)) {
+            throw "draw.io did not create output file: $OutputFile"
         }
     }
 }
