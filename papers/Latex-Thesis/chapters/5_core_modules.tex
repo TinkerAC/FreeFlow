@@ -62,9 +62,8 @@
 
 \section{身份建立与会话协同}
 
-在系统当中，是由本地Profile、钱包地址还有SIWE会话这三者共同构成用户身份基础的。桌面端在启动之后，会去读取本地Profile列表，并且把最近一次使用过的身份进行恢复；用户连接钱包并且切换到目标链之后，客户端就会向后端申请nonce，接着构造登录消息，并请求钱包进行签名；后端在完成签名验证之后，会去创建或者更新用户实体、钱包身份还有会话记录，然后客户端再把当前钱包地址跟本地Profile绑定起来。
+FreeFlow中,用户身份由本地Profile、钱包地址和SIWE会话构成。客户端启动后，将读取本地Profile列表，并且把最近使用过的身份进行恢复；用户连接钱包并且切换到目标链之后，客户端就会向后端申请nonce并构造登录消息，并请求钱包(本文采用MetaMask)进行签名；后端验证后将计入数据库中.
 
-在职责划分方面，桌面端去负责钱包连接、签名发起还有令牌的保存工作，后端则负责对nonce有效性、签名恢复地址、链ID以及消息字段进行校验。这套实现，为后续的发行、购买、评论还有资源管理接口，提供了一套统一的鉴权基础。
 
 用户资料引导、钱包连接与签名登录界面如图\ref{fig:profile_guide.png}所示。
 
@@ -93,7 +92,7 @@
     \end{tabular}
 \end{table}
 
-发行状态包括\texttt{DRAFT}、\texttt{ASSETS\_PENDING}、\texttt{ASSETS\_UPLOADED}、\texttt{METADATA\_UPLOADED}、\texttt{PUBLISHING}、\texttt{PUBLISHED}和\texttt{FAILED}。这些状态由后端持久化保存，用于跨会话恢复与异常重试。
+Release状态包括\texttt{DRAFT}、\texttt{ASSETS\_PENDING}、\texttt{ASSETS\_UPLOADED}、\texttt{METADATA\_UPLOADED}、\texttt{PUBLISHING}、\texttt{PUBLISHED}和\texttt{FAILED}等,由后端发行项目模块管理.
 
 创作者工作台主界面与发行信息编辑界面分别如图\ref{fig:creators_workshop.png}和图\ref{fig:publish_form.png}所示，状态流转关系如图\ref{fig:release_state_flow}所示。
 
@@ -110,7 +109,7 @@
 
 \subsection{素材上传、metadata生成与链上发布}
 
-音频和封面文件由客户端提交至后端上传接口，再由后端代理 Pinata 完成持久化，并记录 CID、文件大小、MIME 类型与上传结果。该方式有助于集中管理上传记录与异常信息。
+音频和封面文件由客户端提交至后端上传接口，再由后端代理 Pinata 完成持久化，并记录 CID、文件大小、MIME 类型与上传结果.
 
 metadata 由客户端根据作品信息、资源 CID 与访问配置动态生成，经后端上传后回写 metadata URI。其主要字段如表\ref{tab:metadata_json_fields}所示。
 
@@ -133,13 +132,13 @@ metadata 由客户端根据作品信息、资源 CID 与访问配置动态生成
     \end{tabular}
 \end{table}
 
-当 metadata 准备完成后，客户端调用\texttt{PlatformHub.publishTrack}发起链上发布。交易确认后，客户端解析事件中的\texttt{tokenId}、交易哈希与分账合约地址，并由后端回写发行记录，形成后续检索、详情展示与状态恢复所需的链下投影。
+当 metadata 准备完成后，客户端调用\texttt{PlatformHub.publishTrack}发起链上发布。交易确认后，客户端解析事件中的\texttt{tokenId}、交易哈希与分账合约地址，并由后端回写发行记录，形成后续检索、详情展示与状态恢复所需的链下索引。
 
 \section{资源索引、检索与详情联动}
 
 作品发布成功后，后端以\texttt{creator\_releases}为核心构建资源索引，并将标题、艺术家、专辑、流派、合约地址、\texttt{tokenId}、CID和交易哈希等字段组织为可检索视图。桌面端据此完成搜索结果展示和详情页加载。
 
-搜索结果页展示封面、标题、创作者、价格、访问模式与链上身份摘要，便于用户快速筛选。用户进入详情页后，客户端根据\texttt{resourceKey}请求后端解析资源信息，并同步读取链上销售配置与访问状态，从而完成详情展示与购买入口联动。
+搜索结果页展示封面、标题、创作者、价格、访问模式与链上身份摘要。用户进入详情页后，客户端根据\texttt{resourceKey}请求后端解析资源信息，并同步读取链上销售配置与访问状态，从而完成详情展示与购买入口联动。
 
 链上资源搜索结果界面如图\ref{fig:search_results.png}所示。
 
@@ -147,9 +146,9 @@ metadata 由客户端根据作品信息、资源 CID 与访问配置动态生成
 
 \section{购买授权、访问校验与链上音乐库}
 
-购买付费作品时，客户端调用\texttt{PlatformHub.buyAccess}发起链上交易。合约完成销售配置与支付金额校验后，向购买者地址铸造对应\texttt{tokenId}的访问凭证。交易完成后，客户端重新读取\texttt{hasAccess}和 ERC-1155 余额，以确认当前钱包已获得访问资格；后端则将购买结果写入\texttt{purchases}表，用于购买历史维护与统计分析。
+购买付费作品时，客户端调用\texttt{PlatformHub.buyAccess}发起链上交易。合约完成销售配置与支付金额校验后，向购买者地址铸造对应\texttt{tokenId}的访问凭证。交易完成后，客户端重新读取\texttt{hasAccess}和 ERC-1155 余额，以检查当前地址用户是否已获访问授权；后端则将购买结果写入\texttt{purchases}表，用于购买历史维护与统计分析。
 
-链上音乐库用于承接已购买或公开资源的本地投影。用户将作品加入音乐库后，客户端将相关记录写入本地歌曲库，并保留\texttt{resourceKey}、链 ID、合约地址、\texttt{tokenId}和资源 CID 等扩展字段，使链上音乐能够复用本地播放、缓存与下载逻辑。
+前端链上音乐库存储了用户在链上资产的缓存。用户将作品加入音乐库后，客户端将相关记录写入本地歌曲库，并保留\texttt{resourceKey}、链 ID、合约地址、\texttt{tokenId}和资源 CID 等扩展字段，作为后续歌单管理功能的基础.
 
 链上音乐详情与购买界面如图\ref{fig:track_detail.png}所示。
 
@@ -157,13 +156,13 @@ metadata 由客户端根据作品信息、资源 CID 与访问配置动态生成
 
 \section{音频代理、播放与评论联动}
 
-播放器通过本地音频代理统一访问音频资源。系统优先读取本地文件或磁盘缓存，缓存未命中时再访问远程音频源。代理层支持 HTTP Range 请求，可在进度跳转时按字节区间返回音频数据，从而改善播放响应效率。
+播放器通过本地音频代理统一访问音频资源,因ipfs访问缓慢,系统实现了下载、缓存两套缓存机制,播放时,优先读取本地文件、磁盘缓存，缓存未命中时再访问远程音频源。代理层支持 HTTP Range 请求，可在进度跳转时按字节区间返回音频数据，从而改善播放响应效率。
 
 歌词联动与播放控制界面如图\ref{fig:lyric.png}所示，音频代理与缓存流程如图\ref{fig:audio_proxy_cache_flow}所示。
 
 \chapteruiscreenshotplaceholder{lyric.png}{歌词联动与播放控制界面}
 
-评论功能部署在链下服务层。用户登录后可针对作品查看和发布评论，后端保存评论内容、用户标识与时间信息，客户端负责评论列表展示。该模块为作品消费提供了基础互动能力，并与详情页、播放页共同构成用户侧主要使用链路。
+评论功能部署在链下服务层。用户登录后可针对作品查看和发布评论，后端保存评论内容、用户标识与时间信息，客户端负责评论列表展示。该模块为作品消费提供了基础互动能力，并与详情页、播放页共同构成用户侧主要界面。
 
 \begin{figure}[htbp]
     \centering
