@@ -2,6 +2,7 @@
 
 \chapter{系统总体设计}
 
+
 \section{系统总体架构}
 
 FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的整体架构。桌面端负责用户交互、钱包连接、播放控制与本地缓存；后端负责认证、上传代理、资源索引、购买记录与评论服务；智能合约负责作品发布、访问授权与收益分账；IPFS/Pinata 负责音频、封面与 metadata 资源存储。系统总体架构如图\ref{fig:system_architecture}所示。
@@ -14,6 +15,7 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
     \caption{FreeFlow系统总体架构图}
     \label{fig:system_architecture}
 \end{figure}
+
 
 \section{功能模块设计}
 
@@ -38,6 +40,7 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
         评论模块      & 支持用户查看和发布作品评论                                  \\ \hline
     \end{tabular}
 \end{table}
+
 
 \section{业务流程设计}
 
@@ -68,7 +71,7 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/out/purchase_playback_sequence.png}
+    \includegraphics[width=\textwidth]{figures/out/purchase_playback_sequence}
     \caption{用户购买与播放流程图}
     \label{fig:purchase_playback_sequence}
 \end{figure}
@@ -82,9 +85,10 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
     \item 访问校验通过后，作品加入链上音乐库并进入播放或下载流程。
 \end{enumerate}
 
+
 \section{数据库设计}
 
-系统采用客户端SQLite数据库与服务器PostgreSQL数据库的双数据库方案。前者服务于本地音乐管理、缓存与播放状态维护，后者服务于身份认证、资源索引、上传记录、购买记录与评论存储。双数据库设计能够分别满足桌面端本地能力与链下业务协同的需要。
+系统采用客户端SQLite数据库与服务器PostgreSQL数据库的双数据库方案。前者用于本地音乐管理、缓存与播放状态维护，后者用于身份认证、资源索引、上传记录、购买记录与评论存储.
 
 \subsection{客户端SQLite数据库设计}
 
@@ -117,7 +121,7 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
 
 \subsection{服务器PostgreSQL数据库设计}
 
-服务器PostgreSQL数据库的ER关系如图\ref{fig:server_postgresql_er}所示。后端以\texttt{creator\_releases}为资源索引中心，关联用户、钱包身份、存储对象、购买记录与评论数据。该设计支持资源检索、详情展示、阶段恢复和交易投影等业务需求。
+服务器PostgreSQL数据库的ER关系如图\ref{fig:server_postgresql_er}所示。后端以\texttt{creator\_releases}为资源索引中心，关联用户、钱包身份、存储对象、购买记录与评论数据,以实现资源检索、详情展示、阶段恢复和交易投影等业务需求。
 
 \begin{figure}[htbp]
     \centering
@@ -151,13 +155,14 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
 
 在约束设计上，\texttt{creator\_releases}通过\texttt{chainId + musicAssetAddress + tokenId}保证链上资源索引唯一；\texttt{purchases}通过交易哈希与用户-资源组合约束防止重复确认；\texttt{comments}通过资源与用户索引支持评论列表和用户行为查询。
 
+
 \section{智能合约设计}
 
 系统合约由\texttt{MusicAccess1155}、\texttt{PlatformHub}和\texttt{RoyaltySplitter}组成，其结构如图\ref{fig:contract_architecture}所示。\texttt{MusicAccess1155}负责访问凭证创建与校验；\texttt{PlatformHub}负责作品发布、销售配置维护、购买处理与访问状态判断；\texttt{RoyaltySplitter}负责收益保存与提取。
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{figures/out/contract_architecture.png}
+    \includegraphics[width=0.95\textwidth]{figures/out/contract_architecture}
     \caption{智能合约结构图}
     \label{fig:contract_architecture}
 \end{figure}
@@ -182,8 +187,8 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
 
 \section{系统安全设计}
 
-系统的安全设计，主要围绕身份建立、访问控制、交易执行、接口保护以及资源访问边界这几个方面来展开。在身份认证方面，系统运用了 SIWE 签名登录机制，后端会对 nonce、地址、链 ID、domain、uri 还有签发时间这些字段进行校验，借此来降低签名重放和身份伪造所带来的风险。
+系统安全主设计要集中在身份建立、访问控制、交易执行、接口保护以及资源访几个方面。本系统使用 SIWE 签名登录机制，后端会对 nonce、地址、链 ID、domain、uri 签发时间等进行校验并恢复出钱包地址和传入地址比对,nonce 具有过期时间和消费限制,以防范重放攻击.
 
-在访问控制方面，付费作品的访问资格是把链上凭证以及合约访问结果当作依据的，客户端只去发起查询并且展示结果，而不直接决定最终的权限。购买流程里涉及的价格、销售状态还有凭证发放，这些全部都由合约来完成校验与执行，这样关键访问规则就能够在链上形成一种可验证而且可审计的统一约束\cite{Maesa2019AuditableAC,Qin2021BlockchainAccess,Punia2024AccessReview}。
+在访问控制方面，创作者可将作品发布为“公开可访问”或“购买后访问”.前端以链上信息为唯一事实,通过静态调用来获取链上状态,从而能够在链上形成一种可公开查验的确权模式\cite{Maesa2019AuditableAC,Qin2021BlockchainAccess,Punia2024AccessReview}。
 
-在接口保护方面，像上传、发行、购买以及评论这些链下接口，全都要求进行会话认证，并且借助服务端来统一维护用户身份、上传记录还有交易投影。目前系统里的音频资源，依然是基于 CID 还有网关来进行访问的，如果资源地址被直接获取，仍有可能绕过应用这边的访问流程。已经有研究也表明了，在区块链和 IPFS 相结合的数据共享场景当中，链上的访问授权通常还是需要配合链下的加密、密钥管理或者是受控解密流程，才可以更加完整地约束实际的资源访问\cite{Ali2017IoTIPFS,Qin2021BlockchainAccess}。所以，现阶段的访问控制，更加适宜当作原型系统里的授权验证机制，后续还是需要结合音频加密、授权网关或者短期签名URL等方案，来进一步完善资源保护方面的能力。
+在资源保护上,当前模式下,如果资源地址被直接获取，仍有可能绕过应用这边的访问流程。已经有研究表明，链上+链下的混和去中心化应用架构中,链上的确权信息仍需配合链下的加密、密钥管理或类似lit protocol等去中心化鉴权模式才能有效防止盗链\cite{Ali2017IoTIPFS,Qin2021BlockchainAccess}。现阶段的访问控制，只是原型系统的授权验证机制，后续需要结合音频加密、授权网关来完善资源保护.
