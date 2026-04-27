@@ -6,7 +6,8 @@ import {
   type ScoredResourceRecord,
 } from '../../modules/resources/resource.ranking.shared.js';
 import { rankResourceRecords } from '../../modules/resources/resource.ranking.js';
-import { buildResourceKey, makeTypo, NOW } from './simulation.js';
+import { buildResourceKey, makeTypo, NOW, removeSpaces } from './simulation.js';
+import type { ProgressTask } from './progress.js';
 import type {
   ExperimentMethod,
   ExperimentQuery,
@@ -70,8 +71,8 @@ function ndcgAtK(
  * 延迟基准统一采用“先预热、后采样”的方式，
  * 避免第一次执行的 JIT 与缓存命中把平均值拉偏。
  */
-function benchmarkAverageLatency(fn: () => void, iterations = 240) {
-  for (let index = 0; index < 24; index += 1) fn();
+function benchmarkAverageLatency(fn: () => void, iterations = 24) {
+  for (let index = 0; index < 6; index += 1) fn();
   const startedAt = performance.now();
   for (let index = 0; index < iterations; index += 1) fn();
   return (performance.now() - startedAt) / iterations;
@@ -134,8 +135,15 @@ function idsWithScores(results: Array<ScoredResourceRecord<SimulatedResourceReco
  * 这一步用于保护“共享打分器重构”不会引入行为漂移。
  * 如果完整配置下的共享排序和正式 rankResourceRecords 不一致，实验会直接失败。
  */
-export function validateFullRankingParity(records: SimulatedResourceRecord[], queries: ExperimentQuery[]) {
-  for (const query of queries) {
+export function validateFullRankingParity(
+  records: SimulatedResourceRecord[],
+  queries: ExperimentQuery[],
+  progress?: ProgressTask,
+) {
+  const step = Math.max(1, Math.ceil(queries.length / 16));
+  const probeQueries = queries.filter((_, index) => index % step === 0).slice(0, 16);
+
+  for (const query of probeQueries) {
     const actual = idsWithScores(rankResourceRecords(records, query.text, NOW));
     const derived = idsWithScores(
       rankResourceRecordsWithConfig(records, query.text, DEFAULT_CHAIN_RESOURCE_RANKING_CONFIG, NOW),
@@ -144,7 +152,10 @@ export function validateFullRankingParity(records: SimulatedResourceRecord[], qu
     if (JSON.stringify(actual) !== JSON.stringify(derived)) {
       throw new Error(`完整排序在 ${query.id} 上出现不一致。`);
     }
+    progress?.tick(query.id);
   }
+
+  progress?.done('一致性校验完成');
 }
 
 export function buildMethods(records: SimulatedResourceRecord[]): ExperimentMethod[] {
@@ -189,13 +200,24 @@ export function buildMethods(records: SimulatedResourceRecord[]): ExperimentMeth
   ];
 }
 
-export function summarizeMethods(methods: ExperimentMethod[], queries: ExperimentQuery[]): MethodSummary[] {
+export function summarizeMethods(
+  methods: ExperimentMethod[],
+  queries: ExperimentQuery[],
+  progressFactory?: (label: string, total: number) => ProgressTask,
+) {
+  const latencyProbeStep = Math.max(1, Math.ceil(queries.length / 18));
+  const latencyProbeQueries = queries.filter((_, index) => index % latencyProbeStep === 0).slice(0, 18);
+  const latencyIterations = queries.length >= 180 ? 12 : queries.length >= 100 ? 18 : 28;
+
   return methods.map((method) => {
     let precisionTotal = 0;
     let mrrTotal = 0;
     let ndcgTotal = 0;
     let zeroResultCount = 0;
-    const latencySamples: number[] = [];
+    const progress = progressFactory?.(
+      `评估 ${method.label}`,
+      queries.length + latencyProbeQueries.length,
+    );
 
     for (const query of queries) {
       const results = method.rank(query.text).slice(0, 10);
@@ -203,12 +225,19 @@ export function summarizeMethods(methods: ExperimentMethod[], queries: Experimen
       mrrTotal += reciprocalRank(results, query.relevance);
       ndcgTotal += ndcgAtK(results, query.relevance, 10);
       if (results.length === 0) zeroResultCount += 1;
-      latencySamples.push(benchmarkAverageLatency(() => {
-        method.rank(query.text);
-      }, 220));
+      progress?.tick(query.id);
     }
 
+    const latencySamples = latencyProbeQueries.map((query) => {
+      const value = benchmarkAverageLatency(() => {
+        method.rank(query.text);
+      }, latencyIterations);
+      progress?.tick(`latency:${query.id}`);
+      return value;
+    });
+
     const averageLatencyMs = latencySamples.reduce((sum, value) => sum + value, 0) / latencySamples.length;
+    progress?.done(`${method.label} 完成`);
 
     return {
       method_key: method.key,
@@ -260,20 +289,38 @@ function expandRecords(records: SimulatedResourceRecord[], targetCount: number) 
   return pool;
 }
 
-export function summarizeLatency(records: SimulatedResourceRecord[]): LatencySummary[] {
-  const queryTexts = [
-    records[0]?.title ?? '',
-    makeTypo(records[12]?.title ?? ''),
-    buildResourceKey(records[22]!),
-    records[31]?.musicAssetAddress ?? '',
-    records[40]?.audioStorageObject?.cid ?? '',
-    'Toby Fox UNDERTALE soundtrack',
-    '新 地球',
-    'fantasy soundtrack',
-  ];
+export function summarizeLatency(
+  records: SimulatedResourceRecord[],
+  progress?: ProgressTask,
+) {
+  const anchorRecords = [
+    records[0],
+    records[Math.min(records.length - 1, 7)],
+    records[Math.min(records.length - 1, 31)],
+    records[Math.min(records.length - 1, 63)],
+    records[Math.min(records.length - 1, 127)],
+  ].filter((record): record is SimulatedResourceRecord => Boolean(record));
 
-  return [50, 100, 300, 500].map((candidateCount) => {
-    const pool = expandRecords(records, candidateCount);
+  const queryTexts = [
+    anchorRecords[0]?.title ?? '',
+    makeTypo(anchorRecords[1]?.title ?? ''),
+    anchorRecords[2] ? buildResourceKey(anchorRecords[2]) : '',
+    anchorRecords[3]?.musicAssetAddress ?? '',
+    anchorRecords[4]?.audioStorageObject?.cid ?? '',
+    `${anchorRecords[0]?.artistName ?? ''} ${anchorRecords[0]?.albumName ?? ''}`.trim(),
+    removeSpaces(anchorRecords[1]?.albumName ?? ''),
+    anchorRecords[2]?.genreLabel ?? '',
+  ].filter(Boolean);
+
+  const candidateCounts = [
+    Math.min(1_000, records.length),
+    Math.min(5_000, records.length),
+    Math.min(10_000, records.length),
+    records.length,
+  ].filter((count, index, list) => count > 0 && list.indexOf(count) === index);
+
+  const results = candidateCounts.map((candidateCount) => {
+    const pool = candidateCount > records.length ? expandRecords(records, candidateCount) : records.slice(0, candidateCount);
     const samples: number[] = [];
 
     for (let round = 0; round < 18; round += 1) {
@@ -290,6 +337,13 @@ export function summarizeLatency(records: SimulatedResourceRecord[]): LatencySum
       p95_latency_ms: percentile(samples, 0.95),
     };
   });
+
+  for (const item of results) {
+    progress?.tick(`${item.candidate_count} candidates`);
+  }
+  progress?.done('延迟采样完成');
+
+  return results;
 }
 
 export function summarizeQueryCategories(queries: ExperimentQuery[]): QueryCategorySummary[] {

@@ -1,7 +1,10 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { NOW } from './simulation.js';
 import type {
+  DatasetProfile,
+  ExperimentQuery,
+  ExperimentScalePlan,
   LatencySummary,
   MethodSummary,
   QueryCategorySummary,
@@ -38,6 +41,22 @@ function formatFloat(value: number) {
   return value.toFixed(4);
 }
 
+function resolveFiguresDataDir(repoRoot: string) {
+  const thesisDir = resolve(repoRoot, 'papers/Latex-Thesis');
+  if (existsSync(thesisDir)) {
+    return {
+      figuresDataDir: resolve(thesisDir, 'figures/data'),
+      experimentOutDir: resolve(thesisDir, 'out/experiments'),
+    };
+  }
+
+  const legacyDir = resolve(repoRoot, 'papers/Latex-Mine');
+  return {
+    figuresDataDir: resolve(legacyDir, 'figures/data'),
+    experimentOutDir: resolve(legacyDir, 'out/experiments'),
+  };
+}
+
 /**
  * 报表输出与实验计算分离，便于后续单独替换 CSV/Markdown/JSON 结构，
  * 而不影响排序逻辑与指标评估本身。
@@ -45,14 +64,16 @@ function formatFloat(value: number) {
 export function writeExperimentOutputs(input: {
   repoRoot: string;
   sourceStats: Record<string, number>;
+  datasetProfile: DatasetProfile;
+  scalePlan: ExperimentScalePlan;
   corpus: SimulationCorpus;
+  queries: ExperimentQuery[];
   methodSummary: MethodSummary[];
   latencySummary: LatencySummary[];
   categorySummary: QueryCategorySummary[];
   representativeCases: RepresentativeCase[];
 }) {
-  const figuresDataDir = resolve(input.repoRoot, 'papers/Latex-Mine/figures/data');
-  const experimentOutDir = resolve(input.repoRoot, 'papers/Latex-Mine/out/experiments');
+  const { figuresDataDir, experimentOutDir } = resolveFiguresDataDir(input.repoRoot);
 
   mkdirSync(figuresDataDir, { recursive: true });
   mkdirSync(experimentOutDir, { recursive: true });
@@ -88,17 +109,39 @@ export function writeExperimentOutputs(input: {
   );
 
   writeFileSync(
+    resolve(figuresDataDir, 'search_annotation_categories.csv'),
+    toCsv(input.scalePlan.category_plan, [
+      'category',
+      'annotation_mode',
+      'query_count',
+      'pool_depth',
+      'estimated_judgements',
+    ]),
+    'utf8',
+  );
+
+  writeFileSync(
+    resolve(experimentOutDir, 'search_annotation_queries.csv'),
+    toCsv(input.scalePlan.query_plan, [
+      'query_id',
+      'category',
+      'text',
+      'annotation_mode',
+      'pool_depth',
+      'relevant_group_key',
+      'relevant_group_label',
+    ]),
+    'utf8',
+  );
+
+  writeFileSync(
     resolve(experimentOutDir, 'search_ranking_summary.json'),
     JSON.stringify(
       {
         generated_at: new Date().toISOString(),
-        dataset: {
-          resource_count: input.corpus.records.length,
-          query_count: input.categorySummary.reduce((sum, item) => sum + item.count, 0),
-          reference_time: NOW.toISOString(),
-          simulated_group_count: input.corpus.groups.length,
-        },
+        dataset: input.datasetProfile,
         seed_statistics: input.sourceStats,
+        scale_plan: input.scalePlan,
         groups: input.corpus.groups.map((group) => ({
           key: group.key,
           artist: group.artist,
@@ -147,12 +190,24 @@ export function writeExperimentOutputs(input: {
     曲目数: group.records.length,
   }));
 
+  const planRows = input.scalePlan.category_plan.map((item) => ({
+    类别: item.category,
+    标注方式: item.annotation_mode,
+    查询数: item.query_count,
+    标注深度: item.pool_depth,
+    预计判断条目: item.estimated_judgements,
+  }));
+
   const summaryMarkdown = [
     '# Search Ranking Experiment',
     '',
-    `- Indexed resources: ${input.corpus.records.length}`,
-    `- Query set size: ${input.categorySummary.reduce((sum, item) => sum + item.count, 0)}`,
-    `- Simulated artist/album clusters: ${input.corpus.groups.length}`,
+    `- Dataset source: ${input.datasetProfile.source_label}`,
+    `- Imported tracks: ${input.datasetProfile.imported_track_count ?? 0}`,
+    `- Indexed resources: ${input.datasetProfile.corpus_record_count}`,
+    `- Core benchmark groups: ${input.datasetProfile.core_group_count}`,
+    `- Core relevant records: ${input.datasetProfile.core_record_count}`,
+    `- Distractor records: ${input.datasetProfile.distractor_record_count}`,
+    `- Query set size: ${input.datasetProfile.query_count}`,
     `- Reference timestamp: ${NOW.toISOString()}`,
     '',
     '## Retrieval Metrics',
@@ -166,6 +221,15 @@ export function writeExperimentOutputs(input: {
     '## Latency by Candidate Count',
     '',
     toMarkdownTable(latencyRows, ['候选集规模', '平均延迟(ms)', 'P95延迟(ms)']),
+    '',
+    '## Annotation Plan',
+    '',
+    toMarkdownTable(planRows, ['类别', '标注方式', '查询数', '标注深度', '预计判断条目']),
+    '',
+    `- Manual queries: ${input.scalePlan.manual_query_count}`,
+    `- Spot-check queries: ${input.scalePlan.spot_check_query_count}`,
+    `- Estimated manual judgements: ${input.scalePlan.estimated_manual_judgements}`,
+    `- Estimated total judgements: ${input.scalePlan.estimated_total_judgements}`,
     '',
     '## Representative Cases',
     '',

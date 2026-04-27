@@ -117,3 +117,55 @@ export type RepresentativeCase = {
     reasons: string[];
   }>;
 };
+
+/**
+ * 数据集画像用于把“导入了多大样本、实际抽了多少语料、查询集有多大”
+ * 这些信息稳定输出到报表里，方便论文和后续复现实验时直接引用。
+ */
+export type DatasetProfile = {
+  source_key: string;
+  source_label: string;
+  imported_track_count?: number;
+  imported_release_count?: number;
+  imported_artist_count?: number;
+  core_group_count: number;
+  core_record_count: number;
+  distractor_record_count: number;
+  corpus_record_count: number;
+  query_count: number;
+};
+
+/**
+ * 标注规划不直接绑定某一种数据源。
+ * 它描述的是“哪些查询需要人工判断、每类做多少、预计工作量有多少”。
+ */
+export type AnnotationCategoryPlan = {
+  category: string;
+  annotation_mode: 'manual' | 'spot_check' | 'auto_label';
+  query_count: number;
+  pool_depth: number;
+  estimated_judgements: number;
+};
+
+export type AnnotationQueryPlan = {
+  query_id: string;
+  category: string;
+  text: string;
+  annotation_mode: 'manual' | 'spot_check' | 'auto_label';
+  pool_depth: number;
+  relevant_group_key: string;
+  relevant_group_label: string;
+};
+
+export type ExperimentScalePlan = {
+  benchmark_label: string;
+  main_corpus_target: number;
+  latency_candidate_tiers: number[];
+  manual_query_count: number;
+  spot_check_query_count: number;
+  auto_label_query_count: number;
+  estimated_manual_judgements: number;
+  estimated_total_judgements: number;
+  category_plan: AnnotationCategoryPlan[];
+  query_plan: AnnotationQueryPlan[];
+};

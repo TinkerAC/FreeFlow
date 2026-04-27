@@ -1,0 +1,16 @@
+category,annotation_mode,query_count,pool_depth,estimated_judgements
+address,spot_check,3,5,15
+album,manual,24,10,240
+artist,manual,18,10,180
+artist_alias,manual,10,10,100
+cid,spot_check,3,5,15
+compact,manual,10,10,100
+fullwidth,manual,4,10,40
+multi_term,manual,18,10,180
+release_alias,manual,10,10,100
+resource_key,spot_check,3,5,15
+title_artist,manual,18,10,180
+title_exact,manual,24,10,240
+token_id,spot_check,3,5,15
+tx_hash,spot_check,2,5,10
+typo,manual,12,10,120
