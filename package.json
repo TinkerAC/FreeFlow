@@ -14,7 +14,6 @@
     "dev:desktop": "pnpm --filter freeflow run dev",
     "dev:backend": "pnpm --filter freeflow-web25-backend run dev",
     "build:backend": "pnpm --filter freeflow-web25-backend run build",
-    "build:thesis": "pnpm --dir apps/desktop exec ts-node --project ../../papers/Latex-Mine/scripts/tsconfig.json ../../papers/Latex-Mine/scripts/compile-latex.ts",
     "db:backend:push": "pnpm --filter freeflow-web25-backend run prisma:push",
     "db:backend:comments": "pnpm --filter freeflow-web25-backend run prisma:comments",
     "db:backend:studio": "pnpm --filter freeflow-web25-backend run prisma:studio"
