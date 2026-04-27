@@ -28,58 +28,56 @@
 
 ## 编译方式
 
+统一编译入口已经收敛为一份 `Node.js + TypeScript` 脚本：
+
+```bash
+pnpm run build:thesis
+```
+
+常用默认开关可以直接修改 [scripts/compile-latex.ts](/Users/tinker/WebstormProjects/FreeFlow/papers/Latex-Mine/scripts/compile-latex.ts:21) 开头的 `defaultOptions`，例如是否重新导出图片、编译后是否自动打开 PDF。
+
+仓库里仍保留了 `scripts/compile-latex-macos.sh` 和 `scripts/compile-latex-windows.ps1`，但它们现在只是包装器，最终都会调用同一份 `compile-latex.ts`。
+
+如未将 draw.io 加入 PATH，可指定可执行文件：
+
 macOS:
 
 ```bash
-zsh scripts/compile-latex-macos.sh
-```
-
-如未将 draw.io 加入 PATH，可指定应用内可执行文件：
-
-```bash
-DRAWIO_CLI=/Applications/draw.io.app/Contents/MacOS/draw.io zsh scripts/compile-latex-macos.sh
-```
-
-提高导出倍率：
-
-```bash
-DRAWIO_SCALE=4 zsh scripts/compile-latex-macos.sh
-```
-
-只编译不自动打开 PDF：
-
-```bash
-OPEN_PDF=0 zsh scripts/compile-latex-macos.sh
+DRAWIO_CLI=/Applications/draw.io.app/Contents/MacOS/draw.io pnpm run build:thesis
 ```
 
 Windows:
 
 ```powershell
-powershell.exe -ExecutionPolicy Bypass -File scripts/compile-latex-windows.ps1
-```
-
-如未将 draw.io 加入 PATH，可指定安装路径：
-
-```powershell
 $env:DRAWIO_CLI = "C:\Program Files\draw.io\draw.io.exe"
-powershell.exe -ExecutionPolicy Bypass -File scripts/compile-latex-windows.ps1
+pnpm run build:thesis
 ```
 
 提高导出倍率：
 
-```powershell
-$env:DRAWIO_SCALE = "4"
-powershell.exe -ExecutionPolicy Bypass -File scripts/compile-latex-windows.ps1
+```bash
+DRAWIO_SCALE=4 pnpm run build:thesis
 ```
 
 只编译不自动打开 PDF：
 
-```powershell
-$env:OPEN_PDF = "0"
-powershell.exe -ExecutionPolicy Bypass -File scripts\compile-latex-windows.ps1
+```bash
+OPEN_PDF=0 pnpm run build:thesis
 ```
 
-两种脚本都会在 `papers/Latex-Mine` 下按 `xelatex -> biber -> xelatex -> xelatex` 的顺序生成 `main.pdf`。
+在 macOS 上，统一脚本会默认通过临时引导入口为 `ctexbook` 注入 `fontset=fandol`，避免系统自动探测到缺失的旧字体而报错；这个替代仅发生在编译脚本运行时，不修改 `main.tex` 或 `zufe.cls`。如需关闭这层兼容处理，可设置：
+
+```bash
+LATEX_CTEX_FONTSET=auto pnpm run build:thesis
+```
+
+如需显式指定其他字体集，也可以直接传入：
+
+```bash
+LATEX_CTEX_FONTSET=windows pnpm run build:thesis
+```
+
+统一脚本会在 `papers/Latex-Mine` 下按 `xelatex -> biber -> xelatex -> xelatex` 的顺序生成 `main.pdf`。
 
 ## 版本管理
 
