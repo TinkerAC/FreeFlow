@@ -39,10 +39,10 @@
     \begin{tabular}{|l|p{8.8cm}|}
         \hline
         项目    & 说明                                                                        \\ \hline
-        资源规模  & 56条模拟链上音乐资源，按14个艺术家/专辑簇组织，覆盖标题、艺术家、专辑、流派、Token ID、CID、合约地址和resourceKey等字段 \\ \hline
-        查询规模  & 62个查询，覆盖标题精确匹配、艺术家/专辑/流派多结果查询、CID与resourceKey定位、全角输入、空格扰动和轻微拼写错误          \\ \hline
-        相关性标注 & 单目标定位查询使用三级相关；多结果查询按照3/2/1相关等级人工标注                                        \\ \hline
+        资源规模  & 基于公开 MusicBrainz 样本库构建 6000 条候选资源，其中核心相关样本 815 条、干扰项 5185 条，按 48 个发行簇组织 \\ \hline
+        查询规模  & 162 个查询，覆盖标题、专辑、艺人、别名、多词组合、紧凑输入、全角输入、拼写扰动以及 Token ID、CID、合约地址和resourceKey 等场景 \\ \hline
+        相关性标注 & 148 条多结果查询采用 3/2/1 相关等级人工标注；14 条链上身份定位查询采用浅层 spot-check 标注            \\ \hline
         评价指标  & Precision@10、MRR、nDCG@10、零结果率和平均响应时间                                      \\ \hline
-        对比方法  & SQL contains基线、仅文本评分、文本+链上身份字段、完整\texttt{chain\_resource\_rank\_v1}       \\ \hline
+        对比方法  & 正文展示 SQL contains 基线、仅文本评分和完整\texttt{chain\_resource\_rank\_v1} 三组代表性方法       \\ \hline
     \end{tabular}
 \end{table}

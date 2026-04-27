@@ -26,7 +26,7 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
         桌面端技术栈  & Electron、React、TypeScript      \\ \hline
         后端技术栈   & Node.js、Express、Prisma         \\ \hline
         合约测试工具链 & Hardhat 2.28.6，Solidity 0.8.26 \\ \hline
-        排序评估集规模 & 56条资源，62个查询                    \\ \hline
+        排序评估集规模 & 6000条候选资源，162个查询               \\ \hline
         参考时间点   & 2026-04-22 12:00:00 UTC        \\ \hline
     \end{tabular}
 \end{table}
@@ -57,9 +57,9 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
 
 \section{检索排序实验设置}
 
-离线检索评估集是围绕第6章所提出的链上资源排序目标来进行构建的。这个评估集包含了56条结构化的模拟资源，并且按照14个艺术家/专辑簇来开展组织工作，它覆盖了标题、艺术家、专辑、流派、Token ID、合约地址、CID、resourceKey以及交易哈希等等诸多字段；同时，62个查询会去覆盖精确检索、模糊检索、链上身份定位以及输入扰动等场景。针对标题、Token ID、CID以及resourceKey这类单目标查询，仅仅会标注一个三级相关结果；而对于艺术家、专辑和流派查询，就会按照人工所标注的3/2/1相关等级来对排序质量进行评价。
+离线检索评估集是围绕第 6 章所提出的链上资源排序目标来进行构建的。该评估集基于公开 MusicBrainz sample 2026-04-01 数据库生成，先选取 48 个发行簇作为核心相关样本，再从整库中抽取干扰项补齐候选集，最终形成了 6000 条候选资源，其中核心相关资源为 815 条、干扰项为 5185 条。查询集共 162 条，用于覆盖精确检索、模糊检索、链上身份定位以及输入扰动等场景。对于标题、专辑、艺人、别名和多词组合等多结果查询，采用 3/2/1 相关等级标注；对于 Token ID、合约地址、CID、\texttt{resourceKey}和交易哈希等高确定性定位查询，则采用浅层 spot-check 标注。
 
-这里需要指出的是，这个评估集主要是为当前系统在冷启动场景下开展可复现的实验来提供服务的。它虽然覆盖了当前实现所关心的查询类型，但并没有去模拟真实线上平台的全部流量特征。为了便于调试以及进行解释，部分链上身份字段选用了结构化测试标识，所以实验结果更适合用来说明排序机制在当前实现当中的工程有效性。而生产环境里的最终搜索质量，仍然需要凭借真实的日志来开展进一步的验证工作。
+这里需要指出的是，该评估集虽然采用了真实公开曲库作为底座，但链上身份字段、热度值以及部分时效性信号仍然使用了确定性映射，因此它依然不能完全模拟真实线上平台的全部流量特征。它更适合用来说明排序机制在当前实现中的工程有效性，而生产环境里的最终搜索质量，仍然需要结合真实的搜索、点击、播放和购买日志继续验证。
 
 \begin{table}[htbp]
     \linespread{1.45}
@@ -69,30 +69,31 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
     \caption{检索评估查询类型分布}\label{tab:ranking_query_categories}
     \begin{tabular}{|l|c|l|}
         \hline
-        查询类型           & 数量 & 说明                                            \\ \hline
-        标题精确匹配         & 12 & 直接定位单首作品                                      \\ \hline
-        艺术家查询          & 10 & 返回同创作者多首作品                                    \\ \hline
-        专辑查询           & 10 & 验证同专辑资源排序                                     \\ \hline
-        流派查询           & 8  & 验证分组标签下的多结果排序                                 \\ \hline
-        Token ID 查询    & 3  & 验证链上标识精确定位                                    \\ \hline
-        合约地址查询         & 2  & 验证MusicAccess合约检索                             \\ \hline
-        CID 查询         & 2  & 验证IPFS内容寻址检索                                  \\ \hline
-        resourceKey 查询 & 2  & 验证链上资源键精确定位                                   \\ \hline
-        交易哈希查询         & 1  & 验证发布交易定位                                      \\ \hline
-        拼写扰动查询         & 5  & 如\texttt{The Fields of Ard Skellix}           \\ \hline
-        紧凑输入/空格扰动      & 4  & 如\texttt{TheFieldsofArdSkellig}、\texttt{新 地球} \\ \hline
-        全角输入           & 1  & 验证NFKC归一化                                     \\ \hline
-        描述关键词查询        & 1  & 验证长文本辅助召回                                     \\ \hline
-        多词组合查询         & 1  & 验证艺术家与专辑联合意图                                  \\ \hline
+        查询类型           & 数量 & 说明                                      \\ \hline
+        标题精确匹配         & 24 & 直接定位单首作品                                \\ \hline
+        专辑查询           & 24 & 验证同专辑资源排序                               \\ \hline
+        艺术家查询          & 18 & 返回同创作者多首作品                              \\ \hline
+        标题+艺人组合查询      & 18 & 验证标题与艺人联合意图                            \\ \hline
+        多词组合查询         & 18 & 验证艺人与专辑联合检索                            \\ \hline
+        发行别名查询         & 10 & 验证 release alias 检索能力                   \\ \hline
+        艺人别名查询         & 10 & 验证 artist alias 检索能力                    \\ \hline
+        拼写扰动查询         & 12 & 如\texttt{Introductiox}                       \\ \hline
+        紧凑输入/空格扰动      & 10 & 如\texttt{MorningDips}                      \\ \hline
+        全角输入           & 4  & 验证 NFKC 归一化                            \\ \hline
+        Token ID 查询    & 3  & 验证链上标识精确定位                              \\ \hline
+        合约地址查询         & 3  & 验证音乐合约地址检索                              \\ \hline
+        CID 查询         & 3  & 验证 IPFS 内容寻址检索                         \\ \hline
+        resourceKey 查询 & 3  & 验证链上资源键精确定位                             \\ \hline
+        交易哈希查询         & 2  & 验证发布交易定位                                \\ \hline
     \end{tabular}
 \end{table}
 
-对比方法一共设置了4组。其中，数据库字段包含匹配基线这个方法只依赖于字段包含关系；仅文本评分方法则仅仅去计算标题、艺术家、专辑、流派、描述以及模糊相似度；文本+链上身份字段方法会在前面方法的基础上，增加Token ID、合约地址、CID、resourceKey以及交易哈希等等身份特征；而完整的排序算法也就是本文所实现的\texttt{chain\_resource\_rank\_v1}，它还会进一步引入新鲜度以及热度信号。评价指标方面，囊括了Precision@10、MRR、nDCG@10、零结果率以及平均响应时间。
+实验内部共设置 4 组方法，其中“文本+链上身份字段”属于中间消融结果，主要用于内部调参与分析。为了让正文展示更加紧凑，本文在表格与图中仅保留 3 组代表性方法：数据库字段包含匹配基线、仅文本评分方法，以及完整的\texttt{chain\_resource\_rank\_v1}排序算法。评价指标方面，囊括了 Precision@10、MRR、nDCG@10、零结果率以及平均响应时间。
 
 
 \section{检索效果对比实验}
 
-表\ref{tab:ranking_metrics_actual}和图\ref{fig:ranking_metrics_bar}给出了4种方法在62个查询上的总体表现。由于评估集包含较多单目标定位查询，Precision@10的绝对值受到上限约束，因此本节重点结合MRR和nDCG@10分析排序质量。
+表\ref{tab:ranking_metrics_actual}和图\ref{fig:ranking_metrics_bar}给出了 3 种代表性方法在 162 个查询上的总体表现。由于评估集同时包含较多单目标定位查询和多结果查询，Precision@10 的绝对值更容易受到相关结果数量上限的影响，因此本节重点结合 MRR 和 nDCG@10 分析排序质量。
 
 \begin{table}[htbp]
     \linespread{1.45}
@@ -103,10 +104,9 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
     \begin{tabular}{|p{3.2cm}|c|c|c|c|c|}
         \hline
         方法          & Precision@10 & MRR    & nDCG@10 & 零结果率    & 平均响应时间/ms \\ \hline
-        数据库字段包含匹配基线 & 0.1790       & 0.8468 & 0.8489  & 12.90\% & 0.2350    \\ \hline
-        仅文本评分       & 0.1806       & 0.8306 & 0.8237  & 16.13\% & 3.1300    \\ \hline
-        文本+链上身份字段   & 0.1952       & 0.9758 & 0.9646  & 0.00\%  & 3.1406    \\ \hline
-        完整排序算法      & 0.1952       & 0.9758 & 0.9646  & 0.00\%  & 3.3014    \\ \hline
+        数据库字段包含匹配基线 & 0.1377       & 0.4681 & 0.4334  & 47.53\% & 23.2932   \\ \hline
+        仅文本评分       & 0.2105       & 0.6992 & 0.6014  & 10.49\% & 278.6325  \\ \hline
+        完整排序算法      & 0.1963       & 0.7253 & 0.6480  & 3.70\%  & 297.7463  \\ \hline
     \end{tabular}
 \end{table}
 
@@ -121,17 +121,17 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
             ymin=0,
             ymax=105,
             ylabel={指标值（\%）},
-            symbolic x coords={sql_contains,text_only,text_identity,full_ranker},
+            symbolic x coords={sql_contains,text_only,full_ranker},
             xtick=data,
-            xticklabels={字段包含匹配基线,仅文本评分,文本+链上身份字段,完整排序算法},
+            xticklabels={字段包含匹配基线,仅文本评分,完整排序算法},
             xticklabel style={rotate=18,anchor=east,font=\zihao{6}},
             ymajorgrids=true,
             legend style={at={(0.5,1.05)},anchor=south,legend columns=3,font=\zihao{6}},
             enlarge x limits=0.08,
         ]
-            \addplot table[x=method_key,y=precision_at_10_pct,col sep=comma]{figures/data/search_ranking_metrics.csv};
-            \addplot table[x=method_key,y=mrr_pct,col sep=comma]{figures/data/search_ranking_metrics.csv};
-            \addplot table[x=method_key,y=ndcg_at_10_pct,col sep=comma]{figures/data/search_ranking_metrics.csv};
+            \addplot coordinates {(sql_contains,13.7654) (text_only,21.0494) (full_ranker,19.6296)};
+            \addplot coordinates {(sql_contains,46.8056) (text_only,69.9177) (full_ranker,72.5279)};
+            \addplot coordinates {(sql_contains,43.3390) (text_only,60.1417) (full_ranker,64.7998)};
             \legend{Precision@10,MRR,nDCG@10}
         \end{axis}
     \end{tikzpicture}
@@ -139,9 +139,9 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
     \label{fig:ranking_metrics_bar}
 \end{figure}
 
-从实验结果可以看出，单纯依赖数据库字段包含匹配虽然开销最低，但在拼写扰动、空格扰动和链上复杂身份查询场景中会出现明显漏召回，零结果率达到 12.90\%。仅文本评分方法能够处理一部分模糊查询，但由于缺少身份字段特征，对Token ID、合约地址、CID 和 resourceKey 等链上定位查询支持不足，其 MRR 和 nDCG@10 分别只有 0.8306 和 0.8237，且零结果率进一步上升到 16.13\%。
+从实验结果可以看出，单纯依赖数据库字段包含匹配虽然开销最低，但在拼写扰动、别名检索和链上复杂身份查询场景中会出现明显漏召回，零结果率达到 47.53\%。仅文本评分方法已经能够处理一部分模糊查询与紧凑输入，Precision@10 达到 0.2105，但由于缺少链上身份信号和辅助排序能力，在首位命中质量上仍存在不足，其 MRR 和 nDCG@10 分别只有 0.6992 和 0.6014。
 
-当加入链上身份字段后，零结果率下降到 0，MRR 从 0.8306 提升到 0.9758，nDCG@10 提升到 0.9646，说明绝大多数查询都能在首位或前两位命中目标资源。完整排序算法在此基础上继续引入新鲜度和热度特征，在 Precision@10、MRR 和 nDCG@10 上保持与文本+ 链上身份字段方法一致的总体表现，同时为在线检索结果补充了可解释因子，说明新增排序特征没有破坏结果稳定性。
+完整排序算法在综合文本相关性、链上身份字段、新鲜度和热度信号后，把零结果率进一步压低到 3.70\%，同时把 MRR 提升到 0.7253、nDCG@10 提升到 0.6480，说明目标资源更容易稳定地出现在结果前列。虽然它在 Precision@10 上略低于仅文本评分方法，但在首位命中和分级排序质量上表现更好，这与资源发现模块更强调“前几位是否可靠命中目标”的使用目标是一致的。
 
 
 \section{典型查询案例分析}
@@ -157,9 +157,9 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
     \begin{tabular}{|p{3.6cm}|p{3.6cm}|p{5.2cm}|}
         \hline
         查询输入                               & 首位结果                      & 主要排序原因                          \\ \hline
-        \texttt{The Fields of Ard Skellix} & The Fields of Ard Skellig & 标题分词命中80\%，文本相似度95\%，能够纠正轻微拼写错误 \\ \hline
-        \texttt{新 地球}                      & 新地球                       & 标题经紧凑化后精确匹配，能够处理空格扰动输入          \\ \hline
-        resourceKey精确查询                    & White Palace              & resourceKey精确匹配，同时命中音乐合约地址      \\ \hline
+        \texttt{Introductiox}              & Introduction            & 文本相似度约92\%，能够纠正尾部单字符错误               \\ \hline
+        \texttt{MorningDips}               & Morning Dips            & 标题经紧凑化后精确匹配，能够处理去空格输入             \\ \hline
+        resourceKey精确查询                    & Houston（日文曲目）          & resourceKey精确匹配，同时命中音乐合约地址             \\ \hline
     \end{tabular}
 \end{table}
 
@@ -168,7 +168,7 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
 
 \section{性能测试结果}
 
-为了观察完整排序算法在不同候选规模下的开销变化，本文将候选集合分别扩展到50、100、300和500条，并统计平均响应时间与95\%分位响应时间。结果如表\ref{tab:ranking_latency}和图\ref{fig:ranking_latency_curve}所示。
+为了观察完整排序算法在不同候选规模下的开销变化，本文分别在 1000、5000 和 6000 条候选资源规模下统计平均响应时间与 95\% 分位响应时间。结果如表\ref{tab:ranking_latency}和图\ref{fig:ranking_latency_curve}所示。
 
 \begin{table}[htbp]
     \linespread{1.45}
@@ -179,10 +179,9 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
     \begin{tabular}{|c|c|c|}
         \hline
         候选数量 & 平均响应时间/ms & 95\%分位响应时间/ms \\ \hline
-        50   & 3.80      & 6.73          \\ \hline
-        100  & 7.49      & 13.42         \\ \hline
-        300  & 21.99     & 39.68         \\ \hline
-        500  & 36.09     & 64.37         \\ \hline
+        1000 & 46.00     & 83.93         \\ \hline
+        5000 & 203.55    & 367.19        \\ \hline
+        6000 & 252.50    & 449.40        \\ \hline
     \end{tabular}
 \end{table}
 
@@ -194,10 +193,10 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
             height=7.8cm,
             xlabel={候选数量},
             ylabel={响应时间/ms},
-            xmin=40,
-            xmax=510,
+            xmin=900,
+            xmax=6100,
             ymin=0,
-            ymax=90,
+            ymax=500,
             ymajorgrids=true,
             legend style={at={(0.5,1.05)},anchor=south,legend columns=2,font=\zihao{6}},
             tick label style={font=\zihao{6}},
@@ -212,12 +211,11 @@ FreeFlow 这一系统，它同时涉及到了桌面端、后端、智能合约�
     \label{fig:ranking_latency_curve}
 \end{figure}
 
-结果显示，随着候选数量增加，平均响应时间近似线性增长，这与第 6 章中的复杂度分析一致。在 500 条候选资源下，完整排序算法的平均响应时间为 36.09 ms，95\% 分位响应时间为 64.37 ms，仍处于桌面端检索交互可接受范围内。因此，在本文面向的系统规模与应用场景下，\texttt{chain\_resource\_rank\_v1}能够在保证排序质量的同时维持可接受的在线响应开销。
+结果显示，随着候选数量增加，平均响应时间近似线性增长，这与第 6 章中的复杂度分析一致。在 6000 条候选资源下，完整排序算法的平均响应时间为 252.50 ms，95\% 分位响应时间为 449.40 ms。这组测试更接近离线全量评估时的上界开销，而不是实际在线请求的常态。在线场景中，系统仍会先通过数据库字段召回与候选集截断来限制参与排序的规模，因此该延迟结果主要用于说明算法在更大候选集合上的增长趋势与可控边界。
 
 
 \section{结果讨论与有效性说明}
 
-综合本章结果，可以得出两点较为稳妥的结论。第一，系统当前已经在可复现范围内验证了链上发布、购买和访问控制这条关键业务链路，说明合约层设计能够支撑作品凭证化和访问授权。第二，检索排序模块在冷启动场景下具备较好的工程可用性，加入链上身份字段后可以显著降低零结果率，并维持较低延迟。
+综合本章结果，可以得出两点较为稳妥的结论。第一，系统当前已经在可复现范围内验证了链上发布、购买和访问控制这条关键业务链路，说明合约层设计能够支撑作品凭证化和访问授权。第二，检索排序模块在冷启动场景下具备较好的工程可用性；在基于公开曲库构建的离线基准上，完整排序算法相较于基础字段匹配和仅文本评分方法，能够更稳定地把目标资源推到结果前列，并显著降低零结果率。
 
-同时，本章也有明确边界。桌面端的登录、上传、详情展示、播放、评论和下载等功能已经完成实现与联调，但尚未形成大规模自动化端到端测试。检索实验所使用的评估集是结构化模拟数据，适合验证算法链路和特征设计是否工作正常，但不足以替代真实用户搜索日志和线上A/B测试。因此，本文的结论应表述为：FreeFlow完成了面向音乐场景的混合架构实现验证，生产环境中的完整平台成熟度仍有待进一步提升。
-
+同时，本章也有明确边界。桌面端的登录、上传、详情展示、播放、评论和下载等功能已经完成实现与联调，但尚未形成大规模自动化端到端测试。检索实验虽然已经从结构化模拟集扩展到了基于公开 MusicBrainz 样本库的离线基准，但它仍然不能替代真实用户搜索日志和线上 A/B 测试。因此，本文的结论应表述为：FreeFlow 完成了面向音乐场景的混合架构实现验证，生产环境中的完整平台成熟度仍有待进一步提升。
