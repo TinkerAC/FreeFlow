@@ -41,7 +41,7 @@
         项目    & 说明                                                                        \\ \hline
         资源规模  & 基于公开 MusicBrainz 样本库构建 6000 条候选资源，其中核心相关样本 815 条、干扰项 5185 条，按 48 个发行簇组织 \\ \hline
         查询规模  & 162 个查询，覆盖标题、专辑、艺人、别名、多词组合、紧凑输入、全角输入、拼写扰动以及 Token ID、CID、合约地址和resourceKey 等场景 \\ \hline
-        相关性标注 & 148 条多结果查询采用 3/2/1 相关等级人工标注；14 条链上身份定位查询采用浅层 spot-check 标注            \\ \hline
+        相关性标注 & 148 条多结果查询采用根据发行结构的 3/2/1 规则弱标注 ；14 条链上身份定位查询采用浅层 spot-check 标注            \\ \hline
         评价指标  & Precision@10、MRR、nDCG@10、零结果率和平均响应时间                                      \\ \hline
         对比方法  & 正文展示 SQL contains 基线、仅文本评分和完整\texttt{chain\_resource\_rank\_v1} 三组代表性方法       \\ \hline
     \end{tabular}

@@ -176,7 +176,7 @@
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/out/search_ranking_pipeline.png}
+    \includegraphics[width=\textwidth]{figures/out/search_ranking_pipeline}
     \caption{链上音乐资源发现处理流程图}
     \label{fig:search_ranking_pipeline}
 \end{figure}
@@ -204,6 +204,7 @@
     \end{algorithmic}
 \end{algorithm}
 
+
 \section{复杂度分析}
 
 设候选资源的数量为$N$，而平均参与比较的文本长度是$L$。候选召回阶段主要是借助数据库字段上的查询来完成的，计算开销的主要部分会集中在结果组织这个阶段。
@@ -215,7 +216,7 @@
 
 \section{检索效果评估设计}
 
-为了对资源发现模块在冷启动阶段的支撑效果进行验证，本文基于公开的 MusicBrainz sample 2026-04-01 数据库构建了一个离线评估集。该评估集先从样本库里选取 48 个发行簇作为核心相关样本，再加入来自整库抽样的干扰项，最终形成了 6000 条候选资源，其中核心相关样本为 815 条，干扰项为 5185 条。与早期的结构化模拟集相比，这一版本的评估集在候选规模和语种覆盖面上都更接近真实公开曲库。
+为了对资源发现模块在冷启动阶段的支撑效果进行验证，本文基于公开的 MusicBrainz sample 2026-04-01 数据库构建了一个离线评估集\cite{musicbrainzDatabase,musicbrainzDataDownload}。该评估集先从样本库里选取 48 个发行簇作为核心相关样本，再加入来自整库抽样的干扰项，最终形成了 6000 条候选资源，其中核心相关样本为 815 条，干扰项为 5185 条。与早期的结构化模拟集相比，这一版本的评估集在候选规模和语种覆盖面上都更接近真实公开曲库。
 
 就查询类型这个方面来说，该评估集共包含 162 个查询，覆盖标题精确匹配、艺人查询、专辑查询、多词组合、别名检索、拼写扰动、紧凑输入、全角输入，以及 Token ID、合约地址、IPFS CID、\texttt{resourceKey}和交易哈希等链上身份检索。这样一个设计能够同时对系统在自然语言查询以及链上标识查询两方面的处理能力进行考察。
 
