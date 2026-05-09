@@ -11,6 +11,7 @@
   },
   "scripts": {
     "dev:web": "pnpm --filter web run dev",
+    
     "dev:desktop": "pnpm --filter freeflow run dev",
     "dev:backend": "pnpm --filter freeflow-web25-backend run dev",
     "build:backend": "pnpm --filter freeflow-web25-backend run build",
