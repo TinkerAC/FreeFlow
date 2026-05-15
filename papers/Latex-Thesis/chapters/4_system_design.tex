@@ -46,7 +46,7 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
 
 \subsection{创作者发布流程}
 
-创作者发布流程如图\ref{fig:release_workflow}所示。该流程从发行草稿创建开始，依次完成素材上传、 metadata 生成、链上发布与结果回写。媒体资源由 IPFS 保存，链上记录 metadata URI、访问配置与发行结果等关键状态。
+创作者发布流程如图\ref{fig:release_workflow}所示。该流程从发行草稿创建开始，依次完成素材上传、 metadata 生成、链上发布与链上信息缓存。媒体资源由 IPFS 保存，链上记录 metadata URI、访问配置与发行结果等关键状态。
 
 \begin{figure}[H]
     \centering
@@ -153,9 +153,6 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
     \end{tabular}
 \end{table}
 
-在约束设计上，\texttt{creator\_releases}通过\texttt{chainId + musicAssetAddress + tokenId}保证链上资源索引唯一；\texttt{purchases}通过交易哈希与用户-资源组合约束防止重复确认；\texttt{comments}通过资源与用户索引支持评论列表和用户行为查询。
-
-
 \section{智能合约设计}
 
 系统合约由\texttt{MusicAccess1155}、\texttt{PlatformHub}和\texttt{RoyaltySplitter}组成，其结构如图\ref{fig:contract_architecture}所示。\texttt{MusicAccess1155}负责访问凭证创建与校验；\texttt{PlatformHub}负责作品发布、销售配置维护、购买处理与访问状态判断；\texttt{RoyaltySplitter}负责收益保存与提取。
@@ -187,8 +184,8 @@ FreeFlow 采用桌面端、链下服务、智能合约与 IPFS 存储协同的�
 
 \section{系统安全设计}
 
-系统安全设计主要集中在身份建立、访问控制、接口保护以及资源访问边界几个方面。本系统使用 SIWE 签名登录机制，后端会对 nonce、地址、链 ID、domain、uri 和签发时间等进行校验并恢复出钱包地址和传入地址比对，nonce 具有过期时间和消费限制，以防范重放攻击。
+系统安全设计主要集中在身份建立、访问控制、接口保护以及资源访问边界几个方面。本系统使用 SIWE 签名登录机制，后端会对 nonce、地址、链 ID、domain、uri 和签发时间等进行校验并恢复出钱包地址并与传入地址比对，nonce 具有过期时间和消费限制，以防范重放攻击。
 
 在访问控制方面，创作者可将作品发布为“公开可访问”或“购买后访问”。前端以链上信息为唯一事实，通过静态调用来获取链上状态，从而能够在链上形成一种可公开查验的确权模式\cite{Maesa2019AuditableAC,Qin2021BlockchainAccess,Punia2024AccessReview}。
 
-在资源保护上，当前模式下，如果资源地址被直接获取，仍有可能绕过应用这边的访问流程。已经有研究表明，链上与链下的混合去中心化应用架构中，链上的确权信息仍需配合链下的加密、密钥管理或类似Lit Protocol 等去中心化鉴权模式才能有效防止盗链\cite{Ali2017IoTIPFS,Qin2021BlockchainAccess}。现阶段的访问控制，只是原型系统的授权验证机制，后续需要结合音频加密、授权网关来完善资源保护。
+在资源保护上，当前模式下，如果资源地址被直接获取，仍有可能绕过应用这边的访问流程。已经有研究表明，链上与链下的混合去中心化应用架构中，链上的确权信息仍需配合链下的加密、密钥管理或类似 Lit Protocol 等去中心化鉴权模式才能有效防止盗链\cite{Ali2017IoTIPFS,Qin2021BlockchainAccess}。现阶段的访问控制，只是原型系统的授权验证机制，后续需要结合音频加密、授权网关来完善资源保护。
