@@ -12,7 +12,7 @@ const mainTexPath = path.join(thesisDir, 'main.tex');
 
 // Default switches: edit these values directly when you want persistent local behavior.
 const defaultOptions = {
-    reExportFigures: true,//是否重新导出图片
+    reExportFigures: false,//是否重新导出图片
     openPdfAfterBuild: true,//编译完成后是否打开
     drawioScale: '3',
     drawioBorder: '10',
