@@ -22,7 +22,7 @@
         <mxCell id="6" value="Web2.5 后端&lt;br&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#F28E2B;fontSize=13;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="260" y="210" width="205" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="8" value="IPFS / Pinata&lt;br&gt;钉固服务" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F7F7;strokeColor=#4ECDC4;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+        <mxCell id="8" value="IPFS / Pinata&lt;br&gt;存储服务" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F7F7;strokeColor=#4ECDC4;fontSize=13;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="-20" y="440" width="170" height="92" as="geometry" />
         </mxCell>
         <mxCell id="13" value="连接钱包 / SIWE签名" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#4E79A7;fontSize=11;entryDx=0;entryDy=0;" parent="1" source="2" target="23" edge="1">

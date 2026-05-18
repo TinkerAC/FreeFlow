@@ -2,22 +2,22 @@
 
 \chapter{系统核心模块实现}\label{ch:core_modules}
 
-\newcommand{\chapteruiscreenshotplaceholder}[2]{
+\newcommand{\chapteruiscreenshotplaceholder}[3][0.82\textwidth]{
     \begin{center}
-    \IfFileExists{figures/screenshots/#1}{
-        \includegraphics[width=0.82\textwidth,height=0.34\textheight,keepaspectratio]{figures/screenshots/#1}
+    \IfFileExists{figures/screenshots/#2}{
+        \includegraphics[width=#1,height=0.34\textheight,keepaspectratio]{figures/screenshots/#2}
     }{
         \fbox{
             \parbox[c][4.2cm][c]{0.78\textwidth}{
                 \centering
                 截图文件缺失\\[6pt]
-                请检查资源：#1
+                请检查资源：#2
             }
         }
     }
     \captionsetup{hypcap=false}
-    \captionof{figure}{#2}
-    \label{fig:#1}
+    \captionof{figure}{#3}
+    \label{fig:#2}
     \end{center}
 }
 \newcommand{\chapteruiscreenshotpair}[4]{
@@ -67,7 +67,7 @@ FreeFlow中，用户身份由本地Profile（用户资料）、钱包地址和SI
 
 用户资料引导、钱包连接与签名登录界面如图\ref{fig:profile_guide.png}所示。
 
-\chapteruiscreenshotplaceholder{profile_guide.png}{用户资料引导与钱包登录界面}
+\chapteruiscreenshotplaceholder[0.62\textwidth]{profile_guide.png}{用户资料引导与钱包登录界面}
 
 \section{创作者发行链路实现}
 
